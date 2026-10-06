@@ -1,4 +1,6 @@
 /* ---------- views ---------- */
+// matches the two-column breakpoint in style.css; main.js re-renders when the window crosses it
+const WIDE='(min-width:960px)',isWide=()=>!!(window.matchMedia&&window.matchMedia(WIDE).matches);
 const reducedMotion=()=>window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 function render(){
   const app=document.getElementById('app'),a=document.activeElement;
@@ -9,11 +11,18 @@ function render(){
   app.innerHTML=view();
   // folding panels keep whatever open/closed state the player last chose
   app.querySelectorAll('details[data-fold]').forEach(d=>{const k=d.dataset.fold;if(UI.folds&&k in UI.folds)d.open=UI.folds[k]});
-  if(keep){const el=[...app.querySelectorAll('[data-act]')].find(e=>e.dataset.act===keep[0]&&e.dataset.arg===keep[1]&&e.classList[0]===keep[2]);if(el)el.focus({preventScroll:true})}
-  // dialog focus goes after the general restore so it wins: into the dialog on open, back to the opener on close
-  const dlg=app.querySelector('.modal');
+  // with the dialog open, focus is restored inside it (the page behind can hold a twin of the same button)
+  const dlg=app.querySelector('dialog.modal'),scope=dlg||app;
+  if(dlg&&dlg.showModal&&!dlg.open){
+    dlg.showModal();
+    // a toast raised just before this render must come back above the freshly opened dialog
+    const t=document.getElementById('toast');if(t&&t.matches&&t.matches(':popover-open')){t.hidePopover();t.showPopover()}
+  }
   document.body.style.overflow=dlg?'hidden':'';
-  if(dlg&&UI.modalFocus){dlg.querySelector('.mclose').focus({preventScroll:true});UI.modalFocus=false}
+  const twin=keep&&[...scope.querySelectorAll('[data-act]')].find(e=>e.dataset.act===keep[0]&&e.dataset.arg===keep[1]&&e.classList[0]===keep[2]);
+  if(twin)twin.focus({preventScroll:true});
+  else if(dlg){const c=dlg.querySelector('.mclose');if(c)c.focus({preventScroll:true})}
+  // after closing, back to the name that opened it
   if(!dlg&&UI.returnFocus!=null){const el=app.querySelector(`[data-act="player"][data-arg="${UI.returnFocus}"]`);if(el)el.focus({preventScroll:true});UI.returnFocus=null}
   if(!reducedMotion())app.querySelectorAll('[data-flip]').forEach(el=>{
     const b=before[el.dataset.flip];if(!b||!el.animate)return;
@@ -95,8 +104,8 @@ function vHome(){
   const H=S.teams[f.h],A=S.teams[f.a],iss=lineupIssues();
   const hs=f.home?rating(ms):rating(os),as=f.home?rating(os):rating(ms);
   // events and bids need an answer: first thing on a phone, top of the right column on a wide screen
-  const ask=vEvent()+vOffer();
-  return `${ask?`<div class="narrow-only">${ask}</div>`:''}<div class="cols"><div class="col">${vCalendar()}<section class="panel ${f.cup?'cupmatch':''}"><h2>下一场：${fixLabel(f)}，${f.home?'主场':'客场'}${f.derby?' <span class="tag2 derby">宿敌之战</span>':''}</h2>
+  const ask=vEvent()+vOffer(),wide=isWide();
+  return `${ask&&!wide?ask:''}<div class="cols"><div class="col">${vCalendar()}<section class="panel ${f.cup?'cupmatch':''}"><h2>下一场：${fixLabel(f)}，${f.home?'主场':'客场'}${f.derby?' <span class="tag2 derby">宿敌之战</span>':''}</h2>
   ${f.derby?`<p class="muted" style="margin:-6px 0 8px;font-size:13px">收入翻倍，赢了全队士气高涨 2 场。</p>`:''}${f.cup?`<p class="muted" style="margin:-6px 0 8px;font-size:13px">一场定胜负，平局直接点球大战。</p>`:''}
   <div class="fixture"><div><div class="t disp" style="color:${H.color}">${H.name}</div><div class="str">综合实力 <span class="num">${hs}</span></div></div>
   <div class="vs num">VS</div>
@@ -107,7 +116,7 @@ function vHome(){
   ${isMatchDay()?'<button class="btn primary" data-act="play">开始比赛</button>':`<span class="muted" style="font-size:14px">${nextMatchDay()-S.day} 天后开赛</span>`}</div>
   ${iss.length?`<p class="warn" style="text-align:center">${iss.join('；')}，请先去阵容页调整。</p>`:''}</section>
   ${vBoard()}</div>
-  <div class="col">${ask?`<div class="wide-only">${ask}</div>`:''}
+  <div class="col">${ask&&wide?ask:''}
   <section class="panel"><h2>俱乐部动态</h2><ul class="news">${S.news.map(n=>`<li><span class="tag">${n.r.replace(/^S\d+ /,'')}</span><span>${n.t}</span></li>`).join('')}</ul></section>
   ${vCheat()}
   ${vSavePanel()}</div></div>`;
@@ -134,12 +143,14 @@ function vTeamPage(tid){
   <section class="panel" style="padding:4px 10px"><p class="muted" style="font-size:13px;margin:8px 0">按钮上是对方要价：主力和核心球员要价更高。阵容不足 16 人或门将只剩 2 个时对方不卖。</p>${rows}</section>`;
 }
 // one player in detail, ours or another club's
-// the player dialog: clicking the dimmed backdrop closes it; the dialog itself swallows clicks (data-act="noop")
+// the player dialog is a native <dialog> opened with showModal() after each render: the browser keeps focus
+// inside it, makes the page behind inert and handles Escape (see the 'cancel' listener in main.js)
 function vModal(){
-  return `<div class="modal-bg" data-act="closeModal"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mtitle" data-act="noop">${vPlayer(UI.modal.id)}</div></div>`;
+  return `<dialog class="modal" aria-labelledby="mtitle">${vPlayer(UI.modal.id)}</dialog>`;
 }
 function vPlayer(id){
-  const f=findAny(id);if(!f)return '<p class="muted">这名球员已经不在联赛里了。</p>';
+  const f=findAny(id);
+  if(!f)return `<section class="panel"><div class="mhead"><h2 id="mtitle">球员详情</h2><button class="btn small mclose" data-act="closeModal" aria-label="关闭">✕</button></div><p class="muted" style="margin:0">这名球员已经不在联赛里了。</p></section>`;
   const {p,t}=f,mine=t.id===S.my,c=S.club[p.id]||{},hist=(p.hist||[]).concat([{s:S.season,o:p.ovr}]);
   const cell=(l,v)=>`<div class="pcell"><small>${l}</small><b>${v}</b></div>`;
   const status=[p.inj?`伤停 ${p.inj} 天`:'',p.ban?`停赛 ${p.ban} 轮`:'',p.away?'探亲中':'',p.loan?`租借至${loanLabel(p)}（${p.lapps||0} 场）`:'',unproven(p)?`未出道 ${careerApps(p)}/${YOUTH_PROVEN}`:''].filter(Boolean).join('，');
@@ -162,7 +173,7 @@ function vSavePanel(){
   const dirOK=canPickDir(),F=UI.saveFiles;
   return `<details class="panel fold" data-fold="${F?'saves-list':'saves'}" ${F?'open':''}><summary><h2>存档文件</h2></summary>
   <p class="muted" style="margin:0 0 10px;font-size:14px">${dirOK
-    ?`已自动保存在这个浏览器里。导出会写进你选的存档文件夹${UI.dirName?`（现在是「${UI.dirName}」）`:'（第一次导出时选一次，例如项目里的 saves 文件夹）'}。`
+    ?`已自动保存在这个浏览器里。导出会写进你选的存档文件夹${UI.dirName?`（现在是「${esc(UI.dirName)}」）`:'（第一次导出时选一次，例如项目里的 saves 文件夹）'}。`
     :'已自动保存在这个浏览器里。这个浏览器只能把导出文件下载到默认的下载文件夹（Chrome 或 Edge 可以直接存进指定文件夹）。'}</p>
   <div class="go" style="justify-content:flex-start;margin-top:0">
     <button class="btn" data-act="exportSave">${dirOK?'导出到存档文件夹':'导出存档文件'}</button>
@@ -170,9 +181,11 @@ function vSavePanel(){
     <button class="btn${dirOK?' small':''}" data-act="importSave">从其他位置选择文件</button></div>
   ${F?vSaveList():''}</details>`;
 }
+// escapes text that comes from outside the game (file and folder names) before it goes into HTML
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 function vSaveList(){
   const F=UI.saveFiles,time=t=>new Date(t).toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
-  return `<div class="savelist">${F.length?F.map(f=>`<div class="cheat-row"><button class="btn small" data-act="loadDir" data-arg="${f.name}">读取</button><span>${f.name}</span><span class="muted" style="font-size:12px">${time(f.time)}</span></div>`).join(''):'<p class="muted" style="margin:0">这个文件夹里还没有存档。</p>'}</div>`;
+  return `<div class="savelist">${F.length?F.map(f=>`<div class="cheat-row"><button class="btn small" data-act="loadDir" data-arg="${esc(f.name)}">读取</button><span>${esc(f.name)}</span><span class="muted" style="font-size:12px">${time(f.time)}</span></div>`).join(''):'<p class="muted" style="margin:0">这个文件夹里还没有存档。</p>'}</div>`;
 }
 function vEvent(){
   if(!S.event)return '';
@@ -212,8 +225,8 @@ function vSquad(){
   const rows=PO.map(pos=>{
     const ps=t.players.filter(p=>p.pos===pos&&!p.loan).sort((a,b)=>b.ovr-a.ovr);
     return `<div class="group-h">${POS[pos]}（${ps.length}）</div>`+ps.map(p=>`
-    <div class="prow ${on.has(p.id)?'on':''} ${unavail(p)?'inj':''}" data-act="toggle" data-arg="${p.id}" role="button" tabindex="0" aria-pressed="${on.has(p.id)}">
-      <span class="tick">${on.has(p.id)?'✓':''}</span>
+    <div class="prow ${on.has(p.id)?'on':''} ${unavail(p)?'inj':''}" data-act="toggle" data-arg="${p.id}">
+      <button class="tick" data-act="toggle" data-arg="${p.id}" aria-pressed="${on.has(p.id)}" aria-label="${on.has(p.id)?'移出首发':'加入首发'}：${p.name}">${on.has(p.id)?'✓':''}</button>
       <div style="min-width:0"><div class="pname"><button class="link" data-act="player" data-arg="${p.id}">${p.name}</button>${gem(p)}${p.youth?' <span class="tag2 youth">青训</span>':''}${unproven(p)?` <span class="muted" style="font-size:11px;font-weight:400" title="出场满 ${YOUTH_PROVEN} 场或下赛季开始时出道，之前买家只按当前能力出价">未出道 ${careerApps(p)}/${YOUTH_PROVEN}</span>`:''}</div>
       <div class="pmeta">${p.sig?`<span class="sig" style="display:inline">★</span> `:''}${p.age} 岁，${p.apps} 场 ${p.goals} 球${p.rn?`，评分 ${avgRating(p).toFixed(1)}`:''}${p.yc?`，黄牌 ${p.yc}`:''}${p.inj?` <span class="injtag">伤停 ${p.inj} 天</span>`:''}${p.ban?` <span class="injtag">停赛 ${p.ban} 轮</span>`:''}${p.away?` <span class="injtag">探亲 ${p.away} 轮</span>`:''}${p.loan?` <span class="loantag">租借至${p.loan.club} · ${p.lapps||0} 场</span>`:''}${!unavail(p)&&p.cond<60?' <span class="risktag">伤病风险高</span>':''}${retireChance({...p,age:p.age+1})>=.3?` <span class="muted" style="font-size:11px" title="赛季结束时有 ${Math.round(retireChance({...p,age:p.age+1})*100)}% 机会退役">可能退役</span>`:''}</div>
 </div>

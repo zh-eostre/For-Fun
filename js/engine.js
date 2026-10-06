@@ -41,10 +41,31 @@ const MIGRATE={
   // v11 sends players on loan to clubs outside our divisions instead of a 乙级 club
   10:d=>d.teams[d.my].players.forEach(p=>{if(p.loan&&typeof p.loan.club==='number')p.loan={...loanHost(p),ovr0:p.loan.ovr0??p.ovr}}),
   // v12 tracks seasons and trophies per player for the legends rule; past seasons are estimated from ability history
-  11:d=>d.teams[d.my].players.forEach(p=>{const c=d.club[p.id];if(c&&c.seasons==null){c.seasons=(p.hist||[]).length;c.titles=[]}})
+  11:d=>d.teams[d.my].players.forEach(p=>{const c=d.club[p.id];if(c&&c.seasons==null){c.seasons=(p.hist||[]).length;c.titles=[]}}),
+  // v13 gives back trophies the v12 step couldn't: a title season counts for anyone who was with us at its end
+  // (his ability history has that season). appearances that season weren't recorded, so they're assumed
+  12:d=>{
+    const me=d.teams[d.my],won=r=>[r.rank===1?`第 ${r.season} 季${DIVS[r.div||0]}冠军`:'',r.cup===me.name?`第 ${r.season} 季${CUP_NAME}冠军`:''].filter(Boolean);
+    me.players.forEach(p=>{
+      const c=d.club[p.id];if(!c)return;
+      const was=new Set((p.hist||[]).map(h=>h.s)),got=new Set(c.titles||[]);
+      (d.records||[]).forEach(r=>{if(was.has(r.season))won(r).forEach(t=>got.add(t))});
+      c.titles=[...got];
+    });
+  }
 };
+// a save can come from anywhere (a shared file, an edited one), and its text ends up in the page's HTML, so
+// every string in it loses the characters that could form markup before the game touches it
+const UNSAFE=/[<>&"'`]/g;
+function sanitize(x){
+  if(typeof x==='string')return x.replace(UNSAFE,'');
+  if(Array.isArray(x))return x.map(sanitize);
+  if(x&&typeof x==='object'){for(const k of Object.keys(x))x[k]=sanitize(x[k]);return x}
+  return x;
+}
 function upgrade(d){
   if(!d||!Array.isArray(d.teams)||typeof d.my!=='number'||!(d.v>=1&&d.v<=SAVE_V))return null;
+  sanitize(d);
   while(d.v<SAVE_V){MIGRATE[d.v](d);d.v++}
   return d;
 }
@@ -268,6 +289,11 @@ function scoutReport(p,force){
   p.scout={conf,est,lo:Math.max(p.ovr,est-w),hi:Math.min(95,est+w)};
   p.price=Math.round(value({...p,pot:est})*1.15);
 }
+// a hidden gem: a teenager with 88-93 potential whose scout report badly undersells it
+function makeGem(){
+  const g=makePlayer(pick(['DF','MF','FW']),ri(50,58),ri(17,19));
+  g.pot=ri(88,93);scoutReport(g,{conf:'low',est:ri(72,77)});return g;
+}
 function refreshMarket(){
   S.market=[];const n=marketSize();
   for(let i=0;i<n;i++){
@@ -277,10 +303,7 @@ function refreshMarket(){
     else p=makePlayer(pos,ri(52,80),ri(18,33));
     scoutReport(p);S.market.push(p);
   }
-  if(rng()<gemChance()){
-    const g=S.market[ri(0,n-1)],ng=makePlayer(pick(['DF','MF','FW']),ri(50,58),ri(17,19));
-    ng.pot=ri(88,93);scoutReport(ng,{conf:'low',est:ri(72,77)});S.market[S.market.indexOf(g)]=ng;
-  }
+  if(rng()<gemChance())S.market[ri(0,n-1)]=makeGem();
   if(rng()<.45){
     const c=S.market.filter(p=>p.scout.conf!=='low'&&p.age>=22);
     if(c.length){const x=pick(c);x.price=Math.round(x.price*.5);x.sale=true}

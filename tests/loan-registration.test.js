@@ -21,6 +21,7 @@ const spare=my().players.find(p=>!p.loan&&!S.lineup.includes(p.id));twice('sell'
 ok(!kids[0].loan&&squadSize()===22,'after selling one, recall works');
 // season end: the other one returns even though that makes 23
 while(S.round<ROUNDS){ACT.ff();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();skipMatch();M=null;UI.view='main'}
+my().players.forEach(p=>p.age=Math.min(p.age,28));  // nobody retires, so the count is exact
 newSeason();ok(!kids[1].loan&&squadSize()===23&&S.news.some(n=>/超过 22 人上限/.test(n.t)),'season end: loan returns, squad 23 with a warning');
 refreshMarket();const n=my().players.length;ACT.buy(String(S.market[0].id));ok(my().players.length===n,'cannot sign while over 22');
 `);

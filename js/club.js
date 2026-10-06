@@ -234,7 +234,8 @@ function buyFrom(id){
 // debut as an academy kid) with the usual match growth chance. as in real football he doesn't take up one of our
 // 22 registered places while away; recalling him needs a free place. loans end with the season
 const LOAN_AGE=23;
-const squadSize=()=>my().players.filter(p=>!p.loan).length;  // registered first-team players
+const firstTeam=()=>my().players.filter(p=>!p.loan);  // registered first-team players
+const squadSize=()=>firstTeam().length;
 const squadFull=()=>squadSize()>=22;
 function loanOut(id){
   const p=findP(id);if(!p||p.loan||p.age>LOAN_AGE)return;
@@ -289,22 +290,21 @@ function payGoals(div){
 // each day on the calendar has SURPRISE_CHANCE of one; w = relative weight, ok = can it happen right now,
 // run applies it and returns the line for the news and the day log
 const SURPRISE_CHANCE=.035;
-const firstTeam=()=>my().players.filter(p=>!p.loan);
 const SURPRISES=[
   {w:3,run:()=>{const m=my().div?ri(40,80):ri(80,150);S.budget+=m;return `赞助商对球队的表现非常满意，决定追加投资 ${money(m)}！`}},
   {w:3,run:()=>{
-    const young=firstTeam().filter(p=>p.age<=25),p=pick(young.length&&rng()<.7?young:firstTeam()),a=ri(2,3);
-    p.ovr=Math.min(95,p.ovr+a);p.pot=Math.max(p.pot,p.ovr);p.gain=(p.gain||0)+a;giveSig(p);
+    const young=firstTeam().filter(p=>p.age<=25&&p.ovr<95),all=firstTeam().filter(p=>p.ovr<95);
+    const p=pick(young.length&&rng()<.7?young:all),old=p.ovr;
+    p.ovr=Math.min(95,p.ovr+ri(2,3));p.pot=Math.max(p.pot,p.ovr);const a=p.ovr-old;p.gain=(p.gain||0)+a;giveSig(p);
     return `${p.name} 在训练中突然顿悟，能力 +${a}，现在是 ${p.ovr}！`}},
-  {w:2,run:()=>{firstTeam().forEach(p=>p.cond=100);return '一位瑜伽大师路过训练场，带全队冥想了一整天。全队体能完全恢复！'}},
-  {w:2,ok:()=>firstTeam().some(p=>p.inj>0),run:()=>{
-    const p=firstTeam().filter(x=>x.inj>0).sort((a,b)=>b.inj-a.inj)[0];p.inj=0;
+  {w:2,run:(log={cond:0})=>{firstTeam().forEach(p=>{log.cond+=100-p.cond;p.cond=100});return '一位瑜伽大师路过训练场，带全队冥想了一整天。全队体能完全恢复！'}},
+  {w:2,ok:()=>firstTeam().some(p=>p.inj>0),run:(log={})=>{
+    const p=firstTeam().filter(x=>x.inj>0).sort((a,b)=>b.inj-a.inj)[0];p.inj=0;(log.healed||(log.healed=[])).push(p);
     return `一位神秘的老中医为 ${p.name} 推拿了一整晚……伤势痊愈了！`}},
   {w:2,run:()=>{const m=ri(20,50);S.budget+=m;return `球迷自发众筹，为球队送来 ${money(m)}！`}},
-  {w:2,run:()=>{S.boost=Math.max(S.boost,1);return '一位退役的传奇前辈回到训练场为全队打气，下一场士气高涨！'}},
+  {w:2,run:()=>{raiseMorale();return '一位退役的传奇前辈回到训练场为全队打气，下一场士气高涨！'}},
   {w:1,ok:()=>S.market.length>0,run:()=>{
-    const g=makePlayer(pick(['DF','MF','FW']),ri(50,58),ri(17,19));g.pot=ri(88,93);scoutReport(g,{conf:'low',est:ri(72,77)});
-    S.market[ri(0,S.market.length-1)]=g;
+    const g=makeGem();S.market[ri(0,S.market.length-1)]=g;
     return `一位老球探寄来密信：转会市场上有一颗被埋没的明珠，${g.name}（${POS[g.pos]}，${g.age} 岁）……`}},
   {w:1,ok:()=>!!S.academy,run:()=>{
     const p=makePlayer(pick(['DF','MF','FW']),40+S.academy.lv*3,ri(16,17));p.pot=ri(85,92);p.youth=true;scoutYouth(p,S.academy.lv);
@@ -315,6 +315,6 @@ function rollSurprise(log){
   if(rng()>=SURPRISE_CHANCE)return;
   const pool=SURPRISES.filter(s=>!s.ok||s.ok());
   let r=rng()*pool.reduce((t,s)=>t+s.w,0);
-  const s=pool.find(x=>(r-=x.w)<0)||pool[0],t=s.run();
+  const s=pool.find(x=>(r-=x.w)<0)||pool[0],t=s.run(log);
   news('✨ '+t);(log.surprises||(log.surprises=[])).push(t);
 }

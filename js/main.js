@@ -1,7 +1,12 @@
 /* ---------- actions ---------- */
 // read out key match moments (goals, red cards, half and full time) for screen readers
 function announce(t){const el=document.getElementById('sr');if(el)el.textContent=t}
-function toast(t){const el=document.getElementById('toast');el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2400)}
+// the toast is a popover so it shows above an open <dialog> (both live in the browser's top layer)
+function toast(t){
+  const el=document.getElementById('toast');el.textContent=t;el.hidden=false;
+  if(el.showPopover){try{el.hidePopover()}catch(e){}el.showPopover()}
+  clearTimeout(toast.t);toast.t=setTimeout(()=>{if(el.hidePopover)try{el.hidePopover()}catch(e){}el.hidden=true},2400);
+}
 function arm(b,label){if(b.dataset.armed)return true;b.dataset.armed='1';const o=b.textContent;b.textContent=label;setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent=o}},2500);return false}
 function enterGame(){
   M=null;UI={tab:'home',view:'main',mf:{...MF0}};indexNames();
@@ -41,7 +46,7 @@ async function exportSave(pickNew){
   try{
     const dir=await saveDir(pickNew),fh=await dir.getFileHandle(saveName(),{create:true}),w=await fh.createWritable();
     await w.write(JSON.stringify(S));await w.close();
-    toast(`已存到「${dir.name}」：${saveName()}`);UI.saveFiles=null;render();
+    toast(`已存到「${dir.name}」：${saveName()}`);  // toast uses textContent, so names are safe hereUI.saveFiles=null;render();
   }catch(e){if(e.name!=='AbortError')toast('没能写进文件夹，请重新选择存档文件夹')}
 }
 function loadSaveText(t){
@@ -106,7 +111,7 @@ const ACT={
   importSave:(a,b)=>{if((S||load())&&!arm(b,'再点一次确认（会覆盖当前进度）'))return;importSave()},
   tab:a=>{UI.tab=a;UI.selSlot=null;UI.pages=[];UI.modal=null;render();window.scrollTo(0,0)},
   team:a=>{(UI.pages=UI.pages||[]).push({type:'team',id:+a});render();window.scrollTo(0,0)},
-  player:a=>{UI.modal={id:+a};UI.modalFocus=true;render()},
+  player:a=>{UI.modal={id:+a};render()},
   closeModal:()=>closeModal(),
   back:()=>{UI.pages.pop();render()},
   bid:(a,b)=>{if(!arm(b,'再点一次确认签下'))return;buyFrom(+a);if(UI.modal&&UI.modal.id===+a&&findP(+a))UI.modal=null;save();render()},
@@ -186,15 +191,22 @@ const ACT={
   yrel:(a,b)=>{if(!arm(b,'确定放走？'))return;releaseYouth(+a);save();render()},
   aup:(a,b)=>{if(!arm(b,'再点一次确认升级'))return;upgradeAcademy();save();render()},
   matchDone:()=>{M=null;UI.view='main';UI.tab='home';UI.dayLog=null;UI.pages=[];UI.modal=null;render();window.scrollTo(0,0)},
-  newSeason:()=>newSeason()
+  newSeason:()=>{UI.modal=null;newSeason()}
 };
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;
   const f=ACT[b.dataset.act];if(f)f(b.dataset.arg,b)});
 // remember which folding panels are open across re-renders ('toggle' doesn't bubble, so listen while capturing)
 document.addEventListener('toggle',e=>{const d=e.target;if(d.dataset&&d.dataset.fold)(UI.folds=UI.folds||{})[d.dataset.fold]=d.open},true);
 function closeModal(){if(!UI.modal)return;UI.returnFocus=UI.modal.id;UI.modal=null;render()}
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&UI.modal){e.preventDefault();closeModal()}});
-document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('prow')){e.preventDefault();ACT.toggle(e.target.dataset.arg)}});
+// Escape on the dialog: let our state close it (and re-render) rather than the browser alone
+document.addEventListener('cancel',e=>{if(e.target.matches&&e.target.matches('dialog.modal')){e.preventDefault();closeModal()}},true);
+// a click on the dialog's backdrop lands on the <dialog> itself; only close if the press also started there,
+// so a text selection dragged out of the dialog doesn't close it
+let downOn=null;
+document.addEventListener('pointerdown',e=>{downOn=e.target},true);
+document.addEventListener('click',e=>{if(e.target.matches&&e.target.matches('dialog.modal')&&downOn===e.target)closeModal()});
+// some panels (event / offer) sit in a different column on wide screens, so re-render when the width crosses over
+if(window.matchMedia){const mq=window.matchMedia(WIDE);(mq.addEventListener?mq.addEventListener('change',()=>render()):mq.addListener(()=>render()))}
 
 // always open on the start screen, so the player can continue or restart
 render();

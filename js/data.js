@@ -1,6 +1,6 @@
 /* ---------- constants, shared state, small helpers ---------- */
 const KEY='lvyin-fm-v1';  // localStorage key; kept as-is so old saves are still found
-const SAVE_V=12;         // bump when the save format changes, and add a step to MIGRATE in engine.js
+const SAVE_V=13;         // bump when the save format changes, and add a step to MIGRATE in engine.js
 // sixteen club slots, eight per division; each new game gives them random names from CITY + NICK
 const TEAMS=[
   {div:0,color:'#2C6E49',str:66},
