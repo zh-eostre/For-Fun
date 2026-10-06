@@ -201,7 +201,8 @@ const ACT={
   yrel:(a,b)=>{if(!arm(b,'确定放走？'))return;releaseYouth(+a);save();render()},
   aup:(a,b)=>{if(!arm(b,'再点一次确认升级'))return;upgradeAcademy();save();render()},
   matchDone:()=>{M=null;UI.view='main';UI.tab='home';UI.dayLog=null;UI.pages=[];UI.modal=null;render();window.scrollTo(0,0)},
-  newSeason:()=>{UI.modal=null;newSeason()}
+  newSeason:()=>{UI.modal=null;newSeason()},
+  takeJob:(a,b)=>{if(!arm(b,'再点一次，接受邀请'))return;UI.modal=null;newSeason(+a)}
 };
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;
   const f=ACT[b.dataset.act];if(f)f(b.dataset.arg,b)});

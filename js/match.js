@@ -151,7 +151,7 @@ function finish(){
   if(S.streak>=5)unlock('streak');
   if(mg-og>=5)unlock('rout');
   if(pens&&w==='胜')unlock('pens');
-  if(M.cup)playCupStage(res);else{loanRound();S.round++}
+  if(M.cup)playCupStage(res);else{loanRound();S.round++;if(S.round>=rounds())careerSeasonEnd()}
   NEWS_TAG=null;
   rollEvent();
   fixLineup();

@@ -132,7 +132,7 @@ function vHome(){
 function vBoard(){
   const g=S.goal,st=goalStatus();if(!g)return '';
   const c=cupReached(),cupTxt=g.cup<0?'':st.cup?'已达成':c<g.cup&&!cupAlive()?'未达成（已出局）':`进行中（目前${stageName(Math.min(c,cupFmt().names.length-1))}）`;
-  return `<section class="panel"><h2>董事会目标</h2>
+  return `<section class="panel"><h2>董事会目标 <span class="muted" style="font-weight:400;font-size:13px">教练声望 ${S.mgr?S.mgr.rep:0}（${mgrTitle(S.mgr?S.mgr.rep:0)}）</span></h2>
   <div class="cheat-row"><span class="${st.league?'goal-ok':'goal-no'}">${st.league?'✓':'·'}</span>联赛第 ${g.rank} 名以内（目前第 ${myRank()}）<span class="muted">奖金 ${money(GOAL_BONUS.league[my().div])}</span></div>
   ${g.cup<0?'':`<div class="cheat-row"><span class="${st.cup?'goal-ok':'goal-no'}">${st.cup?'✓':'·'}</span>${CUP_NAME}进入${stageName(g.cup)}：${cupTxt}<span class="muted">奖金 ${money(GOAL_BONUS.cup)}</span></div>`}</section>`;
 }
@@ -496,6 +496,24 @@ function vMatch(){
   ${ctl}
   <ul class="feed">${M.feed.map(e=>`<li class="${e.cls}"><span class="m">${e.min==='PK'?'PK':e.min+"'"}</span><span>${e.t}</span></li>`).join('')}</ul></div>`;
 }
+// season end: how our reputation moved, and any clubs that want us
+function vCareerEnd(){
+  if(!S.mgr)return '';
+  const O=S.jobOffers||[],d=S.mgr.last||0;
+  return `<div class="career"><p style="margin:0 0 6px"><b>教练声望 ${S.mgr.rep}</b>（${mgrTitle(S.mgr.rep)}）<span class="${d>=0?'goal-ok':'goal-no'}" style="width:auto;margin-left:6px">${d>=0?'+':''}${d}</span></p>
+  ${O.length?`<p class="muted" style="margin:0 0 8px;font-size:13px">这些俱乐部想请你执教。接受后，下赛季带领新球队，资金、设施和青训营都换成新俱乐部的。</p>
+  ${O.map(o=>{const t=S.teams[o.club],rk=table(t.div).findIndex(r=>r.id===t.id)+1;
+    return `<div class="offer-card" style="--c:${t.color}"><div><b class="disp">${t.name}</b><small>${DIVS[t.div]}第 ${rk} 名 · ${tierOf(t.rep)} · 实力 ${t.str} · 预算 ${money(o.budget)}</small></div>
+    <button class="btn small primary" data-act="takeJob" data-arg="${o.club}">接受邀请</button></div>`}).join('')}`
+  :`<p class="muted" style="margin:0;font-size:13px">${S.mgr.rep<40?'暂时没有俱乐部来邀请你，继续带出成绩吧。':'这个夏天没有更大的俱乐部来邀请你。'}</p>`}</div>`;
+}
+// honours room: every season of the career, at whichever club
+function vCareer(){
+  const H=S.history||[];if(!H.length||!S.mgr)return '';
+  return `<section class="panel"><h2>执教生涯 <span class="muted" style="font-weight:400;font-size:13px">教练声望 ${S.mgr.rep}（${mgrTitle(S.mgr.rep)}）</span></h2>
+  <div class="tw scrollbox"><table class="sticky-head"><thead><tr><th>季</th><th>球队</th><th>联赛</th><th>名次</th></tr></thead>
+  <tbody>${H.slice().reverse().map(h=>`<tr><td>${h.season}</td><td>${h.club||'—'}</td><td>${DIVS[h.div||0]}</td><td>${h.rank===1?'🏆 ':''}第 ${h.rank}</td></tr>`).join('')}</tbody></table></div></section>`;
+}
 function vSeasonEnd(){
   const div=my().div,rank=myRank(),exp=expectedRank(),prize=prizeFor(div,rank),z=zone(div,rank),dn=DIVS[div];
   const board=rank<=exp-2?'远远超出预期，董事会非常满意。':rank<=exp?'大致符合预期，董事会对你的工作表示认可。':'成绩低于预期，董事会希望你下赛季能有起色。';
@@ -512,7 +530,8 @@ function vSeasonEnd(){
     return `<p style="font-size:14px">董事会目标：联赛第 ${S.goal.rank} 名以内${g.league?' ✓':' ✗'}${g.cup===null?'':`，杯赛进入${stageName(S.goal.cup)}${g.cup?' ✓':' ✗'}`}${b?`，奖金 ${money(b)}`:''}。</p>`})()}
   ${DIVS.map((dn,d)=>{const a=seasonAwards(d);return `<div class="awards"><b>${dn}个人奖项</b>${Object.entries(AWARDS).map(([k,l])=>a[k]?`<span class="${a[k].tid===S.my?'mine':''}">${l}：${a[k].name}（${a[k].team}，${a[k].stat}）</span>`:'').join('')}</div>`}).join('')}
   ${S.history.length?`<p class="muted" style="font-size:14px">往季排名${S.history.length>6?'（最近 6 季，完整记录在荣誉室）':''}：${S.history.slice(-6).map(h=>`第 ${h.season} 季${DIVS[h.div||0]}第 ${h.rank}`).join('，')}</p>`:''}
-  <div class="go" style="justify-content:flex-start"><button class="btn primary" data-act="newSeason">开始第 ${S.season+1} 赛季</button></div>
+  ${vCareerEnd()}
+  <div class="go" style="justify-content:flex-start"><button class="btn primary" data-act="newSeason">${(S.jobOffers||[]).length?`留在 ${my().name}，`:''}开始第 ${S.season+1} 赛季</button></div>
   <p class="muted" style="font-size:13px;margin-bottom:0">新赛季球员长一岁，33 岁以上的老将可能退役（能力越高越能坚持），黄牌和停赛清零。</p></section>
   ${DIVS.map((_,d)=>vTable(d,false)).join('')}`;
 }
@@ -561,6 +580,7 @@ function vHonours(){
     return `<section class="panel"><h2>个人奖项${won.length?` <span class="muted" style="font-weight:400;font-size:13px">${won.length} 项</span>`:''}</h2>${won.length?'<div class="scrollbox">'+won.reverse().map(x=>`<div class="res" style="grid-template-columns:1fr auto"><span style="text-align:left">第 ${x.r.season} 季${DIVS[x.d]}${AWARDS[x.k]}：${x.w.name}</span><span class="muted">${x.w.stat}</span></div>`).join('')+'</div>':'<p class="muted" style="margin:0">还没有球员拿过个人奖项。</p>'}</section>`})()}
   <section class="panel"><h2>队史射手榜</h2>${sc.length?sc.map((c,i)=>`<div class="res" style="grid-template-columns:24px 1fr auto"><span class="muted">${i+1}</span><span style="text-align:left">${c.name} <span class="muted">${POS[c.pos]}，${c.apps} 场</span></span><span class="num" style="min-width:0">${c.goals}</span></div>`).join(''):'<p class="muted" style="margin:0">还没有人为球队进球。</p>'}</section>
   <section class="panel"><h2>传奇退役${S.legends.length?` <span class="muted" style="font-weight:400;font-size:13px">${S.legends.length} 人</span>`:''}</h2>${S.legends.length?'<div class="scrollbox">'+[...S.legends].reverse().map(l=>`<div class="res" style="grid-template-columns:1fr auto"><span style="text-align:left">${l.name} <span class="muted">${POS[l.pos]}，第 ${l.season} 季退役${l.seasons?`，效力 ${l.seasons} 季`:''}${l.titles&&l.titles.length?`，${l.titles.length} 座冠军`:''}</span></span><span class="muted">${l.apps} 场 ${l.goals} 球</span></div>`).join('')+'</div>':`<p class="muted" style="margin:0">在队效力 ${LEGEND_TITLE_SEASONS} 季以上并帮球队夺冠，或效力 ${LEGEND_SEASONS} 季以上的球员，在队退役后会记在这里。</p>`}</section>
+  ${vCareer()}
   <section class="panel"><h2>历届冠军</h2>${R.length?`<div class="tw scrollbox"><table class="sticky-head"><thead><tr><th>季</th><th>甲级</th><th>乙级</th><th>${CUP_NAME}</th><th>本队</th></tr></thead>
   <tbody>${R.slice().reverse().map(r=>`<tr><td>${r.season}</td><td>${r.champs[0]||'—'}</td><td>${r.champs[1]||'—'}</td><td>${r.cup||'—'}</td><td>${DIVS[r.div]}第 ${r.rank}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted" style="margin:0">打完第一个赛季后，这里会记录每季的冠军。</p>'}</section></div></div>`;
 }

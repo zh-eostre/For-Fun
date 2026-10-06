@@ -408,3 +408,44 @@ function windowDay(){
     news('转会窗口关闭。');
   }
 }
+
+/* ---------- manager career: reputation and job offers ----------
+   S.mgr.rep (0-100) starts at 15 for a manager with no record and moves at each season's end with how the season
+   went against expectations. bigger clubs then make offers; accepting one moves us there for the next season */
+const MGR_TITLES=[[80,'传奇主帅'],[60,'名帅'],[40,'知名教练'],[20,'新锐教练'],[0,'无名之辈']];
+const mgrTitle=r=>MGR_TITLES.find(([m])=>r>=m)[1];
+// the reputation a club wants before it calls: 乙级 clubs are easy, 甲级 giants want a proven name (~80)
+const jobReq=t=>t.div?Math.round(t.rep*.5):Math.round(25+t.rep*.6);
+// what a club offers to spend in our first season there
+const jobBudget=t=>Math.round((t.div?150:300)+t.rep*(t.div?3:6));
+// called once, right after the last league match: reputation change and the offers for the summer
+function careerSeasonEnd(){
+  const div=my().div,rank=myRank(),size=divSize(div),g=goalStatus();
+  // against expectations (capped), then the big moments; gains slow down as the name grows, and every year the
+  // reputation drifts a little toward 40, so it has to be kept up
+  let d=clamp(expectedRank()-rank,-8,8);
+  if(rank===1)d+=div===0?12:5;
+  if(div===1&&rank<=SWAP)d+=5;
+  if(div===0&&rank>size-SWAP)d-=10;
+  if(S.cup.winner===S.my)d+=6;else if(!S.cup.skipped&&cupReached()>=cupFmt().names.length-1)d+=3;
+  if(g&&g.league)d+=2;
+  const before=S.mgr.rep;
+  if(d>0)d*=1-before/130;
+  S.mgr.rep=clamp(Math.round(before+d+(40-before)*.05),0,100);S.mgr.last=S.mgr.rep-before;
+  // offers only from clubs bigger than ours (a higher division, or the same division and clearly grander) that think we are good enough
+  // compared by the division each club will play in next season (promotion and relegation are already decided)
+  const nextDiv=t=>{const r=table(t.div).findIndex(x=>x.id===t.id)+1,z=zone(t.div,r);return t.div+(z==='up'?-1:z==='down'?1:0)};
+  const mine=my(),md=nextDiv(mine),pool=S.teams.filter(t=>t.id!==S.my&&nextDiv(t)<=md&&jobReq(t)<=S.mgr.rep&&(nextDiv(t)<md||t.rep>mine.rep+5))
+    .sort((a,b)=>b.rep-a.rep);
+  S.jobOffers=pool.filter(()=>rng()<.6).slice(0,3).map(t=>({club:t.id,budget:jobBudget(t)}));
+  news(`教练声望 ${S.mgr.last>=0?'+':''}${S.mgr.last}，现在 ${S.mgr.rep}（${mgrTitle(S.mgr.rep)}）。${S.jobOffers.length?`收到 ${S.jobOffers.length} 份执教邀请！`:''}`);
+}
+// moving to a new club at the start of a season: its money, facilities and academy, not the ones we leave behind
+function switchClub(o){
+  const old=my(),t=S.teams[o.club],lv=clamp(1+Math.floor(t.rep/25),1,5);
+  old.players.forEach(p=>{if(p.loan)p.loan=null});
+  S.my=t.id;S.budget=o.budget;
+  S.fac={scout:lv,physio:lv,ground:lv,stadium:lv};S.academy={lv,intake:[]};
+  S.offer=null;S.event=null;S.boost=0;S.streak=0;S.rival=pickRival();UI.selSlot=null;
+  news(`你离开了 ${old.name}，正式执掌 ${t.name}（${DIVS[t.div]}，${tierOf(t.rep)}）！转会预算 ${money(o.budget)}。`);
+}

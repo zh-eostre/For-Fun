@@ -517,3 +517,9 @@ dialog.modal.wide{max-width:860px}
 .team-pick.locked:hover{border-color:var(--line)}
 .locked-list .team-pick span{font-size:12px}
 .lb-switch{margin:-2px 0 8px}
+
+/* career */
+.career{border-top:1px dashed var(--line);margin-top:10px;padding-top:10px}
+.offer-card{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1.5px solid var(--line);border-left:5px solid var(--c);border-radius:8px;padding:8px 10px;margin:6px 0}
+.offer-card b{font-size:17px;display:block}
+.offer-card small{font-size:12px;color:var(--muted)}

@@ -58,6 +58,12 @@ const MIGRATE={
   13:d=>{
     d.teams.forEach(t=>{if(t.rep==null)t.rep=clamp(Math.round((t.str-48)/.27),5,98)});
     if(d.cup&&!d.cup.fmt)d.cup.fmt=CUP_LEGACY;
+  },
+  // v15: manager reputation, estimated from the record so far; past seasons are credited to the current club
+  14:d=>{
+    const titles=(d.history||[]).filter(h=>h.rank===1).length,ups=(d.history||[]).filter(h=>h.div===1&&h.rank<=SWAP).length;
+    d.mgr={rep:clamp(15+(d.history||[]).length*3+titles*10+ups*6,10,85),last:0};
+    (d.history||[]).forEach(h=>{if(!h.club)h.club=d.teams[d.my].name});
   }
 };
 // a save can come from anywhere (a shared file, an edited one), and its text ends up in the page's HTML, so
@@ -412,7 +418,7 @@ const divIds=div=>S.teams.filter(t=>t.div===div).map(t=>t.id);
 const newFixtures=()=>DIVS.map((_,div)=>genFixtures(divIds(div)));
 function newGame(id,names){
   S={v:SAVE_V,pid:1,season:1,round:0,my:id,formation:'4-4-2',tactic:'bal',training:'normal',news:[],history:[],
-    ach:{},streak:0,boost:0,records:[],club:{},legends:[],offer:null,event:null,academy:{lv:1,intake:[]},day:0,lastMatchDay:-9,fac:{scout:1,physio:1,ground:1}};
+    mgr:{rep:15,last:0},ach:{},streak:0,boost:0,records:[],club:{},legends:[],offer:null,event:null,academy:{lv:1,intake:[]},day:0,lastMatchDay:-9,fac:{scout:1,physio:1,ground:1}};
   usedNames=new Set();
   S.teams=TEAMS.map((t,i)=>({...t,...names[i],id:i,players:makeSquad(t.str)}));
   S.fixtures=newFixtures();S.results=DIVS.map(()=>[]);S.cup=newCup();S.rival=pickRival();
@@ -493,9 +499,11 @@ function retireChance(p){
 }
 function expectedRank(){return S.teams.filter(t=>t.div===my().div).sort((a,b)=>b.str-a.str).findIndex(t=>t.id===S.my)+1}
 const prizeFor=(div,rank)=>(div?PRIZE2:PRIZE)[rank-1];
-function newSeason(){
+// moveTo: the id of a club whose offer we accept (otherwise we stay)
+function newSeason(moveTo){
+  const move=moveTo!=null&&(S.jobOffers||[]).find(o=>o.club===moveTo);
   const div=my().div,rank=myRank(),prize=prizeFor(div,rank);
-  S.history.push({season:S.season,div,rank,pts:table()[rank-1].pts});
+  S.history.push({season:S.season,div,rank,pts:table()[rank-1].pts,club:my().name});
   S.budget+=prize;
   recordSeason(div,rank);
   payGoals(div);
@@ -531,6 +539,8 @@ function newSeason(){
     }
   });
   S.season++;S.round=0;S.results=DIVS.map(()=>[]);S.fixtures=newFixtures();S.cheatUsed=false;S.cup=newCup();S.day=0;S.lastMatchDay=-9;
+  if(move)switchClub(move);
+  S.jobOffers=null;
   if(S.teams[S.rival].div!==my().div){S.rival=pickRival();news(`新的宿敌出现了：${S.teams[S.rival].name}。`)}
   // summer window: bigger clubs poach stars from clubs playing above their level, every AI club gets one shot
   // at the market, then the player sees a fresh list
