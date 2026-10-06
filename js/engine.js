@@ -250,7 +250,11 @@ function rate(p,role,ev={},gf,ga,mins=90,act){
   // what he did himself (goals, assists, saves, misses, cards) counts in full however long he played
   const f=Math.min(1,.15+.85*mins/60);
   const r=6+(base-6)*f+(ev.g||0)*(role==='FW'?1.25:1.1)+(ev.a||0)*.6+(ev.sig||0)*.2+(ev.sv||0)*.3-(ev.miss||0)*.15-(ev.yc||0)*.3-(ev.red||0)*1.5;
-  return Math.round(clamp(r,3,10)*10)/10;
+  // squeezed to the spread of real match ratings (average about 6.75, 8+ for roughly one starter in 17, 9+ about 1%,
+  // under 6 about one in 10). the poor side is squeezed hardest; the very top less, so a man of the match is ~8.2.
+  // the order of players within a match doesn't change
+  const d=r-6.8,out=6.65+(d<0?d*.55:d*.62+.3*Math.max(0,r-8));
+  return Math.round(clamp(out,3,10)*10)/10;
 }
 // rates everyone who played for one side, adds it to their season totals (rs sum, rn count), best first
 // act: matchActions for this side; season totals of those numbers go in p.ss

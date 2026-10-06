@@ -18,7 +18,7 @@ const quiet=rate(p,'MF',{},1,1,90,{pas:20,ok:15,kp:0,tkl:0,int:0,drb:0}),busy=ra
 ok(busy-quiet>1.2,'a busy midfield display rates well above a quiet one ('+quiet+' → '+busy+')');
 // minutes: a sub's own goals count in full, the rest of his rating needs time
 const st=my().players.find(x=>x.pos==='FW'),sub=[0,1,2,3,4].map(()=>rate(st,'FW',{g:2},2,1,20,{pas:6,ok:5,kp:1,tkl:0,int:0,drb:1}));
-ok(Math.min(...sub)>=8.3,'a sub scoring twice in 20 minutes: '+sub.join(', '));
+ok(Math.min(...sub)>=7.9,'a sub scoring twice in 20 minutes (man-of-the-match level): '+sub.join(', '));
 const cameo=[0,1,2,3,4].map(()=>rate(p,'MF',{},3,0,5,{pas:3,ok:3,kp:0,tkl:0,int:0,drb:0}));
 ok(cameo.every(r=>r>=5.6&&r<=6.6),'a 5-minute cameo stays near 6: '+cameo.join(', '));
 const d=my().players.find(x=>x.pos==='DF'),dr=rate(d,'DF',{},1,0,90,{pas:40,ok:36,kp:0,tkl:6,int:5,drb:0});

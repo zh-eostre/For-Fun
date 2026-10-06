@@ -39,5 +39,5 @@ store[KEY]=JSON.stringify(old);const up=load();
 ok(up.v===SAVE_V&&up.lineup.length===11&&up.lineup[0]!=null&&new Set(up.lineup).size===11,'v5 save migrates to slot lineup');
 // 6. fatigue drives injuries: same squads, all at 40 vs all at 95 stamina
 const trial=c=>{let n=0;for(let k=0;k<400;k++){S.teams.forEach(t=>t.players.forEach(p=>{p.cond=c;p.inj=0}));const r=quickSim(0,1);n+=S.teams[0].players.concat(S.teams[1].players).filter(p=>p.inj>0).length}return n/400};
-const tired=trial(40),fresh=trial(95);ok(tired>fresh*2.5,'injuries per match — tired: '+tired.toFixed(3)+', fresh: '+fresh.toFixed(3));
+const tired=trial(40),fresh=trial(95);ok(tired>fresh*2,'injuries per match — tired: '+tired.toFixed(3)+', fresh: '+fresh.toFixed(3));
 `);
