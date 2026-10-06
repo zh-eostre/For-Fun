@@ -19,7 +19,7 @@ function startMatch(){
   // each side's formation decides the role of every slot
   M.hForm=f.h===S.my?S.formation:os.form;M.aForm=f.a===S.my?S.formation:os.form;
   // for ratings and stats: each player's role, his events, who only played part of the match, shots per side
-  M.role={...roleMap(M.hXI,M.hForm),...roleMap(M.aXI,M.aForm)};M.line={...lineMap(M.hXI,M.hForm),...lineMap(M.aXI,M.aForm)};M.ev={};M.part=[];M.st={h:{sh:0,on:0},a:{sh:0,on:0}};
+  M.role={...roleMap(M.hXI,M.hForm),...roleMap(M.aXI,M.aForm)};M.line={...lineMap(M.hXI,M.hForm),...lineMap(M.aXI,M.aForm)};M.ev={};M.st={h:{sh:0,on:0},a:{sh:0,on:0}};
   M.poss=possession(S.teams[M.h],M.hIds,M.hForm,M.h===S.my?M.tac:M.aiTac,S.teams[M.a],M.aIds,M.aForm,M.a===S.my?M.tac:M.aiTac);
   const hn=S.teams[M.h].name,an=S.teams[M.a].name;
   M.feed.unshift({min:0,cls:'sys',t:f.friendly?LINE.friendlyKick(hn,an):f.cup?LINE.cupKick(hn,an,stageName(M.stage)):f.derby?LINE.derbyKick(hn,an):LINE.kickoff(hn,an)});
@@ -118,7 +118,7 @@ function substitute(outId,inId,s=mySide(),line){
   if(M[key]>=SUBS||!po||!pi||!ids.includes(outId)||xi.includes(inId)||unavail(pi))return false;
   const slot=ids.indexOf(outId);ids[slot]=inId;xi.push(inId);M[key]++;if(key==='subs')M.sel=null;
   M.off[outId]=M.min;M.on[inId]=M.min;
-  M.role[inId]=slotRoles(M[s+'Form'])[slot];M.line[inId]=slotLines(M[s+'Form'])[slot];M.part.push(outId,inId);
+  M.role[inId]=slotRoles(M[s+'Form'])[slot];M.line[inId]=slotLines(M[s+'Form'])[slot];
   M.feed.unshift({min:M.min,cls:'sys',t:line||LINE.sub(po.name,pi.name)});
   return true;
 }
@@ -137,7 +137,7 @@ function flair(s){
 }
 function matchActs(){
   const mins={};[...M.hXI,...M.aXI].forEach(id=>{if(id!=null)mins[id]=(M.off[id]??90)-(M.on[id]??0)});
-  M.part=partTimers(mins);
+  M.mins=mins;
   const H=S.teams[M.h],A=S.teams[M.a],edge=rating(strength(H,M.hIds,'bal',true,0,M.hForm))-rating(strength(A,M.aIds,'bal',false,0,M.aForm));
   M.act={...matchActions(H,M.hXI,M.line,mins,M.poss/100,edge,M.st.h.sh),...matchActions(A,M.aXI,M.line,mins,1-M.poss/100,-edge,M.st.a.sh)};
   for(const id in M.live||{}){const a=M.act[id];if(a)for(const k in M.live[id])a[k]=Math.max(a[k],M.live[id][k])}
@@ -164,7 +164,7 @@ function finish(){
   S.streak=w==='胜'?(S.streak||0)+1:0;
   // ratings for both sides; the man of the match is the best of everyone
   matchActs();
-  M.rh=rateSide(S.teams[M.h],M.hXI,M.role,M.ev,M.hg,M.ag,M.part,false,M.act);M.ra=rateSide(S.teams[M.a],M.aXI,M.role,M.ev,M.ag,M.hg,M.part,false,M.act);
+  M.rh=rateSide(S.teams[M.h],M.hXI,M.role,M.ev,M.hg,M.ag,M.mins,false,M.act);M.ra=rateSide(S.teams[M.a],M.aXI,M.role,M.ev,M.ag,M.hg,M.mins,false,M.act);
   M.mvp=[...M.rh,...M.ra].sort((a,b)=>b.r-a.r)[0];
   M.summary={w,mg,og,mp,op,pens,income,grown,awoken,banned};
   news(`${w} ${mg}:${og}${pens?`（点球 ${mp}:${op}）`:''} 对阵${S.teams[oppId].name}${M.derby?'（宿敌之战）':''}。比赛收入 ${money(income)}。`);
@@ -195,7 +195,7 @@ function finishFriendly(){
   M.myInjuries=M.injuries.filter(p=>findP(p.id));
   const mg=home?M.hg:M.ag,og=home?M.ag:M.hg,w=mg>og?'胜':mg<og?'负':'平';
   matchActs();
-  M.rh=rateSide(S.teams[M.h],M.hXI,M.role,M.ev,M.hg,M.ag,M.part,true,M.act);M.ra=rateSide(S.teams[M.a],M.aXI,M.role,M.ev,M.ag,M.hg,M.part,true,M.act);
+  M.rh=rateSide(S.teams[M.h],M.hXI,M.role,M.ev,M.hg,M.ag,M.mins,true,M.act);M.ra=rateSide(S.teams[M.a],M.aXI,M.role,M.ev,M.ag,M.hg,M.mins,true,M.act);
   M.mvp=[...M.rh,...M.ra].sort((a,b)=>b.r-a.r)[0];
   M.summary={w,mg,og,income:0,grown,awoken,banned:[],pens:false};
   S.friendlies[M.fIdx].res={hg:M.hg,ag:M.ag};

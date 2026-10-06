@@ -242,25 +242,27 @@ function actScore(a){
   if(!a)return 0;
   return (a.pas>=15?(a.ok/a.pas-.78)*3:0)+a.kp*.18+a.tkl*.15+a.int*.12+a.drb*.08;
 }
-function rate(p,role,ev={},gf,ga,full,act){
-  let r=5.9+(p.ovr-65)/25+(gf>ga?.4:gf<ga?-.4:0)+(rng()-.5)*.6+actScore(act)
-    +(ev.g||0)*(role==='FW'?1.25:1.1)+(ev.a||0)*.6+(ev.sig||0)*.2+(ev.sv||0)*.3-(ev.miss||0)*.15-(ev.yc||0)*.3-(ev.red||0)*1.5;
-  if(role==='GK')r+=.3+(ga?-.25*ga:1);else if(role==='DF')r+=ga?-.15*ga:.5;else if(role==='MF'&&!ga)r+=.1;
-  if(!full)r=6+(r-6)*.6;
+function rate(p,role,ev={},gf,ga,mins=90,act){
+  // the base: ability, the result, his share of the passing and tackling, and for the back line the goals against
+  let base=5.9+(p.ovr-65)/25+(gf>ga?.4:gf<ga?-.4:0)+(rng()-.5)*.6+actScore(act);
+  if(role==='GK')base+=.3+(ga?-.25*ga:1);else if(role==='DF')base+=ga?-.15*ga:.5;else if(role==='MF'&&!ga)base+=.1;
+  // the base needs time to show: on for 10 minutes it moves the rating about 30% as far from 6 as over an hour or more.
+  // what he did himself (goals, assists, saves, misses, cards) counts in full however long he played
+  const f=Math.min(1,.15+.85*mins/60);
+  const r=6+(base-6)*f+(ev.g||0)*(role==='FW'?1.25:1.1)+(ev.a||0)*.6+(ev.sig||0)*.2+(ev.sv||0)*.3-(ev.miss||0)*.15-(ev.yc||0)*.3-(ev.red||0)*1.5;
   return Math.round(clamp(r,3,10)*10)/10;
 }
 // rates everyone who played for one side, adds it to their season totals (rs sum, rn count), best first
 // act: matchActions for this side; season totals of those numbers go in p.ss
-function rateSide(team,played,roleOf,ev,gf,ga,part=[],noTotals,act={}){
+// mins: minutes each player was on (90 if missing)
+function rateSide(team,played,roleOf,ev,gf,ga,mins={},noTotals,act={}){
   return played.map(id=>{
     const p=id!=null&&team.players.find(x=>x.id===id);if(!p)return null;
-    const role=roleOf[id]||p.pos,a=act[id],r=rate(p,role,ev[id],gf,ga,!part.includes(id),a);
+    const role=roleOf[id]||p.pos,a=act[id],r=rate(p,role,ev[id],gf,ga,mins[id]??90,a);
     if(!noTotals){p.rs=(p.rs||0)+r;p.rn=(p.rn||0)+1;if(a){const t=p.ss||(p.ss={pas:0,ok:0,kp:0,tkl:0,int:0,drb:0});for(const k of ['pas','ok','kp','tkl','int','drb'])t[k]+=a[k];t.sv=(t.sv||0)+((ev[id]||{}).sv||0)}}
     return {p,r,role,a};
   }).filter(Boolean).sort((a,b)=>b.r-a.r);
 }
-// players on for under an hour: their ratings drift towards 6 (a man taken off tired at 70' still had a full game)
-const partTimers=mins=>Object.keys(mins).filter(id=>mins[id]<60).map(Number);
 const roleMap=(ids,form,of=slotRoles)=>{const roles=of(form),m={};ids.forEach((id,i)=>{if(id!=null)m[id]=roles[i]});return m};
 const lineMap=(ids,form)=>roleMap(ids,form,slotLines);
 const avgRating=p=>p.rn?p.rs/p.rn:0;
@@ -389,9 +391,9 @@ function quickSim(h,a){
   afterMatch(H,hx,false);afterMatch(A,ax,false);
   hurt.forEach(p=>p.inj=pick(INJ_DAYS));
   const mins={};[...hx,...ax].forEach(id=>{if(id!=null)mins[id]=(off[id]??90)-(on[id]??0)});
-  const rh=roleMap(hx,bh.form),ra=roleMap(ax,ba.form),part=partTimers(mins);
-  rateSide(H,hx,rh,ev,hg,ag,part,false,matchActions(H,hx,lineMap(hx,bh.form),mins,poss,edge,shots.h));
-  rateSide(A,ax,ra,ev,ag,hg,part,false,matchActions(A,ax,lineMap(ax,ba.form),mins,1-poss,-edge,shots.a));
+  const rh=roleMap(hx,bh.form),ra=roleMap(ax,ba.form);
+  rateSide(H,hx,rh,ev,hg,ag,mins,false,matchActions(H,hx,lineMap(hx,bh.form),mins,poss,edge,shots.h));
+  rateSide(A,ax,ra,ev,ag,hg,mins,false,matchActions(A,ax,lineMap(ax,ba.form),mins,1-poss,-edge,shots.a));
   return {h,a,hg,ag};
 }
 

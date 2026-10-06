@@ -14,9 +14,14 @@ render();ok(/详细数据/.test(els.app.innerHTML)&&/关键传球/.test(els.app.
 M=null;UI.view='main';
 // actions move ratings: same player, a quiet game vs a busy one
 const p=my().players.find(x=>x.pos==='MF');
-const quiet=rate(p,'MF',{},1,1,true,{pas:20,ok:15,kp:0,tkl:0,int:0,drb:0}),busy=rate(p,'MF',{},1,1,true,{pas:50,ok:46,kp:3,tkl:4,int:3,drb:2});
+const quiet=rate(p,'MF',{},1,1,90,{pas:20,ok:15,kp:0,tkl:0,int:0,drb:0}),busy=rate(p,'MF',{},1,1,90,{pas:50,ok:46,kp:3,tkl:4,int:3,drb:2});
 ok(busy-quiet>1.2,'a busy midfield display rates well above a quiet one ('+quiet+' → '+busy+')');
-const d=my().players.find(x=>x.pos==='DF'),dr=rate(d,'DF',{},1,0,true,{pas:40,ok:36,kp:0,tkl:6,int:5,drb:0});
+// minutes: a sub's own goals count in full, the rest of his rating needs time
+const st=my().players.find(x=>x.pos==='FW'),sub=[0,1,2,3,4].map(()=>rate(st,'FW',{g:2},2,1,20,{pas:6,ok:5,kp:1,tkl:0,int:0,drb:1}));
+ok(Math.min(...sub)>=8.3,'a sub scoring twice in 20 minutes: '+sub.join(', '));
+const cameo=[0,1,2,3,4].map(()=>rate(p,'MF',{},3,0,5,{pas:3,ok:3,kp:0,tkl:0,int:0,drb:0}));
+ok(cameo.every(r=>r>=5.6&&r<=6.6),'a 5-minute cameo stays near 6: '+cameo.join(', '));
+const d=my().players.find(x=>x.pos==='DF'),dr=rate(d,'DF',{},1,0,90,{pas:40,ok:36,kp:0,tkl:6,int:5,drb:0});
 ok(dr>=7.5,'a defender with 6 tackles, 5 interceptions and a clean sheet: '+dr);
 // a season of AI matches: man of the match is spread across positions
 const all=()=>S.teams.flatMap(t=>t.players),mvp={};let n=0;
