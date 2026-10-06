@@ -263,11 +263,11 @@ function endLoans(){
 /* ---------- board objectives ---------- */
 // each season: finish at or above the expected position, and in 甲级 also reach the cup quarter-finals
 const GOAL_BONUS={league:[120,70],cup:60};
-function setGoals(){S.goal={rank:expectedRank(),cup:my().div===0?1:-1}}
-// how far we got in the cup: index of the stage we went out in, 4 if we won it, -1 if we didn't take part
+function setGoals(){S.goal={rank:expectedRank(),cup:my().div===0?cupFmt().names.indexOf('八强'):-1}}
+// how far we got in the cup: index of the stage we went out in, the number of stages if we won it, -1 if we didn't take part
 function cupReached(){
   const C=S.cup;if(C.skipped)return -1;
-  if(C.winner===S.my)return CUP_STAGES.length;
+  if(C.winner===S.my)return cupFmt().names.length;
   const k=C.rounds.findIndex(rd=>rd.some(r=>(r.h===S.my||r.a===S.my)&&r.w!==S.my));
   return k>=0?k:C.stage;
 }
@@ -317,4 +317,55 @@ function rollSurprise(log){
   let r=rng()*pool.reduce((t,s)=>t+s.w,0);
   const s=pool.find(x=>(r-=x.w)<0)||pool[0],t=s.run(log);
   news('✨ '+t);(log.surprises||(log.surprises=[])).push(t);
+}
+
+/* ---------- 底蕴 (club prestige) ---------- */
+// every club's 底蕴 moves at season end with where it finished, and drifts 6% of the way back to 50 each year,
+// so giants without trophies fade and clubs that keep winning rise. AI clubs' base strength follows it
+const divSize=d=>S.teams.filter(t=>t.div===d).length;
+function prestigeDelta(div,rank,size){
+  if(div===0)return rank===1?8:rank===2?5:rank===3?3:rank>size-SWAP?-6:rank<=size/2?1:-1;
+  return rank===1?5:rank<=SWAP?4:rank>size-3?-3:rank<=size/2?1:0;
+}
+// called with each division's final table (before promotion and relegation); returns lines for the news
+function updatePrestige(tables){
+  const notes=[];
+  tables.forEach((T,d)=>T.forEach((r,i)=>{
+    const t=S.teams[r.id],before=tierOf(t.rep);
+    // gains shrink as a club gets grander, so a perennial champion settles in the high 80s rather than at the cap
+    let delta=prestigeDelta(d,i+1,T.length)+(S.cup.winner===t.id?4:0);
+    if(delta>0)delta*=1-t.rep/120;
+    t.rep=clamp(Math.round(t.rep+delta+(50-t.rep)*.06),5,98);
+    t.str=strFromRep(t.rep);
+    const after=tierOf(t.rep);
+    if(t.id!==S.my&&before!==after&&(after==='豪门'||before==='豪门'))notes.push(after==='豪门'?`${t.name} 跻身豪门`:`${t.name} 跌出豪门行列`);
+  }));
+  return notes;
+}
+// how far an AI club's current best XI is below what its 底蕴 says it should be
+const aiGap=t=>t.str-Math.round(onPitch(t,bestForm(t,true).ids).filter(Boolean).reduce((s,p)=>s+p.ovr,0)/11);
+// the best player an AI club will go for: richer, grander clubs reach higher
+const aiCeiling=t=>t.str+4+Math.round(t.rep/10);
+// summer: an AI club playing clearly above its 底蕴 (best XI more than 3 over its base strength) loses its best
+// player, to a grander AI club that is below its own level if there is one, otherwise abroad. talent flows upward
+function aiPoach(){
+  const lines=[];
+  S.teams.filter(t=>t.id!==S.my&&aiGap(t)<-3&&t.players.length>16).forEach(seller=>{
+    const star=[...seller.players].sort((a,b)=>b.ovr-a.ovr)[0];
+    const buyer=S.teams.filter(t=>t.id!==S.my&&t!==seller&&t.rep>seller.rep&&aiGap(t)>0&&t.players.length<22).sort((a,b)=>b.rep-a.rep)[0];
+    seller.players=seller.players.filter(p=>p!==star);
+    if(buyer){buyer.players.push(star);lines.push(`${buyer.name} 从 ${seller.name} 挖走 ${star.name}（${star.ovr}）`)}
+    else lines.push(`${star.name}（${star.ovr}）离开 ${seller.name}，远走海外`);
+  });
+  if(lines.length)news(`夏季转会：${lines.join('；')}。`);
+}
+
+/* ---------- league expansion (saves from the 8-club format) ---------- */
+// after promotion and relegation: 乙级's next best clubs step up until 甲级 has DIV_SIZE, then new clubs join 乙级
+function expandLeague(t1,moves){
+  const up=[];
+  for(const r of t1){if(divSize(0)>=DIV_SIZE)break;const t=S.teams[r.id];if(t.div===1){t.div=0;up.push(t);moves.push({t,z:'up'})}}
+  const slots=TEAMS.filter(t=>t.div===1).slice(-Math.max(0,DIV_SIZE-divSize(1))),names=teamNames(slots,S.teams),fresh=[];
+  slots.forEach((sl,i)=>{const t={...sl,...names[i],id:S.teams.length,div:1,rep:sl.rep,str:strFromRep(sl.rep),players:[]};S.teams.push(t);t.players=makeSquad(t.str);fresh.push(t)});
+  if(up.length||fresh.length)news(`联赛扩军，甲乙级各 ${DIV_SIZE} 队！${up.length?`${up.map(t=>t.name).join('、')} 额外升入甲级。`:''}${fresh.length?`新球队 ${fresh.map(t=>t.name).join('、')} 加入乙级。`:''}`);
 }

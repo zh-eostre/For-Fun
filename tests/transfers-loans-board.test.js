@@ -4,7 +4,7 @@ require('./harness').run(`
 const btn=()=>({dataset:{},textContent:'',isConnected:true});const twice=(k,a)=>{const b=btn();ACT[k](a,b);ACT[k](a,b)};
 newGame(2,teamNames());S.budget=3000;
 // board objectives
-ok(S.goal&&S.goal.rank===expectedRank()&&S.goal.cup===1,'board goal: top '+S.goal.rank+' + cup '+CUP_STAGES[S.goal.cup]);
+ok(S.goal&&S.goal.rank===expectedRank()&&stageName(S.goal.cup)==='八强','board goal: top '+S.goal.rank+' + cup '+stageName(S.goal.cup));
 UI.tab='home';render();ok(/董事会目标/.test(els.app.innerHTML)&&!bad(els.app.innerHTML),'home shows board objectives');
 // team page and buying
 const other=S.teams.find(t=>t.id!==S.my&&t.div===0&&t.id!==S.rival);ACT.team(String(other.id));
@@ -22,8 +22,8 @@ const kid=my().players.filter(p=>p.age<=LOAN_AGE&&!unavail(p)).sort((a,b)=>a.ovr
 ACT.player(String(kid.id));ok(/外租/.test(els.app.innerHTML),'young player page offers a loan');
 twice('loan',String(kid.id));ok(kid.loan&&unavail(kid)&&!S.lineup.includes(kid.id)&&typeof kid.loan.club==="string","loaned to "+loanLabel(kid));
 UI.pages=[];
-let rounds=0;while(S.round<6){ACT.ff();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);if(!nextFix().cup)rounds++;startMatch();if(!M){console.log("STUCK: "+els.toast.textContent+" | day "+S.day+" next "+nextMatchDay()+" round "+S.round+" | issues "+lineupIssues().join(";")+" | squad "+squadSize()+" | GKs: "+my().players.filter(p=>p.pos==="GK").map(p=>p.name+"(inj "+p.inj+" ban "+p.ban+" away "+p.away+" loan "+!!p.loan+")").join(",")+" | available "+my().players.filter(p=>!unavail(p)).length);throw "stuck"}skipMatch();M=null;UI.view="main"}
-ok(kid.lapps===rounds&&careerApps(kid)>=rounds,'loan matches counted: '+kid.lapps+' (league rounds played: '+rounds+')');
+let played=0;while(S.round<6){ACT.ff();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);if(!nextFix().cup)played++;startMatch();if(!M){console.log("STUCK: "+els.toast.textContent+" | day "+S.day+" next "+nextMatchDay()+" round "+S.round+" | issues "+lineupIssues().join(";")+" | squad "+squadSize()+" | GKs: "+my().players.filter(p=>p.pos==="GK").map(p=>p.name+"(inj "+p.inj+" ban "+p.ban+" away "+p.away+" loan "+!!p.loan+")").join(",")+" | available "+my().players.filter(p=>!unavail(p)).length);throw "stuck"}skipMatch();M=null;UI.view="main"}
+ok(kid.lapps===played&&careerApps(kid)>=played,"loan matches counted: "+kid.lapps+" (league rounds played: "+played+")");
 UI.tab='squad';render();ok(/租借至/.test(els.app.innerHTML)&&!bad(els.app.innerHTML),'squad list shows the loan');
 ACT.recall(String(kid.id));ok(!kid.loan&&!unavail(kid),'recall brings him back');
 twice('loan',String(kid.id));

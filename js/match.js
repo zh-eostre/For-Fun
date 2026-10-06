@@ -22,7 +22,7 @@ function startMatch(){
   M.role={...roleMap(M.hXI,M.hForm),...roleMap(M.aXI,M.aForm)};M.ev={};M.part=[];M.st={h:{sh:0,on:0},a:{sh:0,on:0}};
   M.poss=possession(S.teams[M.h],M.hIds,M.hForm,M.h===S.my?M.tac:M.aiTac,S.teams[M.a],M.aIds,M.aForm,M.a===S.my?M.tac:M.aiTac);
   const hn=S.teams[M.h].name,an=S.teams[M.a].name;
-  M.feed.unshift({min:0,cls:'sys',t:f.cup?LINE.cupKick(hn,an,CUP_STAGES[M.stage]):f.derby?LINE.derbyKick(hn,an):LINE.kickoff(hn,an)});
+  M.feed.unshift({min:0,cls:'sys',t:f.cup?LINE.cupKick(hn,an,stageName(M.stage)):f.derby?LINE.derbyKick(hn,an):LINE.kickoff(hn,an)});
   UI.view='match';render();M.timer=setTimeout(loop,600);
 }
 const mySide=()=>M.h===S.my?'h':'a';
@@ -107,7 +107,7 @@ function substitute(outId,inId,s=mySide(),line){
 }
 function finish(){
   M.done=true;M.paused=false;clearTimeout(M.timer);
-  if(M.cup)NEWS_TAG=`${CUP_NAME}${CUP_STAGES[M.stage]}`;
+  if(M.cup)NEWS_TAG=`${CUP_NAME}${stageName(M.stage)}`;
   const res={h:M.h,a:M.a,hg:M.hg,ag:M.ag},home=M.h===S.my,myXI=home?M.hXI:M.aXI,oppId=home?M.a:M.h,oppXI=home?M.aXI:M.hXI;
   if(M.cup){if(M.hp!==undefined){res.hp=M.hp;res.ap=M.ap}}
   else S.fixtures.forEach((fx,div)=>S.results[div].push(fx[S.round].map(([h,a])=>(h===S.my||a===S.my)?res:quickSim(h,a))));

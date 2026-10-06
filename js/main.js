@@ -33,7 +33,7 @@ async function saveDir(pickNew){
   UI.dirName=h.name;
   return h;
 }
-const saveName=()=>`绿茵经理-${my().short}-第${S.season}季第${Math.min(S.round+1,ROUNDS)}轮.json`;
+const saveName=()=>`绿茵经理-${my().short}-第${S.season}季第${Math.min(S.round+1,rounds())}轮.json`;
 function downloadSave(){
   const url=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));
   const a=document.createElement('a');a.href=url;a.download=saveName();

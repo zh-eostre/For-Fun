@@ -455,3 +455,6 @@ dialog.modal::backdrop{background:rgba(10,15,12,.55)}
 .trophy.got .num{color:var(--amber-text)}
 .fixture .t{color:var(--ink);display:inline-block;border-bottom:3px solid var(--tc,var(--line));padding-bottom:2px}
 .bench .tc{background:#56635A}
+.tier{font-size:10px;font-weight:700;padding:0 5px;border-radius:3px;vertical-align:1px;white-space:nowrap}
+.tier.t-big{background:var(--amber);color:#3a2a00}
+.tier.t-strong{border:1px solid var(--line);color:var(--muted)}

@@ -1,11 +1,21 @@
-/* ---------- 天穹杯: single-leg knockout for all 16 clubs ---------- */
+/* ---------- 天穹杯: single-leg knockout for every club ----------
+   with more than 16 clubs the weakest (by 底蕴) play a qualifying round first and the rest get a bye into the
+   last 16. the format (stage names, timing, prizes) is stored on the cup, so an older save's cup finishes as it began */
+const cupFmt=(C=S.cup)=>C.fmt||CUP_LEGACY;
+const stageName=(k,C=S.cup)=>cupFmt(C).names[k];
+const cupDay=k=>7*cupFmt().at[k]+2;
+const pairUp=ids=>{const t=[];for(let i=0;i+1<ids.length;i+=2)t.push([ids[i],ids[i+1]]);return t};
 function newCup(){
-  const ids=shuffle(S.teams.map(t=>t.id)),ties=[];
-  for(let i=0;i<ids.length;i+=2)ties.push([ids[i],ids[i+1]]);
-  return {stage:0,ties,rounds:[],winner:null};
+  const extra=Math.max(0,S.teams.length-16);
+  if(!extra)return {fmt:CUP_LEGACY,stage:0,ties:pairUp(shuffle(S.teams.map(t=>t.id))),byes:[],rounds:[],winner:null};
+  const order=[...S.teams].sort((a,b)=>(a.rep||0)-(b.rep||0)).map(t=>t.id);
+  return {fmt:CUP_FORMAT,stage:0,ties:pairUp(shuffle(order.slice(0,extra*2))),byes:order.slice(extra*2),rounds:[],winner:null};
 }
-const cupDue=()=>S.cup.stage<CUP_STAGES.length&&S.round>=CUP_AT[S.cup.stage];
+const cupDue=()=>S.cup.stage<cupFmt().names.length&&S.round>=cupFmt().at[S.cup.stage];
 const inCup=()=>S.cup.ties.some(t=>t.includes(S.my));
+// still in the competition: not knocked out yet (a bye in the qualifying round counts as still in)
+const cupAlive=()=>{const C=S.cup;if(C.skipped)return false;if(C.winner!=null)return C.winner===S.my;
+  return !C.rounds.some(rd=>rd.some(r=>(r.h===S.my||r.a===S.my)&&r.w!==S.my))};
 
 // penalties: best of five, then sudden death. log (optional) receives a commentary line per kick
 function shootout(H,hi,A,ai,log){
@@ -38,18 +48,22 @@ function playCupStage(myRes){
   C.rounds.push(res);
   const win=res.map(r=>r.w);
   C.stage++;C.ties=[];
-  if(C.stage<CUP_STAGES.length)for(let i=0;i<win.length;i+=2)C.ties.push([win[i],win[i+1]]);
-  else C.winner=win[0];
+  if(C.stage<cupFmt(C).names.length){
+    // qualifiers join the clubs that had a bye, and the last 16 is drawn afresh
+    const pool=C.byes&&C.byes.length?shuffle(C.byes.concat(win)):win;C.byes=[];
+    C.ties=pairUp(pool);
+  }else C.winner=win[0];
   const mine=res.find(r=>r.h===S.my||r.a===S.my);
   if(mine){
     const opp=S.teams[mine.h===S.my?mine.a:mine.h];
     if(mine.w===S.my){
       if(my().div>opp.div)unlock('giant');
-      if(C.winner===S.my){S.budget+=CUP_PRIZE[k+1];news(`捧起${CUP_NAME}！奖金 ${money(CUP_PRIZE[k+1])}。`);unlock('cup')}
-      else news(`${CUP_NAME}晋级${CUP_STAGES[C.stage]}！`);
+      const P=cupFmt(C).prize;
+      if(C.winner===S.my){S.budget+=P[k+1];news(`捧起${CUP_NAME}！奖金 ${money(P[k+1])}。`);unlock('cup')}
+      else news(`${CUP_NAME}晋级${stageName(C.stage)}！`);
     }else{
-      S.budget+=CUP_PRIZE[k];
-      news(`${CUP_NAME}止步${CUP_STAGES[k]}，被 ${opp.name} 淘汰。${CUP_PRIZE[k]?`奖金 ${money(CUP_PRIZE[k])}。`:''}`);
+      const P=cupFmt(C).prize;S.budget+=P[k];
+      news(`${CUP_NAME}止步${stageName(k)}，被 ${opp.name} 淘汰。${P[k]?`奖金 ${money(P[k])}。`:''}`);
     }
   }
   if(C.winner!==null&&C.winner!==S.my)news(`${CUP_NAME}冠军：${S.teams[C.winner].name}。`);

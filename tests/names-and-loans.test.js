@@ -2,7 +2,7 @@
 require('./harness').run(`
 
 const names=teamNames().map(t=>t.name);console.log('  sample clubs:',names.slice(0,8).join(' '));
-ok(new Set(names).size===16,'16 unique club names from fictional places');
+ok(new Set(names).size===TEAMS.length,TEAMS.length+' unique club names from fictional places');
 newGame(2,teamNames());
 const lg={};for(let i=0;i<400;i++){const o=30+i%40,h=loanHost({ovr:o});(lg[(o<50?'<50':'50+')]=lg[(o<50?'<50':'50+')]||{})[h.league]=1}
 console.log('  loan leagues by ability:',JSON.stringify(lg));
