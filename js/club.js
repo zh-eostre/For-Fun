@@ -108,13 +108,22 @@ function recordSeason(div,rank){
   const awards=DIVS.map((_,d)=>seasonAwards(d));
   S.records.push({season:S.season,champs:DIVS.map((_,d)=>champ(d)),cup:S.cup.winner!=null?S.teams[S.cup.winner].name:null,div,rank,awards});
   awards.forEach((a,d)=>Object.entries(a).forEach(([k,w])=>{if(w&&w.tid===S.my)news(`${w.name} 获得${DIVS[d]}${AWARDS[k]}（${w.stat}）！`)}));
-  my().players.forEach(bankPlayer);
+  // trophies won this season; a player shares in one if he made TITLE_APPS appearances
+  const won=[rank===1?`第 ${S.season} 季${DIVS[div]}冠军`:'',S.cup.winner===S.my?`第 ${S.season} 季${CUP_NAME}冠军`:''].filter(Boolean);
+  my().players.forEach(p=>{
+    const apps=p.apps;bankPlayer(p);
+    const c=S.club[p.id];c.seasons=(c.seasons||0)+1;c.titles=c.titles||[];
+    if(apps>=TITLE_APPS)c.titles=c.titles.concat(won);
+  });
   if(div===0&&rank===1){unlock('champ');if(S.cup.winner===S.my)unlock('double')}
 }
-// called after bankPlayer has run for the season, so the totals are complete
+// club legends retire with us after LEGEND_TITLE_SEASONS seasons and at least one trophy, or after LEGEND_SEASONS seasons.
+// called after recordSeason has banked the season, so the totals are complete
+const TITLE_APPS=5,LEGEND_TITLE_SEASONS=3,LEGEND_SEASONS=8;
+const isLegend=c=>!!c&&((c.seasons||0)>=LEGEND_SEASONS||((c.seasons||0)>=LEGEND_TITLE_SEASONS&&(c.titles||[]).length>0));
 function retireLegend(p){
   const c=S.club[p.id];
-  if(c&&c.apps>=20)S.legends.push({name:p.name,pos:p.pos,goals:c.goals,apps:c.apps,season:S.season});
+  if(isLegend(c))S.legends.push({name:p.name,pos:p.pos,goals:c.goals,apps:c.apps,seasons:c.seasons,titles:c.titles||[],season:S.season});
 }
 // all-time scorers for our club: banked seasons plus the current one
 function clubScorers(){

@@ -39,7 +39,9 @@ const MIGRATE={
   // v10 adds board objectives (loans, ratings and the stadium need no conversion)
   9:d=>{const prev=S;S=d;setGoals();S=prev},
   // v11 sends players on loan to clubs outside our divisions instead of a 乙级 club
-  10:d=>d.teams[d.my].players.forEach(p=>{if(p.loan&&typeof p.loan.club==='number')p.loan={...loanHost(p),ovr0:p.loan.ovr0??p.ovr}})
+  10:d=>d.teams[d.my].players.forEach(p=>{if(p.loan&&typeof p.loan.club==='number')p.loan={...loanHost(p),ovr0:p.loan.ovr0??p.ovr}}),
+  // v12 tracks seasons and trophies per player for the legends rule; past seasons are estimated from ability history
+  11:d=>d.teams[d.my].players.forEach(p=>{const c=d.club[p.id];if(c&&c.seasons==null){c.seasons=(p.hist||[]).length;c.titles=[]}})
 };
 function upgrade(d){
   if(!d||!Array.isArray(d.teams)||typeof d.my!=='number'||!(d.v>=1&&d.v<=SAVE_V))return null;

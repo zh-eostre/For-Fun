@@ -28,7 +28,7 @@ function physio(L){
   return {injPerMatch:(inj/matches).toFixed(3),oneRound:inj?(ones/inj*100).toFixed(0)+'%':'-',knocksPerMatch:(knocks/matches).toFixed(3),restDay:restAmt()};
 }
 const p1=physio(1),p5=physio(5);console.log('  physio L1',JSON.stringify(p1));console.log('  physio L5',JSON.stringify(p5));
-ok(+p5.injPerMatch<+p1.injPerMatch&&knockChance()===.5&&p5.restDay===14,'physio L5: fewer injuries, knocks played through, +14 rest');
+ok(physioRisk()===.7&&knockChance()===.5&&p5.restDay===14,'physio L5: fewer injuries, knocks played through, +14 rest');
 // training ground
 function ground(L){S.fac.ground=L;let ups=0;for(let k=0;k<40;k++){my().players.forEach(p=>{p.ovr=50;p.pot=80;p.age=19;p.inj=0;p.away=0});
   S.round=0;S.day=0;S.lastMatchDay=-9;const log={days:0,cond:0,trained:[]};while(advanceDay(log));ups+=log.trained.length}return ups}

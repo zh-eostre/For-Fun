@@ -139,7 +139,8 @@ function vPlayer(id){
   ${p.sig?`<p class="sig" style="margin:0 0 10px">必杀技「${p.sig}」</p>`:''}
   <div class="pgrid">${cell('能力',p.ovr)}${cell('潜力',mine||p.age>23?p.pot:'?')}${cell('体能',p.cond)}${cell('身价',money(mine?marketValue(p):value(p)))}</div>
   <h3>本赛季</h3><div class="pgrid">${cell('出场',p.apps)}${cell('进球',p.goals)}${cell('平均评分',p.rn?avgRating(p).toFixed(2):'—')}${cell('黄牌',p.yc||0)}</div>
-  ${mine?`<h3>在队生涯</h3><div class="pgrid">${cell('出场',(c.apps||0)+p.apps)}${cell('进球',(c.goals||0)+p.goals)}${cell('租借出场',(c.lapps||0)+(p.lapps||0))}</div>
+  ${mine?`<h3>在队生涯</h3><div class="pgrid">${cell('效力赛季',(c.seasons||0)+1)}${cell('出场',(c.apps||0)+p.apps)}${cell('进球',(c.goals||0)+p.goals)}${cell('租借出场',(c.lapps||0)+(p.lapps||0))}</div>
+  ${(c.titles||[]).length?`<p style="margin:4px 0 0;font-size:13px">🏆 ${c.titles.join('、')}</p>`:''}${isLegend(c)?'<p class="sig" style="margin:4px 0 0">已达到传奇标准：在队退役就会载入史册</p>':''}
   <h3>能力变化</h3><p style="margin:0;font-size:14px">${hist.map(h=>`第 ${h.s} 季 <b class="num" style="font-size:18px">${h.o}</b>`).join(' → ')}</p>`:''}
   <div class="go" style="justify-content:flex-start">${actions}</div></section>`;
 }
@@ -473,7 +474,7 @@ function vHonours(){
   ${(()=>{const won=R.flatMap(r=>(r.awards||[]).flatMap((a,d)=>Object.entries(a).filter(([k,w])=>w&&w.tid===S.my).map(([k,w])=>({r,d,k,w}))));
     return `<section class="panel"><h2>个人奖项</h2>${won.length?won.reverse().map(x=>`<div class="res" style="grid-template-columns:1fr auto"><span style="text-align:left">第 ${x.r.season} 季${DIVS[x.d]}${AWARDS[x.k]}：${x.w.name}</span><span class="muted">${x.w.stat}</span></div>`).join(''):'<p class="muted" style="margin:0">还没有球员拿过个人奖项。</p>'}</section>`})()}
   <section class="panel"><h2>队史射手榜</h2>${sc.length?sc.map((c,i)=>`<div class="res" style="grid-template-columns:24px 1fr auto"><span class="muted">${i+1}</span><span style="text-align:left">${c.name} <span class="muted">${POS[c.pos]}，${c.apps} 场</span></span><span class="num" style="min-width:0">${c.goals}</span></div>`).join(''):'<p class="muted" style="margin:0">还没有人为球队进球。</p>'}</section>
-  <section class="panel"><h2>传奇退役</h2>${S.legends.length?S.legends.map(l=>`<div class="res" style="grid-template-columns:1fr auto"><span style="text-align:left">${l.name} <span class="muted">${POS[l.pos]}，第 ${l.season} 季退役</span></span><span class="muted">${l.apps} 场 ${l.goals} 球</span></div>`).join(''):'<p class="muted" style="margin:0">为球队出场 20 次以上的球员退役后会被记在这里。</p>'}</section>
+  <section class="panel"><h2>传奇退役</h2>${S.legends.length?S.legends.map(l=>`<div class="res" style="grid-template-columns:1fr auto"><span style="text-align:left">${l.name} <span class="muted">${POS[l.pos]}，第 ${l.season} 季退役${l.seasons?`，效力 ${l.seasons} 季`:''}${l.titles&&l.titles.length?`，${l.titles.length} 座冠军`:''}</span></span><span class="muted">${l.apps} 场 ${l.goals} 球</span></div>`).join(''):`<p class="muted" style="margin:0">在队效力 ${LEGEND_TITLE_SEASONS} 季以上并帮球队夺冠，或效力 ${LEGEND_SEASONS} 季以上的球员，在队退役后会记在这里。</p>`}</section>
   <section class="panel"><h2>历届冠军</h2>${R.length?`<div class="tw"><table><thead><tr><th>季</th><th>甲级</th><th>乙级</th><th>${CUP_NAME}</th><th>本队</th></tr></thead>
   <tbody>${R.slice().reverse().map(r=>`<tr><td>${r.season}</td><td>${r.champs[0]||'—'}</td><td>${r.champs[1]||'—'}</td><td>${r.cup||'—'}</td><td>${DIVS[r.div]}第 ${r.rank}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted" style="margin:0">打完第一个赛季后，这里会记录每季的冠军。</p>'}</section>`;
 }
