@@ -147,7 +147,8 @@ const my=()=>S.teams[S.my];
 const findP=id=>my().players.find(p=>p.id===id);
 // ability on the day: fresh legs (70+) cost at most 6%, below 70 every point of stamina costs more:
 // 100 → 100%, 70 → 94%, 55 → 85%, 40 → 76%
-const eff=p=>p.ovr*(p.cond>=70?.94+.06*(p.cond-70)/30:.94-(70-p.cond)*.006);
+// stamina above 80 barely matters; below it a player fades fast (70: about 89%, 60: about 81% of his ability)
+const eff=p=>p.ovr*(p.cond>=80?.97+.03*(p.cond-80)/20:.97-(80-p.cond)*.008);
 // inj = days until fit again; ban / away = matches still to sit out
 const unavail=p=>p.inj>0||p.ban>0||p.away>0||!!p.loan;
 /* ---------- lineups are 11 formation slots ----------
@@ -192,8 +193,9 @@ function strength(team,ids,tac,home,bonus=0,form='4-4-2'){
   const miss=11-n;atk-=miss*6-bonus;def-=miss*6-bonus;
   return {atk,def};
 }
-// goals per minute from attack against defence; the /20 keeps upsets possible (a fresh giant still beats the bottom side ~90% of the time)
-const xgMin=(A,B)=>clamp(1.15*Math.exp((A.atk-B.def)/20),.2,3.5)/90;
+// goals per minute from attack against defence (about 2.6 a match over a season); the /18.5 keeps upsets possible:
+// a much bigger club drops points to a much smaller one about a third of the time, more when it is tired
+const xgMin=(A,B)=>clamp(1.18*Math.exp((A.atk-B.def)/18.5),.2,3.5)/90;
 const rating=s=>Math.round((s.atk+s.def)/2);
 
 // who scores depends on the role he's playing, not his natural position
@@ -224,11 +226,12 @@ function assister(team,ids,form,sc){
 const ACT_W={pas:{GK:.4,DF:1.1,DM:1.5,MF:1.4,AM:1.2,FW:.7},def:{GK:.1,DF:1.4,DM:1.3,MF:.8,AM:.4,FW:.3},
   kp:{GK:.02,DF:.5,DM:.8,MF:1.6,AM:1.9,FW:1},drb:{GK:0,DF:.3,DM:.5,MF:1,AM:1.4,FW:1.5}};
 function matchActions(team,xi,lineOf,mins,poss,edge,shots){
-  const ps=xi.map(id=>{const p=id!=null&&team.players.find(x=>x.id===id);return p&&{p,role:lineOf[id]||p.pos,m:(mins[id]??90)/90}}).filter(x=>x&&x.m>0);
+  const ps=xi.map(id=>{const p=id!=null&&team.players.find(x=>x.id===id);return p&&{p,role:lineOf[id]||p.pos,m:Math.max(1,mins[id]??90)/90}}).filter(Boolean);
   const share=(k,total,q)=>{const ws=ps.map(x=>ACT_W[k][x.role]*x.m*(.6+rng()*.8)*(q?x.p.ovr/70:1)),sum=ws.reduce((a,b)=>a+b,0)||1;return ws.map(w=>total*w/sum)};
   const pas=share('pas',poss*560),def=share('def',(1-poss)*70),kp=share('kp',shots*.75,true),drb=share('drb',poss*22,true),out={};
   ps.forEach((x,i)=>{
-    const q=eff(x.p)-65,pa=Math.round(pas[i]),pct=clamp(.74+q*.008+edge*.004+(rng()-.5)*.06,.5,.95);
+    // ability, not stamina at the final whistle: the numbers cover the whole match
+    const q=x.p.ovr-65,pa=Math.round(pas[i]),pct=clamp(.74+q*.008+edge*.004+(rng()-.5)*.06,.5,.95);
     const tk=def[i]*.6,it=Math.round(def[i]*.4),dr=drb[i];
     out[x.p.id]={pas:pa,ok:Math.round(pa*pct),kp:Math.round(kp[i]),tkl:Math.round(tk*clamp(.55+q*.01,.3,.85)),int:it,drb:Math.round(dr*clamp(.45+q*.01,.2,.8))};
   });
@@ -256,6 +259,8 @@ function rateSide(team,played,roleOf,ev,gf,ga,part=[],noTotals,act={}){
     return {p,r,role,a};
   }).filter(Boolean).sort((a,b)=>b.r-a.r);
 }
+// players on for under an hour: their ratings drift towards 6 (a man taken off tired at 70' still had a full game)
+const partTimers=mins=>Object.keys(mins).filter(id=>mins[id]<60).map(Number);
 const roleMap=(ids,form,of=slotRoles)=>{const roles=of(form),m={};ids.forEach((id,i)=>{if(id!=null)m[id]=roles[i]});return m};
 const lineMap=(ids,form)=>roleMap(ids,form,slotLines);
 const avgRating=p=>p.rn?p.rs/p.rn:0;
@@ -268,7 +273,7 @@ function possession(H,hi,hf,ht,A,ai,af,at){
 }
 
 // injury chance for one player this minute: tired legs break more easily
-const injRisk=p=>INJ_RATE*(p.cond>=80?.6:p.cond>=60?1:p.cond>=45?1.8:2.6);
+const injRisk=p=>INJ_RATE*(p.cond>=75?.45:p.cond>=60?.7:p.cond>=45?1.4:2.2);
 // books a random player on the pitch; yc tracks yellows within this match.
 // a second yellow sends him off (his slot becomes null) and YC_BAN yellows over the season earn a ban
 function booking(team,ids,yc){
@@ -317,23 +322,26 @@ function aiRecover(t){
   }
   t.condDay=S.day;
 }
-// stamina spent by one player in one minute on the pitch: about 14 over 90 minutes for an outfield player, more when
-// attacking all out, less when sitting deep, a little more for players over 30. by role, as in distance covered:
-// midfielders run the most, keepers hardly at all
-const DRAIN_ROLE={GK:.3,DF:.95,DM:1.1,MF:1.1,AM:1.05,FW:1};
+// stamina spent by one player in one minute on the pitch: about 27 over 90 minutes for a forward, 30 for a midfielder,
+// more when attacking all out, less when sitting deep, a little more for players over 30. by role, as in distance
+// covered: midfielders run the most, keepers hardly at all. enough that fresh legs from the bench matter by the hour
+const DRAIN_ROLE={GK:.22,DF:.95,DM:1.1,MF:1.1,AM:1.05,FW:1};
 function drain(p,tac,role){
-  p.cond=Math.max(30,p.cond-.16*(DRAIN_ROLE[role]??1)*(tac==='att'?1.25:tac==='def'?.8:1)*(p.age>=31?1.15:1)*(.8+rng()*.4));
+  p.cond=Math.max(30,p.cond-.33*(DRAIN_ROLE[role]??1)*(tac==='att'?1.12:tac==='def'?.9:1)*(p.age>=31?1.15:1)*(.8+rng()*.4));
 }
-// tired legs: from the 55th minute a side swaps its most exhausted outfield player for a fresh one of the same role
-// (one change every 5 minutes, keeping the last substitution for injuries until the 80th). returns [out, in] or null
+// tired legs: from the hour a side swaps its most exhausted outfield player (below TIRED stamina) for a fresh one of
+// the same role (one change every 5 minutes, keeping the last substitution for injuries until the 80th). [out, in] or null
+const TIRED=72;
 function tiredSwap(team,ids,xi,form,used,min){
-  if(min<55||used>=SUBS-(min<80?1:0))return null;
-  const roles=slotRoles(form);
-  const tired=ids.map((id,i)=>({p:id!=null&&team.players.find(x=>x.id===id),i})).filter(x=>x.p&&roles[x.i]!=='GK'&&x.p.cond<52).sort((a,b)=>a.p.cond-b.p.cond)[0];
-  if(!tired)return null;
-  const bench=team.players.filter(x=>!xi.includes(x.id)&&!unavail(x)).sort((a,b)=>eff(b)-eff(a)),role=roles[tired.i];
-  const fresh=bench.find(x=>x.pos===role)||standIn(bench,role);
-  return fresh?[tired.p,fresh]:null;
+  if(min<60||min>88||used>=SUBS-(min<80?1:0))return null;
+  const roles=slotRoles(form),bench=team.players.filter(x=>!xi.includes(x.id)&&!unavail(x)).sort((a,b)=>eff(b)-eff(a));
+  const tired=ids.map((id,i)=>({p:id!=null&&team.players.find(x=>x.id===id),i})).filter(x=>x.p&&roles[x.i]!=='GK'&&x.p.cond<TIRED).sort((a,b)=>a.p.cond-b.p.cond);
+  // only when the sub would actually do better than the tired man; if not, try the next most tired
+  for(const t of tired){
+    const role=roles[t.i],fresh=bench.find(x=>x.pos===role)||standIn(bench,role);
+    if(fresh&&eff(fresh)*fit(fresh,role)>eff(t.p)*fit(t.p,role))return [t.p,fresh];
+  }
+  return null;
 }
 // a side sitting deep against a side attacking all out gets a counter-attack bonus
 const counter=(mine,theirs)=>mine==='def'&&theirs==='att'?3:0;
@@ -381,7 +389,7 @@ function quickSim(h,a){
   afterMatch(H,hx,false);afterMatch(A,ax,false);
   hurt.forEach(p=>p.inj=pick(INJ_DAYS));
   const mins={};[...hx,...ax].forEach(id=>{if(id!=null)mins[id]=(off[id]??90)-(on[id]??0)});
-  const rh=roleMap(hx,bh.form),ra=roleMap(ax,ba.form),part=Object.keys(on).concat(Object.keys(off)).map(Number);
+  const rh=roleMap(hx,bh.form),ra=roleMap(ax,ba.form),part=partTimers(mins);
   rateSide(H,hx,rh,ev,hg,ag,part,false,matchActions(H,hx,lineMap(hx,bh.form),mins,poss,edge,shots.h));
   rateSide(A,ax,ra,ev,ag,hg,part,false,matchActions(A,ax,lineMap(ax,ba.form),mins,1-poss,-edge,shots.a));
   return {h,a,hg,ag};

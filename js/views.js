@@ -259,7 +259,7 @@ function vSquad(){
       <div class="pmeta">${p.sig?`<span class="sig" style="display:inline">★</span> `:''}${p.age} 岁，${p.apps} 场 ${p.goals} 球 ${p.ast||0} 助${p.rn?`，评分 ${avgRating(p).toFixed(1)}`:''}${p.yc?`，黄牌 ${p.yc}`:''}${p.inj?` <span class="injtag">伤停 ${p.inj} 天</span>`:''}${p.ban?` <span class="injtag">停赛 ${p.ban} 轮</span>`:''}${p.away?` <span class="injtag">探亲 ${p.away} 轮</span>`:''}${p.loan?` <span class="loantag">租借至${p.loan.club} · ${p.lapps||0} 场</span>`:''}${!unavail(p)&&p.cond<60?' <span class="risktag">伤病风险高</span>':''}${retireChance({...p,age:p.age+1})>=.3?` <span class="muted" style="font-size:11px" title="赛季结束时有 ${Math.round(retireChance({...p,age:p.age+1})*100)}% 机会退役">可能退役</span>`:''}</div>
 </div>
       <div><div class="ovr num">${p.ovr}${gainTag(p)}</div><div class="potl">潜力 ${p.pot}</div></div>
-      <div><div class="bar ${p.cond<60?'low':''}"><i style="width:${p.cond}%"></i></div><div class="barlbl">体能 ${p.cond}</div></div>
+      <div><div class="bar ${p.cond<TIRED?'low':''}"><i style="width:${p.cond}%"></i></div><div class="barlbl">体能 ${p.cond}</div></div>
       <div class="act"><button class="btn small danger" data-act="sell" data-arg="${p.id}" ${windowOpen()?'':`disabled title="${windowShut()}"`}>出售 ${money(sellPrice(p))}</button></div>
     </div>`).join('');
   }).join('');
@@ -300,9 +300,9 @@ function pitchSpots(ids,form,team){
 // o: style, act + arg (default: toggle this player), cls, marks (extra badges after the name), role (the slot's role)
 function tok(p,o={}){
   const oop=o.role&&p.pos!==o.role;
-  if(o.static)return `<span class="tok ${unavail(p)?'out':''}" style="${o.style||''}" title="${p.name}"><span class="tc num ${p.cond<60?'low':''}">${p.ovr}</span><span class="tn">${shortName(p.name)}${p.sig?'<i>★</i>':''}</span><span class="tb"><i style="width:${p.cond}%"></i></span><small class="tcond">${Math.round(p.cond)}</small></span>`;
+  if(o.static)return `<span class="tok ${unavail(p)?'out':''}" style="${o.style||''}" title="${p.name}"><span class="tc num ${p.cond<TIRED?'low':''}">${p.ovr}</span><span class="tn">${shortName(p.name)}${p.sig?'<i>★</i>':''}</span><span class="tb"><i style="width:${p.cond}%"></i></span><small class="tcond">${Math.round(p.cond)}</small></span>`;
   return `<button class="tok ${unavail(p)?'out':''} ${oop?'oop':''} ${o.cls||''}" style="${o.style||''}" data-act="${o.act||'toggle'}" data-arg="${o.arg??p.id}" data-flip="p${p.id}" title="${p.name}${oop?`（本职${POS[p.pos]}，打${POS[o.role]}）`:''}">
-    <span class="tc num ${p.cond<60?'low':''}">${p.ovr}</span><span class="tn">${oop?`<b class="mk oopk">${POS[p.pos][0]}</b>`:''}${shortName(p.name)}${p.sig?'<i>★</i>':''}${o.marks||''}</span>
+    <span class="tc num ${p.cond<TIRED?'low':''}">${p.ovr}</span><span class="tn">${oop?`<b class="mk oopk">${POS[p.pos][0]}</b>`:''}${shortName(p.name)}${p.sig?'<i>★</i>':''}${o.marks||''}</span>
     <span class="tb"><i style="width:${p.cond}%"></i></span>${o.cond?`<small class="tcond">${Math.round(p.cond)}</small>`:''}</button>`;
 }
 const emptySlot=(s,act,sel)=>`<button class="tok empty ${sel?'sel':''}" style="left:${s.x}%;top:${s.y}%" data-act="${act}" data-arg="${s.slot}" title="空位：${LINE_NAME[s.line]||POS[s.role]}"><span class="tc">${(LINE_NAME[s.line]||POS[s.role])[0]}</span><span class="tn">空位</span></button>`;
@@ -512,7 +512,7 @@ function vMatch(){
       <span class="sc-ovr num pos-${p.pos}">${p.ovr}</span>
       <span class="sc-main"><span class="sc-name">${p.name}${p.sig?'<i>★</i>':''}</span>
       <span class="sc-meta">${POS[p.pos]} · 体能 ${Math.round(p.cond)}${out&&gain>0?` <b class="sc-gain">+${gain}</b>`:''}</span></span>${same?'<b class="sc-fit">同位置</b>':''}
-      <span class="tb ${p.cond<60?'low':''}"><i style="width:${p.cond}%"></i></span></button>`}).join(''):'<span class="muted" style="font-size:13px">没有可用的替补</span>'}</div></div>
+      <span class="tb ${p.cond<TIRED?'low':''}"><i style="width:${p.cond}%"></i></span></button>`}).join(''):'<span class="muted" style="font-size:13px">没有可用的替补</span>'}</div></div>
     <button class="btn primary" data-act="resume" style="margin-top:12px">再战，下半场！</button></div>`;
   }else{
     ctl=`<div class="mctl"><button class="btn" data-act="speed">${M.speed===1?'加速':'正常速度'}</button><button class="btn primary" data-act="pauseSub">换人 / 调整</button><button class="btn" data-act="skip">直接看结果</button>${autoSubBtn()}</div>${vLiveStamina()}`;

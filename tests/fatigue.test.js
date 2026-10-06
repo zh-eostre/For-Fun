@@ -3,15 +3,15 @@ require('./harness').run(`
 newGame(2,teamNames());
 // stamina spent over a match, by tactic
 const byRole=r=>{let t=0;for(let k=0;k<200;k++){const p={cond:100,age:25};for(let m=0;m<90;m++)drain(p,'bal',r);t+=100-p.cond}return Math.round(t/200)};
-ok(byRole('GK')<=5&&byRole('MF')>byRole('DF')&&byRole('DF')>byRole('GK'),'stamina spent in 90 minutes by role: 门将 '+byRole('GK')+'，后卫 '+byRole('DF')+'，中场 '+byRole('MF')+'，前锋 '+byRole('FW'));
+ok(byRole('GK')<=8&&byRole('MF')>byRole('DF')&&byRole('DF')>byRole('GK'),'stamina spent in 90 minutes by role: 门将 '+byRole('GK')+'，后卫 '+byRole('DF')+'，中场 '+byRole('MF')+'，前锋 '+byRole('FW'));
 const spend=tac=>{let t=0;for(let k=0;k<200;k++){const p={cond:100,age:25};for(let m=0;m<90;m++)drain(p,tac);t+=100-p.cond}return Math.round(t/200)};
 const att=spend('att'),bal=spend('bal'),def=spend('def');
-ok(bal>=12&&bal<=17&&att>bal&&def<bal,'stamina per 90 min: 全力进攻 -'+att+'，平衡 -'+bal+'，防守反击 -'+def);
+ok(bal>=26&&bal<=33&&att>bal&&def<bal,'stamina per 90 min: 全力进攻 -'+att+'，平衡 -'+bal+'，防守反击 -'+def);
 // AI recovery: a rest day then training days, like ours
 const day0=S.day,t=S.teams.find(x=>x.id!==S.my);t.players.forEach(p=>p.cond=70);t.lastDay=t.condDay=S.day;S.day+=1;aiRecover(t);
 ok(t.players[0].cond===80,'AI day after a match: +10 (now '+t.players[0].cond+')');
-S.day+=3;aiRecover(t);ok(t.players[0].cond===86,'then +2 per training day (now '+t.players[0].cond+')');
-aiRecover(t);ok(t.players[0].cond===86,'recovering twice on the same day changes nothing');
+S.day+=3;aiRecover(t);ok(t.players[0].cond===92,'then +4 per training day (now '+t.players[0].cond+')');
+aiRecover(t);ok(t.players[0].cond===92,'recovering twice on the same day changes nothing');
 // tired strong teams drop points to weak ones
 const top=S.teams.filter(x=>x.id!==S.my&&x.div===0).sort((a,b)=>b.rep-a.rep),strong=top[0],weak=top[top.length-1];
 const trial=c=>{let w=0;for(let k=0;k<300;k++){strong.players.forEach(p=>{p.cond=c;p.inj=0;p.ban=0});weak.players.forEach(p=>{p.cond=95;p.inj=0;p.ban=0});

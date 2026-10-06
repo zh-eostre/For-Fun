@@ -39,7 +39,7 @@ const FORMS={'4-4-2':{GK:1,DF:4,MF:4,FW:2},'4-3-3':{GK:1,DF:4,MF:3,FW:3},'4-2-3-
   '5-3-2':{GK:1,DF:5,MF:3,FW:2},'5-4-1':{GK:1,DF:5,MF:4,FW:1}};
 const LINE_NAME={DM:'后腰',AM:'前腰'};
 const TACT={def:'防守反击',bal:'平衡',att:'全力进攻'};
-const TRAIN={rest:['恢复训练','训练日体能 +8，不会通过训练进步'],normal:['常规训练','训练日体能 +2，有一定机会进步'],hard:['高强度加练','训练日体能 −1，进步最快，但疲劳的球员更容易受伤']};
+const TRAIN={rest:['恢复训练','训练日体能 +10，不会通过训练进步'],normal:['常规训练','训练日体能 +4，有一定机会进步'],hard:['高强度加练','训练日体能 +1，进步最快，但疲劳的球员更容易受伤']};
 const PRIZE=[500,400,320,260,220,190,165,145,130,120];
 const CARD=.02;   // chance per team per minute of a booking (about 1.8 per team per match)
 // chance to retire at the end of a season by age (33-39; 40+ always retires), scaled by ability below
@@ -52,7 +52,7 @@ const WEEKDAYS=['周一','周二','周三','周四','周五','周六','周日'];
 const leagueDay=r=>(S.pre||0)+7*r+5;   // S.pre: preseason days before round 1 (see club.js)
 const DAY_REST=10;   // stamina everyone gets back on a rest day
 // per training day, depending on the training setting: stamina change, and chance to improve by 1
-const TRAIN_DAY={rest:{cond:8,grow:0},normal:{cond:2,grow:.028},hard:{cond:-1,grow:.05}};
+const TRAIN_DAY={rest:{cond:10,grow:0},normal:{cond:4,grow:.028},hard:{cond:1,grow:.05}};
 const MATCH_GROW=.1;    // chance per match that a player who played improves by 1
 const YOUTH_PROVEN=5;   // academy players need this many first-team matches before buyers value their potential
 

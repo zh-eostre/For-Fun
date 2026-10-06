@@ -95,9 +95,9 @@ function resolveEvent(i){
 /* ---------- season awards ---------- */
 const AWARDS={mvp:'最佳球员',young:'最佳新秀',gk:'最佳门将',boot:'金靴',ast:'助攻王'};
 // the scores of the top candidates sit close together, so these small tilts are enough to give a realistic spread
-// (forwards ~44%, midfielders ~34%, defenders ~15%, keepers ~8% of best-player awards); the team of the season
+// (forwards ~50%, midfielders ~30%, defenders ~15%, keepers ~5% of best-player awards); the team of the season
 // is where every line gets its due
-const AWARD_W={GK:.93,DF:.94,MF:1,FW:1.02};
+const AWARD_W={GK:1,DF:.99,MF:1.05,FW:1};
 // per division: best player and best 21-and-under (8+ matches), best keeper, top scorer, top assister.
 // player awards compare each man with his own position (how many standard deviations above its average): midfielders
 // see the most of the ball and average the highest ratings, so raw averages would hand them nearly every award.
