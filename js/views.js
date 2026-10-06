@@ -25,7 +25,7 @@ function render(){
   if(twin)twin.focus({preventScroll:true});
   else if(dlg){const c=dlg.querySelector('.mclose');if(c)c.focus({preventScroll:true})}
   // after closing, back to the name that opened it
-  if(!dlg&&UI.returnFocus!=null){const el=app.querySelector(`[data-act="player"][data-arg="${UI.returnFocus}"]`);if(el)el.focus({preventScroll:true});UI.returnFocus=null}
+  if(!dlg&&UI.returnFocus){const r=UI.returnFocus,el=app.querySelector(`[data-act="${r.act}"]${r.arg!=null?`[data-arg="${r.arg}"]`:''}`);if(el)el.focus({preventScroll:true});UI.returnFocus=null}
   if(!reducedMotion())app.querySelectorAll('[data-flip]').forEach(el=>{
     const b=before[el.dataset.flip];if(!b||!el.animate)return;
     const r=el.getBoundingClientRect(),dx=b.left-r.left,dy=b.top-r.top;
@@ -116,7 +116,7 @@ function vHome(){
   <div><div class="t disp" style="--tc:${A.color}">${A.name}</div><div class="str">综合实力 <span class="num">${as}</span></div></div></div>
   ${vOppReport(opp,ob,tacFor(ob.r,rating(ms)))}
   <div class="go"><span class="muted" style="font-size:14px">阵型 ${S.formation}，战术${TACT[S.tactic]}</span>
-  <button class="btn" data-act="tab" data-arg="squad">调整阵容</button>
+  <button class="btn" data-act="oppXI">查看对手阵容</button><button class="btn" data-act="tab" data-arg="squad">调整阵容</button>
   ${isMatchDay()?'<button class="btn primary" data-act="play">开始比赛</button>':`<span class="muted" style="font-size:14px">${nextMatchDay()-S.day} 天后开赛</span>`}</div>
   ${iss.length?`<p class="warn" style="text-align:center">${iss.join('；')}，请先去阵容页调整。</p>`:''}</section>
   ${vBoard()}</div>
@@ -150,7 +150,22 @@ function vTeamPage(tid){
 // the player dialog is a native <dialog> opened with showModal() after each render: the browser keeps focus
 // inside it, makes the page behind inert and handles Escape (see the 'cancel' listener in main.js)
 function vModal(){
-  return `<dialog class="modal" aria-labelledby="mtitle">${vPlayer(UI.modal.id)}</dialog>`;
+  return `<dialog class="modal ${UI.modal.type==='opp'?'wide':''}" aria-labelledby="mtitle">${UI.modal.type==='opp'?vOppXI():vPlayer(UI.modal.id)}</dialog>`;
+}
+// the next opponent's expected XI on a pitch, with their bench and who is missing. tactics and the weak spot
+// come from the scout report (scout department level 3+)
+function vOppXI(){
+  const f=nextFix(),opp=S.teams[f.opp],ob=bestForm(opp,!f.home),xi=onPitch(opp,ob.ids).filter(Boolean);
+  const ms=strength(my(),S.lineup,S.tactic,f.home,S.boost>0?BOOST:0,S.formation),tac=tacFor(ob.r,rating(ms));
+  const field=pitchSpots(ob.ids,ob.form,opp).map(x=>x.p?tok(x.p,{style:`left:${x.x}%;top:${x.y}%`,role:x.role,static:true}):'').join('');
+  const bench=opp.players.filter(p=>!ob.ids.includes(p.id)&&!unavail(p)).sort((a,b)=>b.ovr-a.ovr),out=opp.players.filter(unavail);
+  const avg=Math.round(xi.reduce((s,p)=>s+p.ovr,0)/xi.length),cond=Math.round(xi.reduce((s,p)=>s+p.cond,0)/xi.length);
+  return `<section class="panel"><div class="mhead"><h2 id="mtitle">${opp.name} 预计阵容</h2><button class="btn small mclose" data-act="closeModal" aria-label="关闭">✕</button></div>
+  <p class="muted" style="margin:0 0 10px;font-size:13px">${fixLabel(f)}，${f.home?'我们主场':'我们客场'} · ${tierOf(opp.rep)} · 首发平均能力 ${avg} · 平均体能 ${cond}${facLv('scout')>=3?` · 预计战术：${TACT[tac]}`:''}</p>
+  <div class="oppgrid">${pitchBox(field,'对手预计首发',ob.form,{color:opp.color,note:facLv('scout')>=3?`${ob.form} · ${TACT[tac]}`:ob.form})}
+  <div><div class="subh" style="margin-bottom:6px">替补</div>${bench.map(p=>`<div class="oprow"><span class="spos">${POS[p.pos]}</span><span>${p.name}${p.sig?' <i class="sig" style="font-style:normal">★</i>':''}</span><b class="num">${p.ovr}</b></div>`).join('')||'<span class="muted">没有替补</span>'}
+  ${out.length?`<div class="subh" style="margin:10px 0 6px">缺阵</div>${out.map(p=>`<div class="oprow out"><span class="spos">${POS[p.pos]}</span><span>${p.name}</span><span class="muted">${p.inj?`伤停 ${p.inj} 天`:p.ban?'停赛':'请假'}</span></div>`).join('')}`:''}
+  ${facLv('scout')>=3?'':'<p class="muted" style="font-size:12px;margin:10px 0 0">球探部升到 3 级，可以看到对手的预计战术和最薄弱的一线。</p>'}</div></div></section>`;
 }
 function vPlayer(id){
   const f=findAny(id);
@@ -256,7 +271,8 @@ function vSquad(){
 // the formation; the tactic pushes the outfield lines up or down; wide slots in back/mid lines of 4+ sit a bit higher
 const shortName=n=>n.split('·')[0];
 const PITCH_Y={FW:17,MF:42,DF:66,GK:89};
-function pitchSpots(ids,form){
+function pitchSpots(ids,form,team){
+  const find=team?id=>team.players.find(p=>p.id===id):findP;
   const tac=M&&!M.done?M.tac:S.tactic,roles=slotRoles(form),shift=tac==='att'?-5:tac==='def'?5:0,spots=[];
   PO.forEach(pos=>{
     const idx=roles.map((r,i)=>r===pos?i:-1).filter(i=>i>=0),n=idx.length;
@@ -264,7 +280,7 @@ function pitchSpots(ids,form){
     idx.forEach((slot,k)=>{
       const x=50+(k-(n-1)/2)*gap,w=(x-50)/40;
       const y=PITCH_Y[pos]+(pos==='GK'?0:shift)-(n>=4&&(pos==='DF'||pos==='MF')?6*w*w:0);
-      spots.push({slot,role:pos,p:ids[slot]!=null?findP(ids[slot]):null,x,y});
+      spots.push({slot,role:pos,p:ids[slot]!=null?find(ids[slot]):null,x,y});
     });
   });
   return spots;
@@ -272,14 +288,16 @@ function pitchSpots(ids,form){
 // o: style, act + arg (default: toggle this player), cls, marks (extra badges after the name), role (the slot's role)
 function tok(p,o={}){
   const oop=o.role&&p.pos!==o.role;
+  if(o.static)return `<span class="tok ${unavail(p)?'out':''}" style="${o.style||''}" title="${p.name}"><span class="tc num ${p.cond<60?'low':''}">${p.ovr}</span><span class="tn">${shortName(p.name)}${p.sig?'<i>★</i>':''}</span><span class="tb"><i style="width:${p.cond}%"></i></span><small class="tcond">${Math.round(p.cond)}</small></span>`;
   return `<button class="tok ${unavail(p)?'out':''} ${oop?'oop':''} ${o.cls||''}" style="${o.style||''}" data-act="${o.act||'toggle'}" data-arg="${o.arg??p.id}" data-flip="p${p.id}" title="${p.name}${oop?`（本职${POS[p.pos]}，打${POS[o.role]}）`:''}">
     <span class="tc num ${p.cond<60?'low':''}">${p.ovr}</span><span class="tn">${oop?`<b class="mk oopk">${POS[p.pos][0]}</b>`:''}${shortName(p.name)}${p.sig?'<i>★</i>':''}${o.marks||''}</span>
     <span class="tb"><i style="width:${p.cond}%"></i></span>${o.cond?`<small class="tcond">${Math.round(p.cond)}</small>`:''}</button>`;
 }
 const emptySlot=(s,act,sel)=>`<button class="tok empty ${sel?'sel':''}" style="left:${s.x}%;top:${s.y}%" data-act="${act}" data-arg="${s.slot}" title="空位：${POS[s.role]}"><span class="tc">${POS[s.role][0]}</span><span class="tn">空位</span></button>`;
-const pitchBox=(inner,label,form)=>`<div class="pitch" style="--team:${my().color}" aria-label="${label}">
+// o.color: the club whose shirts are drawn (default ours); o.note: the corner label (default formation · our tactic)
+const pitchBox=(inner,label,form,o={})=>`<div class="pitch" style="--team:${o.color||my().color}" aria-label="${label}">
     <div class="pl half"></div><div class="pl circle"></div><div class="pl box top"></div><div class="pl box bot"></div>
-    ${inner}<span class="pitch-note">${form} · ${TACT[M&&!M.done?M.tac:S.tactic]}</span></div>`;
+    ${inner}<span class="pitch-note">${o.note??`${form} · ${TACT[M&&!M.done?M.tac:S.tactic]}`}</span></div>`;
 function vPitch(){
   const bench=my().players.filter(p=>!S.lineup.includes(p.id)&&!p.loan).sort((a,b)=>unavail(a)-unavail(b)||PO.indexOf(a.pos)-PO.indexOf(b.pos)||b.ovr-a.ovr);
   const sel=UI.selSlot,roles=slotRoles(S.formation),selP=sel!=null&&S.lineup[sel]!=null?findP(S.lineup[sel]):null;
@@ -298,12 +316,25 @@ function vPitch(){
   <div class="bench">${bench.map(p=>`<div class="bslot"><small>${POS[p.pos]}${p.inj?' · 伤':p.ban?' · 停赛':p.away?' · 探亲':p.loan?' · 租借':''}</small>${tok(p,{act:'bench'})}</div>`).join('')||'<span class="muted">没有替补</span>'}</div></section>`;
 }
 // switcher: show the division picker (the 积分榜 tab); without it the given division is shown as-is (season end)
+// a leaderboard: medals for the top three, the club's colour, and a bar against the leader (scale maps a value to
+// what the bar measures, e.g. rating above 5). names open the player dialog
+function vLeaders(title,note,rows,scale){
+  if(!rows.length)return '';
+  const top=Math.max(...rows.map(r=>scale(r.v)),.01);
+  return `<section class="panel lb"><h2>${title}${note?` <span class="muted" style="font-weight:400;font-size:13px">${note}</span>`:''}</h2><ol class="lb-list">
+  ${rows.map((r,i)=>`<li class="lb-row ${i<3?'m'+(i+1):''} ${r.t.id===S.my?'mine':''}" style="--c:${r.t.color}">
+    <span class="lb-rank num">${i+1}</span>
+    <div class="lb-who"><div class="lb-name"><button class="link" data-act="player" data-arg="${r.p.id}">${r.p.name}</button></div>
+      <small>${r.t.short} · ${POS[r.p.pos]} · ${r.sub}</small>
+      <span class="lb-bar" aria-hidden="true"><i style="width:${Math.max(4,Math.round(scale(r.v)/top*100))}%"></i></span></div>
+    <b class="lb-val num">${r.label}</b></li>`).join('')}</ol></section>`;
+}
 function vTable(div,switcher=true){
   if(div===undefined)div=UI.div??my().div;
   const T=table(div),res=S.results[div];
   const last=res[res.length-1];
-  const sc=S.teams.filter(t=>t.div===div).flatMap(t=>t.players.filter(p=>p.goals>0).map(p=>({p,t}))).sort((a,b)=>b.p.goals-a.p.goals).slice(0,5);
-  const RL_MIN=Math.max(1,Math.floor(res.length/2)),rl=S.teams.filter(t=>t.div===div).flatMap(t=>t.players.filter(p=>p.rn>=RL_MIN).map(p=>({p,t}))).sort((a,b)=>avgRating(b.p)-avgRating(a.p)).slice(0,5);
+  const sc=S.teams.filter(t=>t.div===div).flatMap(t=>t.players.filter(p=>p.goals>0).map(p=>({p,t}))).sort((a,b)=>b.p.goals-a.p.goals||a.p.apps-b.p.apps).slice(0,8);
+  const RL_MIN=Math.max(1,Math.floor(res.length/2)),rl=S.teams.filter(t=>t.div===div).flatMap(t=>t.players.filter(p=>p.rn>=RL_MIN).map(p=>({p,t}))).sort((a,b)=>avgRating(b.p)-avgRating(a.p)).slice(0,8);
   const pickDiv=switcher?`<div class="seg sm" style="margin-bottom:10px">${DIVS.map((dn,d)=>`<button data-act="div" data-arg="${d}" aria-pressed="${d===div}">${dn}${d===my().div?'（本队）':''}</button>`).join('')}</div>`:'';
   const legend=[div>0?`<span class="zl up">前 ${SWAP} 名升级</span>`:'',div<DIVS.length-1?`<span class="zl down">后 ${SWAP} 名降级</span>`:''].join('');
   return `<div class="cols"><div class="col"><section class="panel"><h2>${DIVS[div]}积分榜</h2>${pickDiv}<div class="tw"><table>
@@ -311,8 +342,8 @@ function vTable(div,switcher=true){
   <tbody>${T.map((r,i)=>`<tr class="${r.id===S.my?'me':''} ${zone(div,i+1)}"><td>${i+1}</td><td><span class="dot" style="background:${r.color}"></span>${r.id===S.my?r.name:`<button class="link" data-act="team" data-arg="${r.id}">${r.name}</button>${tierTag(S.teams[r.id])}`}${r.id===S.rival?' <span class="tag2 derby">宿敌</span>':''}</td>
   <td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td><td>${r.gf}:${r.ga}</td><td class="pts">${r.pts}</td></tr>`).join('')}</tbody></table></div><p class="legend">${legend}</p></section></div><div class="col">
   ${last?`<section class="panel"><h2>上一轮赛果</h2>${last.map(r=>`<div class="res"><span>${S.teams[r.h].name}</span><span class="num">${r.hg} : ${r.ag}</span><span>${S.teams[r.a].name}</span></div>`).join('')}</section>`:''}
-  ${sc.length?`<section class="panel"><h2>射手榜</h2>${sc.map((x,i)=>`<div class="res" style="grid-template-columns:24px 1fr auto"><span class="muted">${i+1}</span><span style="text-align:left">${x.p.name} <span class="muted">${x.t.name}</span></span><span class="num" style="min-width:0">${x.p.goals}</span></div>`).join('')}</section>`:''}
-  ${rl.length?`<section class="panel"><h2>评分榜 <span class="muted" style="font-weight:400;font-size:13px">出场 ${RL_MIN} 场以上</span></h2>${rl.map((x,i)=>`<div class="res" style="grid-template-columns:24px 1fr auto"><span class="muted">${i+1}</span><span style="text-align:left">${x.p.name} <span class="muted">${POS[x.p.pos]}，${x.t.name}</span></span>${rtag(avgRating(x.p))}</div>`).join('')}</section>`:''}</div></div>`;
+  ${vLeaders('射手榜','',sc.map(x=>({p:x.p,t:x.t,v:x.p.goals,label:String(x.p.goals),sub:`${x.p.apps} 场`})),v=>v)}
+  ${vLeaders('评分榜',`出场 ${RL_MIN} 场以上`,rl.map(x=>({p:x.p,t:x.t,v:avgRating(x.p),label:avgRating(x.p).toFixed(2),sub:`${x.p.rn} 场`})),v=>v-5)}</div></div>`;
 }
 const gainTag=p=>p.gain>0?`<span class="gain">+${p.gain}</span>`:p.gain<0?`<span class="gain neg">${p.gain}</span>`:'';
 const shownPot=p=>p.scout?p.scout.est:p.pot;

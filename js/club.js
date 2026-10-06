@@ -296,7 +296,7 @@ function payGoals(div){
 const SURPRISE_CHANCE=.035;
 const SURPRISES=[
   {w:3,run:()=>{const m=my().div?ri(40,80):ri(80,150);S.budget+=m;return `赞助商对球队的表现非常满意，决定追加投资 ${money(m)}！`}},
-  {w:3,run:()=>{
+  {w:3,ok:()=>firstTeam().some(p=>p.ovr<95),run:()=>{
     const young=firstTeam().filter(p=>p.age<=25&&p.ovr<95),all=firstTeam().filter(p=>p.ovr<95);
     const p=pick(young.length&&rng()<.7?young:all),old=p.ovr;
     p.ovr=Math.min(95,p.ovr+ri(2,3));p.pot=Math.max(p.pot,p.ovr);const a=p.ovr-old;p.gain=(p.gain||0)+a;giveSig(p);
@@ -326,6 +326,7 @@ function rollSurprise(log){
 /* ---------- 底蕴 (club prestige) ---------- */
 // every club's 底蕴 moves at season end with where it finished, and drifts 6% of the way back to 50 each year,
 // so giants without trophies fade and clubs that keep winning rise. AI clubs' base strength follows it
+const MIN_GIANTS=2;
 const divSize=d=>S.teams.filter(t=>t.div===d).length;
 function prestigeDelta(div,rank,size){
   if(div===0)return rank===1?8:rank===2?6:rank===3?4:rank>size-SWAP?-6:rank<=size/2?1:-1;
@@ -344,6 +345,12 @@ function updatePrestige(tables){
     const after=tierOf(t.rep);
     if(t.id!==S.my&&before!==after&&(after==='豪门'||before==='豪门'))notes.push(after==='豪门'?`${t.name} 跻身豪门`:`${t.name} 跌出豪门行列`);
   }));
+  // the league always keeps at least MIN_GIANTS AI giants: if it runs short (say we keep winning everything),
+  // the grandest 甲级 clubs below the line get backing and are raised to 82; their squads then catch up through
+  // the usual below-target shopping and faster development
+  const giants=S.teams.filter(t=>t.id!==S.my&&t.rep>=80).length;
+  S.teams.filter(t=>t.id!==S.my&&t.div===0&&t.rep<80).sort((a,b)=>b.rep-a.rep).slice(0,Math.max(0,MIN_GIANTS-giants))
+    .forEach(t=>{t.rep=82;t.str=strFromRep(82);notes.push(`${t.name} 获得财团注资，跻身豪门`)});
   return notes;
 }
 // how far an AI club's current best XI is below what its 底蕴 says it should be
