@@ -188,6 +188,8 @@ const ACT={
 };
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;
   const f=ACT[b.dataset.act];if(f)f(b.dataset.arg,b)});
+// remember which folding panels are open across re-renders ('toggle' doesn't bubble, so listen while capturing)
+document.addEventListener('toggle',e=>{const d=e.target;if(d.dataset&&d.dataset.fold)(UI.folds=UI.folds||{})[d.dataset.fold]=d.open},true);
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('prow')){e.preventDefault();ACT.toggle(e.target.dataset.arg)}});
 
 // always open on the start screen, so the player can continue or restart

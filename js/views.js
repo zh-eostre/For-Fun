@@ -7,6 +7,8 @@ function render(){
   // elements with data-flip glide from their old spot to the new one (players moving on the pitch)
   const before={};app.querySelectorAll('[data-flip]').forEach(el=>before[el.dataset.flip]=el.getBoundingClientRect());
   app.innerHTML=view();
+  // folding panels keep whatever open/closed state the player last chose
+  app.querySelectorAll('details[data-fold]').forEach(d=>{const k=d.dataset.fold;if(UI.folds&&k in UI.folds)d.open=UI.folds[k]});
   if(keep){const el=[...app.querySelectorAll('[data-act]')].find(e=>e.dataset.act===keep[0]&&e.dataset.arg===keep[1]&&e.classList[0]===keep[2]);if(el)el.focus({preventScroll:true})}
   if(!reducedMotion())app.querySelectorAll('[data-flip]').forEach(el=>{
     const b=before[el.dataset.flip];if(!b||!el.animate)return;
@@ -73,7 +75,8 @@ function vCalendar(){
   <div class="days">${strip}</div>
   ${L?`<p class="daylog">过了 ${L.days} 天：全队体能共 ${L.cond>=0?'+':''}${L.cond}${L.trained.length?`；训练中进步：${L.trained.map(p=>`${p.name}（${p.ovr}）`).join('、')}`:'；训练中没有人进步'}${L.healed.length?`；伤愈复出：${L.healed.map(p=>p.name).join('、')}`:''}。</p>`:''}
   <p class="muted" style="margin:8px 0 0;font-size:14px">首发平均体能 <b>${avg}</b>${tired.length?`，偏低：${tired.map(p=>`${p.name} ${p.cond}`).join('、')}`:'，全员状态良好'}。</p>
-  ${today==='match'?'':`<div class="go" style="justify-content:flex-start"><button class="btn" data-act="nextDay">进入下一天</button><button class="btn primary" data-act="ff">快进到比赛日（${left} 天）</button></div>`}</section>`;
+  <div class="cal-train"><span class="muted">训练</span><div class="seg sm">${Object.entries(TRAIN).map(([k,v])=>`<button data-act="train" data-arg="${k}" aria-pressed="${S.training===k}" title="${v[1]}">${v[0]}</button>`).join('')}</div><span class="muted cal-hint">${TRAIN[S.training][1]}</span></div>
+  ${today==='match'?'':`<div class="go" style="justify-content:flex-start;margin-top:10px"><button class="btn" data-act="nextDay">进入下一天</button><button class="btn primary" data-act="ff">快进到比赛日（${left} 天）</button></div>`}</section>`;
 }
 function vHome(){
   const f=nextFix(),opp=S.teams[f.opp],ob=bestForm(opp,!f.home);
@@ -81,7 +84,9 @@ function vHome(){
   const os=strength(opp,ob.ids,tacFor(ob.r,rating(ms)),!f.home,0,ob.form);
   const H=S.teams[f.h],A=S.teams[f.a],iss=lineupIssues();
   const hs=f.home?rating(ms):rating(os),as=f.home?rating(os):rating(ms);
-  return `${vEvent()}${vOffer()}${vCalendar()}<section class="panel ${f.cup?'cupmatch':''}"><h2>下一场：${fixLabel(f)}，${f.home?'主场':'客场'}${f.derby?' <span class="tag2 derby">宿敌之战</span>':''}</h2>
+  // events and bids need an answer: first thing on a phone, top of the right column on a wide screen
+  const ask=vEvent()+vOffer();
+  return `${ask?`<div class="narrow-only">${ask}</div>`:''}<div class="cols"><div class="col">${vCalendar()}<section class="panel ${f.cup?'cupmatch':''}"><h2>下一场：${fixLabel(f)}，${f.home?'主场':'客场'}${f.derby?' <span class="tag2 derby">宿敌之战</span>':''}</h2>
   ${f.derby?`<p class="muted" style="margin:-6px 0 8px;font-size:13px">收入翻倍，赢了全队士气高涨 2 场。</p>`:''}${f.cup?`<p class="muted" style="margin:-6px 0 8px;font-size:13px">一场定胜负，平局直接点球大战。</p>`:''}
   <div class="fixture"><div><div class="t disp" style="color:${H.color}">${H.name}</div><div class="str">综合实力 <span class="num">${hs}</span></div></div>
   <div class="vs num">VS</div>
@@ -91,17 +96,11 @@ function vHome(){
   <button class="btn" data-act="tab" data-arg="squad">调整阵容</button>
   ${isMatchDay()?'<button class="btn primary" data-act="play">开始比赛</button>':`<span class="muted" style="font-size:14px">${nextMatchDay()-S.day} 天后开赛</span>`}</div>
   ${iss.length?`<p class="warn" style="text-align:center">${iss.join('；')}，请先去阵容页调整。</p>`:''}</section>
-
-  ${vBoard()}
-  <section class="panel"><h2>训练安排</h2>
-  <div class="seg">${Object.entries(TRAIN).map(([k,v])=>`<button data-act="train" data-arg="${k}" aria-pressed="${S.training===k}">${v[0]}</button>`).join('')}</div>
-  <p class="muted" style="margin:8px 0 0;font-size:14px">${TRAIN[S.training][1]}。</p></section>
-
-  ${vCheat()}
-
+  ${vBoard()}</div>
+  <div class="col">${ask?`<div class="wide-only">${ask}</div>`:''}
   <section class="panel"><h2>俱乐部动态</h2><ul class="news">${S.news.map(n=>`<li><span class="tag">${n.r.replace(/^S\d+ /,'')}</span><span>${n.t}</span></li>`).join('')}</ul></section>
-
-  ${vSavePanel()}`;
+  ${vCheat()}
+  ${vSavePanel()}</div></div>`;
 }
 // this season's board objectives and how we're tracking
 function vBoard(){
@@ -114,12 +113,12 @@ function vBoard(){
 // another club's squad: tap a name for details, or buy straight away at their asking price
 function vTeamPage(tid){
   const t=S.teams[tid],rk=table(t.div).findIndex(r=>r.id===tid)+1,b=bestForm(t,true);
-  const rows=PO.map(pos=>`<div class="group-h">${POS[pos]}</div>`+t.players.filter(p=>p.pos===pos).sort((a,b)=>b.ovr-a.ovr).map(p=>{
+  const rows=PO.map(pos=>`<div class="group-h">${POS[pos]}</div><div class="mlist">`+t.players.filter(p=>p.pos===pos).sort((a,b)=>b.ovr-a.ovr).map(p=>{
     const why=buyBlock(p,t);
     return `<div class="mrow"><div style="min-width:0"><div class="pname"><button class="link" data-act="player" data-arg="${p.id}">${p.name}</button>${p.sig?` <span class="sig" style="display:inline">「${p.sig}」</span>`:''}</div>
       <div class="price">${p.age} 岁，${p.apps} 场 ${p.goals} 球${p.rn?`，评分 ${avgRating(p).toFixed(1)}`:''}${unavail(p)?'，伤停中':''}</div></div>
       <div><div class="ovr num">${p.ovr}</div><div class="potl">${p.age>23?`潜力 ${p.pot}`:'潜力 ?'}</div></div>
-      <button class="btn small primary" data-act="bid" data-arg="${p.id}" ${why?`disabled title="${why}"`:''}>${money(askPrice(p,t))}</button></div>`}).join('')).join('');
+      <button class="btn small primary" data-act="bid" data-arg="${p.id}" ${why?`disabled title="${why}"`:''}>${money(askPrice(p,t))}</button></div>`}).join('')+'</div>').join('');
   return `<section class="panel" style="border-left:6px solid ${t.color}"><h2>${t.name}</h2>
   <p class="muted" style="margin:-4px 0 0;font-size:14px">${DIVS[t.div]}第 ${rk} 名 · 常用阵型 ${b.form} · ${t.players.length} 人${tid===S.rival?' · 宿敌（要价贵 30%）':''}</p></section>
   <section class="panel" style="padding:4px 10px"><p class="muted" style="font-size:13px;margin:8px 0">按钮上是对方要价：主力和核心球员要价更高。阵容不足 16 人或门将只剩 2 个时对方不卖。</p>${rows}</section>`;
@@ -147,15 +146,15 @@ function vPlayer(id){
 // export / load: straight into a chosen folder where the browser allows it, otherwise download / file picker
 function vSavePanel(){
   const dirOK=canPickDir(),F=UI.saveFiles;
-  return `<section class="panel"><h2>存档文件</h2>
-  <p class="muted" style="margin:-4px 0 10px;font-size:14px">${dirOK
+  return `<details class="panel fold" data-fold="${F?'saves-list':'saves'}" ${F?'open':''}><summary><h2>存档文件</h2></summary>
+  <p class="muted" style="margin:0 0 10px;font-size:14px">${dirOK
     ?`已自动保存在这个浏览器里。导出会写进你选的存档文件夹${UI.dirName?`（现在是「${UI.dirName}」）`:'（第一次导出时选一次，例如项目里的 saves 文件夹）'}。`
     :'已自动保存在这个浏览器里。这个浏览器只能把导出文件下载到默认的下载文件夹（Chrome 或 Edge 可以直接存进指定文件夹）。'}</p>
   <div class="go" style="justify-content:flex-start;margin-top:0">
     <button class="btn" data-act="exportSave">${dirOK?'导出到存档文件夹':'导出存档文件'}</button>
     ${dirOK?'<button class="btn" data-act="listSaves">从存档文件夹读取</button><button class="btn small" data-act="pickDir">更换文件夹</button>':''}
     <button class="btn${dirOK?' small':''}" data-act="importSave">从其他位置选择文件</button></div>
-  ${F?vSaveList():''}</section>`;
+  ${F?vSaveList():''}</details>`;
 }
 function vSaveList(){
   const F=UI.saveFiles,time=t=>new Date(t).toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
@@ -178,10 +177,10 @@ function vOffer(){
 }
 const cheatBtn=k=>`<button class="btn small" data-act="cheat" data-arg="${k}">「${CHEAT_INFO[k][0]}」</button>`;
 function vCheat(){
-  if(S.cheatUsed)return `<section class="panel cheat used"><h2>${CHEAT_CARD}</h2><p class="muted" style="margin:0;font-size:14px">封印已解，力量耗尽。下个赛季，它将再度觉醒。</p></section>`;
-  return `<section class="panel cheat"><h2>${CHEAT_CARD} <span class="tag2" style="background:var(--amber);color:#3a2a00">本赛季可发动 1 次</span></h2>
+  if(S.cheatUsed)return `<section class="panel cheat used fold-sum"><h2>${CHEAT_CARD} <span class="muted" style="font-weight:400;font-size:13px">封印已解，下个赛季再度觉醒</span></h2></section>`;
+  return `<details class="panel cheat fold" data-fold="cheat"><summary><h2>${CHEAT_CARD} <span class="tag2" style="background:var(--amber);color:#3a2a00">本赛季可发动 1 次</span></h2></summary>
   ${['heal','scout','cash'].map(k=>`<div class="cheat-row">${cheatBtn(k)}<span class="muted">${CHEAT_INFO[k][1]}</span></div>`).join('')}
-  <div class="cheat-row"><span class="btn small" aria-disabled="true" style="opacity:.5;cursor:default">「${CHEAT_INFO.redo[0]}」</span><span class="muted">${CHEAT_INFO.redo[1]}（终场时发动）</span></div></section>`;
+  <div class="cheat-row"><span class="btn small" aria-disabled="true" style="opacity:.5;cursor:default">「${CHEAT_INFO.redo[0]}」</span><span class="muted">${CHEAT_INFO.redo[1]}（终场时发动）</span></div></details>`;
 }
 // players out on loan: not in the 22, listed on their own with how the loan is going
 function vLoans(){
@@ -201,12 +200,12 @@ function vSquad(){
     return `<div class="group-h">${POS[pos]}（${ps.length}）</div>`+ps.map(p=>`
     <div class="prow ${on.has(p.id)?'on':''} ${unavail(p)?'inj':''}" data-act="toggle" data-arg="${p.id}" role="button" tabindex="0" aria-pressed="${on.has(p.id)}">
       <span class="tick">${on.has(p.id)?'✓':''}</span>
-      <div style="min-width:0"><div class="pname">${p.name}${gem(p)}${p.youth?' <span class="tag2 youth">青训</span>':''}${unproven(p)?` <span class="muted" style="font-size:11px;font-weight:400" title="出场满 ${YOUTH_PROVEN} 场或下赛季开始时出道，之前买家只按当前能力出价">未出道 ${careerApps(p)}/${YOUTH_PROVEN}</span>`:''}</div>
-      <div class="pmeta">${p.age} 岁，${p.apps} 场 ${p.goals} 球${p.rn?`，评分 ${avgRating(p).toFixed(1)}`:''}${p.yc?`，黄牌 ${p.yc}`:''}${p.inj?` <span class="injtag">伤停 ${p.inj} 天</span>`:''}${p.ban?` <span class="injtag">停赛 ${p.ban} 轮</span>`:''}${p.away?` <span class="injtag">探亲 ${p.away} 轮</span>`:''}${p.loan?` <span class="loantag">租借至${p.loan.club} · ${p.lapps||0} 场</span>`:''}${!unavail(p)&&p.cond<60?' <span class="risktag">伤病风险高</span>':''}${retireChance({...p,age:p.age+1})>=.3?` <span class="muted" style="font-size:11px" title="赛季结束时有 ${Math.round(retireChance({...p,age:p.age+1})*100)}% 机会退役">可能退役</span>`:''}</div>
-      ${p.sig?`<div class="sig">必杀「${p.sig}」</div>`:''}</div>
+      <div style="min-width:0"><div class="pname"><button class="link" data-act="player" data-arg="${p.id}">${p.name}</button>${gem(p)}${p.youth?' <span class="tag2 youth">青训</span>':''}${unproven(p)?` <span class="muted" style="font-size:11px;font-weight:400" title="出场满 ${YOUTH_PROVEN} 场或下赛季开始时出道，之前买家只按当前能力出价">未出道 ${careerApps(p)}/${YOUTH_PROVEN}</span>`:''}</div>
+      <div class="pmeta">${p.sig?`<span class="sig" style="display:inline">★</span> `:''}${p.age} 岁，${p.apps} 场 ${p.goals} 球${p.rn?`，评分 ${avgRating(p).toFixed(1)}`:''}${p.yc?`，黄牌 ${p.yc}`:''}${p.inj?` <span class="injtag">伤停 ${p.inj} 天</span>`:''}${p.ban?` <span class="injtag">停赛 ${p.ban} 轮</span>`:''}${p.away?` <span class="injtag">探亲 ${p.away} 轮</span>`:''}${p.loan?` <span class="loantag">租借至${p.loan.club} · ${p.lapps||0} 场</span>`:''}${!unavail(p)&&p.cond<60?' <span class="risktag">伤病风险高</span>':''}${retireChance({...p,age:p.age+1})>=.3?` <span class="muted" style="font-size:11px" title="赛季结束时有 ${Math.round(retireChance({...p,age:p.age+1})*100)}% 机会退役">可能退役</span>`:''}</div>
+</div>
       <div><div class="ovr num">${p.ovr}${gainTag(p)}</div><div class="potl">潜力 ${p.pot}</div></div>
       <div><div class="bar ${p.cond<60?'low':''}"><i style="width:${p.cond}%"></i></div><div class="barlbl">体能 ${p.cond}</div></div>
-      <div class="act"><button class="btn small" data-act="player" data-arg="${p.id}">详情</button> <button class="btn small danger" data-act="sell" data-arg="${p.id}">出售 ${money(sellPrice(p))}</button></div>
+      <div class="act"><button class="btn small danger" data-act="sell" data-arg="${p.id}">出售 ${money(sellPrice(p))}</button></div>
     </div>`).join('');
   }).join('');
   return `<section class="panel"><div class="toolbar">
@@ -218,9 +217,9 @@ function vSquad(){
   <button class="btn" data-act="auto">按 ${S.formation} 自动选人</button>
   ${iss.length?`<span class="warn">${iss[0]}</span>`:'<span class="muted" style="font-size:14px">阵型决定 11 个位置，球场上按位置排</span>'}
   </div></section>
-  ${vPitch()}
-  <section class="panel" style="padding:4px 6px"><h2 style="margin:10px 10px 0">一线队 <span class="muted" style="font-weight:400;font-size:14px">${squadSize()}/22</span></h2>${rows}</section>
-  ${vLoans()}`;
+  <div class="cols squad"><div class="col">${vPitch()}</div>
+  <div class="col"><section class="panel" style="padding:4px 6px"><h2 style="margin:10px 10px 0">一线队 <span class="muted" style="font-weight:400;font-size:14px">${squadSize()}/22 · 点名字看详情</span></h2>${rows}</section>
+  ${vLoans()}</div></div>`;
 }
 // the XI drawn on a pitch, attacking upwards. every slot of the formation gets a spot, so the shape always matches
 // the formation; the tactic pushes the outfield lines up or down; wide slots in back/mid lines of 4+ sit a bit higher
@@ -276,13 +275,13 @@ function vTable(div,switcher=true){
   const RL_MIN=Math.max(1,Math.floor(res.length/2)),rl=S.teams.filter(t=>t.div===div).flatMap(t=>t.players.filter(p=>p.rn>=RL_MIN).map(p=>({p,t}))).sort((a,b)=>avgRating(b.p)-avgRating(a.p)).slice(0,5);
   const pickDiv=switcher?`<div class="seg sm" style="margin-bottom:10px">${DIVS.map((dn,d)=>`<button data-act="div" data-arg="${d}" aria-pressed="${d===div}">${dn}${d===my().div?'（本队）':''}</button>`).join('')}</div>`:'';
   const legend=[div>0?`<span class="zl up">前 ${SWAP} 名升级</span>`:'',div<DIVS.length-1?`<span class="zl down">后 ${SWAP} 名降级</span>`:''].join('');
-  return `<section class="panel"><h2>${DIVS[div]}积分榜</h2>${pickDiv}<div class="tw"><table>
+  return `<div class="cols"><div class="col"><section class="panel"><h2>${DIVS[div]}积分榜</h2>${pickDiv}<div class="tw"><table>
   <thead><tr><th>#</th><th>球队</th><th>场</th><th>胜</th><th>平</th><th>负</th><th>进/失</th><th>积分</th></tr></thead>
   <tbody>${T.map((r,i)=>`<tr class="${r.id===S.my?'me':''} ${zone(div,i+1)}"><td>${i+1}</td><td><span class="dot" style="background:${r.color}"></span>${r.id===S.my?r.name:`<button class="link" data-act="team" data-arg="${r.id}">${r.name}</button>`}${r.id===S.rival?' <span class="tag2 derby">宿敌</span>':''}</td>
-  <td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td><td>${r.gf}:${r.ga}</td><td class="pts">${r.pts}</td></tr>`).join('')}</tbody></table></div><p class="legend">${legend}</p></section>
+  <td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td><td>${r.gf}:${r.ga}</td><td class="pts">${r.pts}</td></tr>`).join('')}</tbody></table></div><p class="legend">${legend}</p></section></div><div class="col">
   ${last?`<section class="panel"><h2>上一轮赛果</h2>${last.map(r=>`<div class="res"><span>${S.teams[r.h].name}</span><span class="num">${r.hg} : ${r.ag}</span><span>${S.teams[r.a].name}</span></div>`).join('')}</section>`:''}
   ${sc.length?`<section class="panel"><h2>射手榜</h2>${sc.map((x,i)=>`<div class="res" style="grid-template-columns:24px 1fr auto"><span class="muted">${i+1}</span><span style="text-align:left">${x.p.name} <span class="muted">${x.t.name}</span></span><span class="num" style="min-width:0">${x.p.goals}</span></div>`).join('')}</section>`:''}
-  ${rl.length?`<section class="panel"><h2>评分榜 <span class="muted" style="font-weight:400;font-size:13px">出场 ${RL_MIN} 场以上</span></h2>${rl.map((x,i)=>`<div class="res" style="grid-template-columns:24px 1fr auto"><span class="muted">${i+1}</span><span style="text-align:left">${x.p.name} <span class="muted">${POS[x.p.pos]}，${x.t.name}</span></span>${rtag(avgRating(x.p))}</div>`).join('')}</section>`:''}`;
+  ${rl.length?`<section class="panel"><h2>评分榜 <span class="muted" style="font-weight:400;font-size:13px">出场 ${RL_MIN} 场以上</span></h2>${rl.map((x,i)=>`<div class="res" style="grid-template-columns:24px 1fr auto"><span class="muted">${i+1}</span><span style="text-align:left">${x.p.name} <span class="muted">${POS[x.p.pos]}，${x.t.name}</span></span>${rtag(avgRating(x.p))}</div>`).join('')}</section>`:''}</div></div>`;
 }
 const gainTag=p=>p.gain>0?`<span class="gain">+${p.gain}</span>`:p.gain<0?`<span class="gain neg">${p.gain}</span>`:'';
 const shownPot=p=>p.scout?p.scout.est:p.pot;
@@ -327,7 +326,7 @@ function vAcademy(){
   <p class="muted" style="margin:-4px 0 10px;font-size:14px">每季送来 ${lv>=3?4:3} 名少年，签入免费，没签的赛季结束后离开。</p>
   <div class="cheat-row">${max?'<span class="muted">已是最高等级</span>':`<button class="btn small" data-act="aup" ${S.budget<cost?'disabled':''}>升到 ${lv+1} 级（${money(cost)}）</button>
   <span class="muted">${lv+1>=3&&lv<3?'3 级起每季多送 1 人，':''}少年能力和潜力更高，报告更准</span>`}</div></section>
-  <section class="panel"><h2>本季青训少年</h2>
+  <div class="cols"><div class="col"><section class="panel"><h2>本季青训少年</h2>
   ${A.intake.length?A.intake.map(p=>`<div class="mrow"><div style="min-width:0"><div class="pname">${p.name}${p.chosen?' <span class="tag2" style="background:#6B3F7A;color:#fff">气息异常</span>':''} <span class="muted" style="font-weight:400">${POS[p.pos]}，${p.age} 岁</span></div>
     <div class="pbar" aria-hidden="true"><i class="p" style="width:${pctR(p.scout.hi)}%"></i><i class="o" style="width:${pctR(p.ovr)}%"></i></div>
     <div class="price">球探${conf[p.scout.conf]}</div></div>
@@ -335,7 +334,7 @@ function vAcademy(){
     <div style="display:flex;flex-direction:column;gap:4px"><button class="btn small primary" data-act="ysign" data-arg="${p.id}" ${squadFull()?'disabled':''}>签入</button><button class="btn small" data-act="yrel" data-arg="${p.id}">放走</button></div></div>`).join('')
   :'<p class="muted" style="margin:0">这一批少年都处理完了，下个赛季会有新人。</p>'}
   ${squadFull()?'<p class="warn">一线队已满 22 人，先卖掉一些人才能签入。</p>':''}</section>
-  <section class="panel"><h2>青训出品</h2>${grads.length?grads.map(p=>`<div class="res" style="grid-template-columns:1fr auto"><span style="text-align:left">${p.name} <span class="muted">${POS[p.pos]}，${p.age} 岁，${p.apps} 场 ${p.goals} 球</span></span><span class="num">${p.ovr}<span class="muted" style="font-size:13px">/${p.pot}</span></span></div>`).join(''):'<p class="muted" style="margin:0">一线队里还没有青训出身的球员。</p>'}</section>`;
+  </div><div class="col"><section class="panel"><h2>青训出品</h2>${grads.length?grads.map(p=>`<div class="res" style="grid-template-columns:1fr auto"><span style="text-align:left">${p.name} <span class="muted">${POS[p.pos]}，${p.age} 岁，${p.apps} 场 ${p.goals} 球</span></span><span class="num">${p.ovr}<span class="muted" style="font-size:13px">/${p.pot}</span></span></div>`).join(''):'<p class="muted" style="margin:0">一线队里还没有青训出身的球员。</p>'}</section></div></div>`;
 }
 function vMarket(){
   const F=UI.mf;
@@ -352,12 +351,12 @@ function vMarket(){
   <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
    <button class="btn small" data-act="scout" ${S.budget<scoutCost()?'disabled':''}>派球探刷新名单（${money(scoutCost())}）</button>
    <span class="muted" style="font-size:13px">显示 ${list.length}/${S.market.length} 人</span></div>
-  ${list.length?list.map(p=>`<div class="mrow"><div style="min-width:0"><div class="pname">${p.name}${gem(p)} ${p.sale?'<span class="tag2 sale">急售半价</span>':''} <span class="muted" style="font-weight:400">${POS[p.pos]}，${p.age} 岁</span></div>
+  ${list.length?'<div class="mlist">'+list.map(p=>`<div class="mrow"><div style="min-width:0"><div class="pname">${p.name}${gem(p)} ${p.sale?'<span class="tag2 sale">急售半价</span>':''} <span class="muted" style="font-weight:400">${POS[p.pos]}，${p.age} 岁</span></div>
   ${p.sig?`<div class="sig">必杀「${p.sig}」</div>`:''}
   <div class="pbar" aria-hidden="true"><i class="p" style="width:${pctR(p.scout?p.scout.hi:p.pot)}%"></i><i class="o" style="width:${pctR(p.ovr)}%"></i></div>
   <div class="price">转会费 ${money(p.price)}${p.scout&&p.scout.conf!=='high'?`<span class="conf">，球探把握${p.scout.conf==='mid'?'一般':'很低'}</span>`:''}</div></div>
   <div><div class="ovr num">${p.ovr}</div><div class="potl">${potText(p)}</div></div>
-  <button class="btn small primary" data-act="buy" data-arg="${p.id}" ${S.budget<p.price||squadFull()?'disabled':''}>签下</button></div>`).join('')
+  <button class="btn small primary" data-act="buy" data-arg="${p.id}" ${S.budget<p.price||squadFull()?'disabled':''}>签下</button></div>`).join('')+'</div>'
   :`<p class="muted">${S.market.length?'没有符合条件的球员，换个筛选试试。':'这一轮的球员都被签走了，打完下一场再来看看。'}</p>`}</section>`;
 }
 const rcls=r=>r>=8?'r-hi':r>=7?'r-ok':r<6?'r-lo':'';
@@ -458,7 +457,7 @@ function vCup(){
   <p style="margin:10px 0 0"><b>本队：</b>${cupStatus()}</p>
   ${C.winner!=null?`<p class="disp" style="font-size:24px;margin:10px 0 0;color:var(--amber)">🏆 ${nm(C.winner)}</p>`:''}</section>
   ${pending}
-  ${C.rounds.map((rd,k)=>`<section class="panel"><h2>${CUP_STAGES[k]}</h2>${rd.map(row).join('')}</section>`).reverse().join('')}`;
+  <div class="grid2">${C.rounds.map((rd,k)=>`<section class="panel"><h2>${CUP_STAGES[k]}</h2>${rd.map(row).join('')}</section>`).reverse().join('')}</div>`;
 }
 function vHonours(){
   const H=S.history,R=S.records;
@@ -466,15 +465,16 @@ function vHonours(){
   const cups=R.filter(r=>r.cup===my().name).length+(S.cup.winner===S.my?1:0);
   const trophies=[['甲级冠军',count(h=>h.div===0&&h.rank===1)],['乙级冠军',count(h=>h.div===1&&h.rank===1)],[`${CUP_NAME}`,cups],['升级',count(h=>h.div===1&&h.rank<=SWAP)],['青训出身（现役）',my().players.filter(p=>p.youth).length]];
   const sc=clubScorers();
-  return `<section class="panel"><h2>奖杯柜</h2><div class="trophies">${trophies.map(([l,n])=>`<div class="trophy ${n?'got':''}"><div class="num">${n}</div><div>${l}</div></div>`).join('')}</div></section>
+  return `<div class="cols"><div class="col"><section class="panel"><h2>奖杯柜</h2><div class="trophies">${trophies.map(([l,n])=>`<div class="trophy ${n?'got':''}"><div class="num">${n}</div><div>${l}</div></div>`).join('')}</div></section>
   <section class="panel"><h2>称号 <span class="muted" style="font-weight:400;font-size:14px">${Object.keys(S.ach).length}/${Object.keys(ACH).length}</span></h2>
   <div class="achs">${Object.entries(ACH).map(([k,[n,d]])=>S.ach[k]
     ?`<div class="ach got"><b>「${n}」</b><span>${d}</span><small>第 ${S.ach[k]} 赛季解锁</small></div>`
     :`<div class="ach"><b>「？？？」</b><span>${d}</span></div>`).join('')}</div></section>
+  </div><div class="col">
   ${(()=>{const won=R.flatMap(r=>(r.awards||[]).flatMap((a,d)=>Object.entries(a).filter(([k,w])=>w&&w.tid===S.my).map(([k,w])=>({r,d,k,w}))));
     return `<section class="panel"><h2>个人奖项</h2>${won.length?won.reverse().map(x=>`<div class="res" style="grid-template-columns:1fr auto"><span style="text-align:left">第 ${x.r.season} 季${DIVS[x.d]}${AWARDS[x.k]}：${x.w.name}</span><span class="muted">${x.w.stat}</span></div>`).join(''):'<p class="muted" style="margin:0">还没有球员拿过个人奖项。</p>'}</section>`})()}
   <section class="panel"><h2>队史射手榜</h2>${sc.length?sc.map((c,i)=>`<div class="res" style="grid-template-columns:24px 1fr auto"><span class="muted">${i+1}</span><span style="text-align:left">${c.name} <span class="muted">${POS[c.pos]}，${c.apps} 场</span></span><span class="num" style="min-width:0">${c.goals}</span></div>`).join(''):'<p class="muted" style="margin:0">还没有人为球队进球。</p>'}</section>
   <section class="panel"><h2>传奇退役</h2>${S.legends.length?S.legends.map(l=>`<div class="res" style="grid-template-columns:1fr auto"><span style="text-align:left">${l.name} <span class="muted">${POS[l.pos]}，第 ${l.season} 季退役${l.seasons?`，效力 ${l.seasons} 季`:''}${l.titles&&l.titles.length?`，${l.titles.length} 座冠军`:''}</span></span><span class="muted">${l.apps} 场 ${l.goals} 球</span></div>`).join(''):`<p class="muted" style="margin:0">在队效力 ${LEGEND_TITLE_SEASONS} 季以上并帮球队夺冠，或效力 ${LEGEND_SEASONS} 季以上的球员，在队退役后会记在这里。</p>`}</section>
   <section class="panel"><h2>历届冠军</h2>${R.length?`<div class="tw"><table><thead><tr><th>季</th><th>甲级</th><th>乙级</th><th>${CUP_NAME}</th><th>本队</th></tr></thead>
-  <tbody>${R.slice().reverse().map(r=>`<tr><td>${r.season}</td><td>${r.champs[0]||'—'}</td><td>${r.champs[1]||'—'}</td><td>${r.cup||'—'}</td><td>${DIVS[r.div]}第 ${r.rank}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted" style="margin:0">打完第一个赛季后，这里会记录每季的冠军。</p>'}</section>`;
+  <tbody>${R.slice().reverse().map(r=>`<tr><td>${r.season}</td><td>${r.champs[0]||'—'}</td><td>${r.champs[1]||'—'}</td><td>${r.cup||'—'}</td><td>${DIVS[r.div]}第 ${r.rank}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted" style="margin:0">打完第一个赛季后，这里会记录每季的冠军。</p>'}</section></div></div>`;
 }

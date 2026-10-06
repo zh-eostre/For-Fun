@@ -332,3 +332,89 @@ tr.down td:first-child{box-shadow:inset 4px 0 var(--red)}
 .goal-no{color:var(--muted);width:14px;display:inline-block}
 .loantag{color:var(--pitch);font-size:12px;font-weight:700}
 .savelist{margin-top:10px;border-top:1px solid var(--line);padding-top:6px;max-height:240px;overflow-y:auto}
+
+/* ---------- compact layout: less scrolling ---------- */
+.wrap{max-width:1180px}
+.matchwrap{max-width:880px}
+.panel{padding:14px;margin-bottom:12px}
+h2{font-size:18px;margin-bottom:8px}
+/* tabs stay on screen so switching pages never needs a scroll back up */
+.tabs{position:sticky;top:0;z-index:15;background:var(--bg);margin:0 -16px 12px;padding:0 16px}
+.club .wrap{padding-top:10px;padding-bottom:8px}
+.club-name{font-size:22px}
+.cash .num{font-size:26px}
+/* two columns on wide screens; one column (in source order) on narrow ones */
+@media (min-width:960px){
+  .cols{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:0 14px;align-items:start}
+  .cols.squad{grid-template-columns:440px minmax(0,1fr)}
+  .mlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:18px}
+  .news{max-height:420px}
+}
+@media (min-width:720px){.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px;align-items:start}}
+/* folding panels */
+details.fold>summary{list-style:none;cursor:pointer;display:flex;align-items:center}
+details.fold>summary::-webkit-details-marker{display:none}
+details.fold>summary h2{margin:0;flex:1}
+details.fold>summary::after{content:"展开 ▾";font-size:12px;color:var(--muted)}
+details.fold[open]>summary::after{content:"收起 ▴"}
+details.fold[open]>summary{margin-bottom:10px}
+.fold-sum h2{margin:0}
+/* training controls inside the calendar */
+.cal-train{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;font-size:13px}
+.cal-hint{font-size:12px}
+/* squad list rows: one line of facts, smaller controls */
+.prow{padding:5px 8px;grid-template-columns:28px minmax(0,1fr) 54px 78px auto;gap:8px}
+.prow .ovr{font-size:24px}
+.prow .pmeta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .act .btn{padding:3px 8px;font-size:12px}
+.tick{width:22px;height:22px}
+.group-h{padding:8px 8px 2px}
+.mrow{padding:7px 4px}
+.fixture .t{font-size:18px}
+.fixture .vs{font-size:28px}
+.days{margin-top:2px}
+.news li{padding:6px 0}
+/* match commentary scrolls in its own box so the scoreboard and controls stay in view */
+.feed{max-height:min(420px,55vh);overflow-y:auto;overscroll-behavior:contain;border:1px solid var(--line);border-radius:8px;padding:0 6px}
+.feed li:first-child{border-top:0}
+@media (max-width:560px){
+  .news{max-height:220px}
+  .prow{grid-template-columns:24px minmax(0,1fr) 46px 58px;row-gap:2px}
+  .prow .act{grid-column:2/-1}
+  .barlbl{display:none}
+  .cal-hint{display:none}
+}
+.wide-only{display:none}
+@media (min-width:960px){.narrow-only{display:none}.wide-only{display:block}}
+@media (max-width:560px){
+  /* one line per player: selling lives on the player page (tap the name) */
+  .prow .act{display:none}
+  .prow{grid-template-columns:24px minmax(0,1fr) 44px 54px}
+  .prow .ovr{font-size:22px}
+  /* header on one line */
+  .club .wrap{flex-wrap:nowrap;gap:10px}
+  .crest{width:34px;height:34px;font-size:18px}
+  .club-name{font-size:18px}
+  .club-meta{font-size:11px}
+  .cash{width:auto;margin-left:auto;text-align:right}
+  .cash .club-meta{display:none}
+  .cash .num{font-size:20px;white-space:nowrap}
+  /* honours: denser tiles */
+  .trophies{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .trophy{padding:6px;font-size:11px}
+  .trophy .num{font-size:24px}
+  .achs{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+  .ach{padding:6px 8px;font-size:12px}
+  .toolbar{gap:8px}
+  .seg button{padding:5px 9px}
+}
+.htgrid{grid-template-columns:minmax(0,360px) minmax(0,1fr)}
+.htgrid .pitch{max-width:360px}
+@media (min-width:960px){.news{max-height:340px}}
+@media (max-width:560px){
+  .htgrid{grid-template-columns:1fr}
+  .htgrid .pitch{max-width:none}
+  .sublist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
+  .sublist .subh{grid-column:1/-1}
+  .board{padding:12px 10px 10px}
+}
