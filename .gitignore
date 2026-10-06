@@ -1,0 +1,3 @@
+.DS_Store
+# personal save files (the folder itself is kept)
+saves/*.json

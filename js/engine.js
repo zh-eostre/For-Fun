@@ -1,0 +1,481 @@
+/* ---------- saves ---------- */
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+// older saves are upgraded one step at a time: MIGRATE[n] turns a v(n) save into v(n+1)
+const MIGRATE={
+  1:d=>d.teams.forEach(t=>t.players.forEach(p=>{p.yc=0;p.ban=0})),
+  // v3 adds 乙级: the old league becomes 甲级, and a new 乙级 is created and caught up to the current round
+  2:d=>{
+    const prev=S;S=d;indexNames();
+    d.teams.forEach(t=>t.div=0);
+    const slots=TEAMS.filter(t=>t.div===1),names=teamNames(slots,d.teams);
+    slots.forEach((t,i)=>d.teams.push({...t,...names[i],id:d.teams.length,players:makeSquad(t.str)}));
+    d.fixtures=[d.fixtures,genFixtures(d.teams.filter(t=>t.div===1).map(t=>t.id))];
+    d.results=[d.results,d.fixtures[1].slice(0,d.round).map(rd=>rd.map(([h,a])=>quickSim(h,a)))];
+    d.history.forEach(h=>h.div=0);
+    S=prev;
+  },
+  // v4 adds the cup, rival, achievements, club history, signature moves; the cup starts next season
+  3:d=>{
+    const prev=S;S=d;
+    Object.assign(d,{cup:{stage:CUP_STAGES.length,ties:[],rounds:[],winner:null,skipped:true},
+      ach:{},streak:0,boost:0,records:[],club:{},legends:[],offer:null,event:null});
+    d.teams.forEach(t=>t.players.forEach(p=>{p.away=0;giveSig(p)}));
+    d.rival=pickRival();
+    S=prev;
+  },
+  // v5 adds the youth academy; the first intake arrives next season
+  4:d=>{d.academy={lv:1,intake:[]}},
+  // v6 turns the lineup into formation slots, keeping the same players where they fit
+  5:d=>{
+    const team=d.teams[d.my],ps=d.lineup.map(id=>team.players.find(p=>p.id===id)).filter(Boolean);
+    d.lineup=arrange(ps,d.formation);
+  },
+  // v7 adds the calendar: an old save resumes on its next match day
+  6:d=>{const prev=S;S=d;d.day=nextMatchDay();d.lastMatchDay=-9;S=prev},
+  // v8 adds the scout department, physio room and training ground
+  7:d=>{d.fac={scout:1,physio:1,ground:1}},
+  // v9 counts injuries in days (an old injury of n matches becomes n weeks)
+  8:d=>d.teams.forEach(t=>t.players.forEach(p=>p.inj=(p.inj||0)*7)),
+  // v10 adds board objectives (loans, ratings and the stadium need no conversion)
+  9:d=>{const prev=S;S=d;setGoals();S=prev},
+  // v11 sends players on loan to clubs outside our divisions instead of a 乙级 club
+  10:d=>d.teams[d.my].players.forEach(p=>{if(p.loan&&typeof p.loan.club==='number')p.loan={...loanHost(p),ovr0:p.loan.ovr0??p.ovr}})
+};
+function upgrade(d){
+  if(!d||!Array.isArray(d.teams)||typeof d.my!=='number'||!(d.v>=1&&d.v<=SAVE_V))return null;
+  while(d.v<SAVE_V){MIGRATE[d.v](d);d.v++}
+  return d;
+}
+function load(){try{const t=localStorage.getItem(KEY);if(t)return upgrade(JSON.parse(t))}catch(e){}return null}
+
+/* ---------- players & league ---------- */
+function rawName(){
+  const r=rng();
+  if(r<.4)return pick(SUR)+pick(GIV);
+  if(r<.78)return pick(MALAY_F)+'·'+pick(MALAY_L);
+  if(r<.88)return pick(INDIAN_F)+'·'+pick(INDIAN_L);
+  if(r<.96)return pick(WEST_F)+'·'+pick(WEST_L);
+  return pick(ASIA);
+}
+// retries until the name is new to the league (gives up after a while rather than loop forever)
+function genName(){
+  let n=rawName();
+  for(let i=0;i<30&&usedNames.has(n);i++)n=rawName();
+  usedNames.add(n);return n;
+}
+function indexNames(){usedNames=new Set([...S.teams.flatMap(t=>t.players),...(S.market||[]),...(S.academy?S.academy.intake:[])].map(p=>p.name))}
+// one random name per slot, skipping cities and nicknames already used by the clubs in `taken`
+function teamNames(slots=TEAMS,taken=[]){
+  const c=shuffle(CITY.filter(x=>!taken.some(t=>t.name.startsWith(x)))),n=shuffle(NICK.filter(x=>!taken.some(t=>t.short===x)));
+  return slots.map((t,i)=>({name:c[i]+n[i],short:n[i]}));
+}
+const startBudget=t=>t.div?150+(60-t.str)*20:250+(75-t.str)*25;
+function makePlayer(pos,base,age){
+  age=age||ri(18,33);
+  const ovr=clamp(Math.round(base+rnd(-6,6)),38,90);
+  const pot=age<24?clamp(ovr+ri(3,14),ovr,92):ovr;
+  return giveSig({id:S.pid++,name:genName(),pos,ovr,age,pot,cond:100,inj:0,ban:0,away:0,yc:0,goals:0,apps:0});
+}
+function giveSig(p){if(!p.sig&&p.ovr>=SIG_OVR)p.sig=pick(SIG_A)+'·'+pick(SIG_B);return p}
+function awaken(p){
+  const a=ri(2,4);p.pot=Math.min(95,p.pot+ri(4,8));p.ovr=Math.min(p.pot,p.ovr+a);p.gain=(p.gain||0)+a;giveSig(p);
+}
+function value(p){const f=p.age<=23?1.3:p.age<=30?1:p.age<=32?.7:.45,r=p.age<=23?p.ovr*.6+p.pot*.4:p.ovr;return Math.max(5,Math.round(((r-35)**2)/6*f))}
+// what buyers pay: academy kids who haven't proven themselves in the first team are valued on ability alone
+// first-team matches for us plus loan matches elsewhere, this season and banked from earlier ones
+const careerApps=p=>{const c=S.club&&S.club[p.id]||{};return p.apps+(p.lapps||0)+(c.apps||0)+(c.lapps||0)};
+// joined = the season he entered the first team; saves from before this field count from the current season
+const unproven=p=>p.youth&&careerApps(p)<YOUTH_PROVEN&&(p.joined??S.season)>=S.season;
+const marketValue=p=>unproven(p)?clamp(Math.round((p.ovr-35)*1.2),5,40):value(p);
+const sellPrice=p=>Math.round(marketValue(p)*.85);
+function makeSquad(str){
+  const arr=[],starters={GK:1,DF:4,MF:4,FW:2},n={GK:2,DF:5,MF:5,FW:4};
+  PO.forEach(pos=>{for(let i=0;i<n[pos];i++)arr.push(makePlayer(pos,str+(i<starters[pos]?2:-5)))});
+  return arr;
+}
+// double round robin for one division's team ids
+function genFixtures(teamIds){
+  const ids=shuffle(teamIds),n=ids.length,rounds=[];
+  for(let r=0;r<n-1;r++){
+    const m=[];
+    for(let i=0;i<n/2;i++){let a=ids[i],b=ids[n-1-i];if((r+i)%2)[a,b]=[b,a];m.push([a,b])}
+    rounds.push(m);ids.splice(1,0,ids.pop());
+  }
+  return rounds.concat(rounds.map(rd=>rd.map(([a,b])=>[b,a])));
+}
+const my=()=>S.teams[S.my];
+const findP=id=>my().players.find(p=>p.id===id);
+const eff=p=>p.ovr*(.84+.16*p.cond/100);
+// inj = days until fit again; ban / away = matches still to sit out
+const unavail=p=>p.inj>0||p.ban>0||p.away>0||!!p.loan;
+/* ---------- lineups are 11 formation slots ----------
+   a lineup is an array with one entry per slot of the formation (GK first, then DF, MF, FW); an entry is a
+   player id, or null when the slot is empty or its player was sent off. the slot decides the role he plays */
+const slotRoles=form=>PO.flatMap(pos=>Array(FORMS[form][pos]).fill(pos));
+// how well a player suits a role: own position 1, another outfield line .85, keeper <-> outfield .5
+const fit=(p,role)=>p.pos===role?1:p.pos==='GK'||role==='GK'?.5:OOP;
+const onPitch=(team,ids)=>ids.map(id=>id==null?null:team.players.find(p=>p.id===id)||null);
+const pickOn=ids=>pick(ids.filter(id=>id!=null));
+const keeper=(team,ids)=>ids[0]==null?null:team.players.find(x=>x.id===ids[0]);
+// distance between lines (DF-MF 1, DF-FW 2): a stand-in comes from the nearest line
+const lineGap=(a,b)=>Math.abs(PO.indexOf(a)-PO.indexOf(b));
+// best stand-in for an outfield role from players listed in order of preference
+const standIn=(list,role)=>list.filter(p=>p.pos!=='GK').sort((a,b)=>lineGap(a.pos,role)-lineGap(b.pos,role))[0];
+// fills the formation's slots from players in order of preference: own position first, then the nearest line.
+// with no keeper available, the best remaining outfield player goes in goal rather than leaving it empty
+function arrange(players,form){
+  const roles=slotRoles(form),slots=Array(roles.length).fill(null),left=[...players];
+  roles.forEach((r,i)=>{const k=left.findIndex(p=>p.pos===r);if(k>=0)slots[i]=left.splice(k,1)[0].id});
+  roles.forEach((r,i)=>{if(slots[i]!=null||r==='GK')return;const p=standIn(left,r);if(p){left.splice(left.indexOf(p),1);slots[i]=p.id}});
+  if(slots[0]==null&&left.length)slots[0]=left.splice(0,1)[0].id;
+  roles.forEach((r,i)=>{if(slots[i]==null&&left.length)slots[i]=left.splice(0,1)[0].id});  // last resort: a spare keeper outfield
+  return slots;
+}
+function autoPick(team,form){return arrange(team.players.filter(p=>!unavail(p)).sort((a,b)=>eff(b)-eff(a)),form)}
+
+function strength(team,ids,tac,home,bonus=0,form='4-4-2'){
+  const roles=slotRoles(form),g={GK:[],DF:[],MF:[],FW:[]};let n=0;
+  onPitch(team,ids).forEach((p,i)=>{if(p){n++;g[roles[i]].push(eff(p)*fit(p,roles[i]))}});
+  const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:30;
+  const gk=g.GK.length?g.GK[0]:25,d=avg(g.DF),m=avg(g.MF),f=avg(g.FW);
+  let atk=f*.5+m*.4+d*.1+(g.FW.length-2)*2+(g.MF.length-4)*.8;
+  let def=d*.5+gk*.3+m*.2+(g.DF.length-4)*2+(g.MF.length-4)*.8;
+  if(tac==='att'){atk+=4;def-=4}else if(tac==='def'){atk-=4;def+=4}
+  if(home){atk+=1.5;def+=1}
+  const miss=11-n;atk-=miss*6-bonus;def-=miss*6-bonus;
+  return {atk,def};
+}
+const xgMin=(A,B)=>clamp(1.15*Math.exp((A.atk-B.def)/15),.2,3.5)/90;
+const rating=s=>Math.round((s.atk+s.def)/2);
+
+// who scores depends on the role he's playing, not his natural position
+function scorer(team,ids,form='4-4-2'){
+  const w={FW:5,MF:2.2,DF:.6,GK:.02},roles=slotRoles(form);
+  const ps=onPitch(team,ids).map((p,i)=>p&&{p,w:w[roles[i]]*p.ovr}).filter(Boolean);
+  let r=rng()*ps.reduce((s,x)=>s+x.w,0);
+  for(const x of ps){r-=x.w;if(r<=0)return x.p}
+  return ps[0].p;
+}
+/* ---------- match ratings ---------- */
+// a 3.0-10.0 rating: starts from ability and the result, then what he did (ev: g goals, sig signature goals,
+// sv saves, miss, yc, red) and, for the back line, goals conceded. part-timers (subbed on or off) drift less from 6
+function rate(p,role,ev={},gf,ga,full){
+  let r=6+(p.ovr-65)/25+(gf>ga?.4:gf<ga?-.4:0)+(rng()-.5)*.6
+    +(ev.g||0)*(role==='FW'?.9:1.1)+(ev.sig||0)*.2+(ev.sv||0)*.35-(ev.miss||0)*.15-(ev.yc||0)*.3-(ev.red||0)*1.5;
+  if(role==='GK')r+=ga?-.25*ga:.8;else if(role==='DF')r+=ga?-.15*ga:.5;else if(role==='MF'&&!ga)r+=.2;
+  if(!full)r=6+(r-6)*.6;
+  return Math.round(clamp(r,3,10)*10)/10;
+}
+// rates everyone who played for one side, adds it to their season totals (rs sum, rn count), best first
+function rateSide(team,played,roleOf,ev,gf,ga,part=[]){
+  return played.map(id=>{
+    const p=id!=null&&team.players.find(x=>x.id===id);if(!p)return null;
+    const role=roleOf[id]||p.pos,r=rate(p,role,ev[id],gf,ga,!part.includes(id));
+    p.rs=(p.rs||0)+r;p.rn=(p.rn||0)+1;
+    return {p,r,role};
+  }).filter(Boolean).sort((a,b)=>b.r-a.r);
+}
+const roleMap=(ids,form)=>{const roles=slotRoles(form),m={};ids.forEach((id,i)=>{if(id!=null)m[id]=roles[i]});return m};
+const avgRating=p=>p.rn?p.rs/p.rn:0;
+// ball possession share for the home side, from midfield control and tactics
+function possession(H,hi,hf,ht,A,ai,af,at){
+  const mid=(t,ids,f)=>{const roles=slotRoles(f);return onPitch(t,ids).reduce((s,p,i)=>s+(p?eff(p)*fit(p,roles[i])*(roles[i]==='MF'?1:.3):0),0)};
+  const mh=mid(H,hi,hf),ma=mid(A,ai,af),tb=t=>t==='att'?3:t==='def'?-3:0;
+  return Math.round(clamp(50+(mh-ma)/(mh+ma)*150+tb(ht)-tb(at),30,70));
+}
+
+// injury chance for one player this minute: tired legs break more easily
+const injRisk=p=>INJ_RATE*(p.cond>=80?.6:p.cond>=60?1:p.cond>=45?1.8:2.6);
+// books a random player on the pitch; yc tracks yellows within this match.
+// a second yellow sends him off (his slot becomes null) and YC_BAN yellows over the season earn a ban
+function booking(team,ids,yc){
+  const p=team.players.find(x=>x.id===pickOn(ids));if(!p)return null;
+  if(yc[p.id]){ids[ids.indexOf(p.id)]=null;p.ban=Math.max(p.ban,1);return {p,red:true}}
+  yc[p.id]=1;p.yc++;
+  if(p.yc>=YC_BAN){p.yc=0;p.ban=Math.max(p.ban,1);return {p,banned:true}}
+  return {p};
+}
+// growth multiplier: young players and those far below their potential improve faster
+const growF=p=>(p.age<=21?1.3:1)*clamp((p.pot-p.ovr)/8,.5,2);
+// xi = everyone who played this match; anyone banned or away who sat it out has now served a match.
+// our squad only takes the match itself here (fatigue, match growth); rest and training happen day by day.
+// AI clubs have no calendar, so their recovery and training are folded into each match
+function afterMatch(team,xi,isMy){
+  const grown=[],awoken=[];
+  if(isMy)team.players.forEach(p=>p.gain=0);
+  team.players.forEach(p=>{
+    const played=xi.includes(p.id);
+    if(played){p.cond-=ri(12,18);p.apps++}
+    if(!isMy)p.cond+=DAY_REST+5*TRAIN_DAY.normal.cond;  // the same as one of our weeks with normal training
+    p.cond=clamp(p.cond,30,100);
+    if(!isMy&&p.inj>0)p.inj=Math.max(0,p.inj-7);  // our injuries heal day by day in advanceDay
+    if(p.ban>0&&!played)p.ban--;
+    if(p.away>0&&!played)p.away--;
+    if(p.ovr<p.pot){
+      const ch=isMy?(played?MATCH_GROW:0):.17;
+      if(ch&&rng()<ch*growF(p)){p.ovr++;if(isMy){grown.push(p);p.gain=(p.gain||0)+1}}
+    }
+    if(p.age<=23&&p.pot<95&&rng()<AWAKEN){awaken(p);if(isMy)awoken.push(p)}
+    giveSig(p);
+  });
+  return {grown,awoken};
+}
+// AI clubs line up in whichever formation rates best with the players they have
+function bestForm(team,home){
+  let best=null;
+  for(const form of Object.keys(FORMS)){
+    const ids=autoPick(team,form),r=rating(strength(team,ids,'bal',home,0,form));
+    if(!best||r>best.r)best={form,ids,r};
+  }
+  return best;
+}
+// and pick a tactic from how they compare: clearly stronger go for it, clearly weaker sit deep
+const tacFor=(mine,theirs)=>mine>theirs+3?'att':mine<theirs-3?'def':'bal';
+function quickSim(h,a){
+  const H=S.teams[h],A=S.teams[a],bh=bestForm(H,true),ba=bestForm(A,false),th=tacFor(bh.r,ba.r),ta=tacFor(ba.r,bh.r);
+  const hx=bh.ids,ax=ba.ids,hi=[...hx],ai=[...ax],yc={},ev={};
+  const e=id=>ev[id]||(ev[id]={}),book=b=>{if(b)e(b.p.id)[b.red?'red':'yc']=1};
+  let hg=0,ag=0;const hurt=[];
+  const injure=(t,ids)=>{const p=t.players.find(x=>x.id===pickOn(ids));if(p&&!hurt.includes(p)&&rng()<injRisk(p))hurt.push(p)};
+  for(let i=0;i<90;i++){
+    const sh=strength(H,hi,th,true,0,bh.form),sa=strength(A,ai,ta,false,0,ba.form);
+    if(rng()<xgMin(sh,sa)){hg++;const p=scorer(H,hi,bh.form);p.goals++;e(p.id).g=(e(p.id).g||0)+1}
+    if(rng()<xgMin(sa,sh)){ag++;const p=scorer(A,ai,ba.form);p.goals++;e(p.id).g=(e(p.id).g||0)+1}
+    if(rng()<CARD)book(booking(H,hi,yc));
+    if(rng()<CARD)book(booking(A,ai,yc));
+    injure(H,hi);injure(A,ai);
+  }
+  afterMatch(H,hx,false);afterMatch(A,ax,false);
+  hurt.forEach(p=>p.inj=pick(INJ_DAYS));
+  rateSide(H,hx,roleMap(hx,bh.form),ev,hg,ag);rateSide(A,ax,roleMap(ax,ba.form),ev,ag,hg);
+  return {h,a,hg,ag};
+}
+
+/* ---------- transfer market ---------- */
+// over-23s are always read right; for younger players the scout department's level sets how often the report is
+// confident and how far off it can be. force = {conf, est} sets the report directly (hidden gems, academy kids)
+function scoutReport(p,force){
+  let conf='high',est=p.pot,w=0;
+  if(force){conf=force.conf;est=force.est;w=conf==='high'?0:conf==='mid'?3:6}
+  else if(p.age<=23){
+    const sh=scoutShare(),e=scoutErr(),r=rng();
+    conf=r<sh.high?'high':r<1-sh.low?'mid':'low';
+    if(conf!=='high'){const m=e[conf];est=p.pot+ri(-m,m);w=Math.max(1,m-(conf==='mid'?1:2))}
+  }
+  est=clamp(est,p.ovr,94);
+  p.scout={conf,est,lo:Math.max(p.ovr,est-w),hi:Math.min(95,est+w)};
+  p.price=Math.round(value({...p,pot:est})*1.15);
+}
+function refreshMarket(){
+  S.market=[];const n=marketSize();
+  for(let i=0;i<n;i++){
+    const pos=pick(['GK','DF','DF','DF','MF','MF','MF','FW','FW','FW']);
+    let p;
+    if(i<3){p=makePlayer(pos,ri(50,64),ri(17,20));p.pot=ri(80,92)}
+    else p=makePlayer(pos,ri(52,80),ri(18,33));
+    scoutReport(p);S.market.push(p);
+  }
+  if(rng()<gemChance()){
+    const g=S.market[ri(0,n-1)],ng=makePlayer(pick(['DF','MF','FW']),ri(50,58),ri(17,19));
+    ng.pot=ri(88,93);scoutReport(ng,{conf:'low',est:ri(72,77)});S.market[S.market.indexOf(g)]=ng;
+  }
+  if(rng()<.45){
+    const c=S.market.filter(p=>p.scout.conf!=='low'&&p.age>=22);
+    if(c.length){const x=pick(c);x.price=Math.round(x.price*.5);x.sale=true}
+  }
+}
+// AI clubs shop too: starting from their weakest starter, sign a clearly better market player at that position.
+// the str+6 ceiling keeps each club near its own level so the league doesn't inflate over seasons
+function aiSign(t){
+  const xi=onPitch(t,autoPick(t,'4-4-2')).filter(Boolean).sort((x,y)=>x.ovr-y.ovr);
+  for(const w of xi){
+    const c=S.market.filter(p=>p.pos===w.pos&&p.ovr>=w.ovr+3&&p.ovr<=t.str+6).sort((x,y)=>y.ovr-x.ovr)[0];
+    if(!c)continue;
+    S.market=S.market.filter(x=>x!==c);delete c.price;delete c.scout;delete c.sale;
+    t.players.push(c);
+    if(t.players.length>20){
+      const drop=t.players.filter(p=>p.pos===c.pos&&p!==c).sort((x,y)=>x.ovr-y.ovr||y.age-x.age)[0];
+      if(drop)t.players=t.players.filter(p=>p!==drop);
+    }
+    return `${t.name}签下${c.name}（${POS[c.pos]}，能力 ${c.ovr}）`;
+  }
+  return null;
+}
+function aiWindow(chance){
+  const done=S.teams.filter(t=>t.id!==S.my&&rng()<chance).map(aiSign).filter(Boolean);
+  if(done.length)news(`其他球队转会动态：${done.join('；')}。`);
+}
+let NEWS_TAG=null;  // set while a cup match is being wrapped up, so its news is labelled with the cup stage
+function news(t){S.news.unshift({r:`S${S.season} ${NEWS_TAG||`第${Math.min(S.round+1,ROUNDS)}轮`}`,t});S.news=S.news.slice(0,30)}
+
+const divIds=div=>S.teams.filter(t=>t.div===div).map(t=>t.id);
+const newFixtures=()=>DIVS.map((_,div)=>genFixtures(divIds(div)));
+function newGame(id,names){
+  S={v:SAVE_V,pid:1,season:1,round:0,my:id,formation:'4-4-2',tactic:'bal',training:'normal',news:[],history:[],
+    ach:{},streak:0,boost:0,records:[],club:{},legends:[],offer:null,event:null,academy:{lv:1,intake:[]},day:0,lastMatchDay:-9,fac:{scout:1,physio:1,ground:1}};
+  usedNames=new Set();
+  S.teams=TEAMS.map((t,i)=>({...t,...names[i],id:i,players:makeSquad(t.str)}));
+  S.fixtures=newFixtures();S.results=DIVS.map(()=>[]);S.cup=newCup();S.rival=pickRival();
+  S.budget=startBudget(TEAMS[id]);
+  S.lineup=autoPick(my(),S.formation);
+  refreshMarket();
+  news(`你正式成为${my().name}的主教练。董事会给了你 ${money(S.budget)} 的预算。`);
+  news(`宿敌：${S.teams[S.rival].name}。与他们的对决，收入翻倍，赢了全队士气高涨。`);
+  newIntake();setGoals();
+  save();UI={tab:'home',view:'main',mf:{...MF0}};render();
+}
+
+function table(div=my().div){
+  const T=S.teams.filter(t=>t.div===div).map(t=>({id:t.id,name:t.name,color:t.color,p:0,w:0,d:0,l:0,gf:0,ga:0,pts:0})),by={};
+  T.forEach(r=>by[r.id]=r);
+  S.results[div].flat().forEach(r=>{
+    const h=by[r.h],a=by[r.a];h.p++;a.p++;h.gf+=r.hg;h.ga+=r.ag;a.gf+=r.ag;a.ga+=r.hg;
+    if(r.hg>r.ag){h.w++;a.l++;h.pts+=3}else if(r.hg<r.ag){a.w++;h.l++;a.pts+=3}else{h.d++;a.d++;h.pts++;a.pts++}
+  });
+  return T.sort((x,y)=>y.pts-x.pts||(y.gf-y.ga)-(x.gf-x.ga)||y.gf-x.gf);
+}
+const myRank=()=>table().findIndex(t=>t.id===S.my)+1;
+// 'up', 'down' or '' for a finishing position in a division
+const zone=(div,rank)=>div>0&&rank<=SWAP?'up':div<DIVS.length-1&&rank>8-SWAP?'down':'';
+// the next match: a cup tie when one is due and we're still in it, otherwise the league round
+function nextFix(){
+  const cup=cupDue()&&inCup();
+  const m=cup?S.cup.ties.find(t=>t.includes(S.my)):S.fixtures[my().div][S.round].find(m=>m.includes(S.my));
+  const opp=m[0]===S.my?m[1]:m[0];
+  return {h:m[0],a:m[1],home:m[0]===S.my,opp,cup,derby:opp===S.rival};
+}
+const fixLabel=f=>f.cup?`${CUP_NAME}·${CUP_STAGES[S.cup.stage]}`:`联赛第 ${S.round+1} 轮`;
+function lineupIssues(){
+  const ps=S.lineup.map(id=>id==null?null:findP(id)),n=ps.filter(Boolean).length,iss=[];
+  // fewer than 11 is only allowed when nobody else is fit to play, and never below the 7 the rules require
+  const spare=my().players.some(p=>!unavail(p)&&!S.lineup.includes(p.id));
+  if(n<7)iss.push(`可上场的球员不足 7 人，比赛无法进行`);
+  else if(n<11&&spare)iss.push(`首发需要 11 人，现在是 ${n} 人`);
+  if(ps.some(p=>p&&unavail(p)))iss.push('首发里有受伤、停赛或请假的球员');
+  if(!ps[0])iss.push('门将位置空着');
+  return iss;
+}
+const lineupCount=()=>S.lineup.filter(id=>id!=null&&findP(id)).length;
+// players in our lineup playing outside their own position
+const outOfPos=()=>{const roles=slotRoles(S.formation);return S.lineup.map((id,i)=>{const p=id!=null&&findP(id);return p&&p.pos!==roles[i]?p:null}).filter(Boolean)};
+// after a match: empty the slots of anyone now unavailable, and if the XI was full, refill those slots
+function fixLineup(){
+  const full=lineupCount()===11;
+  S.lineup=S.lineup.map(id=>{const p=id!=null&&findP(id);return p&&!unavail(p)?id:null});
+  if(full)fillSlots();
+}
+// puts the best free players into empty slots: own position first, then any outfield slot
+function fillSlots(){
+  const roles=slotRoles(S.formation),free=()=>my().players.filter(p=>!unavail(p)&&!S.lineup.includes(p.id)).sort((a,b)=>eff(b)-eff(a));
+  roles.forEach((r,i)=>{if(S.lineup[i]==null){const p=free().find(x=>x.pos===r);if(p)S.lineup[i]=p.id}});
+  roles.forEach((r,i)=>{if(S.lineup[i]==null&&r!=='GK'){const p=standIn(free(),r);if(p)S.lineup[i]=p.id}});
+  if(S.lineup[0]==null){const p=free()[0];if(p)S.lineup[0]=p.id}  // emergency keeper
+  roles.forEach((r,i)=>{if(S.lineup[i]==null){const p=free()[0];if(p)S.lineup[i]=p.id}});  // last resort: a spare keeper outfield
+}
+// a player joins the XI: into the given slot, else an empty slot of his position, else any empty outfield slot
+function placeInLineup(p,slot){
+  const roles=slotRoles(S.formation);
+  if(slot==null)slot=roles.findIndex((r,i)=>S.lineup[i]==null&&r===p.pos);
+  if(slot<0)slot=roles.findIndex((r,i)=>S.lineup[i]==null&&(r!=='GK'||p.pos==='GK'));
+  if(slot<0)return false;
+  S.lineup[slot]=p.id;return true;
+}
+const dropFromLineup=id=>S.lineup=S.lineup.map(x=>x===id?null:x);
+
+/* ---------- season ---------- */
+// good players keep going longer: 75+ at 40% of the base chance, 70-74 at 70%, under 60 at 130%
+function retireChance(p){
+  if(p.age>=40)return 1;
+  const base=RETIRE_AGE[p.age]||0;
+  return Math.min(1,base*(p.ovr>=75?.4:p.ovr>=70?.7:p.ovr<60?1.3:1));
+}
+function expectedRank(){return S.teams.filter(t=>t.div===my().div).sort((a,b)=>b.str-a.str).findIndex(t=>t.id===S.my)+1}
+const prizeFor=(div,rank)=>(div?PRIZE2:PRIZE)[rank-1];
+function newSeason(){
+  const div=my().div,rank=myRank(),prize=prizeFor(div,rank);
+  S.history.push({season:S.season,div,rank,pts:table()[rank-1].pts});
+  S.budget+=prize;
+  recordSeason(div,rank);
+  payGoals(div);
+  endLoans();
+  // promotion and relegation between neighbouring divisions
+  const moves=[];
+  DIVS.forEach((_,d)=>table(d).forEach((r,i)=>{const z=zone(d,i+1);if(z)moves.push({t:S.teams[r.id],z})}));
+  moves.forEach(({t,z})=>{t.div+=z==='up'?-1:1;t.str+=z==='up'?SWAP_STR:-SWAP_STR});
+  const names=z=>moves.filter(m=>m.z===z).map(m=>m.t.name).join('、');
+  const retired=[];
+  S.teams.forEach(t=>{
+    t.players.forEach(p=>{
+      if(t.id===S.my)(p.hist=p.hist||[]).push({s:S.season,o:p.ovr});
+      const old=p.ovr;p.age++;
+      if(p.age<=23)p.ovr=Math.min(p.pot,p.ovr+ri(1,clamp(Math.round((p.pot-p.ovr)/3),2,6)));
+      else if(p.age<=32)p.ovr+=ri(-1,1);  // peak years: holds steady until 33
+      else if(p.age<=34)p.ovr-=ri(1,3);
+      else p.ovr-=ri(2,5);
+      p.ovr=clamp(p.ovr,35,92);p.pot=Math.max(p.pot,p.ovr);
+      p.cond=100;p.inj=0;p.ban=0;p.away=0;p.yc=0;p.goals=0;p.apps=0;p.lapps=0;p.rs=0;p.rn=0;p.gain=p.ovr-old;giveSig(p);
+    });
+    const out=t.players.filter(p=>rng()<retireChance(p));
+    if(t.id===S.my)out.forEach(p=>{retired.push(p.name);retireLegend(p)});
+    t.players=t.players.filter(p=>!out.includes(p));
+    const minN=t.id===S.my?15:16;
+    while(t.players.length<minN){
+      const counts={GK:0,DF:0,MF:0,FW:0};t.players.forEach(p=>counts[p.pos]++);
+      const pos=counts.GK<2?'GK':counts.DF<5?'DF':counts.MF<5?'MF':'FW';
+      const y=makePlayer(pos,t.str-10,ri(17,19));y.pot=clamp(y.ovr+ri(10,22),y.ovr,90);if(t.id===S.my){y.youth=true;y.joined=S.season+1}t.players.push(y);
+      if(t.id===S.my)news(`青训球员 ${y.name}（${POS[pos]}，${y.age} 岁）升入一线队。`);
+    }
+  });
+  S.season++;S.round=0;S.results=DIVS.map(()=>[]);S.fixtures=newFixtures();S.cheatUsed=false;S.cup=newCup();S.day=0;S.lastMatchDay=-9;
+  if(S.teams[S.rival].div!==my().div){S.rival=pickRival();news(`新的宿敌出现了：${S.teams[S.rival].name}。`)}
+  // summer window: every AI club gets one shot at the market, then the player sees a fresh list
+  refreshMarket();aiWindow(1);refreshMarket();
+  S.lineup=autoPick(my(),S.formation);
+  news(`升级：${names('up')}。降级：${names('down')}。`);
+  const mz=moves.find(m=>m.t.id===S.my);
+  news(`新赛季开始！上赛季${DIVS[div]}第 ${rank}，获得奖金 ${money(prize)}。${mz?mz.z==='up'?`球队升入${DIVS[my().div]}！`:`球队降入${DIVS[my().div]}。`:''}`);
+  if(retired.length)news(`退役：${retired.join('、')}。`);
+  setGoals();
+  if(S.academy.intake.length)news(`上一批没有签下的 ${S.academy.intake.length} 名青训少年离开了。`);
+  newIntake();
+  if(my().players.some(p=>p.youth&&p.ovr>=75))unlock('academy');
+  if(mz&&mz.z==='up'&&div===1)unlock('promo');
+  if(S.history.length>=5)unlock('vet');
+  save();UI.tab='home';render();
+}
+
+/* ---------- calendar ---------- */
+// our known upcoming matches: the remaining league rounds, plus the current cup tie if we're still in
+function matchDays(){
+  const list=[];
+  for(let r=S.round;r<ROUNDS;r++)list.push({day:leagueDay(r),cup:false,r});
+  if(inCup()&&S.cup.stage<CUP_STAGES.length)list.push({day:cupDay(S.cup.stage),cup:true,k:S.cup.stage});
+  return list.sort((a,b)=>a.day-b.day);
+}
+const nextMatchDay=()=>cupDue()&&inCup()?cupDay(S.cup.stage):leagueDay(S.round);
+const isMatchDay=()=>S.round<ROUNDS&&S.day===nextMatchDay();
+// 'match', 'rest' (the day after one of our matches) or 'train'
+function dayType(d,days=matchDays()){
+  if(days.some(m=>m.day===d))return 'match';
+  if(S.lastMatchDay===d-1||days.some(m=>m.day===d-1))return 'rest';
+  return 'train';
+}
+const dayLabel=d=>`第 ${Math.floor(d/7)+1} 周${WEEKDAYS[d%7]}`;
+// moves one day forward: a rest day restores stamina; a training day follows the training setting.
+// injured players rest instead of training. cup ties we're not part of are played on their own date
+function advanceDay(log){
+  if(S.round>=ROUNDS||S.day>=nextMatchDay())return false;
+  S.day++;
+  const type=dayType(S.day),mode=type==='rest'?{cond:restAmt(),grow:0}:TRAIN_DAY[S.training];
+  if(type!=='match')my().players.forEach(p=>{
+    const before=p.cond;
+    const wasHurt=p.inj>0;
+    p.cond=clamp(p.cond+(wasHurt?restAmt():mode.cond),30,100);
+    if(wasHurt&&--p.inj===0)(log.healed||(log.healed=[])).push(p);
+    log.cond+=p.cond-before;
+    if(mode.grow&&!p.inj&&!p.away&&p.ovr<p.pot&&rng()<mode.grow*growF(p)*groundMult()){p.ovr++;p.gain=(p.gain||0)+1;giveSig(p);log.trained.push(p)}
+  });
+  log.days++;
+  while(cupDue()&&!inCup()&&S.day>=cupDay(S.cup.stage))playCupStage(null);
+  return true;
+}
