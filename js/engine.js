@@ -198,7 +198,7 @@ const rating=s=>Math.round((s.atk+s.def)/2);
 
 // who scores depends on the role he's playing, not his natural position
 function scorer(team,ids,form='4-4-2'){
-  const w={FW:5,AM:3.5,MF:2.2,DM:.8,DF:.6,GK:.02},lines=slotLines(form);
+  const w={FW:5.5,AM:3.3,MF:2,DM:.8,DF:.6,GK:.02},lines=slotLines(form);
   const ps=onPitch(team,ids).map((p,i)=>p&&{p,w:w[lines[i]]*p.ovr}).filter(Boolean);
   let r=rng()*ps.reduce((s,x)=>s+x.w,0);
   for(const x of ps){r-=x.w;if(r<=0)return x.p}
@@ -208,7 +208,7 @@ function scorer(team,ids,form='4-4-2'){
 // and then, keepers almost never; better players more often. never the scorer himself
 function assister(team,ids,form,sc){
   if(rng()>=.78)return null;
-  const w={AM:4.2,MF:3,DM:2.2,FW:4.5,DF:1.3,GK:.05},lines=slotLines(form);  // roughly 45% midfield, 35% forwards, 20% defence
+  const w={AM:4.2,MF:3,DM:2.2,FW:4.5,DF:1.1,GK:.05},lines=slotLines(form);  // roughly 45% midfield, 35% forwards, 20% defence
   const ps=onPitch(team,ids).map((p,i)=>p&&p!==sc&&{p,w:w[lines[i]]*p.ovr}).filter(Boolean);
   let r=rng()*ps.reduce((s,x)=>s+x.w,0);
   for(const x of ps){r-=x.w;if(r<=0)return x.p}

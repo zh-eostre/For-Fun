@@ -22,6 +22,12 @@ ok(M.ht&&gain.every(g=>g>=1&&g<=10),'our players get a little back at halftime: 
 ok(oppGain.every(g=>g<=0),'the opponents only tire: '+oppGain.join(','));
 ok(M.feed.some(e=>e.t.includes('缓过一口气')),'commentary mentions it');
 render();ok(!/刹那/.test(els.app.innerHTML),'no cheat button at halftime');
+// bench cards: picking a midfielder on the pitch marks same-position subs and shows the stamina they'd bring
+const mfOn=M[s+'Ids'].find(id=>M.role[id]==='MF');ACT.subOut(String(mfOn));render();
+const h=els.app.innerHTML,cards=h.match(/class="scard[^"]*"/g)||[];
+ok(cards.length>0&&cards.some(c=>/fit/.test(c))===my().players.some(p=>p.pos==='MF'&&!M[s+'XI'].includes(p.id)&&!unavail(p)),'bench cards mark same-position subs ('+cards.length+' cards)');
+ok(/sc-gain/.test(h)&&/sc-ovr num pos-/.test(h),'cards show the stamina gain and a position-coloured rating');
+M.sel=null;
 ACT.resume();skipMatch();
 // a full week between league rounds, one click at a time
 ACT.matchDone();

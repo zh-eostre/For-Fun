@@ -22,7 +22,7 @@ function playOne(){
   while(!M.done&&M.min<45)tick(false);
   if(M.ht){
     render();st.htViews++;if(bad(els.app.innerHTML))badViews.push('ht');
-    if(!/class="pitch"/.test(els.app.innerHTML)||!/class="srow"/.test(els.app.innerHTML))badViews.push('ht-layout');
+    if(!/class="pitch"/.test(els.app.innerHTML)||!/class="scard/.test(els.app.innerHTML))badViews.push('ht-layout');
     const s=mySide();for(let i=0;i<5;i++){const on=M[s+'Ids'].map(findP).filter(Boolean).sort((a,b)=>a.cond-b.cond)[0];
       const b=my().players.find(p=>!M[s+'XI'].includes(p.id)&&!unavail(p)&&p.pos===on.pos);if(on&&b){ACT.subOut(String(on.id));ACT.subIn(String(b.id))}}
     st.subs+=M.subs;ACT.resume();

@@ -536,3 +536,31 @@ dialog.modal.wide{max-width:860px}
 .stat-t th:first-child,.stat-t td:first-child{text-align:left;width:auto;white-space:nowrap}
 @media (max-width:520px){.stat-t th,.stat-t td{padding:4px 3px}}
 .stat-t .rating{font-size:14px}
+
+/* bench at halftime / pause: cards with a position-coloured rating badge */
+.sublist{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;align-content:start}
+.sublist .subh{grid-column:1/-1;margin-bottom:0}
+.scard{position:relative;display:grid;grid-template-columns:34px minmax(0,1fr);gap:8px;align-items:center;text-align:left;
+  padding:7px 8px 10px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);cursor:pointer;overflow:hidden;
+  transition:border-color .15s,opacity .15s,transform .15s}
+.scard:hover:not(:disabled){border-color:var(--pitch);transform:translateY(-1px)}
+.scard:disabled{opacity:.45;cursor:not-allowed}
+.scard.fit{border-color:var(--pitch);box-shadow:0 0 0 2px var(--pitch-soft)}
+.scard.dim{opacity:.6}
+.sc-ovr{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:19px;line-height:1;color:#fff;padding-top:2px}
+.sc-ovr.pos-GK{background:#D99A1E;color:#2B1D00}
+.sc-ovr.pos-DF{background:#3567A6}
+.sc-ovr.pos-MF{background:#2C6E49}
+.sc-ovr.pos-FW{background:#B9412F}
+.sc-main{min-width:0;display:flex;flex-direction:column;line-height:1.3}
+.sc-name{font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc-name i{font-style:normal;color:var(--amber);margin-left:2px}
+.sc-meta{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc-gain{color:var(--pitch);font-weight:700}
+.sc-fit{position:absolute;top:0;right:0;background:var(--pitch);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:0 0 0 7px;line-height:1.5}
+.scard .tb{position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:0;background:var(--line);width:auto}
+.scard .tb i{display:block;height:100%;background:var(--pitch)}
+.scard .tb.low i{background:var(--amber)}
+@media (max-width:560px){.sublist{grid-template-columns:repeat(2,minmax(0,1fr))}.scard{padding:6px 7px 9px;gap:6px;grid-template-columns:30px minmax(0,1fr)}
+  .sc-ovr{width:30px;height:30px;font-size:17px}.sc-name{font-size:13px}}
+.scard.fit .sc-name{padding-right:40px}

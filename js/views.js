@@ -504,10 +504,15 @@ function vMatch(){
     <p class="muted" style="margin:0 0 12px;font-size:12px">只影响本场。</p>
     <div class="subh">换人 ${M.subs}/${SUBS}${full?'，名额已用完':M.sel!=null?`：换下 ${findP(M.sel).name}，请在右边选替补`:'：先点球场上要换下的人，再点右边的替补'}</div>
     <div class="htgrid">${pitchBox(field,'场上球员',M[s+'Form'])}
-    <div class="sublist"><div class="subh" style="margin-bottom:6px">替补席</div>
-    ${bench.length?bench.map(p=>`<button class="srow" data-act="subIn" data-arg="${p.id}" data-flip="p${p.id}" ${full?'disabled':''}>
-      <span class="spos">${POS[p.pos]}</span><span class="sname">${p.name}${p.sig?'<i>★</i>':''}</span><span class="num sovr">${p.ovr}</span><span class="scond">体能 ${Math.round(p.cond)}</span>
-      <span class="tb"><i style="width:${p.cond}%"></i></span></button>`).join(''):'<span class="muted" style="font-size:13px">没有可用的替补</span>'}</div></div>
+    <div class="sublist"><div class="subh">替补席 <span class="muted" style="font-weight:400">${bench.length} 人可用</span></div>
+    ${bench.length?bench.map(p=>{
+      // with a player picked on the pitch: same-position subs stand out, and each shows the stamina he'd bring
+      const out=M.sel!=null&&findP(M.sel),same=out&&p.pos===(M.role[out.id]||out.pos),gain=out?Math.round(p.cond-out.cond):0;
+      return `<button class="scard ${same?'fit':out?'dim':''}" data-act="subIn" data-arg="${p.id}" data-flip="p${p.id}" ${full?'disabled':''} title="${p.name}，${POS[p.pos]}，能力 ${p.ovr}，体能 ${Math.round(p.cond)}">
+      <span class="sc-ovr num pos-${p.pos}">${p.ovr}</span>
+      <span class="sc-main"><span class="sc-name">${p.name}${p.sig?'<i>★</i>':''}</span>
+      <span class="sc-meta">${POS[p.pos]} · 体能 ${Math.round(p.cond)}${out&&gain>0?` <b class="sc-gain">+${gain}</b>`:''}</span></span>${same?'<b class="sc-fit">同位置</b>':''}
+      <span class="tb ${p.cond<60?'low':''}"><i style="width:${p.cond}%"></i></span></button>`}).join(''):'<span class="muted" style="font-size:13px">没有可用的替补</span>'}</div></div>
     <button class="btn primary" data-act="resume" style="margin-top:12px">再战，下半场！</button></div>`;
   }else{
     ctl=`<div class="mctl"><button class="btn" data-act="speed">${M.speed===1?'加速':'正常速度'}</button><button class="btn primary" data-act="pauseSub">换人 / 调整</button><button class="btn" data-act="skip">直接看结果</button>${autoSubBtn()}</div>${vLiveStamina()}`;
