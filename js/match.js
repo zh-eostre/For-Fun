@@ -8,7 +8,7 @@ function startMatch(){
   rng=seeded(S.live.seed);indexNames();  // same name pool on a replay, so the post-match market comes out the same
   const f=nextFix(),opp=S.teams[f.opp];aiRecover(opp);
   M={h:f.h,a:f.a,cup:f.cup,derby:f.derby,friendly:!!f.friendly,fIdx:f.idx,stage:f.cup?S.cup.stage:null,hg:0,ag:0,min:0,feed:[],speed:1,paused:false,ht:false,done:false,
-    flash:null,injuries:[],yc:{},goals:{},subs:0,oppSubs:0,sel:null,aiTac:'bal',tac:S.tactic,subMode:false,lastAuto:{h:-9,a:-9}};  // tac: our tactic for this match only
+    flash:null,injuries:[],yc:{},goals:{},on:{},off:{},subs:0,oppSubs:0,sel:null,aiTac:'bal',tac:S.tactic,subMode:false,lastAuto:{h:-9,a:-9}};  // tac: our tactic for this match only
   // the opponent picks its best formation, and a tactic from how it rates against our XI
   const os=bestForm(opp,!f.home),mr=rating(strength(my(),S.lineup,S.tactic,f.home,S.boost>0?BOOST:0,S.formation));
   M.aiTac=tacFor(os.r,mr);
@@ -86,7 +86,7 @@ function side(s,p){
   }else if(rng()<p*3.5)st.sh++;  // speculative efforts that never make the commentary
   if(!M.friendly&&rng()<CARD){
     const b=booking(team,ids,M.yc);
-    if(b)ev(b.p.id)[b.red?'red':'yc']=1;
+    if(b){ev(b.p.id)[b.red?'red':'yc']=1;if(b.red)M.off[b.p.id]=M.min}
     if(b)M.feed.unshift(b.red
       ?(announce(LINE.red(b.p.name,team.short)),{min:M.min,cls:'red',t:LINE.red(b.p.name,team.short)})
       :{min:M.min,cls:'',t:LINE.yellow(b.p.name,team.short)+(b.banned?LINE.ban:'')});
@@ -112,9 +112,16 @@ function substitute(outId,inId,s=mySide(),line){
   const po=team.players.find(x=>x.id===outId),pi=team.players.find(x=>x.id===inId);
   if(M[key]>=SUBS||!po||!pi||!ids.includes(outId)||xi.includes(inId)||unavail(pi))return false;
   const slot=ids.indexOf(outId);ids[slot]=inId;xi.push(inId);M[key]++;if(key==='subs')M.sel=null;
+  M.off[outId]=M.min;M.on[inId]=M.min;
   M.role[inId]=slotRoles(M[s+'Form'])[slot];M.part.push(outId,inId);
   M.feed.unshift({min:M.min,cls:'sys',t:line||LINE.sub(po.name,pi.name)});
   return true;
+}
+// both sides' numbers for the live match: minutes from who came on and off, possession, shots, and how the sides compared
+function matchActs(){
+  const mins={};[...M.hXI,...M.aXI].forEach(id=>{if(id!=null)mins[id]=(M.off[id]??90)-(M.on[id]??0)});
+  const H=S.teams[M.h],A=S.teams[M.a],edge=rating(strength(H,M.hIds,'bal',true,0,M.hForm))-rating(strength(A,M.aIds,'bal',false,0,M.aForm));
+  M.act={...matchActions(H,M.hXI,M.role,mins,M.poss/100,edge,M.st.h.sh),...matchActions(A,M.aXI,M.role,mins,1-M.poss/100,-edge,M.st.a.sh)};
 }
 function finish(){
   M.done=true;M.paused=false;clearTimeout(M.timer);
@@ -137,7 +144,8 @@ function finish(){
   if(M.derby&&w==='胜'){S.boost=2;unlock('derby')}
   S.streak=w==='胜'?(S.streak||0)+1:0;
   // ratings for both sides; the man of the match is the best of everyone
-  M.rh=rateSide(S.teams[M.h],M.hXI,M.role,M.ev,M.hg,M.ag,M.part);M.ra=rateSide(S.teams[M.a],M.aXI,M.role,M.ev,M.ag,M.hg,M.part);
+  matchActs();
+  M.rh=rateSide(S.teams[M.h],M.hXI,M.role,M.ev,M.hg,M.ag,M.part,false,M.act);M.ra=rateSide(S.teams[M.a],M.aXI,M.role,M.ev,M.ag,M.hg,M.part,false,M.act);
   M.mvp=[...M.rh,...M.ra].sort((a,b)=>b.r-a.r)[0];
   M.summary={w,mg,og,mp,op,pens,income,grown,awoken,banned};
   news(`${w} ${mg}:${og}${pens?`（点球 ${mp}:${op}）`:''} 对阵${S.teams[oppId].name}${M.derby?'（宿敌之战）':''}。比赛收入 ${money(income)}。`);
@@ -167,7 +175,8 @@ function finishFriendly(){
   M.injuries.forEach(p=>{p.inj=pick(INJ_DAYS);if(findP(p.id)&&rng()<quickHeal())p.inj=Math.max(1,Math.round(p.inj/2))});
   M.myInjuries=M.injuries.filter(p=>findP(p.id));
   const mg=home?M.hg:M.ag,og=home?M.ag:M.hg,w=mg>og?'胜':mg<og?'负':'平';
-  M.rh=rateSide(S.teams[M.h],M.hXI,M.role,M.ev,M.hg,M.ag,M.part,true);M.ra=rateSide(S.teams[M.a],M.aXI,M.role,M.ev,M.ag,M.hg,M.part,true);
+  matchActs();
+  M.rh=rateSide(S.teams[M.h],M.hXI,M.role,M.ev,M.hg,M.ag,M.part,true,M.act);M.ra=rateSide(S.teams[M.a],M.aXI,M.role,M.ev,M.ag,M.hg,M.part,true,M.act);
   M.mvp=[...M.rh,...M.ra].sort((a,b)=>b.r-a.r)[0];
   M.summary={w,mg,og,income:0,grown,awoken,banned:[],pens:false};
   S.friendlies[M.fIdx].res={hg:M.hg,ag:M.ag};

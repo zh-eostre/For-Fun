@@ -185,6 +185,7 @@ function vPlayer(id){
   ${p.sig?`<p class="sig" style="margin:0 0 10px">必杀技「${p.sig}」</p>`:''}
   <div class="pgrid">${cell('能力',p.ovr)}${cell('潜力',mine||p.age>23?p.pot:'?')}${cell('体能',p.cond)}${cell('身价',money(mine?marketValue(p):value(p)))}</div>
   <h3>本赛季</h3><div class="pgrid">${cell('出场',p.apps)}${cell('进球',p.goals)}${cell('助攻',p.ast||0)}${cell('平均评分',p.rn?avgRating(p).toFixed(2):'—')}</div>
+  ${p.ss&&p.rn?`<div class="pgrid">${cell('传球成功率',p.ss.pas?Math.round(p.ss.ok/p.ss.pas*100)+'%':'—')}${p.pos==='GK'?'':cell('场均关键传球',(p.ss.kp/p.rn).toFixed(1))+cell('场均抢断+拦截',((p.ss.tkl+p.ss.int)/p.rn).toFixed(1))+cell('场均过人',(p.ss.drb/p.rn).toFixed(1))}</div>`:''}
   ${mine?`<h3>在队生涯</h3><div class="pgrid">${cell('效力赛季',(c.seasons||0)+1)}${cell('出场',(c.apps||0)+p.apps)}${cell('进球',(c.goals||0)+p.goals)}${cell('助攻',(c.ast||0)+(p.ast||0))}${cell('租借出场',(c.lapps||0)+(p.lapps||0))}</div>
   ${(c.titles||[]).length?`<p style="margin:4px 0 0;font-size:13px">🏆 ${c.titles.join('、')}</p>`:''}${isLegend(c)?'<p class="sig" style="margin:4px 0 0">已达到传奇标准：在队退役就会载入史册</p>':''}
   <h3>能力变化</h3><p style="margin:0;font-size:14px">${hist.map(h=>`第 ${h.s} 季 <b class="num" style="font-size:18px">${h.o}</b>`).join(' → ')}</p>`:''}
@@ -433,6 +434,21 @@ function vMarket(){
   <button class="btn small primary" data-act="buy" data-arg="${p.id}" ${!open||S.budget<p.price||squadFull()?'disabled':''}>签下</button></div>`).join('')+'</div>'+pager
   :`<p class="muted">${S.market.length?'没有符合条件的球员，换个筛选试试。':'这一轮的球员都被签走了，打完下一场再来看看。'}</p>`}</section>`;
 }
+// what made a performance: goals and assists first, then whatever stood out
+function standout(x){
+  const a=x.a||{},e=(M.ev||{})[x.p.id]||{},bits=[];
+  if(e.g)bits.push(`${e.g} 球`);if(e.a)bits.push(`${e.a} 次助攻`);if(e.sv>=3)bits.push(`${e.sv} 次扑救`);
+  if(a.kp>=2)bits.push(`${a.kp} 次关键传球`);if(a.tkl+a.int>=5)bits.push(`${a.tkl} 抢断 ${a.int} 拦截`);
+  if(a.drb>=3)bits.push(`${a.drb} 次过人`);if(a.pas>=30&&a.ok/a.pas>=.88)bits.push(`传球成功率 ${Math.round(a.ok/a.pas*100)}%`);
+  return bits.slice(0,3).join('，');
+}
+// our players' numbers for the match
+function statTable(list){
+  const pct=a=>a.pas?Math.round(a.ok/a.pas*100)+'%':'—';
+  return `<div class="tw"><table class="stat-t"><thead><tr><th>球员</th><th>评分</th><th>传球</th><th>关键传球</th><th>抢断</th><th>拦截</th><th>过人</th><th>进/助</th></tr></thead>
+  <tbody>${list.map(x=>{const a=x.a||{pas:0,ok:0,kp:0,tkl:0,int:0,drb:0},e=(M.ev||{})[x.p.id]||{};
+    return `<tr><td>${POS[x.role][0]} ${shortName(x.p.name)}</td><td>${rtag(x.r)}</td><td>${a.ok}/${a.pas} <small class="muted">${pct(a)}</small></td><td>${a.kp}</td><td>${a.tkl}</td><td>${a.int}</td><td>${a.drb}</td><td>${e.g||0}/${e.a||0}</td></tr>`}).join('')}</tbody></table></div>`;
+}
 const rcls=r=>r>=8?'r-hi':r>=7?'r-ok':r<6?'r-lo':'';
 const rtag=r=>`<span class="rating ${rcls(r)}">${r.toFixed(1)}</span>`;
 // full-time box: shots / on target / possession, man of the match, and our players' ratings
@@ -442,8 +458,9 @@ function vMatchStats(){
   return `<div class="mstats">
     <div class="srow2 head"><span>${H.short}</span><span></span><span>${A.short}</span></div>
     ${row('射门',M.st.h.sh,M.st.a.sh)}${row('射正',M.st.h.on,M.st.a.on)}${row('控球',M.poss+'%',(100-M.poss)+'%')}</div>
-  ${M.mvp?`<p class="mvp">全场最佳：<b>${M.mvp.p.name}</b>（${S.teams.find(t=>t.players.includes(M.mvp.p)).short}，${POS[M.mvp.role]}）${rtag(M.mvp.r)}</p>`:''}
-  <div class="ratings">${mine.map(x=>`<span class="rt">${POS[x.role][0]} ${shortName(x.p.name)} ${rtag(x.r)}</span>`).join('')}</div>`;
+  ${M.mvp?`<p class="mvp">全场最佳：<b>${M.mvp.p.name}</b>（${S.teams.find(t=>t.players.includes(M.mvp.p)).short}，${POS[M.mvp.role]}）${rtag(M.mvp.r)}${standout(M.mvp)?` <span class="muted" style="font-size:13px">${standout(M.mvp)}</span>`:''}</p>`:''}
+  <div class="ratings">${mine.map(x=>`<span class="rt">${POS[x.role][0]} ${shortName(x.p.name)} ${rtag(x.r)}</span>`).join('')}</div>
+  <details class="fold mstat-fold" data-fold="mstats"><summary><b>详细数据</b></summary>${statTable(mine)}</details>`;
 }
 // stamina while the match runs: our players on the pitch (lowest first) and the opponents' average
 const oppAvgCond=()=>{const s=mySide()==='h'?'a':'h',ps=onPitch(S.teams[s==='h'?M.h:M.a],M[s+'Ids']).filter(Boolean);return Math.round(ps.reduce((t,p)=>t+p.cond,0)/ps.length)};

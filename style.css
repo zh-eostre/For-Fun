@@ -523,3 +523,14 @@ dialog.modal.wide{max-width:860px}
 .offer-card{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1.5px solid var(--line);border-left:5px solid var(--c);border-radius:8px;padding:8px 10px;margin:6px 0}
 .offer-card b{font-size:17px;display:block}
 .offer-card small{font-size:12px;color:var(--muted)}
+
+/* match stats table */
+.mstat-fold{margin:0 0 12px;border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+.mstat-fold>summary{font-size:13px}
+.mstat-fold>summary b{flex:1}
+.mstat-fold[open]>summary{margin-bottom:6px}
+.stat-t{font-size:12px}
+.stat-t th,.stat-t td{padding:4px 6px;text-align:center}
+.stat-t th:first-child,.stat-t td:first-child{text-align:left;width:auto;white-space:nowrap}
+@media (max-width:520px){.stat-t th,.stat-t td{padding:4px 3px}}
+.stat-t .rating{font-size:14px}

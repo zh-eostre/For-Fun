@@ -207,20 +207,41 @@ function assister(team,ids,form,sc){
 /* ---------- match ratings ---------- */
 // a 3.0-10.0 rating: starts from ability and the result, then what he did (ev: g goals, sig signature goals,
 // sv saves, miss, yc, red) and, for the back line, goals conceded. part-timers (subbed on or off) drift less from 6
-function rate(p,role,ev={},gf,ga,full){
-  let r=6+(p.ovr-65)/25+(gf>ga?.4:gf<ga?-.4:0)+(rng()-.5)*.6
-    +(ev.g||0)*(role==='FW'?.9:1.1)+(ev.a||0)*.6+(ev.sig||0)*.2+(ev.sv||0)*.35-(ev.miss||0)*.15-(ev.yc||0)*.3-(ev.red||0)*1.5;
-  if(role==='GK')r+=ga?-.25*ga:.8;else if(role==='DF')r+=ga?-.15*ga:.5;else if(role==='MF'&&!ga)r+=.2;
+// a player's match in numbers, shared out from team totals by role, minutes and quality:
+// passes (and how many found a man), key passes (one per chance created), tackles won, interceptions, dribbles.
+// mins: minutes each player was on; poss: our share of the ball (0-1); edge: our strength minus theirs; shots: ours
+const ACT_W={pas:{GK:.4,DF:1.1,MF:1.4,FW:.7},def:{GK:.1,DF:1.4,MF:.8,FW:.3},kp:{GK:.02,DF:.5,MF:1.6,FW:1},drb:{GK:0,DF:.3,MF:1,FW:1.5}};
+function matchActions(team,xi,roleOf,mins,poss,edge,shots){
+  const ps=xi.map(id=>{const p=id!=null&&team.players.find(x=>x.id===id);return p&&{p,role:roleOf[id]||p.pos,m:(mins[id]??90)/90}}).filter(x=>x&&x.m>0);
+  const share=(k,total,q)=>{const ws=ps.map(x=>ACT_W[k][x.role]*x.m*(.6+rng()*.8)*(q?x.p.ovr/70:1)),sum=ws.reduce((a,b)=>a+b,0)||1;return ws.map(w=>total*w/sum)};
+  const pas=share('pas',poss*560),def=share('def',(1-poss)*70),kp=share('kp',shots*.75,true),drb=share('drb',poss*22,true),out={};
+  ps.forEach((x,i)=>{
+    const q=eff(x.p)-65,pa=Math.round(pas[i]),pct=clamp(.74+q*.008+edge*.004+(rng()-.5)*.06,.5,.95);
+    const tk=def[i]*.6,it=Math.round(def[i]*.4),dr=drb[i];
+    out[x.p.id]={pas:pa,ok:Math.round(pa*pct),kp:Math.round(kp[i]),tkl:Math.round(tk*clamp(.55+q*.01,.3,.85)),int:it,drb:Math.round(dr*clamp(.45+q*.01,.2,.8))};
+  });
+  return out;
+}
+// what the numbers are worth in a rating: accurate passing (15+ passes), chances created, winning the ball, beating a man
+function actScore(a){
+  if(!a)return 0;
+  return (a.pas>=15?(a.ok/a.pas-.78)*3:0)+a.kp*.18+a.tkl*.15+a.int*.12+a.drb*.08;
+}
+function rate(p,role,ev={},gf,ga,full,act){
+  let r=5.9+(p.ovr-65)/25+(gf>ga?.4:gf<ga?-.4:0)+(rng()-.5)*.6+actScore(act)
+    +(ev.g||0)*(role==='FW'?1.25:1.1)+(ev.a||0)*.6+(ev.sig||0)*.2+(ev.sv||0)*.45-(ev.miss||0)*.15-(ev.yc||0)*.3-(ev.red||0)*1.5;
+  if(role==='GK')r+=.3+(ga?-.25*ga:1);else if(role==='DF')r+=ga?-.15*ga:.5;else if(role==='MF'&&!ga)r+=.1;
   if(!full)r=6+(r-6)*.6;
   return Math.round(clamp(r,3,10)*10)/10;
 }
 // rates everyone who played for one side, adds it to their season totals (rs sum, rn count), best first
-function rateSide(team,played,roleOf,ev,gf,ga,part=[],noTotals){
+// act: matchActions for this side; season totals of those numbers go in p.ss
+function rateSide(team,played,roleOf,ev,gf,ga,part=[],noTotals,act={}){
   return played.map(id=>{
     const p=id!=null&&team.players.find(x=>x.id===id);if(!p)return null;
-    const role=roleOf[id]||p.pos,r=rate(p,role,ev[id],gf,ga,!part.includes(id));
-    if(!noTotals){p.rs=(p.rs||0)+r;p.rn=(p.rn||0)+1}
-    return {p,r,role};
+    const role=roleOf[id]||p.pos,a=act[id],r=rate(p,role,ev[id],gf,ga,!part.includes(id),a);
+    if(!noTotals){p.rs=(p.rs||0)+r;p.rn=(p.rn||0)+1;if(a){const t=p.ss||(p.ss={pas:0,ok:0,kp:0,tkl:0,int:0,drb:0});for(const k in t)t[k]+=a[k]}}
+    return {p,r,role,a};
   }).filter(Boolean).sort((a,b)=>b.r-a.r);
 }
 const roleMap=(ids,form)=>{const roles=slotRoles(form),m={};ids.forEach((id,i)=>{if(id!=null)m[id]=roles[i]});return m};
@@ -314,28 +335,36 @@ const tacFor=(mine,theirs)=>mine>theirs+3?'att':mine<theirs-3?'def':'bal';
 function quickSim(h,a){
   aiRecover(S.teams[h]);aiRecover(S.teams[a]);
   const H=S.teams[h],A=S.teams[a],bh=bestForm(H,true),ba=bestForm(A,false),th=tacFor(bh.r,ba.r),ta=tacFor(ba.r,bh.r);
-  const hx=[...bh.ids],ax=[...ba.ids],hi=[...hx],ai=[...ax],yc={},ev={},used={h:0,a:0};
-  const e=id=>ev[id]||(ev[id]={}),book=b=>{if(b)e(b.p.id)[b.red?'red':'yc']=1};
+  const hx=[...bh.ids],ax=[...ba.ids],hi=[...hx],ai=[...ax],yc={},ev={},used={h:0,a:0},on={},off={},shots={h:0,a:0};
+  let minute=0;
+  const e=id=>ev[id]||(ev[id]={}),book=b=>{if(b){e(b.p.id)[b.red?'red':'yc']=1;if(b.red)off[b.p.id]=minute}};
+  const poss=possession(H,hi,bh.form,th,A,ai,ba.form,ta)/100;
   let hg=0,ag=0;const hurt=[];
   const injure=(t,ids)=>{const p=t.players.find(x=>x.id===pickOn(ids));if(p&&!hurt.includes(p)&&rng()<injRisk(p))hurt.push(p)};
+  let edge=0;
   for(let i=0;i<90;i++){
+    minute=i;
     const sh=strength(H,hi,th,true,0,bh.form),sa=strength(A,ai,ta,false,0,ba.form);
-    sh.atk+=counter(th,ta);sa.atk+=counter(ta,th);
+    sh.atk+=counter(th,ta);sa.atk+=counter(ta,th);edge=rating(sh)-rating(sa);
+    const ph=xgMin(sh,sa),pa=xgMin(sa,sh);
     const assist=(T,ids,form,p)=>{const a=assister(T,ids,form,p);if(a){a.ast=(a.ast||0)+1;e(a.id).a=(e(a.id).a||0)+1}};
-    if(rng()<xgMin(sh,sa)){hg++;const p=scorer(H,hi,bh.form);p.goals++;e(p.id).g=(e(p.id).g||0)+1;assist(H,hi,bh.form,p)}
-    if(rng()<xgMin(sa,sh)){ag++;const p=scorer(A,ai,ba.form);p.goals++;e(p.id).g=(e(p.id).g||0)+1;assist(A,ai,ba.form,p)}
+    if(rng()<ph){hg++;shots.h++;const p=scorer(H,hi,bh.form);p.goals++;e(p.id).g=(e(p.id).g||0)+1;assist(H,hi,bh.form,p)}else if(rng()<ph*4.7)shots.h++;
+    if(rng()<pa){ag++;shots.a++;const p=scorer(A,ai,ba.form);p.goals++;e(p.id).g=(e(p.id).g||0)+1;assist(A,ai,ba.form,p)}else if(rng()<pa*4.7)shots.a++;
     if(rng()<CARD)book(booking(H,hi,yc));
     if(rng()<CARD)book(booking(A,ai,yc));
     injure(H,hi);injure(A,ai);
     onPitch(H,hi).forEach(p=>p&&drain(p,th));onPitch(A,ai).forEach(p=>p&&drain(p,ta));
     for(const [T,ids,xi,form,k] of [[H,hi,hx,bh.form,'h'],[A,ai,ax,ba.form,'a']]){
       const sw=i%5===0&&tiredSwap(T,ids,xi,form,used[k],i);
-      if(sw){ids[ids.indexOf(sw[0].id)]=sw[1].id;xi.push(sw[1].id);used[k]++}
+      if(sw){ids[ids.indexOf(sw[0].id)]=sw[1].id;xi.push(sw[1].id);used[k]++;off[sw[0].id]=i;on[sw[1].id]=i}
     }
   }
   afterMatch(H,hx,false);afterMatch(A,ax,false);
   hurt.forEach(p=>p.inj=pick(INJ_DAYS));
-  rateSide(H,hx,roleMap(hx,bh.form),ev,hg,ag);rateSide(A,ax,roleMap(ax,ba.form),ev,ag,hg);
+  const mins={};[...hx,...ax].forEach(id=>{if(id!=null)mins[id]=(off[id]??90)-(on[id]??0)});
+  const rh=roleMap(hx,bh.form),ra=roleMap(ax,ba.form),part=Object.keys(on).concat(Object.keys(off)).map(Number);
+  rateSide(H,hx,rh,ev,hg,ag,part,false,matchActions(H,hx,rh,mins,poss,edge,shots.h));
+  rateSide(A,ax,ra,ev,ag,hg,part,false,matchActions(A,ax,ra,mins,1-poss,-edge,shots.a));
   return {h,a,hg,ag};
 }
 
@@ -525,7 +554,7 @@ function newSeason(moveTo){
       else if(p.age<=34)p.ovr-=ri(1,3);
       else p.ovr-=ri(2,5);
       p.ovr=clamp(p.ovr,35,92);p.pot=Math.max(p.pot,p.ovr);
-      t.condDay=0;t.lastDay=-9;p.cond=100;p.inj=0;p.ban=0;p.away=0;p.yc=0;p.goals=0;p.ast=0;p.apps=0;p.lapps=0;p.rs=0;p.rn=0;p.gain=p.ovr-old;giveSig(p);
+      t.condDay=0;t.lastDay=-9;p.cond=100;p.inj=0;p.ban=0;p.away=0;p.yc=0;p.goals=0;p.ast=0;p.ss=null;p.apps=0;p.lapps=0;p.rs=0;p.rn=0;p.gain=p.ovr-old;giveSig(p);
     });
     const out=t.players.filter(p=>rng()<retireChance(p));
     if(t.id===S.my)out.forEach(p=>{retired.push(p.name);retireLegend(p)});
