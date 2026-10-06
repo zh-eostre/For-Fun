@@ -2,6 +2,8 @@
 require('./harness').run(`
 newGame(2,teamNames());
 // stamina spent over a match, by tactic
+const byRole=r=>{let t=0;for(let k=0;k<200;k++){const p={cond:100,age:25};for(let m=0;m<90;m++)drain(p,'bal',r);t+=100-p.cond}return Math.round(t/200)};
+ok(byRole('GK')<=5&&byRole('MF')>byRole('DF')&&byRole('DF')>byRole('GK'),'stamina spent in 90 minutes by role: 门将 '+byRole('GK')+'，后卫 '+byRole('DF')+'，中场 '+byRole('MF')+'，前锋 '+byRole('FW'));
 const spend=tac=>{let t=0;for(let k=0;k<200;k++){const p={cond:100,age:25};for(let m=0;m<90;m++)drain(p,tac);t+=100-p.cond}return Math.round(t/200)};
 const att=spend('att'),bal=spend('bal'),def=spend('def');
 ok(bal>=12&&bal<=17&&att>bal&&def<bal,'stamina per 90 min: 全力进攻 -'+att+'，平衡 -'+bal+'，防守反击 -'+def);

@@ -94,6 +94,10 @@ function resolveEvent(i){
 
 /* ---------- season awards ---------- */
 const AWARDS={mvp:'最佳球员',young:'最佳新秀',gk:'最佳门将',boot:'金靴',ast:'助攻王'};
+// the scores of the top candidates sit close together, so these small tilts are enough to give a realistic spread
+// (forwards ~44%, midfielders ~34%, defenders ~15%, keepers ~8% of best-player awards); the team of the season
+// is where every line gets its due
+const AWARD_W={GK:.93,DF:.94,MF:1,FW:1.02};
 // per division: best player and best 21-and-under (8+ matches), best keeper, top scorer, top assister.
 // player awards compare each man with his own position (how many standard deviations above its average): midfielders
 // see the most of the ball and average the highest ratings, so raw averages would hand them nearly every award.
@@ -104,7 +108,7 @@ function seasonAwards(div){
   PO.forEach(pos=>{const r=q.filter(x=>x.p.pos===pos).map(x=>avgRating(x.p)),m=r.reduce((a,b)=>a+b,0)/(r.length||1);
     norm[pos]=[m,(Math.sqrt(r.reduce((a,b)=>a+(b-m)**2,0)/(r.length||1))||1)*Math.log(Math.max(r.length,2))**.25]});
   const z=x=>(avgRating(x.p)-norm[x.p.pos][0])/norm[x.p.pos][1];
-  const best=f=>q.filter(f).sort((a,b)=>z(b)-z(a))[0];
+  const sc=x=>z(x)*AWARD_W[x.p.pos],best=f=>q.filter(f).sort((a,b)=>sc(b)-sc(a))[0];
   const boot=ps.filter(x=>x.p.goals>0).sort((a,b)=>b.p.goals-a.p.goals)[0],ast=ps.filter(x=>x.p.ast>0).sort((a,b)=>b.p.ast-a.p.ast||b.p.goals-a.p.goals)[0];
   const out=(x,stat)=>x&&{name:x.p.name,pos:x.p.pos,team:x.t.name,tid:x.t.id,stat};
   const rated=x=>out(x,x&&avgRating(x.p).toFixed(2));

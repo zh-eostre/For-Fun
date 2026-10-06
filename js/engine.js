@@ -308,10 +308,12 @@ function aiRecover(t){
   }
   t.condDay=S.day;
 }
-// stamina spent by one player in one minute on the pitch: about 14 over 90 minutes, more when attacking all out,
-// less when sitting deep, a little more for players over 30
-function drain(p,tac){
-  p.cond=Math.max(30,p.cond-.16*(tac==='att'?1.25:tac==='def'?.8:1)*(p.age>=31?1.15:1)*(.8+rng()*.4));
+// stamina spent by one player in one minute on the pitch: about 14 over 90 minutes for an outfield player, more when
+// attacking all out, less when sitting deep, a little more for players over 30. by role, as in distance covered:
+// midfielders run the most, keepers hardly at all
+const DRAIN_ROLE={GK:.3,DF:.95,MF:1.1,FW:1};
+function drain(p,tac,role){
+  p.cond=Math.max(30,p.cond-.16*(DRAIN_ROLE[role]??1)*(tac==='att'?1.25:tac==='def'?.8:1)*(p.age>=31?1.15:1)*(.8+rng()*.4));
 }
 // tired legs: from the 55th minute a side swaps its most exhausted outfield player for a fresh one of the same role
 // (one change every 5 minutes, keeping the last substitution for injuries until the 80th). returns [out, in] or null
@@ -360,7 +362,8 @@ function quickSim(h,a){
     if(rng()<CARD)book(booking(H,hi,yc));
     if(rng()<CARD)book(booking(A,ai,yc));
     injure(H,hi);injure(A,ai);
-    onPitch(H,hi).forEach(p=>p&&drain(p,th));onPitch(A,ai).forEach(p=>p&&drain(p,ta));
+    const rH=slotRoles(bh.form),rA=slotRoles(ba.form);
+    onPitch(H,hi).forEach((p,j)=>p&&drain(p,th,rH[j]));onPitch(A,ai).forEach((p,j)=>p&&drain(p,ta,rA[j]));
     for(const [T,ids,xi,form,k] of [[H,hi,hx,bh.form,'h'],[A,ai,ax,ba.form,'a']]){
       const sw=i%5===0&&tiredSwap(T,ids,xi,form,used[k],i);
       if(sw){ids[ids.indexOf(sw[0].id)]=sw[1].id;xi.push(sw[1].id);used[k]++;off[sw[0].id]=i;on[sw[1].id]=i}

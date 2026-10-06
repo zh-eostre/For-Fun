@@ -36,7 +36,7 @@ function tick(skipping){
   if(!M.done){flair('h');flair('a')}
   for(const s of ['h','a']){
     const team=S.teams[s==='h'?M.h:M.a],tac=s==='h'?ht:at,mine=team.id===S.my;
-    onPitch(team,M[s+'Ids']).forEach(p=>p&&drain(p,tac));
+    const roles=slotRoles(M[s+'Form']);onPitch(team,M[s+'Ids']).forEach((p,j)=>p&&drain(p,tac,roles[j]));
     if((mine&&S.autoSub===false)||M.min-M.lastAuto[s]<5)continue;
     const sw=tiredSwap(team,M[s+'Ids'],M[s+'XI'],M[s+'Form'],mine?M.subs:M.oppSubs,M.min);
     if(sw&&substitute(sw[0].id,sw[1].id,s,LINE.tiredSub(sw[0].name,sw[1].name)))M.lastAuto[s]=M.min;
