@@ -144,7 +144,7 @@ function scoutYouth(p,lv){
 function newIntake(){
   const lv=S.academy.lv,n=lv>=3?4:3,kids=[];
   for(let i=0;i<n;i++){
-    const p=makePlayer(pick(['GK','DF','DF','MF','MF','MF','FW','FW']),38+lv*3,ri(16,18));
+    const p=makePlayer(pick(['GK','DF','DF','MF','MF','MF','FW','FW']),38+lv*3+leagueShift()*.5,ri(16,18));
     p.pot=clamp(p.ovr+ri(10,20)+lv*2,p.ovr,93);p.youth=true;
     if(rng()<.04*lv){p.pot=ri(90,95);p.chosen=true;scoutYouth(p,1)}else scoutYouth(p,lv);
     kids.push(p);

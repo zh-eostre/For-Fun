@@ -95,7 +95,7 @@ function teamNames(slots=TEAMS,taken=[]){
 const startBudget=t=>t.div?150+(60-t.str)*20:250+(75-t.str)*25;
 function makePlayer(pos,base,age){
   age=age||ri(18,33);
-  const ovr=clamp(Math.round(base+rnd(-6,6)),38,90);
+  const ovr=clamp(Math.round(base+rnd(-6,6)),38,92);
   const pot=age<24?clamp(ovr+ri(3,14),ovr,92):ovr;
   return giveSig({id:S.pid++,name:genName(),pos,ovr,age,pot,cond:100,inj:0,ban:0,away:0,yc:0,goals:0,apps:0});
 }
@@ -294,13 +294,22 @@ function makeGem(){
   const g=makePlayer(pick(['DF','MF','FW']),ri(50,58),ri(17,19));
   g.pot=ri(88,93);scoutReport(g,{conf:'low',est:ri(72,77)});return g;
 }
+// how far the top division has moved above its starting level (average best XI of 68), 0-14.
+// the market and the academy follow it, so there is always something worth buying as the league gets stronger
+const BASE_LEVEL=68;
+function leagueShift(){
+  const top=S.teams.filter(t=>t.div===0&&t.id!==S.my);
+  const avg=top.reduce((s,t)=>s+onPitch(t,bestForm(t,true).ids).filter(Boolean).reduce((a,p)=>a+p.ovr,0)/11,0)/top.length;
+  return clamp(Math.round(avg-BASE_LEVEL),0,14);
+}
 function refreshMarket(){
-  S.market=[];const n=marketSize();
+  S.market=[];const n=marketSize(),sh=leagueShift();
   for(let i=0;i<n;i++){
     const pos=pick(['GK','DF','DF','DF','MF','MF','MF','FW','FW','FW']);
     let p;
-    if(i<3){p=makePlayer(pos,ri(50,64),ri(17,20));p.pot=ri(80,92)}
-    else p=makePlayer(pos,ri(52,80),ri(18,33));
+    if(i<3){p=makePlayer(pos,ri(50,64)+sh*.5,ri(17,20));p.pot=Math.min(95,ri(80,92)+Math.round(sh*.3))}
+    else if(i===3&&sh>=4)p=makePlayer(pos,ri(78,84)+sh*.6,ri(24,30));  // once the league has grown: one marquee name
+    else p=makePlayer(pos,ri(52,80)+sh,ri(18,33));
     scoutReport(p);S.market.push(p);
   }
   if(rng()<gemChance())S.market[ri(0,n-1)]=makeGem();
