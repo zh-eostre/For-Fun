@@ -243,6 +243,11 @@ function vLoans(){
     <button class="btn small" data-act="recall" data-arg="${p.id}" ${squadFull()?'disabled title="一线队已满 22 人"':''}>召回</button></div>`}).join('')}
   <p class="muted" style="margin:8px 0 0;font-size:12px">赛季结束时自动回归。召回需要一线队有空位。</p></section>`;
 }
+// what the chosen formation's midfield does, for the ones with holding or attacking midfielders
+function formNote(form){
+  const f=FORMS[form],bits=[f.dm&&`${f.dm} 名后腰偏防守、多抢断`,f.am&&`${f.am} 名前腰更容易进球和助攻`].filter(Boolean);
+  return bits.length?`中场里 ${bits.join('，')}（由中场球员担任）`:'阵型决定 11 个位置，球场上按位置排';
+}
 function vSquad(){
   const t=my(),on=new Set(S.lineup),iss=lineupIssues();
   const rows=PO.map(pos=>{
@@ -265,7 +270,7 @@ function vSquad(){
   <div class="toolbar" style="align-items:center;margin:0">
   <div class="count">首发 <span class="num">${lineupCount()}</span>/11</div>
   <button class="btn" data-act="auto">按 ${S.formation} 自动选人</button>
-  ${iss.length?`<span class="warn">${iss[0]}</span>`:'<span class="muted" style="font-size:14px">阵型决定 11 个位置，球场上按位置排</span>'}
+  ${iss.length?`<span class="warn">${iss[0]}</span>`:`<span class="muted" style="font-size:14px">${formNote(S.formation)}</span>`}
   </div></section>
   <div class="cols squad"><div class="col">${vPitch()}</div>
   <div class="col"><section class="panel" style="padding:4px 6px"><h2 style="margin:10px 10px 0">一线队 <span class="muted" style="font-weight:400;font-size:14px">${squadSize()}/22 · 点名字看详情</span></h2>${rows}</section>
@@ -276,17 +281,18 @@ function vSquad(){
 // Malay and Indian players go by their given name, Western ones by their surname (like 「席尔瓦」 on a shirt)
 const EU_SET=new Set(EU_SUR);
 const shortName=n=>{const [a,b]=n.split('·');return b&&EU_SET.has(b)?b:a};
-const PITCH_Y={FW:17,MF:42,DF:66,GK:89};
+const PITCH_Y={FW:16,AM:29,MF:43,DM:53,DF:68,GK:89};
+// one row per line, holding and attacking midfielders on rows of their own
 function pitchSpots(ids,form,team){
   const find=team?id=>team.players.find(p=>p.id===id):findP;
-  const tac=M&&!M.done?M.tac:S.tactic,roles=slotRoles(form),shift=tac==='att'?-5:tac==='def'?5:0,spots=[];
-  PO.forEach(pos=>{
-    const idx=roles.map((r,i)=>r===pos?i:-1).filter(i=>i>=0),n=idx.length;
+  const tac=M&&!M.done?M.tac:S.tactic,roles=slotRoles(form),lines=slotLines(form),shift=tac==='att'?-5:tac==='def'?5:0,spots=[];
+  Object.keys(PITCH_Y).reverse().forEach(line=>{
+    const idx=lines.map((r,i)=>r===line?i:-1).filter(i=>i>=0),n=idx.length;
     const gap=n<=2?28:Math.min(24,80/(n-1));
     idx.forEach((slot,k)=>{
       const x=50+(k-(n-1)/2)*gap,w=(x-50)/40;
-      const y=PITCH_Y[pos]+(pos==='GK'?0:shift)-(n>=4&&(pos==='DF'||pos==='MF')?6*w*w:0);
-      spots.push({slot,role:pos,p:ids[slot]!=null?find(ids[slot]):null,x,y});
+      const y=PITCH_Y[line]+(line==='GK'?0:shift)-(n>=4&&(line==='DF'||line==='MF')?6*w*w:0);
+      spots.push({slot,role:roles[slot],line,p:ids[slot]!=null?find(ids[slot]):null,x,y});
     });
   });
   return spots;
@@ -299,7 +305,7 @@ function tok(p,o={}){
     <span class="tc num ${p.cond<60?'low':''}">${p.ovr}</span><span class="tn">${oop?`<b class="mk oopk">${POS[p.pos][0]}</b>`:''}${shortName(p.name)}${p.sig?'<i>★</i>':''}${o.marks||''}</span>
     <span class="tb"><i style="width:${p.cond}%"></i></span>${o.cond?`<small class="tcond">${Math.round(p.cond)}</small>`:''}</button>`;
 }
-const emptySlot=(s,act,sel)=>`<button class="tok empty ${sel?'sel':''}" style="left:${s.x}%;top:${s.y}%" data-act="${act}" data-arg="${s.slot}" title="空位：${POS[s.role]}"><span class="tc">${POS[s.role][0]}</span><span class="tn">空位</span></button>`;
+const emptySlot=(s,act,sel)=>`<button class="tok empty ${sel?'sel':''}" style="left:${s.x}%;top:${s.y}%" data-act="${act}" data-arg="${s.slot}" title="空位：${LINE_NAME[s.line]||POS[s.role]}"><span class="tc">${(LINE_NAME[s.line]||POS[s.role])[0]}</span><span class="tn">空位</span></button>`;
 // o.color: the club whose shirts are drawn (default ours); o.note: the corner label (default formation · our tactic)
 const pitchBox=(inner,label,form,o={})=>`<div class="pitch" style="--team:${o.color||my().color}" aria-label="${label}">
     <div class="pl half"></div><div class="pl circle"></div><div class="pl box top"></div><div class="pl box bot"></div>

@@ -32,7 +32,12 @@ const LOAN_LEAGUES={
 const NICK=['流星','铁骑','海鹰','石狮','古城','南风','浪潮','犀鸟','猛虎','黑豹','雷霆','飞马','巨鳄','金鹰','烈火','白鲨','野牛','红隼','战象','疾风','银狼','火凤','苍龙','赤狐','冰熊','钢鹰','夜枭','狂狮'];
 const POS={GK:'门将',DF:'后卫',MF:'中场',FW:'前锋'};
 const PO=['GK','DF','MF','FW'];
-const FORMS={'4-4-2':{GK:1,DF:4,MF:4,FW:2},'4-3-3':{GK:1,DF:4,MF:3,FW:3},'4-5-1':{GK:1,DF:4,MF:5,FW:1},'3-5-2':{GK:1,DF:3,MF:5,FW:2},'5-3-2':{GK:1,DF:5,MF:3,FW:2}};
+// players per role; dm / am: how many of the midfielders play as holding (后腰) or attacking (前腰) midfielders
+const FORMS={'4-4-2':{GK:1,DF:4,MF:4,FW:2},'4-3-3':{GK:1,DF:4,MF:3,FW:3},'4-2-3-1':{GK:1,DF:4,MF:5,FW:1,dm:2,am:3},
+  '4-1-4-1':{GK:1,DF:4,MF:5,FW:1,dm:1},'4-5-1':{GK:1,DF:4,MF:5,FW:1},'4-3-1-2':{GK:1,DF:4,MF:4,FW:2,am:1},
+  '3-5-2':{GK:1,DF:3,MF:5,FW:2},'3-4-3':{GK:1,DF:3,MF:4,FW:3},'3-4-2-1':{GK:1,DF:3,MF:6,FW:1,am:2},
+  '5-3-2':{GK:1,DF:5,MF:3,FW:2},'5-4-1':{GK:1,DF:5,MF:4,FW:1}};
+const LINE_NAME={DM:'后腰',AM:'前腰'};
 const TACT={def:'防守反击',bal:'平衡',att:'全力进攻'};
 const TRAIN={rest:['恢复训练','训练日体能 +8，不会通过训练进步'],normal:['常规训练','训练日体能 +2，有一定机会进步'],hard:['高强度加练','训练日体能 −1，进步最快，但疲劳的球员更容易受伤']};
 const PRIZE=[500,400,320,260,220,190,165,145,130,120];

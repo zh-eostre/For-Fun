@@ -19,7 +19,7 @@ function startMatch(){
   // each side's formation decides the role of every slot
   M.hForm=f.h===S.my?S.formation:os.form;M.aForm=f.a===S.my?S.formation:os.form;
   // for ratings and stats: each player's role, his events, who only played part of the match, shots per side
-  M.role={...roleMap(M.hXI,M.hForm),...roleMap(M.aXI,M.aForm)};M.ev={};M.part=[];M.st={h:{sh:0,on:0},a:{sh:0,on:0}};
+  M.role={...roleMap(M.hXI,M.hForm),...roleMap(M.aXI,M.aForm)};M.line={...lineMap(M.hXI,M.hForm),...lineMap(M.aXI,M.aForm)};M.ev={};M.part=[];M.st={h:{sh:0,on:0},a:{sh:0,on:0}};
   M.poss=possession(S.teams[M.h],M.hIds,M.hForm,M.h===S.my?M.tac:M.aiTac,S.teams[M.a],M.aIds,M.aForm,M.a===S.my?M.tac:M.aiTac);
   const hn=S.teams[M.h].name,an=S.teams[M.a].name;
   M.feed.unshift({min:0,cls:'sys',t:f.friendly?LINE.friendlyKick(hn,an):f.cup?LINE.cupKick(hn,an,stageName(M.stage)):f.derby?LINE.derbyKick(hn,an):LINE.kickoff(hn,an)});
@@ -36,7 +36,7 @@ function tick(skipping){
   if(!M.done){flair('h');flair('a')}
   for(const s of ['h','a']){
     const team=S.teams[s==='h'?M.h:M.a],tac=s==='h'?ht:at,mine=team.id===S.my;
-    const roles=slotRoles(M[s+'Form']);onPitch(team,M[s+'Ids']).forEach((p,j)=>p&&drain(p,tac,roles[j]));
+    const lines=slotLines(M[s+'Form']);onPitch(team,M[s+'Ids']).forEach((p,j)=>p&&drain(p,tac,lines[j]));
     if((mine&&S.autoSub===false)||M.min-M.lastAuto[s]<5)continue;
     const sw=tiredSwap(team,M[s+'Ids'],M[s+'XI'],M[s+'Form'],mine?M.subs:M.oppSubs,M.min);
     if(sw&&substitute(sw[0].id,sw[1].id,s,LINE.tiredSub(sw[0].name,sw[1].name)))M.lastAuto[s]=M.min;
@@ -118,7 +118,7 @@ function substitute(outId,inId,s=mySide(),line){
   if(M[key]>=SUBS||!po||!pi||!ids.includes(outId)||xi.includes(inId)||unavail(pi))return false;
   const slot=ids.indexOf(outId);ids[slot]=inId;xi.push(inId);M[key]++;if(key==='subs')M.sel=null;
   M.off[outId]=M.min;M.on[inId]=M.min;
-  M.role[inId]=slotRoles(M[s+'Form'])[slot];M.part.push(outId,inId);
+  M.role[inId]=slotRoles(M[s+'Form'])[slot];M.line[inId]=slotLines(M[s+'Form'])[slot];M.part.push(outId,inId);
   M.feed.unshift({min:M.min,cls:'sys',t:line||LINE.sub(po.name,pi.name)});
   return true;
 }
@@ -130,7 +130,7 @@ function flair(s){
   if(rng()>=.045)return;
   const team=S.teams[s==='h'?M.h:M.a],ps=onPitch(team,M[s+'Ids']).filter(Boolean),onBall=(s==='h'?M.poss:100-M.poss)/100;
   const k=rng()<onBall?(rng()<.5?'drb':'kp'):(rng()<.55?'tkl':'int'),wt=ACT_W[{tkl:'def',int:'def',drb:'drb',kp:'kp'}[k]];
-  const w=ps.map(p=>wt[M.role[p.id]||p.pos]),tot=w.reduce((a,b)=>a+b,0);if(!tot)return;
+  const w=ps.map(p=>wt[M.line[p.id]||p.pos]),tot=w.reduce((a,b)=>a+b,0);if(!tot)return;
   let r=rng()*tot,i=0;while(i<ps.length-1&&r>=w[i])r-=w[i++];
   const p=ps[i],live=M.live||(M.live={}),l=live[p.id]||(live[p.id]={});l[k]=(l[k]||0)+1;
   M.feed.unshift({min:M.min,cls:'',t:`${pick(FLAIR[k])(p.name)}（${team.short}）`});
@@ -138,7 +138,7 @@ function flair(s){
 function matchActs(){
   const mins={};[...M.hXI,...M.aXI].forEach(id=>{if(id!=null)mins[id]=(M.off[id]??90)-(M.on[id]??0)});
   const H=S.teams[M.h],A=S.teams[M.a],edge=rating(strength(H,M.hIds,'bal',true,0,M.hForm))-rating(strength(A,M.aIds,'bal',false,0,M.aForm));
-  M.act={...matchActions(H,M.hXI,M.role,mins,M.poss/100,edge,M.st.h.sh),...matchActions(A,M.aXI,M.role,mins,1-M.poss/100,-edge,M.st.a.sh)};
+  M.act={...matchActions(H,M.hXI,M.line,mins,M.poss/100,edge,M.st.h.sh),...matchActions(A,M.aXI,M.line,mins,1-M.poss/100,-edge,M.st.a.sh)};
   for(const id in M.live||{}){const a=M.act[id];if(a)for(const k in M.live[id])a[k]=Math.max(a[k],M.live[id][k])}
 }
 function finish(){

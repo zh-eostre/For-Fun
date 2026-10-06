@@ -154,6 +154,11 @@ const unavail=p=>p.inj>0||p.ban>0||p.away>0||!!p.loan;
    a lineup is an array with one entry per slot of the formation (GK first, then DF, MF, FW); an entry is a
    player id, or null when the slot is empty or its player was sent off. the slot decides the role he plays */
 const slotRoles=form=>PO.flatMap(pos=>Array(FORMS[form][pos]).fill(pos));
+// each slot's line: like slotRoles, but midfield slots are split into holding (DM), central (MF) and attacking (AM)
+const slotLines=form=>{const f=FORMS[form],roles=slotRoles(form),m0=roles.indexOf('MF');
+  return roles.map((r,i)=>r!=='MF'?r:i-m0<(f.dm||0)?'DM':i-m0>=f.MF-(f.am||0)?'AM':'MF')};
+// a holding midfielder trades a little attack for defence, an attacking one the reverse (zero-sum: a style, not an edge)
+const LINE_TILT={DM:-.8,AM:.8};
 // how well a player suits a role: own position 1, another outfield line .85, keeper <-> outfield .5
 const fit=(p,role)=>p.pos===role?1:p.pos==='GK'||role==='GK'?.5:OOP;
 const onPitch=(team,ids)=>ids.map(id=>id==null?null:team.players.find(p=>p.id===id)||null);
@@ -176,12 +181,12 @@ function arrange(players,form){
 function autoPick(team,form){return arrange(team.players.filter(p=>!unavail(p)).sort((a,b)=>eff(b)-eff(a)),form)}
 
 function strength(team,ids,tac,home,bonus=0,form='4-4-2'){
-  const roles=slotRoles(form),g={GK:[],DF:[],MF:[],FW:[]};let n=0;
-  onPitch(team,ids).forEach((p,i)=>{if(p){n++;g[roles[i]].push(eff(p)*fit(p,roles[i]))}});
+  const roles=slotRoles(form),lines=slotLines(form),g={GK:[],DF:[],MF:[],FW:[]};let n=0,tilt=0;
+  onPitch(team,ids).forEach((p,i)=>{if(p){n++;g[roles[i]].push(eff(p)*fit(p,roles[i]));tilt+=LINE_TILT[lines[i]]||0}});
   const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:30;
   const gk=g.GK.length?g.GK[0]:25,d=avg(g.DF),m=avg(g.MF),f=avg(g.FW);
-  let atk=f*.5+m*.4+d*.1+(g.FW.length-2)*2+(g.MF.length-4)*.8;
-  let def=d*.5+gk*.3+m*.2+(g.DF.length-4)*2+(g.MF.length-4)*.8;
+  let atk=f*.5+m*.4+d*.1+(g.FW.length-2)*2+(g.MF.length-4)*.8+tilt;
+  let def=d*.5+gk*.3+m*.2+(g.DF.length-4)*2+(g.MF.length-4)*.8-tilt;
   if(tac==='att'){atk+=4;def-=4}else if(tac==='def'){atk-=4;def+=4}
   if(home){atk+=1.5;def+=1}
   const miss=11-n;atk-=miss*6-bonus;def-=miss*6-bonus;
@@ -193,8 +198,8 @@ const rating=s=>Math.round((s.atk+s.def)/2);
 
 // who scores depends on the role he's playing, not his natural position
 function scorer(team,ids,form='4-4-2'){
-  const w={FW:5,MF:2.2,DF:.6,GK:.02},roles=slotRoles(form);
-  const ps=onPitch(team,ids).map((p,i)=>p&&{p,w:w[roles[i]]*p.ovr}).filter(Boolean);
+  const w={FW:5,AM:3.5,MF:2.2,DM:.8,DF:.6,GK:.02},lines=slotLines(form);
+  const ps=onPitch(team,ids).map((p,i)=>p&&{p,w:w[lines[i]]*p.ovr}).filter(Boolean);
   let r=rng()*ps.reduce((s,x)=>s+x.w,0);
   for(const x of ps){r-=x.w;if(r<=0)return x.p}
   return ps[0].p;
@@ -203,8 +208,8 @@ function scorer(team,ids,form='4-4-2'){
 // and then, keepers almost never; better players more often. never the scorer himself
 function assister(team,ids,form,sc){
   if(rng()>=.78)return null;
-  const w={MF:3,FW:4.5,DF:1.3,GK:.05},roles=slotRoles(form);  // roughly 45% midfield, 35% forwards, 20% defence
-  const ps=onPitch(team,ids).map((p,i)=>p&&p!==sc&&{p,w:w[roles[i]]*p.ovr}).filter(Boolean);
+  const w={AM:4.2,MF:3,DM:2.2,FW:4.5,DF:1.3,GK:.05},lines=slotLines(form);  // roughly 45% midfield, 35% forwards, 20% defence
+  const ps=onPitch(team,ids).map((p,i)=>p&&p!==sc&&{p,w:w[lines[i]]*p.ovr}).filter(Boolean);
   let r=rng()*ps.reduce((s,x)=>s+x.w,0);
   for(const x of ps){r-=x.w;if(r<=0)return x.p}
   return ps.length?ps[0].p:null;
@@ -215,9 +220,11 @@ function assister(team,ids,form,sc){
 // a player's match in numbers, shared out from team totals by role, minutes and quality:
 // passes (and how many found a man), key passes (one per chance created), tackles won, interceptions, dribbles.
 // mins: minutes each player was on; poss: our share of the ball (0-1); edge: our strength minus theirs; shots: ours
-const ACT_W={pas:{GK:.4,DF:1.1,MF:1.4,FW:.7},def:{GK:.1,DF:1.4,MF:.8,FW:.3},kp:{GK:.02,DF:.5,MF:1.6,FW:1},drb:{GK:0,DF:.3,MF:1,FW:1.5}};
-function matchActions(team,xi,roleOf,mins,poss,edge,shots){
-  const ps=xi.map(id=>{const p=id!=null&&team.players.find(x=>x.id===id);return p&&{p,role:roleOf[id]||p.pos,m:(mins[id]??90)/90}}).filter(x=>x&&x.m>0);
+// by line (lineOf: player id -> GK/DF/DM/MF/AM/FW)
+const ACT_W={pas:{GK:.4,DF:1.1,DM:1.5,MF:1.4,AM:1.2,FW:.7},def:{GK:.1,DF:1.4,DM:1.3,MF:.8,AM:.4,FW:.3},
+  kp:{GK:.02,DF:.5,DM:.8,MF:1.6,AM:1.9,FW:1},drb:{GK:0,DF:.3,DM:.5,MF:1,AM:1.4,FW:1.5}};
+function matchActions(team,xi,lineOf,mins,poss,edge,shots){
+  const ps=xi.map(id=>{const p=id!=null&&team.players.find(x=>x.id===id);return p&&{p,role:lineOf[id]||p.pos,m:(mins[id]??90)/90}}).filter(x=>x&&x.m>0);
   const share=(k,total,q)=>{const ws=ps.map(x=>ACT_W[k][x.role]*x.m*(.6+rng()*.8)*(q?x.p.ovr/70:1)),sum=ws.reduce((a,b)=>a+b,0)||1;return ws.map(w=>total*w/sum)};
   const pas=share('pas',poss*560),def=share('def',(1-poss)*70),kp=share('kp',shots*.75,true),drb=share('drb',poss*22,true),out={};
   ps.forEach((x,i)=>{
@@ -249,11 +256,13 @@ function rateSide(team,played,roleOf,ev,gf,ga,part=[],noTotals,act={}){
     return {p,r,role,a};
   }).filter(Boolean).sort((a,b)=>b.r-a.r);
 }
-const roleMap=(ids,form)=>{const roles=slotRoles(form),m={};ids.forEach((id,i)=>{if(id!=null)m[id]=roles[i]});return m};
+const roleMap=(ids,form,of=slotRoles)=>{const roles=of(form),m={};ids.forEach((id,i)=>{if(id!=null)m[id]=roles[i]});return m};
+const lineMap=(ids,form)=>roleMap(ids,form,slotLines);
 const avgRating=p=>p.rn?p.rs/p.rn:0;
 // ball possession share for the home side, from midfield control and tactics
 function possession(H,hi,hf,ht,A,ai,af,at){
-  const mid=(t,ids,f)=>{const roles=slotRoles(f);return onPitch(t,ids).reduce((s,p,i)=>s+(p?eff(p)*fit(p,roles[i])*(roles[i]==='MF'?1:.3):0),0)};
+  const MID={MF:1,DM:.9,AM:.8};
+  const mid=(t,ids,f)=>{const roles=slotRoles(f),lines=slotLines(f);return onPitch(t,ids).reduce((s,p,i)=>s+(p?eff(p)*fit(p,roles[i])*(MID[lines[i]]||.3):0),0)};
   const mh=mid(H,hi,hf),ma=mid(A,ai,af),tb=t=>t==='att'?3:t==='def'?-3:0;
   return Math.round(clamp(50+(mh-ma)/(mh+ma)*150+tb(ht)-tb(at),30,70));
 }
@@ -311,7 +320,7 @@ function aiRecover(t){
 // stamina spent by one player in one minute on the pitch: about 14 over 90 minutes for an outfield player, more when
 // attacking all out, less when sitting deep, a little more for players over 30. by role, as in distance covered:
 // midfielders run the most, keepers hardly at all
-const DRAIN_ROLE={GK:.3,DF:.95,MF:1.1,FW:1};
+const DRAIN_ROLE={GK:.3,DF:.95,DM:1.1,MF:1.1,AM:1.05,FW:1};
 function drain(p,tac,role){
   p.cond=Math.max(30,p.cond-.16*(DRAIN_ROLE[role]??1)*(tac==='att'?1.25:tac==='def'?.8:1)*(p.age>=31?1.15:1)*(.8+rng()*.4));
 }
@@ -328,14 +337,14 @@ function tiredSwap(team,ids,xi,form,used,min){
 }
 // a side sitting deep against a side attacking all out gets a counter-attack bonus
 const counter=(mine,theirs)=>mine==='def'&&theirs==='att'?3:0;
-// AI clubs line up in whichever formation rates best with the players they have
+// AI clubs line up in a formation that rates best with the players they have. any within half a point of the best
+// will do, and each club has its own order of favourites among those, so the league isn't all 4-4-2.
+// deterministic, so the opponent preview shows the formation the match will use
 function bestForm(team,home){
-  let best=null;
-  for(const form of Object.keys(FORMS)){
-    const ids=autoPick(team,form),r=rating(strength(team,ids,'bal',home,0,form));
-    if(!best||r>best.r)best={form,ids,r};
-  }
-  return best;
+  const keys=Object.keys(FORMS),all=keys.map(form=>{const ids=autoPick(team,form),s=strength(team,ids,'bal',home,0,form);
+    return {form,ids,v:(s.atk+s.def)/2,r:rating(s)}});
+  const top=Math.max(...all.map(x=>x.v)),fav=f=>(keys.indexOf(f)+team.id*3)%keys.length;
+  return all.filter(x=>x.v>=top-.5).sort((a,b)=>fav(a.form)-fav(b.form))[0];
 }
 // and pick a tactic from how they compare: clearly stronger go for it, clearly weaker sit deep
 const tacFor=(mine,theirs)=>mine>theirs+3?'att':mine<theirs-3?'def':'bal';
@@ -362,7 +371,7 @@ function quickSim(h,a){
     if(rng()<CARD)book(booking(H,hi,yc));
     if(rng()<CARD)book(booking(A,ai,yc));
     injure(H,hi);injure(A,ai);
-    const rH=slotRoles(bh.form),rA=slotRoles(ba.form);
+    const rH=slotLines(bh.form),rA=slotLines(ba.form);
     onPitch(H,hi).forEach((p,j)=>p&&drain(p,th,rH[j]));onPitch(A,ai).forEach((p,j)=>p&&drain(p,ta,rA[j]));
     for(const [T,ids,xi,form,k] of [[H,hi,hx,bh.form,'h'],[A,ai,ax,ba.form,'a']]){
       const sw=i%5===0&&tiredSwap(T,ids,xi,form,used[k],i);
@@ -373,8 +382,8 @@ function quickSim(h,a){
   hurt.forEach(p=>p.inj=pick(INJ_DAYS));
   const mins={};[...hx,...ax].forEach(id=>{if(id!=null)mins[id]=(off[id]??90)-(on[id]??0)});
   const rh=roleMap(hx,bh.form),ra=roleMap(ax,ba.form),part=Object.keys(on).concat(Object.keys(off)).map(Number);
-  rateSide(H,hx,rh,ev,hg,ag,part,false,matchActions(H,hx,rh,mins,poss,edge,shots.h));
-  rateSide(A,ax,ra,ev,ag,hg,part,false,matchActions(A,ax,ra,mins,1-poss,-edge,shots.a));
+  rateSide(H,hx,rh,ev,hg,ag,part,false,matchActions(H,hx,lineMap(hx,bh.form),mins,poss,edge,shots.h));
+  rateSide(A,ax,ra,ev,ag,hg,part,false,matchActions(A,ax,lineMap(ax,ba.form),mins,1-poss,-edge,shots.a));
   return {h,a,hg,ag};
 }
 
