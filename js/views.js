@@ -74,6 +74,7 @@ function vCalendar(){
   return `<section class="panel"><h2>日程 <span class="muted" style="font-weight:400;font-size:14px">${dayLabel(S.day)}，今天${today==='match'?'是比赛日':today==='rest'?'休息':`训练（${T}）`}</span></h2>
   <div class="days">${strip}</div>
   ${L?`<p class="daylog">过了 ${L.days} 天：全队体能共 ${L.cond>=0?'+':''}${L.cond}${L.trained.length?`；训练中进步：${L.trained.map(p=>`${p.name}（${p.ovr}）`).join('、')}`:'；训练中没有人进步'}${L.healed.length?`；伤愈复出：${L.healed.map(p=>p.name).join('、')}`:''}。</p>`:''}
+  ${L&&L.surprises?L.surprises.map(t=>`<p class="surprise">✨ ${t}</p>`).join(''):''}
   <p class="muted" style="margin:8px 0 0;font-size:14px">首发平均体能 <b>${avg}</b>${tired.length?`，偏低：${tired.map(p=>`${p.name} ${p.cond}`).join('、')}`:'，全员状态良好'}。</p>
   <div class="cal-train"><span class="muted">训练</span><div class="seg sm">${Object.entries(TRAIN).map(([k,v])=>`<button data-act="train" data-arg="${k}" aria-pressed="${S.training===k}" title="${v[1]}">${v[0]}</button>`).join('')}</div><span class="muted cal-hint">${TRAIN[S.training][1]}</span></div>
   ${today==='match'?'':`<div class="go" style="justify-content:flex-start;margin-top:10px"><button class="btn" data-act="nextDay">进入下一天</button><button class="btn primary" data-act="ff">快进到比赛日（${left} 天）</button></div>`}</section>`;

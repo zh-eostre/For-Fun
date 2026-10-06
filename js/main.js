@@ -165,9 +165,10 @@ const ACT={
   },
   play:()=>startMatch(),
   // calendar: one day, or straight to the next match day; the log sums up what happened on the way
-  nextDay:()=>{const log={days:0,cond:0,trained:[],healed:[]};if(advanceDay(log)){UI.dayLog=log;save()}render()},
+  nextDay:()=>{const log={days:0,cond:0,trained:[],healed:[]};if(advanceDay(log)){UI.dayLog=log;save()}render();if(log.surprises)toast('✨ '+log.surprises[0])},
   ff:()=>{const log={days:0,cond:0,trained:[],healed:[]};while(advanceDay(log));UI.dayLog=log;
-    if(log.trained.length)news(`训练成果：${log.trained.map(p=>`${p.name}（${p.ovr}）`).join('、')} 有所进步。`);save();render()},
+    if(log.trained.length)news(`训练成果：${log.trained.map(p=>`${p.name}（${p.ovr}）`).join('、')} 有所进步。`);save();render();
+    if(log.surprises)toast('✨ '+log.surprises[log.surprises.length-1])},
   speed:()=>{M.speed=M.speed===1?3:1;render()},
   skip:()=>skipMatch(),
   resume:()=>{M.ht=false;M.paused=false;M.sel=null;render();M.timer=setTimeout(loop,300)},

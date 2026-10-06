@@ -418,3 +418,4 @@ details.fold[open]>summary{margin-bottom:10px}
   .sublist .subh{grid-column:1/-1}
   .board{padding:12px 10px 10px}
 }
+.surprise{margin:8px 0 0;padding:6px 10px;border-radius:6px;font-size:14px;font-weight:700;background:color-mix(in srgb,var(--amber) 22%,transparent);border-left:3px solid var(--amber)}

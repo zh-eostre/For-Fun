@@ -478,6 +478,7 @@ function advanceDay(log){
     if(mode.grow&&!p.inj&&!p.away&&p.ovr<p.pot&&rng()<mode.grow*growF(p)*groundMult()){p.ovr++;p.gain=(p.gain||0)+1;giveSig(p);log.trained.push(p)}
   });
   log.days++;
+  rollSurprise(log);
   while(cupDue()&&!inCup()&&S.day>=cupDay(S.cup.stage))playCupStage(null);
   return true;
 }
