@@ -72,6 +72,8 @@ function importSave(){
   inp.click();
 }
 
+const dayLog=()=>UI.dayLog||{days:0,cond:0,trained:[],healed:[]};
+const trainNews=l=>{if(l.length)news(`训练成果：${l.map(p=>`${p.name}（${p.ovr}）`).join('、')} 有所进步。`)};
 /* ---------- cheat card: one use per season ---------- */
 const cheatNews=k=>news(`发动了${CHEAT_CARD}「${CHEAT_INFO[k][0]}」。`);
 const CHEATS={
@@ -82,15 +84,20 @@ const CHEATS={
     S.market.forEach(p=>{const price=p.price;scoutReport(p,{conf:'high',est:p.pot});p.price=price});
     UI.tab='market';toast('真理之瞳已开启，一切潜力无所遁形！');
   },
-  cash:()=>{S.budget+=CHEAT_CASH;toast(`契约成立。${money(CHEAT_CASH)} 已注入俱乐部金库`)}
+  cash:()=>{S.budget+=CHEAT_CASH;toast(`契约成立。${money(CHEAT_CASH)} 已注入俱乐部金库`)},
+  // halftime only, and only our players on the pitch
+  rest:()=>{onPitch(my(),M[mySide()+'Ids']).forEach(p=>p&&(p.cond=100));
+    M.feed.unshift({min:45,cls:'sys',t:`${CHEAT_CARD}「${CHEAT_INFO.rest[0]}」发动——${my().short}的战士们气力重燃！`});toast('圣泉涌动，全员体能回满！')}
 };
 function useCheat(kind,b){
   if(S.cheatUsed){toast(`${CHEAT_CARD}的力量已耗尽，等待下个赛季的觉醒`);return}
   if(kind==='redo'&&!(M&&M.done&&M.pre))return;
+  if(kind==='rest'&&!(M&&M.ht&&!M.done)){toast('圣泉只在中场休息时涌现');return}
   if(kind==='scout'&&!S.market.length){toast('市场空无一人，真理之瞳无处可看，打完下一场再用');return}
   if(!arm(b,'再点一次，解放封印'))return;
   if(kind==='redo'){CHEATS.redo();return}
-  S.cheatUsed=true;CHEATS[kind]();cheatNews(kind);unlock('cheat');save();render();
+  // mid-match nothing is saved (a reload replays the match from kickoff); full time saves the card as spent
+  S.cheatUsed=true;CHEATS[kind]();cheatNews(kind);unlock('cheat');if(!M||M.done)save();render();
 }
 
 function canStart(p){
@@ -177,9 +184,11 @@ const ACT={
   },
   play:()=>startMatch(),
   // calendar: one day, or straight to the next match day; the log sums up what happened on the way
-  nextDay:()=>{const log={days:0,cond:0,trained:[],healed:[]};if(advanceDay(log)){UI.dayLog=log;save()}render();if(log.surprises)toast('✨ '+log.surprises[0])},
-  ff:()=>{const log={days:0,cond:0,trained:[],healed:[]};while(advanceDay(log));UI.dayLog=log;
-    if(log.trained.length)news(`训练成果：${log.trained.map(p=>`${p.name}（${p.ovr}）`).join('、')} 有所进步。`);save();render();
+  // the log under the calendar adds up every day since our last match; each day's training gains also go to the news
+  nextDay:()=>{const log=dayLog(),t=log.trained.length,su=(log.surprises||[]).length;
+    if(advanceDay(log)){UI.dayLog=log;trainNews(log.trained.slice(t));save()}render();if((log.surprises||[]).length>su)toast('✨ '+log.surprises[su])},
+  ff:()=>{const log=dayLog(),t=log.trained.length;while(advanceDay(log));UI.dayLog=log;
+    trainNews(log.trained.slice(t));save();render();
     if(log.surprises)toast('✨ '+log.surprises[log.surprises.length-1])},
   speed:()=>{M.speed=M.speed===1?3:1;render()},
   skip:()=>skipMatch(),
