@@ -5,11 +5,11 @@ const fs=require('fs'),vm=require('vm'),path=require('path');
 const root=path.join(__dirname,'..');
 
 exports.run=(code,extra={})=>{
-  const store={},el=()=>({innerHTML:'',hidden:true,textContent:'',contains:()=>false,querySelectorAll:()=>[]});
+  const store={},el=()=>({innerHTML:'',hidden:true,textContent:'',contains:()=>false,querySelector:()=>null,querySelectorAll:()=>[]});
   const els={app:el(),toast:el(),sr:el()};
   const ctx={els,store,console,Math,JSON,Set,Blob,setTimeout:()=>0,clearTimeout(){},window:{scrollTo(){}},
     localStorage:{getItem:k=>store[k]??null,setItem:(k,v)=>store[k]=v,removeItem:k=>delete store[k]},
-    document:{getElementById:i=>els[i],addEventListener(){},activeElement:null},...extra};
+    document:{getElementById:i=>els[i],addEventListener(){},activeElement:null,body:{style:{}}},...extra};
   vm.createContext(ctx);
   const files=fs.readFileSync(path.join(root,'football-manager.html'),'utf8').match(/js\/\w+\.js/g);
   const prelude='const ok=(c,m)=>console.log((c?"PASS ":"FAIL ")+m);const bad=h=>/undefined|NaN|\\[object/.test(h);';

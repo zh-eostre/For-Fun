@@ -10,6 +10,11 @@ function render(){
   // folding panels keep whatever open/closed state the player last chose
   app.querySelectorAll('details[data-fold]').forEach(d=>{const k=d.dataset.fold;if(UI.folds&&k in UI.folds)d.open=UI.folds[k]});
   if(keep){const el=[...app.querySelectorAll('[data-act]')].find(e=>e.dataset.act===keep[0]&&e.dataset.arg===keep[1]&&e.classList[0]===keep[2]);if(el)el.focus({preventScroll:true})}
+  // dialog focus goes after the general restore so it wins: into the dialog on open, back to the opener on close
+  const dlg=app.querySelector('.modal');
+  document.body.style.overflow=dlg?'hidden':'';
+  if(dlg&&UI.modalFocus){dlg.querySelector('.mclose').focus({preventScroll:true});UI.modalFocus=false}
+  if(!dlg&&UI.returnFocus!=null){const el=app.querySelector(`[data-act="player"][data-arg="${UI.returnFocus}"]`);if(el)el.focus({preventScroll:true});UI.returnFocus=null}
   if(!reducedMotion())app.querySelectorAll('[data-flip]').forEach(el=>{
     const b=before[el.dataset.flip];if(!b||!el.animate)return;
     const r=el.getBoundingClientRect(),dx=b.left-r.left,dy=b.top-r.top;
@@ -17,12 +22,16 @@ function render(){
   });
 }
 function view(){
+  const main=mainView();
+  return S&&UI.modal&&!(UI.view==='match'&&M)?main+vModal():main;
+}
+function mainView(){
   if(!S)return vStart();
   if(UI.view==='match'&&M)return vMatch();
   if(S.round>=ROUNDS)return vHeader()+`<div class="wrap">${vSeasonEnd()}</div>`;
   const tabs=[['home','俱乐部',vHome],['squad','阵容',vSquad],['table','积分榜',()=>vTable()],['cup',CUP_NAME,vCup],['market','转会市场',vMarket],['fac','设施',vAcademy],['honours','荣誉室',vHonours]];
   const pg=UI.pages&&UI.pages[UI.pages.length-1];
-  if(pg)return vHeader()+`<div class="wrap"><button class="btn small" data-act="back" style="margin-bottom:12px">← 返回</button>${pg.type==='team'?vTeamPage(pg.id):vPlayer(pg.id)}</div>`;
+  if(pg)return vHeader()+`<div class="wrap"><button class="btn small" data-act="back" style="margin-bottom:12px">← 返回</button>${vTeamPage(pg.id)}</div>`;
   const cur=tabs.find(t=>t[0]===UI.tab)||tabs[0];
   return vHeader()+`<div class="wrap"><nav class="tabs">${tabs.map(([k,l])=>`<button data-act="tab" data-arg="${k}" ${cur[0]===k?'aria-current="page"':''}>${l}</button>`).join('')}</nav>${cur[2]()}</div>`;
 }
@@ -125,6 +134,10 @@ function vTeamPage(tid){
   <section class="panel" style="padding:4px 10px"><p class="muted" style="font-size:13px;margin:8px 0">按钮上是对方要价：主力和核心球员要价更高。阵容不足 16 人或门将只剩 2 个时对方不卖。</p>${rows}</section>`;
 }
 // one player in detail, ours or another club's
+// the player dialog: clicking the dimmed backdrop closes it; the dialog itself swallows clicks (data-act="noop")
+function vModal(){
+  return `<div class="modal-bg" data-act="closeModal"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mtitle" data-act="noop">${vPlayer(UI.modal.id)}</div></div>`;
+}
 function vPlayer(id){
   const f=findAny(id);if(!f)return '<p class="muted">这名球员已经不在联赛里了。</p>';
   const {p,t}=f,mine=t.id===S.my,c=S.club[p.id]||{},hist=(p.hist||[]).concat([{s:S.season,o:p.ovr}]);
@@ -134,7 +147,7 @@ function vPlayer(id){
     ?`${p.loan?`<button class="btn small" data-act="recall" data-arg="${p.id}">召回</button>`:p.age<=LOAN_AGE?`<button class="btn small" data-act="loan" data-arg="${p.id}">外租（赛季结束回归）</button>`:''}
       <button class="btn small danger" data-act="sell" data-arg="${p.id}">出售 ${money(sellPrice(p))}</button>`
     :(()=>{const why=buyBlock(p,t);return `<button class="btn small primary" data-act="bid" data-arg="${p.id}" ${why?'disabled':''}>以 ${money(askPrice(p,t))} 签下</button>${why?`<span class="muted" style="font-size:13px">${why}</span>`:''}`})();
-  return `<section class="panel"><h2>${p.name}${p.youth?' <span class="tag2 youth">青训</span>':''}</h2>
+  return `<section class="panel"><div class="mhead"><h2 id="mtitle">${p.name}${p.youth?' <span class="tag2 youth">青训</span>':''}</h2><button class="btn small mclose" data-act="closeModal" aria-label="关闭">✕</button></div>
   <p class="muted" style="margin:-4px 0 10px;font-size:14px">${POS[p.pos]}，${p.age} 岁，${t.name}${status?`。${status}`:''}</p>
   ${p.sig?`<p class="sig" style="margin:0 0 10px">必杀技「${p.sig}」</p>`:''}
   <div class="pgrid">${cell('能力',p.ovr)}${cell('潜力',mine||p.age>23?p.pot:'?')}${cell('体能',p.cond)}${cell('身价',money(mine?marketValue(p):value(p)))}</div>

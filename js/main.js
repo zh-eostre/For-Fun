@@ -104,11 +104,12 @@ const ACT={
   listSaves:()=>listSaves(),
   loadDir:(a,b)=>{if((S||load())&&!arm(b,'再点一次读取（会覆盖当前进度）'))return;loadFromDir(a)},
   importSave:(a,b)=>{if((S||load())&&!arm(b,'再点一次确认（会覆盖当前进度）'))return;importSave()},
-  tab:a=>{UI.tab=a;UI.selSlot=null;UI.pages=[];render();window.scrollTo(0,0)},
+  tab:a=>{UI.tab=a;UI.selSlot=null;UI.pages=[];UI.modal=null;render();window.scrollTo(0,0)},
   team:a=>{(UI.pages=UI.pages||[]).push({type:'team',id:+a});render();window.scrollTo(0,0)},
-  player:a=>{(UI.pages=UI.pages||[]).push({type:'player',id:+a});render();window.scrollTo(0,0)},
+  player:a=>{UI.modal={id:+a};UI.modalFocus=true;render()},
+  closeModal:()=>closeModal(),
   back:()=>{UI.pages.pop();render()},
-  bid:(a,b)=>{if(!arm(b,'再点一次确认签下'))return;buyFrom(+a);UI.pages=(UI.pages||[]).filter(pg=>!(pg.type==='player'&&pg.id===+a));save();render()},
+  bid:(a,b)=>{if(!arm(b,'再点一次确认签下'))return;buyFrom(+a);if(UI.modal&&UI.modal.id===+a&&findP(+a))UI.modal=null;save();render()},
   loan:(a,b)=>{if(!arm(b,'再点一次确认租借'))return;loanOut(+a);save();render()},
   recall:a=>{recallLoan(+a);save();render()},
   div:a=>{UI.div=+a;render()},
@@ -150,7 +151,7 @@ const ACT={
     if(!arm(b,'再点一次确认'))return;
     const price=sellPrice(p);S.budget+=price;bankPlayer(p);
     my().players=my().players.filter(x=>x.id!==p.id);dropFromLineup(p.id);
-    news(`以 ${money(price)} 出售了 ${p.name}。`);UI.pages=(UI.pages||[]).filter(pg=>pg.id!==p.id);save();toast(`${p.name} 已出售`);render();
+    news(`以 ${money(price)} 出售了 ${p.name}。`);if(UI.modal&&UI.modal.id===p.id)UI.modal=null;save();toast(`${p.name} 已出售`);render();
   },
   buy:a=>{
     const p=S.market.find(x=>x.id===+a);if(!p)return;
@@ -184,13 +185,15 @@ const ACT={
   ysign:a=>{signYouth(+a);save();render()},
   yrel:(a,b)=>{if(!arm(b,'确定放走？'))return;releaseYouth(+a);save();render()},
   aup:(a,b)=>{if(!arm(b,'再点一次确认升级'))return;upgradeAcademy();save();render()},
-  matchDone:()=>{M=null;UI.view='main';UI.tab='home';UI.dayLog=null;UI.pages=[];render();window.scrollTo(0,0)},
+  matchDone:()=>{M=null;UI.view='main';UI.tab='home';UI.dayLog=null;UI.pages=[];UI.modal=null;render();window.scrollTo(0,0)},
   newSeason:()=>newSeason()
 };
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;
   const f=ACT[b.dataset.act];if(f)f(b.dataset.arg,b)});
 // remember which folding panels are open across re-renders ('toggle' doesn't bubble, so listen while capturing)
 document.addEventListener('toggle',e=>{const d=e.target;if(d.dataset&&d.dataset.fold)(UI.folds=UI.folds||{})[d.dataset.fold]=d.open},true);
+function closeModal(){if(!UI.modal)return;UI.returnFocus=UI.modal.id;UI.modal=null;render()}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&UI.modal){e.preventDefault();closeModal()}});
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('prow')){e.preventDefault();ACT.toggle(e.target.dataset.arg)}});
 
 // always open on the start screen, so the player can continue or restart
