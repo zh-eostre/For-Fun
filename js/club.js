@@ -12,6 +12,7 @@ function unlock(k){
 /* ---------- AI bids for your players ---------- */
 // a pending bid lasts until the next match; then it lapses and a new one may arrive
 function rollOffer(){
+  if(!windowOpen())return;
   if(S.offer){news(`${S.teams[S.offer.club].name} 的报价已过期。`);S.offer=null}
   if(rng()>=OFFER_CHANCE)return;
   const p=pick(my().players.filter(x=>!unavail(x)));
@@ -27,6 +28,7 @@ function bankPlayer(p){
   c.goals+=p.goals;c.apps+=p.apps;c.lapps=(c.lapps||0)+(p.lapps||0);
 }
 function acceptOffer(){
+  if(!windowOpen()){toast(WINDOW_SHUT);return}
   const o=S.offer,p=findP(o.pid),club=S.teams[o.club];
   if(!p){S.offer=null;return}
   if(squadSize()<=14){toast('一线队至少要保留 14 人');return}
@@ -174,7 +176,7 @@ const facLv=k=>(S.fac&&S.fac[k])||1;
 // scout department: more accurate reports, a bigger market, more hidden gems, cheaper refreshes, opponent reports from level 3
 const scoutShare=()=>{const L=facLv('scout');return {high:.25+.1*(L-1),low:Math.max(0,.25-.0625*(L-1))}};
 const scoutErr=()=>{const L=facLv('scout');return {mid:Math.round(4-.5*(L-1)),low:8-(L-1)}};
-const marketSize=()=>12+facLv('scout')-1;
+const marketSize=()=>36+4*(facLv('scout')-1);  // the season's transfer list
 const gemChance=()=>.35+.05*(facLv('scout')-1);
 const scoutCost=()=>20-2.5*(facLv('scout')-1);
 // physio room: fewer injuries, shorter ones, faster recovery, and from level 4 some knocks can be played through
@@ -187,7 +189,7 @@ const groundMult=()=>1+.15*(facLv('ground')-1);
 const pct=x=>Math.round(x*100)+'%';
 // what a facility does at level L, for the facilities page
 const FAC={
-  scout:{name:'球探部',fx:L=>`市场 ${12+L-1} 人 · 报告准确率 ${pct(.25+.1*(L-1))} · 刷新 ${money(20-2.5*(L-1))}${L>=3?' · 对手情报':''}`},
+  scout:{name:'球探部',fx:L=>`名单 ${36+4*(L-1)} 人 · 报告准确率 ${pct(.25+.1*(L-1))} · 加派球探 ${money(20-2.5*(L-1))}${L>=3?' · 对手情报':''}`},
   physio:{name:'理疗室',fx:L=>`受伤风险 ${pct(1-.075*(L-1))} · 休息日体能 +${DAY_REST+L-1}${L>=4?' · 部分伤病可带伤再战':''}`},
   ground:{name:'训练场',fx:L=>`训练成长 ×${(1+.15*(L-1)).toFixed(2)}`},
   stadium:{name:'球场',cost:[0,100,200,350,550],fx:L=>`主场门票收入 ×${(1+.25*(L-1)).toFixed(2)}`}
@@ -213,6 +215,7 @@ function askPrice(p,t){
 }
 // why a club won't sell (or we can't buy) right now; '' when the deal can go ahead
 function buyBlock(p,t){
+  if(!windowOpen())return WINDOW_SHUT;
   if(t.players.length<=15)return '对方阵容人数不足，不愿出售';
   if(p.pos==='GK'&&t.players.filter(x=>x.pos==='GK').length<=2)return '对方门将不够，不愿出售';
   if(squadFull())return '你的一线队已满 22 人';
@@ -220,6 +223,7 @@ function buyBlock(p,t){
   return '';
 }
 function buyFrom(id){
+  if(!windowOpen()){toast(WINDOW_SHUT);return}
   const f=findAny(id);if(!f||f.t.id===S.my)return;
   const {p,t}=f,why=buyBlock(p,t);if(why){toast(why);return}
   const price=askPrice(p,t);S.budget-=price;
@@ -368,4 +372,32 @@ function expandLeague(t1,moves){
   const slots=TEAMS.filter(t=>t.div===1).slice(-Math.max(0,DIV_SIZE-divSize(1))),names=teamNames(slots,S.teams),fresh=[];
   slots.forEach((sl,i)=>{const t={...sl,...names[i],id:S.teams.length,div:1,rep:sl.rep,str:strFromRep(sl.rep),players:[]};S.teams.push(t);t.players=makeSquad(t.str);fresh.push(t)});
   if(up.length||fresh.length)news(`联赛扩军，甲乙级各 ${DIV_SIZE} 队！${up.length?`${up.map(t=>t.name).join('、')} 额外升入甲级。`:''}${fresh.length?`新球队 ${fresh.map(t=>t.name).join('、')} 加入乙级。`:''}`);
+}
+
+/* ---------- preseason: transfer window and friendlies ----------
+   a season opens with S.pre days (one week) before league round 1. the transfer window is open only then, for
+   us and for AI clubs alike; two friendlies are played in it. saves from before this (S.pre undefined) keep an
+   always-open window until their next season */
+const PRESEASON=7;
+const windowOpen=()=>S.pre==null||S.day<S.pre;
+const windowLeft=()=>S.pre==null?null:Math.max(0,S.pre-S.day);
+const WINDOW_SHUT='转会窗口已关闭，下赛季季前再开放';
+// two friendlies against clubs from the other division: Wednesday at home, Saturday away
+function planFriendlies(){
+  const others=shuffle(S.teams.filter(t=>t.div!==my().div).map(t=>t.id));
+  S.friendlies=[{day:2,opp:others[0],home:true},{day:5,opp:others[1],home:false}];
+  S.teams.forEach(t=>t.winBuys=0);  // AI signings this window (capped per club)
+}
+const nextFriendly=()=>(S.friendlies||[]).find(f=>!f.res);
+// one preseason day for the AI and the market: clubs shop (harder near the deadline), bids for our players arrive,
+// and when the window shuts, any bid still open lapses
+function windowDay(){
+  if(S.pre==null)return;
+  if(S.day<S.pre){
+    aiWindow(S.day===S.pre-1?.35:.06);
+    rollOffer();
+  }else if(S.day===S.pre){
+    if(S.offer){news(`转会窗口关闭，${S.teams[S.offer.club].name} 的报价作废。`);S.offer=null}
+    news('转会窗口关闭。');
+  }
 }

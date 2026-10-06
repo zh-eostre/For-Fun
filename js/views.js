@@ -79,7 +79,8 @@ function vCalendar(){
   const cell=d=>{
     const t=dayType(d,days),m=days.find(x=>x.day===d);
     let what='',sub='';
-    if(t==='match'){
+    if(t==='match'&&m.friendly){what='友谊赛';sub=`${m.home?'主':'客'} ${S.teams[m.opp].short}`}
+    else if(t==='match'){
       const fx=m.cup?S.cup.ties.find(x=>x.includes(S.my)):S.fixtures[my().div][m.r].find(x=>x.includes(S.my));
       const opp=S.teams[fx[0]===S.my?fx[1]:fx[0]];
       what=m.cup?CUP_NAME:'联赛';sub=`${fx[0]===S.my?'主':'客'} ${opp.short}`;
@@ -96,6 +97,7 @@ function vCalendar(){
   ${L?`<p class="daylog">过了 ${L.days} 天：全队体能共 ${L.cond>=0?'+':''}${L.cond}${L.trained.length?`；训练中进步：${L.trained.map(p=>`${p.name}（${p.ovr}）`).join('、')}`:'；训练中没有人进步'}${L.healed.length?`；伤愈复出：${L.healed.map(p=>p.name).join('、')}`:''}。</p>`:''}
   ${L&&L.surprises?L.surprises.map(t=>`<p class="surprise">✨ ${t}</p>`).join(''):''}
   <p class="muted" style="margin:8px 0 0;font-size:14px">首发平均体能 <b>${avg}</b>${tired.length?`，偏低：${tired.map(p=>`${p.name} ${p.cond}`).join('、')}`:'，全员状态良好'}。</p>
+  ${windowOpen()&&S.pre!=null?`<p class="window open" style="margin:8px 0 0">季前转会窗口开放中，还剩 ${windowLeft()} 天</p>`:''}
   <div class="cal-train"><span class="muted">训练</span><div class="seg sm">${Object.entries(TRAIN).map(([k,v])=>`<button data-act="train" data-arg="${k}" aria-pressed="${S.training===k}" title="${v[1]}">${v[0]}</button>`).join('')}</div><span class="muted cal-hint">${TRAIN[S.training][1]}</span></div>
   ${today==='match'?'':`<div class="go" style="justify-content:flex-start;margin-top:10px"><button class="btn" data-act="nextDay">进入下一天</button><button class="btn primary" data-act="ff">快进到比赛日（${left} 天）</button></div>`}</section>`;
 }
@@ -158,7 +160,7 @@ function vPlayer(id){
   const status=[p.inj?`伤停 ${p.inj} 天`:'',p.ban?`停赛 ${p.ban} 轮`:'',p.away?'探亲中':'',p.loan?`租借至${loanLabel(p)}（${p.lapps||0} 场）`:'',unproven(p)?`未出道 ${careerApps(p)}/${YOUTH_PROVEN}`:''].filter(Boolean).join('，');
   const actions=mine
     ?`${p.loan?`<button class="btn small" data-act="recall" data-arg="${p.id}">召回</button>`:p.age<=LOAN_AGE?`<button class="btn small" data-act="loan" data-arg="${p.id}">外租（赛季结束回归）</button>`:''}
-      <button class="btn small danger" data-act="sell" data-arg="${p.id}">出售 ${money(sellPrice(p))}</button>`
+      <button class="btn small danger" data-act="sell" data-arg="${p.id}" ${windowOpen()?'':`disabled title="${WINDOW_SHUT}"`}>出售 ${money(sellPrice(p))}</button>`
     :(()=>{const why=buyBlock(p,t);return `<button class="btn small primary" data-act="bid" data-arg="${p.id}" ${why?'disabled':''}>以 ${money(askPrice(p,t))} 签下</button>${why?`<span class="muted" style="font-size:13px">${why}</span>`:''}`})();
   return `<section class="panel"><div class="mhead"><h2 id="mtitle">${p.name}${p.youth?' <span class="tag2 youth">青训</span>':''}</h2><button class="btn small mclose" data-act="closeModal" aria-label="关闭">✕</button></div>
   <p class="muted" style="margin:-4px 0 10px;font-size:14px">${POS[p.pos]}，${p.age} 岁，${t.name}${status?`。${status}`:''}</p>
@@ -234,7 +236,7 @@ function vSquad(){
 </div>
       <div><div class="ovr num">${p.ovr}${gainTag(p)}</div><div class="potl">潜力 ${p.pot}</div></div>
       <div><div class="bar ${p.cond<60?'low':''}"><i style="width:${p.cond}%"></i></div><div class="barlbl">体能 ${p.cond}</div></div>
-      <div class="act"><button class="btn small danger" data-act="sell" data-arg="${p.id}">出售 ${money(sellPrice(p))}</button></div>
+      <div class="act"><button class="btn small danger" data-act="sell" data-arg="${p.id}" ${windowOpen()?'':`disabled title="${WINDOW_SHUT}"`}>出售 ${money(sellPrice(p))}</button></div>
     </div>`).join('');
   }).join('');
   return `<section class="panel"><div class="toolbar">
@@ -369,23 +371,26 @@ function vMarket(){
   const F=UI.mf;
   let list=S.market.filter(p=>(F.pos==='all'||p.pos===F.pos)&&(F.age==='all'||(F.age==='y'?p.age<=21:F.age==='m'?p.age>=22&&p.age<=28:p.age>=29)));
   list.sort((a,b)=>F.sort==='pot'?shownPot(b)-shownPot(a):F.sort==='price'?a.price-b.price:b.ovr-a.ovr);
+  const PER=12,pages=Math.max(1,Math.ceil(list.length/PER)),pg=Math.min(UI.mpage||0,pages-1),shown=list.slice(pg*PER,pg*PER+PER),open=windowOpen();
+  const pager=pages>1?`<div class="pager"><button class="btn small" data-act="mpage" data-arg="${pg-1}" ${pg?'':'disabled'} aria-label="上一页">‹</button><span>第 ${pg+1}/${pages} 页</span><button class="btn small" data-act="mpage" data-arg="${pg+1}" ${pg<pages-1?'':'disabled'} aria-label="下一页">›</button></div>`:'';
   const seg=(key,opts)=>`<div class="seg sm">${opts.map(([v,l])=>`<button data-act="mf" data-arg="${key}:${v}" aria-pressed="${F[key]===v}">${l}</button>`).join('')}</div>`;
   return vReveal()+`<section class="panel"><h2>转会市场</h2>
-  <p class="muted" style="margin-top:-4px;font-size:14px">每场比赛后刷新 · 一线队 ${squadSize()}/22${my().players.length>squadSize()?`（另有 ${my().players.length-squadSize()} 人租借在外）`:''} · 绿条是能力，金条是球探估计的潜力 · 想买其他球队的人，在积分榜点球队名</p>
+  <p class="window ${open?'open':'shut'}">${open?(windowLeft()==null?'转会窗口开放中':`转会窗口开放中，还剩 ${windowLeft()} 天`):WINDOW_SHUT+'。名单可以先看，球探也可以先派。'}</p>
+  <p class="muted" style="margin-top:6px;font-size:14px">本赛季名单 · 一线队 ${squadSize()}/22${my().players.length>squadSize()?`（另有 ${my().players.length-squadSize()} 人租借在外）`:''} · 绿条是能力，金条是球探估计的潜力 · 想买其他球队的人，在积分榜点球队名</p>
   <div class="filters">
    <div><label>位置</label>${seg('pos',[['all','全部'],['GK','门将'],['DF','后卫'],['MF','中场'],['FW','前锋']])}</div>
    <div><label>年龄</label>${seg('age',[['all','全部'],['y','21 岁以下'],['m','22 到 28'],['o','29 岁以上']])}</div>
    <div><label>排序</label>${seg('sort',[['ovr','能力'],['pot','潜力'],['price','价格']])}</div>
   </div>
   <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
-   <button class="btn small" data-act="scout" ${S.budget<scoutCost()?'disabled':''}>派球探刷新名单（${money(scoutCost())}）</button>
-   <span class="muted" style="font-size:13px">显示 ${list.length}/${S.market.length} 人</span></div>
-  ${list.length?'<div class="mlist">'+list.map(p=>`<div class="mrow"><div style="min-width:0"><div class="pname">${p.name}${gem(p)} ${p.sale?'<span class="tag2 sale">急售半价</span>':''} <span class="muted" style="font-weight:400">${POS[p.pos]}，${p.age} 岁</span></div>
+   <button class="btn small" data-act="scout" ${S.budget<scoutCost()?'disabled':''}>加派球探，名单多 4 人（${money(scoutCost())}）</button>
+   <span class="muted" style="font-size:13px">符合条件 ${list.length}/${S.market.length} 人</span>${pager}</div>
+  ${list.length?'<div class="mlist">'+shown.map(p=>`<div class="mrow"><div style="min-width:0"><div class="pname">${p.name}${gem(p)} ${p.sale?'<span class="tag2 sale">急售半价</span>':''} <span class="muted" style="font-weight:400">${POS[p.pos]}，${p.age} 岁</span></div>
   ${p.sig?`<div class="sig">必杀「${p.sig}」</div>`:''}
   <div class="pbar" aria-hidden="true"><i class="p" style="width:${pctR(p.scout?p.scout.hi:p.pot)}%"></i><i class="o" style="width:${pctR(p.ovr)}%"></i></div>
   <div class="price">转会费 ${money(p.price)}${p.scout&&p.scout.conf!=='high'?`<span class="conf">，球探把握${p.scout.conf==='mid'?'一般':'很低'}</span>`:''}</div></div>
   <div><div class="ovr num">${p.ovr}</div><div class="potl">${potText(p)}</div></div>
-  <button class="btn small primary" data-act="buy" data-arg="${p.id}" ${S.budget<p.price||squadFull()?'disabled':''}>签下</button></div>`).join('')+'</div>'
+  <button class="btn small primary" data-act="buy" data-arg="${p.id}" ${!open||S.budget<p.price||squadFull()?'disabled':''}>签下</button></div>`).join('')+'</div>'+pager
   :`<p class="muted">${S.market.length?'没有符合条件的球员，换个筛选试试。':'这一轮的球员都被签走了，打完下一场再来看看。'}</p>`}</section>`;
 }
 const rcls=r=>r>=8?'r-hi':r>=7?'r-ok':r<6?'r-lo':'';
@@ -416,7 +421,7 @@ function vMatch(){
   if(M.done){
     const s=M.summary;
     ctl=`<div class="ht" style="border-color:var(--pitch)"><div class="verdict disp" style="color:${s.w==='胜'?'var(--pitch)':s.w==='负'?'var(--red)':'var(--ink)'}">${s.w==='胜'?LINE.win:s.w==='负'?LINE.lose:LINE.draw}</div>
-    <p style="margin:0 0 10px;font-size:14px">${s.pens?`点球大战 ${s.mp}:${s.op}。`:''}比赛收入 ${money(s.income)}${M.derby?'（宿敌之战，翻倍）':''}。${M.myInjuries.length?`伤病：${M.myInjuries.map(p=>p.name).join('、')}。`:''}${s.banned.length?`下轮停赛：${s.banned.map(p=>p.name).join('、')}。`:''}${s.grown.length?`比赛中成长：${s.grown.map(p=>p.name).join('、')}。`:''}</p>
+    <p style="margin:0 0 10px;font-size:14px">${s.pens?`点球大战 ${s.mp}:${s.op}。`:''}${M.friendly?'友谊赛不计成绩。':`比赛收入 ${money(s.income)}`}${M.derby?'（宿敌之战，翻倍）':''}。${M.myInjuries.length?`伤病：${M.myInjuries.map(p=>p.name).join('、')}。`:''}${s.banned.length?`下轮停赛：${s.banned.map(p=>p.name).join('、')}。`:''}${s.grown.length?`比赛中成长：${s.grown.map(p=>p.name).join('、')}。`:''}</p>
     ${s.awoken.map(p=>`<p class="awake">${LINE.awaken(p.name)}能力 ${p.ovr}，潜力 ${p.pot}${p.sig?`，领悟必杀技「${p.sig}」`:''}</p>`).join('')}
     ${vMatchStats()}
     <div class="go" style="justify-content:flex-start;margin-top:0"><button class="btn primary" data-act="matchDone">回到俱乐部</button>
@@ -442,7 +447,7 @@ function vMatch(){
   }else{
     ctl=`<div class="mctl"><button class="btn" data-act="speed">${M.speed===1?'加速':'正常速度'}</button><button class="btn primary" data-act="pauseSub">换人 / 调整</button><button class="btn" data-act="skip">直接看结果</button>${autoSubBtn()}</div>${vLiveStamina()}`;
   }
-  const tag=M.cup?`${CUP_NAME}·${stageName(M.stage)}`:M.derby?'宿敌之战':'';
+  const tag=M.friendly?'季前友谊赛':M.cup?`${CUP_NAME}·${stageName(M.stage)}`:M.derby?'宿敌之战':'';
   return `<div class="matchwrap">${tag?`<div class="mtag">${tag}</div>`:''}<div class="board">
   <div class="side disp">${H.name}<small>主队</small></div>
   <div class="score"><span class="${M.flash==='h'?'flash':''}">${M.hg}</span><span class="colon">:</span><span class="${M.flash==='a'?'flash':''}">${M.ag}</span></div>

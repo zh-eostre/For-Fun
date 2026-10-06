@@ -118,9 +118,10 @@ const ACT={
   loan:(a,b)=>{if(!arm(b,'再点一次确认租借'))return;loanOut(+a);save();render()},
   recall:a=>{recallLoan(+a);save();render()},
   div:a=>{UI.div=+a;render()},
-  mf:a=>{const [k,v]=a.split(':');UI.mf[k]=v;render()},
+  mf:a=>{const [k,v]=a.split(':');UI.mf[k]=v;UI.mpage=0;render()},
   closeReveal:()=>{UI.reveal=null;render()},
-  scout:()=>{const c=scoutCost();if(S.budget<c){toast('资金不够');return}S.budget-=c;refreshMarket();save();toast('球探带回了一份新名单');render()},
+  scout:()=>{const c=scoutCost();if(S.budget<c){toast('资金不够');return}S.budget-=c;addToMarket(4);save();toast('球探带回了 4 名新球员');render()},
+  mpage:a=>{UI.mpage=Math.max(0,+a);render()},
   fup:(a,b)=>{if(!arm(b,'再点一次确认升级'))return;upgradeFac(a);save();render()},
   train:a=>{S.training=a;save();render()},
   form:a=>{S.formation=a;S.lineup=autoPick(my(),a);UI.selSlot=null;save();toast(`已按 ${a} 重新选好首发`);render()},
@@ -151,6 +152,7 @@ const ACT={
     save();render();
   },
   sell:(a,b)=>{
+    if(!windowOpen()){toast(WINDOW_SHUT);return}
     const p=findP(+a);if(!p)return;
     if(!p.loan&&squadSize()<=14){toast('一线队至少要保留 14 人');return}
     if(!arm(b,'再点一次确认'))return;
@@ -159,6 +161,7 @@ const ACT={
     news(`以 ${money(price)} 出售了 ${p.name}。`);if(UI.modal&&UI.modal.id===p.id)UI.modal=null;save();toast(`${p.name} 已出售`);render();
   },
   buy:a=>{
+    if(!windowOpen()){toast(WINDOW_SHUT);return}
     const p=S.market.find(x=>x.id===+a);if(!p)return;
     if(S.budget<p.price){toast('资金不够');return}
     if(squadFull()){toast('一线队已满 22 人');return}

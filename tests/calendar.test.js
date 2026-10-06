@@ -6,7 +6,7 @@ newGame(2,teamNames());S.event=null;UI.tab='home';render();
 ok(S.day===0&&!isMatchDay()&&!bad(els.app.innerHTML),'new game starts day 0 ('+dayLabel(0)+'), first match '+dayLabel(nextMatchDay()));
 startMatch();ok(M===null,'cannot kick off before match day: "'+els.toast.textContent+'"');
 ACT.nextDay();ok(S.day===1&&UI.dayLog.days===1,'next day -> '+dayLabel(S.day)+' ('+dayType(S.day)+')');
-ACT.ff();ok(S.day===5&&isMatchDay(),'fast-forward lands on match day '+dayLabel(S.day));
+ACT.ff();ok(S.day===2&&isMatchDay()&&nextFix().friendly,'fast-forward lands on the first preseason friendly, '+dayLabel(S.day));
 render();ok(/data-act="play"/.test(els.app.innerHTML)&&!/data-act="ff"/.test(els.app.innerHTML),'match day shows the play button, no day buttons');
 
 // stamina over one week, normal training, same XI every match

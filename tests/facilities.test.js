@@ -10,7 +10,7 @@ const scoutStats=()=>{let n=0,young=0,high=0,inRange=0,gems=0;for(let i=0;i<300;
   return {market:(n/300).toFixed(1),highConf:(high/young*100).toFixed(0)+'%',truthInRange:(inRange/young*100).toFixed(0)+'%',gemRate:(gems/300*100).toFixed(0)+'%',refresh:scoutCost()}};
 const s1=scoutStats();S.fac.scout=5;const s5=scoutStats();
 console.log('  scout L1',JSON.stringify(s1));console.log('  scout L5',JSON.stringify(s5));
-ok(+s5.market===16&&parseInt(s5.highConf)>parseInt(s1.highConf)+25&&s5.refresh===10,'scout L5: bigger market, more confident, cheaper');
+ok(+s5.market===52&&+s1.market===36&&parseInt(s5.highConf)>parseInt(s1.highConf)+25&&s5.refresh===10,'scout L5: bigger market, more confident, cheaper');
 UI.tab='home';render();ok(/球探情报/.test(els.app.innerHTML)&&!bad(els.app.innerHTML),'scout L5 shows the opponent report on the home page');
 S.fac.scout=1;render();ok(!/球探情报：/.test(els.app.innerHTML),'scout L1 shows no opponent report');
 // facilities page + upgrade action

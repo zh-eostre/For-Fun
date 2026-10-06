@@ -44,7 +44,7 @@ const YC_BAN=3;   // yellow cards that add up to a one-match ban
 // calendar: a season is one week per league round; league matches on Saturdays, cup ties on the Wednesday of the week whose
 // league round is the cup format's at[k] (see CUP_FORMAT). the day after any of our matches is a rest day, every other day is a training day
 const WEEKDAYS=['周一','周二','周三','周四','周五','周六','周日'];
-const leagueDay=r=>7*r+5;
+const leagueDay=r=>(S.pre||0)+7*r+5;   // S.pre: preseason days before round 1 (see club.js)
 const DAY_REST=10;   // stamina everyone gets back on a rest day
 // per training day, depending on the training setting: stamina change, and chance to improve by 1
 const TRAIN_DAY={rest:{cond:8,grow:0},normal:{cond:2,grow:.028},hard:{cond:-1,grow:.05}};
@@ -152,6 +152,7 @@ const LINE={
   injSub:(o,i)=>`${o} 无法坚持，被担架抬下。${i} 紧急登场！`,
   injStay:n=>`换人名额已用尽，${n} 只能咬牙坚持。`,
   knock:n=>`${n} 倒地，理疗师冲进场内……只是轻伤，他站起来了！`,
+  friendlyKick:(h,a)=>`季前友谊赛：${h} 对阵 ${a}。不计成绩，正好磨合阵容。`,
   tiredSub:(o,i)=>`${o} 体力透支，${i} 替补登场，注入新的力量！`,
   derbyKick:(h,a)=>`宿敌之战！${h} 与 ${a} 之间，今日必须做个了断！`,
   cupKick:(h,a,st)=>`${CUP_NAME}${st}，${h} 对阵 ${a}。败者，将就此退场。`,

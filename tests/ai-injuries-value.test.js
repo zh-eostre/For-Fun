@@ -11,6 +11,7 @@ ok(['att','def','bal'].includes(M.aiTac)&&Object.keys(FORMS).includes(M.h===S.my
 const srBefore=els.sr.textContent;skipMatch();ok(els.sr.textContent!==''&&/终焉|进球/.test(els.sr.textContent),'screen reader region announced: "'+els.sr.textContent+'"');
 M=null;UI.view='main';
 // injuries in days heal on the calendar
+S.friendlies.forEach(f=>f.res={hg:0,ag:0});  // skip the preseason friendlies so four days are free
 const p=my().players.find(x=>!unavail(x));p.inj=4;dropFromLineup(p.id);
 const log={days:0,cond:0,trained:[],healed:[]};let d=0;while(p.inj>0&&advanceDay(log))d++;
 ok(p.inj===0&&d===4&&log.healed.includes(p),'a 4-day injury heals after 4 calendar days');

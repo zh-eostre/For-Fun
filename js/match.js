@@ -7,7 +7,7 @@ function startMatch(){
   if(!S.live){S.live={seed:Math.floor(Math.random()*2**31)};save()}
   rng=seeded(S.live.seed);indexNames();  // same name pool on a replay, so the post-match market comes out the same
   const f=nextFix(),opp=S.teams[f.opp];aiRecover(opp);
-  M={h:f.h,a:f.a,cup:f.cup,derby:f.derby,stage:f.cup?S.cup.stage:null,hg:0,ag:0,min:0,feed:[],speed:1,paused:false,ht:false,done:false,
+  M={h:f.h,a:f.a,cup:f.cup,derby:f.derby,friendly:!!f.friendly,fIdx:f.idx,stage:f.cup?S.cup.stage:null,hg:0,ag:0,min:0,feed:[],speed:1,paused:false,ht:false,done:false,
     flash:null,injuries:[],yc:{},goals:{},subs:0,oppSubs:0,sel:null,aiTac:'bal',tac:S.tactic,subMode:false,lastAuto:{h:-9,a:-9}};  // tac: our tactic for this match only
   // the opponent picks its best formation, and a tactic from how it rates against our XI
   const os=bestForm(opp,!f.home),mr=rating(strength(my(),S.lineup,S.tactic,f.home,S.boost>0?BOOST:0,S.formation));
@@ -22,7 +22,7 @@ function startMatch(){
   M.role={...roleMap(M.hXI,M.hForm),...roleMap(M.aXI,M.aForm)};M.ev={};M.part=[];M.st={h:{sh:0,on:0},a:{sh:0,on:0}};
   M.poss=possession(S.teams[M.h],M.hIds,M.hForm,M.h===S.my?M.tac:M.aiTac,S.teams[M.a],M.aIds,M.aForm,M.a===S.my?M.tac:M.aiTac);
   const hn=S.teams[M.h].name,an=S.teams[M.a].name;
-  M.feed.unshift({min:0,cls:'sys',t:f.cup?LINE.cupKick(hn,an,stageName(M.stage)):f.derby?LINE.derbyKick(hn,an):LINE.kickoff(hn,an)});
+  M.feed.unshift({min:0,cls:'sys',t:f.friendly?LINE.friendlyKick(hn,an):f.cup?LINE.cupKick(hn,an,stageName(M.stage)):f.derby?LINE.derbyKick(hn,an):LINE.kickoff(hn,an)});
   UI.view='match';render();M.timer=setTimeout(loop,600);
 }
 const mySide=()=>M.h===S.my?'h':'a';
@@ -81,7 +81,7 @@ function side(s,p){
     else if(gk&&rng()<.5){M.feed.unshift({min:M.min,cls:'',t:gk.sig&&rng()<.5?LINE.sigSave(gk.name,gk.sig,sc.name):pick(SAVE)(sc.name,gk.name)});ev(gk.id).sv=(ev(gk.id).sv||0)+1;st.sh++;st.on++}
     else{M.feed.unshift({min:M.min,cls:'',t:pick(MISS)(sc.name)});ev(sc.id).miss=(ev(sc.id).miss||0)+1;st.sh++}
   }else if(rng()<p*3.5)st.sh++;  // speculative efforts that never make the commentary
-  if(rng()<CARD){
+  if(!M.friendly&&rng()<CARD){
     const b=booking(team,ids,M.yc);
     if(b)ev(b.p.id)[b.red?'red':'yc']=1;
     if(b)M.feed.unshift(b.red
@@ -91,7 +91,7 @@ function side(s,p){
   // each minute one random player on the pitch is at risk; the risk grows as his stamina drops
   // and our physio room lowers it. from physio level 4 some of our knocks can be played through
   const pl=team.players.find(x=>x.id===pickOn(ids));
-  if(pl&&rng()<injRisk(pl)*(mine?physioRisk():1)){
+  if(pl&&rng()<injRisk(pl)*(mine?physioRisk():1)*(M.friendly?.5:1)){
     if(mine&&rng()<knockChance()){pl.cond=Math.max(30,pl.cond-10);M.feed.unshift({min:M.min,cls:'',t:LINE.knock(pl.name)})}
     else if(!M.injuries.includes(pl)){
       M.injuries.push(pl);pl.cond=Math.max(30,pl.cond-30);
@@ -115,6 +115,7 @@ function substitute(outId,inId,s=mySide(),line){
 }
 function finish(){
   M.done=true;M.paused=false;clearTimeout(M.timer);
+  if(M.friendly)return finishFriendly();
   if(M.cup)NEWS_TAG=`${CUP_NAME}${stageName(M.stage)}`;
   const res={h:M.h,a:M.a,hg:M.hg,ag:M.ag},home=M.h===S.my,myXI=home?M.hXI:M.aXI,oppId=home?M.a:M.h,oppXI=home?M.aXI:M.hXI;
   if(M.cup){if(M.hp!==undefined){res.hp=M.hp;res.ap=M.ap}}
@@ -149,8 +150,26 @@ function finish(){
   if(pens&&w==='胜')unlock('pens');
   if(M.cup)playCupStage(res);else{loanRound();S.round++}
   NEWS_TAG=null;
-  aiWindow(.1);rollOffer();rollEvent();
-  refreshMarket();
+  rollEvent();
+  fixLineup();
+  delete S.live;rng=Math.random;
+  save();
+}
+// a preseason friendly: stamina, growth and injuries count, but no table, cards, appearances or season ratings
+function finishFriendly(){
+  const home=M.h===S.my,myXI=home?M.hXI:M.aXI,oppXI=home?M.aXI:M.hXI,opp=S.teams[home?M.a:M.h];
+  afterMatch(opp,oppXI,false,true);
+  const {grown,awoken}=afterMatch(my(),myXI,true,true);
+  S.lastMatchDay=S.day;
+  M.injuries.forEach(p=>{p.inj=pick(INJ_DAYS);if(findP(p.id)&&rng()<quickHeal())p.inj=Math.max(1,Math.round(p.inj/2))});
+  M.myInjuries=M.injuries.filter(p=>findP(p.id));
+  const mg=home?M.hg:M.ag,og=home?M.ag:M.hg,w=mg>og?'胜':mg<og?'负':'平';
+  M.rh=rateSide(S.teams[M.h],M.hXI,M.role,M.ev,M.hg,M.ag,M.part,true);M.ra=rateSide(S.teams[M.a],M.aXI,M.role,M.ev,M.ag,M.hg,M.part,true);
+  M.mvp=[...M.rh,...M.ra].sort((a,b)=>b.r-a.r)[0];
+  M.summary={w,mg,og,income:0,grown,awoken,banned:[],pens:false};
+  S.friendlies[M.fIdx].res={hg:M.hg,ag:M.ag};
+  news(`季前友谊赛：${w} ${mg}:${og} 对阵${opp.name}。`);
+  M.myInjuries.forEach(p=>news(`${p.name} 在友谊赛中受伤，预计伤停 ${p.inj} 天。`));
   fixLineup();
   delete S.live;rng=Math.random;
   save();

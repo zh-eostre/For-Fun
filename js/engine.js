@@ -199,11 +199,11 @@ function rate(p,role,ev={},gf,ga,full){
   return Math.round(clamp(r,3,10)*10)/10;
 }
 // rates everyone who played for one side, adds it to their season totals (rs sum, rn count), best first
-function rateSide(team,played,roleOf,ev,gf,ga,part=[]){
+function rateSide(team,played,roleOf,ev,gf,ga,part=[],noTotals){
   return played.map(id=>{
     const p=id!=null&&team.players.find(x=>x.id===id);if(!p)return null;
     const role=roleOf[id]||p.pos,r=rate(p,role,ev[id],gf,ga,!part.includes(id));
-    p.rs=(p.rs||0)+r;p.rn=(p.rn||0)+1;
+    if(!noTotals){p.rs=(p.rs||0)+r;p.rn=(p.rn||0)+1}
     return {p,r,role};
   }).filter(Boolean).sort((a,b)=>b.r-a.r);
 }
@@ -232,7 +232,7 @@ const growF=p=>(p.age<=21?1.3:1)*clamp((p.pot-p.ovr)/8,.5,2);
 // xi = everyone who played this match; anyone banned or away who sat it out has now served a match.
 // our squad only takes the match itself here (fatigue, match growth); rest and training happen day by day.
 // AI clubs have no calendar, so their recovery and training are folded into each match
-function afterMatch(team,xi,isMy){
+function afterMatch(team,xi,isMy,friendly){
   const grown=[],awoken=[];
   // AI clubs develop players according to where they stand against their 底蕴: below their level faster,
   // above it slower. this anchors each club near its tier instead of the whole league drifting upward
@@ -240,11 +240,11 @@ function afterMatch(team,xi,isMy){
   if(isMy)team.players.forEach(p=>p.gain=0);
   team.players.forEach(p=>{
     const played=xi.includes(p.id);
-    if(played)p.apps++;
+    if(played&&!friendly)p.apps++;
     p.cond=clamp(Math.round(p.cond),30,100);  // stamina was spent minute by minute during the match
     if(!isMy&&p.inj>0)p.inj=Math.max(0,p.inj-7);  // our injuries heal day by day in advanceDay
-    if(p.ban>0&&!played)p.ban--;
-    if(p.away>0&&!played)p.away--;
+    if(!friendly&&p.ban>0&&!played)p.ban--;  // a friendly doesn't serve a ban
+    if(!friendly&&p.away>0&&!played)p.away--;
     if(p.ovr<p.pot){
       const ch=isMy?(played?MATCH_GROW:0):aiGrow;
       if(ch&&rng()<ch*growF(p)){p.ovr++;if(isMy){grown.push(p);p.gain=(p.gain||0)+1}}
@@ -342,27 +342,30 @@ function makeGem(){
   const g=makePlayer(pick(['DF','MF','FW']),ri(50,58),ri(17,19));
   g.pot=ri(88,93);scoutReport(g,{conf:'low',est:ri(72,77)});return g;
 }
-// how far the top division has moved above its starting level (average best XI of 68), 0-14.
+// how far the top division has moved above its starting level (average best XI of 75), 0-14.
 // the market and the academy follow it, so there is always something worth buying as the league gets stronger
-const BASE_LEVEL=68;
+const BASE_LEVEL=75;
 function leagueShift(){
   const top=S.teams.filter(t=>t.div===0&&t.id!==S.my);
   const avg=top.reduce((s,t)=>s+onPitch(t,bestForm(t,true).ids).filter(Boolean).reduce((a,p)=>a+p.ovr,0)/11,0)/top.length;
   return clamp(Math.round(avg-BASE_LEVEL),0,14);
 }
-function refreshMarket(){
-  S.market=[];const n=marketSize(),sh=leagueShift();
+// the season's transfer list, generated at the start of the season (n players; the scouts can add more later)
+function refreshMarket(){S.market=[];addToMarket(marketSize(),true)}
+function addToMarket(n,season){
+  const sh=leagueShift(),start=S.market.length;
   for(let i=0;i<n;i++){
     const pos=pick(['GK','DF','DF','DF','MF','MF','MF','FW','FW','FW']);
     let p;
-    if(i<3){p=makePlayer(pos,ri(50,64)+sh*.5,ri(17,20));p.pot=Math.min(95,ri(80,92)+Math.round(sh*.3))}
-    else if(i===3&&sh>=4)p=makePlayer(pos,ri(78,84)+sh*.6,ri(24,30));  // once the league has grown: one marquee name
+    if(i%4===0){p=makePlayer(pos,ri(50,64)+sh*.5,ri(17,20));p.pot=Math.min(95,ri(80,92)+Math.round(sh*.3))}  // a quarter are prospects
+    else if(season&&i<3*Math.max(1,sh>>2)&&sh>=4)p=makePlayer(pos,ri(78,84)+sh*.6,ri(24,30));  // once the league has grown: marquee names
     else p=makePlayer(pos,ri(52,80)+sh,ri(18,33));
     scoutReport(p);S.market.push(p);
   }
-  if(rng()<gemChance())S.market[ri(0,n-1)]=makeGem();
-  if(rng()<.45){
-    const c=S.market.filter(p=>p.scout.conf!=='low'&&p.age>=22);
+  const at=()=>start+ri(0,n-1);
+  for(let g=0;g<(season?3:1);g++)if(rng()<gemChance())S.market[at()]=makeGem();
+  for(let g=0;g<(season?3:1);g++)if(rng()<.45){
+    const c=S.market.slice(start).filter(p=>p.scout.conf!=='low'&&p.age>=22&&!p.sale);
     if(c.length){const x=pick(c);x.price=Math.round(x.price*.5);x.sale=true}
   }
 }
@@ -386,7 +389,7 @@ function aiSign(t){
 function aiWindow(chance){
   // clubs well below the level their 底蕴 expects try harder; clubs above it hardly bother
   const want=t=>{const g=aiGap(t);return chance*(g>4?3:g>1?1.5:g<-3?.3:1)};
-  const done=S.teams.filter(t=>t.id!==S.my&&rng()<want(t)).map(aiSign).filter(Boolean);
+  const done=S.teams.filter(t=>t.id!==S.my&&(t.winBuys||0)<2&&rng()<want(t)).map(t=>{const r=aiSign(t);if(r)t.winBuys=(t.winBuys||0)+1;return r}).filter(Boolean);
   if(done.length)news(`其他球队转会动态：${done.join('；')}。`);
 }
 let NEWS_TAG=null;  // set while a cup match is being wrapped up, so its news is labelled with the cup stage
@@ -404,8 +407,8 @@ function newGame(id,names){
   S.fixtures=newFixtures();S.results=DIVS.map(()=>[]);S.cup=newCup();S.rival=pickRival();
   S.budget=startBudget(TEAMS[id]);
   S.lineup=autoPick(my(),S.formation);
-  refreshMarket();
-  news(`你正式成为${my().name}的主教练。董事会给了你 ${money(S.budget)} 的预算。`);
+  S.pre=PRESEASON;refreshMarket();planFriendlies();
+  news(`你正式成为${my().name}的主教练。董事会给了你 ${money(S.budget)} 的预算。季前一周转会窗口开放，还有两场友谊赛。`);
   news(`宿敌：${S.teams[S.rival].name}。与他们的对决，收入翻倍，赢了全队士气高涨。`);
   newIntake();setGoals();
   save();UI={tab:'home',view:'main',mf:{...MF0}};render();
@@ -425,12 +428,14 @@ const myRank=()=>table().findIndex(t=>t.id===S.my)+1;
 const zone=(div,rank)=>div>0&&rank<=SWAP?'up':div<DIVS.length-1&&rank>divSize(div)-SWAP?'down':'';
 // the next match: a cup tie when one is due and we're still in it, otherwise the league round
 function nextFix(){
+  const fr=nextFriendly();
+  if(fr){const h=fr.home?S.my:fr.opp,a=fr.home?fr.opp:S.my;return {h,a,home:fr.home,opp:fr.opp,cup:false,derby:false,friendly:true,idx:S.friendlies.indexOf(fr)}}
   const cup=cupDue()&&inCup();
   const m=cup?S.cup.ties.find(t=>t.includes(S.my)):S.fixtures[my().div][S.round].find(m=>m.includes(S.my));
   const opp=m[0]===S.my?m[1]:m[0];
   return {h:m[0],a:m[1],home:m[0]===S.my,opp,cup,derby:opp===S.rival};
 }
-const fixLabel=f=>f.cup?`${CUP_NAME}·${stageName(S.cup.stage)}`:`联赛第 ${S.round+1} 轮`;
+const fixLabel=f=>f.friendly?`季前友谊赛 ${f.idx+1}/2`:f.cup?`${CUP_NAME}·${stageName(S.cup.stage)}`:`联赛第 ${S.round+1} 轮`;
 function lineupIssues(){
   const ps=S.lineup.map(id=>id==null?null:findP(id)),n=ps.filter(Boolean).length,iss=[];
   // fewer than 11 is only allowed when nobody else is fit to play, and never below the 7 the rules require
@@ -518,7 +523,7 @@ function newSeason(){
   if(S.teams[S.rival].div!==my().div){S.rival=pickRival();news(`新的宿敌出现了：${S.teams[S.rival].name}。`)}
   // summer window: bigger clubs poach stars from clubs playing above their level, every AI club gets one shot
   // at the market, then the player sees a fresh list
-  aiPoach();refreshMarket();aiWindow(1);refreshMarket();
+  S.pre=PRESEASON;S.day=0;aiPoach();refreshMarket();planFriendlies();
   S.lineup=autoPick(my(),S.formation);
   news(`升级：${names('up')}。降级：${names('down')}。`);
   prestigeNotes.forEach(t=>news(t+'。'));
@@ -538,11 +543,12 @@ function newSeason(){
 // our known upcoming matches: the remaining league rounds, plus the current cup tie if we're still in
 function matchDays(){
   const list=[];
+  (S.friendlies||[]).forEach((f,i)=>{if(!f.res)list.push({day:f.day,friendly:true,i,opp:f.opp,home:f.home})});
   for(let r=S.round;r<rounds();r++)list.push({day:leagueDay(r),cup:false,r});
   if(inCup()&&S.cup.stage<cupFmt().names.length)list.push({day:cupDay(S.cup.stage),cup:true,k:S.cup.stage});
   return list.sort((a,b)=>a.day-b.day);
 }
-const nextMatchDay=()=>cupDue()&&inCup()?cupDay(S.cup.stage):leagueDay(S.round);
+const nextMatchDay=()=>{const fr=nextFriendly();return fr?fr.day:cupDue()&&inCup()?cupDay(S.cup.stage):leagueDay(S.round)};
 const isMatchDay=()=>S.round<rounds()&&S.day===nextMatchDay();
 // 'match', 'rest' (the day after one of our matches) or 'train'
 function dayType(d,days=matchDays()){
@@ -566,6 +572,7 @@ function advanceDay(log){
     if(mode.grow&&!p.inj&&!p.away&&p.ovr<p.pot&&rng()<mode.grow*growF(p)*groundMult()){p.ovr++;p.gain=(p.gain||0)+1;giveSig(p);log.trained.push(p)}
   });
   log.days++;
+  windowDay();
   rollSurprise(log);
   while(cupDue()&&!inCup()&&S.day>=cupDay(S.cup.stage))playCupStage(null);
   return true;

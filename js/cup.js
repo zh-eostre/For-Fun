@@ -3,7 +3,7 @@
    last 16. the format (stage names, timing, prizes) is stored on the cup, so an older save's cup finishes as it began */
 const cupFmt=(C=S.cup)=>C.fmt||CUP_LEGACY;
 const stageName=(k,C=S.cup)=>cupFmt(C).names[k];
-const cupDay=k=>7*cupFmt().at[k]+2;
+const cupDay=k=>(S.pre||0)+7*cupFmt().at[k]+2;
 const pairUp=ids=>{const t=[];for(let i=0;i+1<ids.length;i+=2)t.push([ids[i],ids[i+1]]);return t};
 function newCup(){
   const extra=Math.max(0,S.teams.length-16);

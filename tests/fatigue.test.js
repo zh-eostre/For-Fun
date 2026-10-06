@@ -6,7 +6,7 @@ const spend=tac=>{let t=0;for(let k=0;k<200;k++){const p={cond:100,age:25};for(l
 const att=spend('att'),bal=spend('bal'),def=spend('def');
 ok(bal>=12&&bal<=17&&att>bal&&def<bal,'stamina per 90 min: 全力进攻 -'+att+'，平衡 -'+bal+'，防守反击 -'+def);
 // AI recovery: a rest day then training days, like ours
-const t=S.teams.find(x=>x.id!==S.my);t.players.forEach(p=>p.cond=70);t.lastDay=t.condDay=S.day;S.day+=1;aiRecover(t);
+const day0=S.day,t=S.teams.find(x=>x.id!==S.my);t.players.forEach(p=>p.cond=70);t.lastDay=t.condDay=S.day;S.day+=1;aiRecover(t);
 ok(t.players[0].cond===80,'AI day after a match: +10 (now '+t.players[0].cond+')');
 S.day+=3;aiRecover(t);ok(t.players[0].cond===86,'then +2 per training day (now '+t.players[0].cond+')');
 aiRecover(t);ok(t.players[0].cond===86,'recovering twice on the same day changes nothing');
@@ -18,6 +18,7 @@ const fresh=trial(100),tired=trial(55);
 ok(tired>fresh+10,'甲级 bottom side avoids defeat vs a giant: '+fresh+'% when the giant is fresh, '+tired+'% when it is tired');
 // counter-attack bonus
 ok(counter('def','att')===3&&counter('att','def')===0&&counter('def','def')===0,'防守反击 gets +3 attack against 全力进攻');
+S.day=day0;  // the recovery checks above moved the date by hand; put it back before playing
 // live match: our tired players come off automatically; pausing opens the substitution panel
 ACT.ff();S.event=null;S.offer=null;S.autoSub=true;my().players.forEach(p=>p.cond=60);
 startMatch();while(M.min<45)tick(false);ACT.resume();clearTimeout(M.timer);while(M.min<70)tick(true);
