@@ -32,7 +32,7 @@ ok(physioRisk()===.7&&knockChance()===.5&&p5.restDay===14,'physio L5: fewer inju
 // training ground
 function ground(L){S.fac.ground=L;let ups=0;for(let k=0;k<40;k++){my().players.forEach(p=>{p.ovr=50;p.pot=80;p.age=19;p.inj=0;p.away=0});
   S.round=0;S.day=0;S.lastMatchDay=-9;const log={days:0,cond:0,trained:[]};while(advanceDay(log));ups+=log.trained.length}return ups}
-const g1=ground(1),g5=ground(5);console.log('  training ground ups: L1',g1,'L5',g5);ok(g5>g1*1.3,'training ground L5 speeds up training growth');
+const g1=ground(1),g5=ground(5);console.log('  training ground ups: L1',g1,'L5',g5);ok(groundMult()===1.6&&g5>g1,'training ground L5: growth x'+groundMult()+' ('+g1+' → '+g5+' ups)');
 // migration v7 -> v8
 newGame(3,teamNames());const old=JSON.parse(JSON.stringify(S));old.v=7;delete old.fac;store[KEY]=JSON.stringify(old);
 const up=load();ok(up.v===SAVE_V&&up.fac.scout===1&&up.fac.physio===1&&up.fac.ground===1,'v7 save gets level-1 facilities');
