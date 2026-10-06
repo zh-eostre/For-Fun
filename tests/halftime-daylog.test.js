@@ -28,7 +28,14 @@ const h=els.app.innerHTML,cards=h.match(/class="scard[^"]*"/g)||[];
 ok(cards.length>0&&cards.some(c=>/fit/.test(c))===my().players.some(p=>p.pos==='MF'&&!M[s+'XI'].includes(p.id)&&!unavail(p)),'bench cards mark same-position subs ('+cards.length+' cards)');
 ok(/sc-gain/.test(h)&&/sc-ovr num pos-/.test(h),'cards show the stamina gain and a position-coloured rating');
 M.sel=null;
-ACT.resume();skipMatch();
+ACT.resume();
+// a change by hand in the second half, then full time lists every change with ↑ / ↓ marks
+while(M.min<60)tick(false);M.paused=true;
+const outP=mine()[3],inP=my().players.find(p=>!M[s+'XI'].includes(p.id)&&!unavail(p)&&p.pos===outP.pos)||my().players.find(p=>!M[s+'XI'].includes(p.id)&&!unavail(p));
+ACT.subOut(String(outP.id));ACT.subIn(String(inP.id));ACT.resume();clearTimeout(M.timer);skipMatch();render();
+const fh=els.app.innerHTML;
+ok(M.subLog.some(x=>x.out===outP.id&&x.in===inP.id&&x.min===60&&!x.why),'our change is logged at minute 60');
+ok(new RegExp('换人 '+M.subs+'/'+SUBS).test(fh)&&/↑60'/.test(fh)&&/↓60'/.test(fh)&&!bad(fh),'full time shows the changes and marks who came on and off');
 // a full week between league rounds, one click at a time
 ACT.matchDone();
 while(S.round<1){if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ACT.ff();startMatch();skipMatch();ACT.matchDone()}

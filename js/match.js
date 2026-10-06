@@ -39,7 +39,7 @@ function tick(skipping){
     const lines=slotLines(M[s+'Form']);onPitch(team,M[s+'Ids']).forEach((p,j)=>p&&drain(p,tac,lines[j]));
     if((mine&&S.autoSub===false)||M.min-M.lastAuto[s]<5)continue;
     const sw=tiredSwap(team,M[s+'Ids'],M[s+'XI'],M[s+'Form'],mine?M.subs:M.oppSubs,M.min);
-    if(sw&&substitute(sw[0].id,sw[1].id,s,LINE.tiredSub(sw[0].name,sw[1].name)))M.lastAuto[s]=M.min;
+    if(sw&&substitute(sw[0].id,sw[1].id,s,LINE.tiredSub(sw[0].name,sw[1].name),'tired'))M.lastAuto[s]=M.min;
   }
   if(M.min===45){
     const myG=M.h===S.my?M.hg:M.ag,opG=M.h===S.my?M.ag:M.hg;
@@ -107,17 +107,18 @@ function side(s,p){
       // an injured player is carried off if a substitution is left: best fresh player for his slot's role, else anyone
       const xi=M[s+'XI'],role=slotRoles(form)[ids.indexOf(pl.id)],bench=team.players.filter(x=>!xi.includes(x.id)&&!unavail(x)).sort((a,b)=>eff(b)-eff(a));
       const sub=bench.find(x=>x.pos===role)||standIn(bench,role);
-      if(!(sub&&substitute(pl.id,sub.id,s,LINE.injSub(pl.name,sub.name))))M.feed.unshift({min:M.min,cls:'sys',t:LINE.injStay(pl.name)});
+      if(!(sub&&substitute(pl.id,sub.id,s,LINE.injSub(pl.name,sub.name),'inj')))M.feed.unshift({min:M.min,cls:'sys',t:LINE.injStay(pl.name)});
     }
   }
 }
 // out must be on the pitch, in must not have played yet. s = 'h'/'a', defaults to our side
-function substitute(outId,inId,s=mySide(),line){
+// why: 'tired' / 'inj' for automatic changes, empty for ours by hand; every change is kept in M.subLog
+function substitute(outId,inId,s=mySide(),line,why){
   const team=S.teams[s==='h'?M.h:M.a],key=team.id===S.my?'subs':'oppSubs',ids=M[s+'Ids'],xi=M[s+'XI'];
   const po=team.players.find(x=>x.id===outId),pi=team.players.find(x=>x.id===inId);
   if(M[key]>=SUBS||!po||!pi||!ids.includes(outId)||xi.includes(inId)||unavail(pi))return false;
   const slot=ids.indexOf(outId);ids[slot]=inId;xi.push(inId);M[key]++;if(key==='subs')M.sel=null;
-  M.off[outId]=M.min;M.on[inId]=M.min;
+  M.off[outId]=M.min;M.on[inId]=M.min;(M.subLog||(M.subLog=[])).push({s,min:M.min,out:outId,in:inId,why});
   M.role[inId]=slotRoles(M[s+'Form'])[slot];M.line[inId]=slotLines(M[s+'Form'])[slot];
   M.feed.unshift({min:M.min,cls:'sys',t:line||LINE.sub(po.name,pi.name)});
   return true;

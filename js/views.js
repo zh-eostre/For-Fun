@@ -455,10 +455,23 @@ function statTable(list){
   const pct=a=>a.pas?Math.round(a.ok/a.pas*100)+'%':'—';
   return `<div class="tw"><table class="stat-t"><thead><tr><th>球员</th><th>评分</th><th>传球</th><th>关键传球</th><th>抢断</th><th>拦截</th><th>过人</th><th>扑救</th><th>进/助</th></tr></thead>
   <tbody>${list.map(x=>{const a=x.a||{pas:0,ok:0,kp:0,tkl:0,int:0,drb:0},e=(M.ev||{})[x.p.id]||{};
-    return `<tr><td>${POS[x.role][0]} ${shortName(x.p.name)}</td><td>${rtag(x.r)}</td><td>${a.ok}/${a.pas} <small class="muted">${pct(a)}</small></td><td>${a.kp}</td><td>${a.tkl}</td><td>${a.int}</td><td>${a.drb}</td><td>${x.role==='GK'?e.sv||0:'—'}</td><td>${e.g||0}/${e.a||0}</td></tr>`}).join('')}</tbody></table></div>`;
+    return `<tr><td>${POS[x.role][0]} ${shortName(x.p.name)}${subMark(x.p.id)}</td><td>${rtag(x.r)}</td><td>${a.ok}/${a.pas} <small class="muted">${pct(a)}</small></td><td>${a.kp}</td><td>${a.tkl}</td><td>${a.int}</td><td>${a.drb}</td><td>${x.role==='GK'?e.sv||0:'—'}</td><td>${e.g||0}/${e.a||0}</td></tr>`}).join('')}</tbody></table></div>`;
 }
 const rcls=r=>r>=8?'r-hi':r>=7?'r-ok':r<6?'r-lo':'';
 const rtag=r=>`<span class="rating ${rcls(r)}">${r.toFixed(1)}</span>`;
+// who came on (↑) or went off (↓) and when; a sending-off shows as a red card
+function subMark(id){
+  if(M.on&&M.on[id]!=null)return ` <small class="subm on" title="第 ${M.on[id]} 分钟替补上场">↑${M.on[id]}'</small>`;
+  if(M.off&&M.off[id]!=null)return ((M.ev||{})[id]||{}).red?` <small class="subm red" title="第 ${M.off[id]} 分钟被罚下">红牌 ${M.off[id]}'</small>`
+    :` <small class="subm off" title="第 ${M.off[id]} 分钟被换下">↓${M.off[id]}'</small>`;
+  return '';
+}
+// our changes in order: minute, who went off and why, who came on
+function vSubLog(){
+  const l=(M.subLog||[]).filter(x=>x.s===mySide());if(!l.length)return '<p class="sublog muted">本场没有换人。</p>';
+  const why={tired:'体能',inj:'伤'};
+  return `<div class="sublog"><b>换人 ${l.length}/${SUBS}</b>${l.map(x=>`<span><span class="num">${x.min}'</span> <span class="subm off">↓</span>${findP(x.out)?.name||'?'}${why[x.why]?`<small class="muted">（${why[x.why]}）</small>`:''} <span class="subm on">↑</span>${findP(x.in)?.name||'?'}</span>`).join('')}</div>`;
+}
 // full-time box: shots / on target / possession, man of the match, and our players' ratings
 function vMatchStats(){
   const H=S.teams[M.h],A=S.teams[M.a],mine=mySide()==='h'?M.rh:M.ra;
@@ -467,7 +480,8 @@ function vMatchStats(){
     <div class="srow2 head"><span>${H.short}</span><span></span><span>${A.short}</span></div>
     ${row('射门',M.st.h.sh,M.st.a.sh)}${row('射正',M.st.h.on,M.st.a.on)}${row('控球',M.poss+'%',(100-M.poss)+'%')}</div>
   ${M.mvp?`<p class="mvp">全场最佳：<b>${M.mvp.p.name}</b>（${S.teams.find(t=>t.players.includes(M.mvp.p)).short}，${POS[M.mvp.role]}）${rtag(M.mvp.r)}${standout(M.mvp)?` <span class="muted" style="font-size:13px">${standout(M.mvp)}</span>`:''}</p>`:''}
-  <div class="ratings">${mine.map(x=>`<span class="rt">${POS[x.role][0]} ${shortName(x.p.name)} ${rtag(x.r)}</span>`).join('')}</div>
+  <div class="ratings">${mine.map(x=>`<span class="rt">${POS[x.role][0]} ${shortName(x.p.name)}${subMark(x.p.id)} ${rtag(x.r)}</span>`).join('')}</div>
+  ${vSubLog()}
   <details class="fold mstat-fold" data-fold="mstats"><summary><b>详细数据</b></summary>${statTable(mine)}</details>`;
 }
 // stamina while the match runs: our players on the pitch (lowest first) and the opponents' average

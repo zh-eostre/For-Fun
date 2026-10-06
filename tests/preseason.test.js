@@ -26,7 +26,8 @@ const other=S.teams.find(t=>t.id!==S.my);ok(/关闭/.test(buyBlock(other.players
 // market list stays put through league matches; AI clubs stop signing
 const list=JSON.stringify(S.market.map(x=>x.id)),squads=JSON.stringify(S.teams.filter(t=>t.id!==S.my).map(t=>t.players.map(x=>x.id).sort()));
 for(let k=0;k<3;k++){ACT.ff();S.event=null;startMatch();skipMatch();M=null;UI.view='main'}
-ok(JSON.stringify(S.market.map(x=>x.id))===list,'the season list does not change after matches');
+// nobody leaves the list (a surprise scout tip may add a hidden gem)
+ok(JSON.parse(list).every(id=>S.market.some(x=>x.id===id)),'the season list does not change after matches');
 ok(!S.offer,'no bids for our players outside the window');
 const aiNews=S.news.filter(n=>/其他球队转会动态/.test(n.t)&&n.r.includes('第'+(S.round)+'轮'));ok(aiNews.length===0,'AI clubs do not sign players during the season');
 // scouts add four

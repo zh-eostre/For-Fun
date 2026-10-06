@@ -564,3 +564,12 @@ dialog.modal.wide{max-width:860px}
 @media (max-width:560px){.sublist{grid-template-columns:repeat(2,minmax(0,1fr))}.scard{padding:6px 7px 9px;gap:6px;grid-template-columns:30px minmax(0,1fr)}
   .sc-ovr{width:30px;height:30px;font-size:17px}.sc-name{font-size:13px}}
 .scard.fit .sc-name{padding-right:40px}
+
+/* full time: substitutions */
+.subm{font-size:11px;font-weight:700;margin-left:2px}
+.subm.on{color:var(--pitch)}
+.subm.off{color:var(--muted)}
+.subm.red{color:var(--red-text,var(--red))}
+.sublog{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;margin:0 0 10px;align-items:baseline}
+.sublog>b{margin-right:2px}
+.sublog .num{font-size:15px}
