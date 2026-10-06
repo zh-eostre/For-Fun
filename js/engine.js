@@ -84,13 +84,18 @@ function upgrade(d){
 function load(){try{const t=localStorage.getItem(KEY);if(t)return upgrade(JSON.parse(t))}catch(e){}return null}
 
 /* ---------- players & league ---------- */
+// CN_SUR is ordered by frequency, so the curve makes 王, 李 and 陈 turn up far more often than 葛
+function cnName(){
+  const sur=rng()<.03?pick(CN_COMP):CN_SUR[Math.floor(CN_SUR.length*rng()**1.6)],r=rng();
+  return sur+(r<.1?pick(CN_GIV1):r<.3?pick(GIV):pick(CN_GIV2));
+}
 function rawName(){
   const r=rng();
-  if(r<.4)return pick(SUR)+pick(GIV);
+  if(r<.4)return cnName();
   if(r<.78)return pick(MALAY_F)+'·'+pick(MALAY_L);
   if(r<.88)return pick(INDIAN_F)+'·'+pick(INDIAN_L);
-  if(r<.96)return pick(WEST_F)+'·'+pick(WEST_L);
-  return pick(ASIA);
+  if(r<.96)return pick(WEST_F)+'·'+pick(EU_SUR);
+  return rng()<.5?pick(JP_SUR)+pick(JP_GIV):pick(KR_SUR)+pick(KR_GIV);
 }
 // retries until the name is new to the league (gives up after a while rather than loop forever)
 function genName(){

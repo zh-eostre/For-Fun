@@ -273,7 +273,9 @@ function vSquad(){
 }
 // the XI drawn on a pitch, attacking upwards. every slot of the formation gets a spot, so the shape always matches
 // the formation; the tactic pushes the outfield lines up or down; wide slots in back/mid lines of 4+ sit a bit higher
-const shortName=n=>n.split('·')[0];
+// Malay and Indian players go by their given name, Western ones by their surname (like 「席尔瓦」 on a shirt)
+const EU_SET=new Set(EU_SUR);
+const shortName=n=>{const [a,b]=n.split('·');return b&&EU_SET.has(b)?b:a};
 const PITCH_Y={FW:17,MF:42,DF:66,GK:89};
 function pitchSpots(ids,form,team){
   const find=team?id=>team.players.find(p=>p.id===id):findP;
