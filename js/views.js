@@ -107,9 +107,9 @@ function vHome(){
   const ask=vEvent()+vOffer(),wide=isWide();
   return `${ask&&!wide?ask:''}<div class="cols"><div class="col">${vCalendar()}<section class="panel ${f.cup?'cupmatch':''}"><h2>下一场：${fixLabel(f)}，${f.home?'主场':'客场'}${f.derby?' <span class="tag2 derby">宿敌之战</span>':''}</h2>
   ${f.derby?`<p class="muted" style="margin:-6px 0 8px;font-size:13px">收入翻倍，赢了全队士气高涨 2 场。</p>`:''}${f.cup?`<p class="muted" style="margin:-6px 0 8px;font-size:13px">一场定胜负，平局直接点球大战。</p>`:''}
-  <div class="fixture"><div><div class="t disp" style="color:${H.color}">${H.name}</div><div class="str">综合实力 <span class="num">${hs}</span></div></div>
+  <div class="fixture"><div><div class="t disp" style="--tc:${H.color}">${H.name}</div><div class="str">综合实力 <span class="num">${hs}</span></div></div>
   <div class="vs num">VS</div>
-  <div><div class="t disp" style="color:${A.color}">${A.name}</div><div class="str">综合实力 <span class="num">${as}</span></div></div></div>
+  <div><div class="t disp" style="--tc:${A.color}">${A.name}</div><div class="str">综合实力 <span class="num">${as}</span></div></div></div>
   ${vOppReport(opp,ob,tacFor(ob.r,rating(ms)))}
   <div class="go"><span class="muted" style="font-size:14px">阵型 ${S.formation}，战术${TACT[S.tactic]}</span>
   <button class="btn" data-act="tab" data-arg="squad">调整阵容</button>
@@ -328,7 +328,7 @@ function vFacilities(){
   return `<section class="panel"><h2>设施</h2>
   <div class="facs">${Object.entries(FAC).map(([k,f])=>{
     const L=facLv(k),max=L>=facCost(k).length,c=facCost(k)[L];
-    return `<div class="fac"><div class="fh"><b>${f.name}</b><span class="tag2" style="background:var(--pitch);color:#fff">${L} 级</span></div>
+    return `<div class="fac"><div class="fh"><b>${f.name}</b><span class="tag2" style="background:var(--accent);color:#fff">${L} 级</span></div>
     <p class="fx">${f.fx(L)}</p>
     ${max?'<p class="muted" style="margin:0;font-size:12px">已是最高等级</p>':`<p class="fx next">升到 ${L+1} 级：${f.fx(L+1)}</p>
     <button class="btn small" data-act="fup" data-arg="${k}" ${S.budget<c?'disabled':''}>升级（${money(c)}）</button>`}</div>`}).join('')}</div></section>`;
@@ -349,7 +349,7 @@ function vAcademy(){
   const A=S.academy,lv=A.lv,max=lv>=ACADEMY_COST.length,cost=ACADEMY_COST[lv];
   const grads=my().players.filter(p=>p.youth).sort((a,b)=>b.ovr-a.ovr);
   const conf={high:'把握高',mid:'把握一般',low:'把握很低'};
-  return vReveal()+`${vFacilities()}<section class="panel"><h2>青训营 <span class="tag2" style="background:var(--pitch);color:#fff">${lv} 级</span></h2>
+  return vReveal()+`${vFacilities()}<section class="panel"><h2>青训营 <span class="tag2" style="background:var(--accent);color:#fff">${lv} 级</span></h2>
   <p class="muted" style="margin:-4px 0 10px;font-size:14px">每季送来 ${lv>=3?4:3} 名少年，签入免费，没签的赛季结束后离开。</p>
   <div class="cheat-row">${max?'<span class="muted">已是最高等级</span>':`<button class="btn small" data-act="aup" ${S.budget<cost?'disabled':''}>升到 ${lv+1} 级（${money(cost)}）</button>
   <span class="muted">${lv+1>=3&&lv<3?'3 级起每季多送 1 人，':''}少年能力和潜力更高，报告更准</span>`}</div></section>

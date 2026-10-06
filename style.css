@@ -438,3 +438,20 @@ dialog.modal::backdrop{background:rgba(10,15,12,.55)}
 .toast[popover]{inset:auto;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));margin:0;border:0;overflow:visible}
 .tick{background:none;padding:0;cursor:pointer;font:inherit;font-size:13px;flex:none}
 .prow.on .tick{color:#fff}
+
+/* ---------- contrast: text-safe shades per theme ----------
+   --accent: fill behind white text (buttons, selected options, badges)
+   --red-text / --amber-text: coloured text on the card or page background */
+:root{--accent:#2C6E49;--red-text:#A93226;--amber-text:#8A5A00}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--accent:#2E7A4B;--red-text:#F28B7D;--amber-text:#F5B841}}
+:root[data-theme="dark"]{--accent:#2E7A4B;--red-text:#F28B7D;--amber-text:#F5B841}
+.btn.primary{background:var(--accent);border-color:var(--accent)}
+.seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent)}
+.prow.on .tick{background:var(--accent);border-color:var(--accent)}
+.tag2.youth,.rating.r-hi{background:var(--accent)}
+.btn.danger{color:var(--red-text);border-color:var(--red-text)}
+.warn,.injtag,.gain.neg,.goal-no.red{color:var(--red-text)}
+.sig,.awake,.mtag{color:var(--amber-text);filter:none}
+.trophy.got .num{color:var(--amber-text)}
+.fixture .t{color:var(--ink);display:inline-block;border-bottom:3px solid var(--tc,var(--line));padding-bottom:2px}
+.bench .tc{background:#56635A}
