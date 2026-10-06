@@ -516,3 +516,4 @@ dialog.modal.wide{max-width:860px}
 .team-pick.locked{cursor:default;opacity:.55;border-left-color:var(--line)}
 .team-pick.locked:hover{border-color:var(--line)}
 .locked-list .team-pick span{font-size:12px}
+.lb-switch{margin:-2px 0 8px}

@@ -188,12 +188,22 @@ function scorer(team,ids,form='4-4-2'){
   for(const x of ps){r-=x.w;if(r<=0)return x.p}
   return ps[0].p;
 }
+// who set the goal up: about 78% of goals have an assist; midfielders most often, then forwards, defenders now
+// and then, keepers almost never; better players more often. never the scorer himself
+function assister(team,ids,form,sc){
+  if(rng()>=.78)return null;
+  const w={MF:3,FW:4.5,DF:1.3,GK:.05},roles=slotRoles(form);  // roughly 45% midfield, 35% forwards, 20% defence
+  const ps=onPitch(team,ids).map((p,i)=>p&&p!==sc&&{p,w:w[roles[i]]*p.ovr}).filter(Boolean);
+  let r=rng()*ps.reduce((s,x)=>s+x.w,0);
+  for(const x of ps){r-=x.w;if(r<=0)return x.p}
+  return ps.length?ps[0].p:null;
+}
 /* ---------- match ratings ---------- */
 // a 3.0-10.0 rating: starts from ability and the result, then what he did (ev: g goals, sig signature goals,
 // sv saves, miss, yc, red) and, for the back line, goals conceded. part-timers (subbed on or off) drift less from 6
 function rate(p,role,ev={},gf,ga,full){
   let r=6+(p.ovr-65)/25+(gf>ga?.4:gf<ga?-.4:0)+(rng()-.5)*.6
-    +(ev.g||0)*(role==='FW'?.9:1.1)+(ev.sig||0)*.2+(ev.sv||0)*.35-(ev.miss||0)*.15-(ev.yc||0)*.3-(ev.red||0)*1.5;
+    +(ev.g||0)*(role==='FW'?.9:1.1)+(ev.a||0)*.6+(ev.sig||0)*.2+(ev.sv||0)*.35-(ev.miss||0)*.15-(ev.yc||0)*.3-(ev.red||0)*1.5;
   if(role==='GK')r+=ga?-.25*ga:.8;else if(role==='DF')r+=ga?-.15*ga:.5;else if(role==='MF'&&!ga)r+=.2;
   if(!full)r=6+(r-6)*.6;
   return Math.round(clamp(r,3,10)*10)/10;
@@ -305,8 +315,9 @@ function quickSim(h,a){
   for(let i=0;i<90;i++){
     const sh=strength(H,hi,th,true,0,bh.form),sa=strength(A,ai,ta,false,0,ba.form);
     sh.atk+=counter(th,ta);sa.atk+=counter(ta,th);
-    if(rng()<xgMin(sh,sa)){hg++;const p=scorer(H,hi,bh.form);p.goals++;e(p.id).g=(e(p.id).g||0)+1}
-    if(rng()<xgMin(sa,sh)){ag++;const p=scorer(A,ai,ba.form);p.goals++;e(p.id).g=(e(p.id).g||0)+1}
+    const assist=(T,ids,form,p)=>{const a=assister(T,ids,form,p);if(a){a.ast=(a.ast||0)+1;e(a.id).a=(e(a.id).a||0)+1}};
+    if(rng()<xgMin(sh,sa)){hg++;const p=scorer(H,hi,bh.form);p.goals++;e(p.id).g=(e(p.id).g||0)+1;assist(H,hi,bh.form,p)}
+    if(rng()<xgMin(sa,sh)){ag++;const p=scorer(A,ai,ba.form);p.goals++;e(p.id).g=(e(p.id).g||0)+1;assist(A,ai,ba.form,p)}
     if(rng()<CARD)book(booking(H,hi,yc));
     if(rng()<CARD)book(booking(A,ai,yc));
     injure(H,hi);injure(A,ai);
@@ -506,7 +517,7 @@ function newSeason(){
       else if(p.age<=34)p.ovr-=ri(1,3);
       else p.ovr-=ri(2,5);
       p.ovr=clamp(p.ovr,35,92);p.pot=Math.max(p.pot,p.ovr);
-      t.condDay=0;t.lastDay=-9;p.cond=100;p.inj=0;p.ban=0;p.away=0;p.yc=0;p.goals=0;p.apps=0;p.lapps=0;p.rs=0;p.rn=0;p.gain=p.ovr-old;giveSig(p);
+      t.condDay=0;t.lastDay=-9;p.cond=100;p.inj=0;p.ban=0;p.away=0;p.yc=0;p.goals=0;p.ast=0;p.apps=0;p.lapps=0;p.rs=0;p.rn=0;p.gain=p.ovr-old;giveSig(p);
     });
     const out=t.players.filter(p=>rng()<retireChance(p));
     if(t.id===S.my)out.forEach(p=>{retired.push(p.name);retireLegend(p)});

@@ -25,7 +25,7 @@ function rollOffer(){
 // moving a player to an AI club keeps his career at our club on record
 function bankPlayer(p){
   const c=S.club[p.id]||(S.club[p.id]={name:p.name,pos:p.pos,goals:0,apps:0});
-  c.goals+=p.goals;c.apps+=p.apps;c.lapps=(c.lapps||0)+(p.lapps||0);
+  c.goals+=p.goals;c.ast=(c.ast||0)+(p.ast||0);c.apps+=p.apps;c.lapps=(c.lapps||0)+(p.lapps||0);
 }
 function acceptOffer(){
   if(!windowOpen()){toast(WINDOW_SHUT);return}
@@ -93,15 +93,15 @@ function resolveEvent(i){
 }
 
 /* ---------- season awards ---------- */
-const AWARDS={mvp:'最佳球员',young:'最佳新秀',gk:'最佳门将',boot:'金靴'};
+const AWARDS={mvp:'最佳球员',young:'最佳新秀',gk:'最佳门将',boot:'金靴',ast:'助攻王'};
 // per division: best average rating (8+ matches), best 21-and-under, best keeper, top scorer
 function seasonAwards(div){
   const ps=S.teams.filter(t=>t.div===div).flatMap(t=>t.players.map(p=>({p,t})));
   const q=ps.filter(x=>x.p.rn>=8),best=f=>q.filter(f).sort((a,b)=>avgRating(b.p)-avgRating(a.p))[0];
-  const boot=ps.filter(x=>x.p.goals>0).sort((a,b)=>b.p.goals-a.p.goals)[0];
+  const boot=ps.filter(x=>x.p.goals>0).sort((a,b)=>b.p.goals-a.p.goals)[0],ast=ps.filter(x=>x.p.ast>0).sort((a,b)=>b.p.ast-a.p.ast||b.p.goals-a.p.goals)[0];
   const out=(x,stat)=>x&&{name:x.p.name,pos:x.p.pos,team:x.t.name,tid:x.t.id,stat};
   return {mvp:out(best(()=>true),q.length&&avgRating(best(()=>true).p).toFixed(2)),young:out(best(x=>x.p.age<=21),best(x=>x.p.age<=21)&&avgRating(best(x=>x.p.age<=21).p).toFixed(2)),
-    gk:out(best(x=>x.p.pos==='GK'),best(x=>x.p.pos==='GK')&&avgRating(best(x=>x.p.pos==='GK').p).toFixed(2)),boot:out(boot,boot&&boot.p.goals+' 球')};
+    gk:out(best(x=>x.p.pos==='GK'),best(x=>x.p.pos==='GK')&&avgRating(best(x=>x.p.pos==='GK').p).toFixed(2)),boot:out(boot,boot&&boot.p.goals+' 球'),ast:out(ast,ast&&ast.p.ast+' 次助攻')};
 }
 
 /* ---------- club history ---------- */

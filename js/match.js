@@ -63,9 +63,12 @@ function side(s,p){
   const opp=S.teams[s==='h'?M.a:M.h],gk=keeper(opp,s==='h'?M.aIds:M.hIds);
   const ev=id=>M.ev[id]||(M.ev[id]={}),st=M.st[s];
   const goal=(sc,t,sig)=>{
-    sc.goals++;M.goals[sc.id]=(M.goals[sc.id]||0)+1;ev(sc.id).g=(ev(sc.id).g||0)+1;if(sig)ev(sc.id).sig=(ev(sc.id).sig||0)+1;st.sh++;st.on++;
+    // goals and assists in friendlies show in the match but don't count toward season tallies
+    if(!M.friendly)sc.goals++;
+    M.goals[sc.id]=(M.goals[sc.id]||0)+1;ev(sc.id).g=(ev(sc.id).g||0)+1;if(sig)ev(sc.id).sig=(ev(sc.id).sig||0)+1;st.sh++;st.on++;
+    const a=assister(team,ids,form,sc);if(a){ev(a.id).a=(ev(a.id).a||0)+1;if(!M.friendly)a.ast=(a.ast||0)+1}
     if(s==='h')M.hg++;else M.ag++;
-    M.flash=s;M.feed.unshift({min:M.min,cls:'goal '+(mine?'mine':'theirs'),t:`进球！${t}（${team.short}）`});
+    M.flash=s;M.feed.unshift({min:M.min,cls:'goal '+(mine?'mine':'theirs'),t:`进球！${t}（${team.short}${a?` · 助攻 ${a.name}`:''}）`});
     announce(`${M.min} 分钟，${team.short}进球，比分 ${M.hg} 比 ${M.ag}`);
   };
   if(r<p){
