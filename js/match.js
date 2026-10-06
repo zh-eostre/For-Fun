@@ -45,6 +45,10 @@ function tick(skipping){
     const myG=M.h===S.my?M.hg:M.ag,opG=M.h===S.my?M.ag:M.hg;
     M.aiTac=opG<myG?'att':opG>myG?'def':'bal';
     M.feed.unshift({min:45,cls:'sys',t:LINE.half(M.hg,M.ag)});announce(LINE.half(M.hg,M.ag));
+    // a perk for our side only: the halftime talk and a drink win back a little of the stamina lost
+    const ours=onPitch(my(),M[mySide()+'Ids']).filter(Boolean);let got=0;
+    ours.forEach(p=>{const g=Math.min(100-p.cond,Math.max(2,Math.round((100-p.cond)*HT_REST)));p.cond+=g;got+=g});
+    if(got)M.feed.unshift({min:45,cls:'sys',t:`更衣室里补水调整，${my().short}的球员们缓过一口气（体能平均 +${Math.round(got/ours.length)}）。`});
     if(!skipping){M.paused=true;M.ht=true}
   }
   if(M.min>=90){

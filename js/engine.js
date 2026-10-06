@@ -234,7 +234,7 @@ function actScore(a){
 }
 function rate(p,role,ev={},gf,ga,full,act){
   let r=5.9+(p.ovr-65)/25+(gf>ga?.4:gf<ga?-.4:0)+(rng()-.5)*.6+actScore(act)
-    +(ev.g||0)*(role==='FW'?1.25:1.1)+(ev.a||0)*.6+(ev.sig||0)*.2+(ev.sv||0)*.45-(ev.miss||0)*.15-(ev.yc||0)*.3-(ev.red||0)*1.5;
+    +(ev.g||0)*(role==='FW'?1.25:1.1)+(ev.a||0)*.6+(ev.sig||0)*.2+(ev.sv||0)*.3-(ev.miss||0)*.15-(ev.yc||0)*.3-(ev.red||0)*1.5;
   if(role==='GK')r+=.3+(ga?-.25*ga:1);else if(role==='DF')r+=ga?-.15*ga:.5;else if(role==='MF'&&!ga)r+=.1;
   if(!full)r=6+(r-6)*.6;
   return Math.round(clamp(r,3,10)*10)/10;

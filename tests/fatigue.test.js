@@ -21,7 +21,7 @@ ok(counter('def','att')===3&&counter('att','def')===0&&counter('def','def')===0,
 S.day=day0;  // the recovery checks above moved the date by hand; put it back before playing
 // live match: our tired players come off automatically; pausing opens the substitution panel
 ACT.ff();S.event=null;S.offer=null;S.autoSub=true;my().players.forEach(p=>p.cond=60);
-startMatch();while(M.min<45)tick(false);ACT.resume();clearTimeout(M.timer);while(M.min<70)tick(true);
+startMatch();while(M.min<45)tick(false);ACT.resume();clearTimeout(M.timer);while(M.min<85)tick(true);  // halftime gives some stamina back, so later than before
 ok(M.subs>=1&&M.feed.some(e=>/体力透支/.test(e.t)),'auto-sub took off '+M.subs+' tired player(s)');
 ACT.pauseSub();render();ok(M.paused&&M.subMode&&/暂停·调整/.test(els.app.innerHTML)&&!bad(els.app.innerHTML),'pause opens the adjust panel');
 ACT.resume();ok(!M.paused&&!M.subMode,'resume continues the match');render();ok(/场上体能/.test(els.app.innerHTML),'live stamina panel shows during play');

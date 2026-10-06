@@ -97,13 +97,13 @@ const ACH={
 
 // the once-per-season cheat card: display name, and [name, description] per effect
 const CHEAT_CASH=150;
+const HT_REST=.15;  // halftime: our players on the pitch get back this share of the stamina they've lost (at least 2)
 const CHEAT_CARD='禁断之牌';
 const CHEAT_INFO={
   redo:['时之逆流','令刚刚结束的一战归于虚无，从开球重来'],
   heal:['不死鸟之炎','全员体能燃至巅峰，伤病与停赛尽数焚尽'],
   scout:['真理之瞳','看穿市场上每个人隐藏的真实潜力'],
-  cash:['黄金契约',`与神秘财团缔约，换来 ${CHEAT_CASH} 万资金`],
-  rest:['刹那·圣泉','于中场的寂静里饮下圣泉，场上我方全员体能回满']
+  cash:['黄金契约',`与神秘财团缔约，换来 ${CHEAT_CASH} 万资金`]
 };
 /* names: the big lists (Chinese surnames and given names, Western surnames, Japanese names) are in names.js, built
    from a public corpus; these hand-made ones add local flavour and cover what the corpus lacks */

@@ -230,7 +230,7 @@ function vCheat(){
   if(S.cheatUsed)return `<section class="panel cheat used fold-sum"><h2>${CHEAT_CARD} <span class="muted" style="font-weight:400;font-size:13px">封印已解，下个赛季再度觉醒</span></h2></section>`;
   return `<details class="panel cheat fold" data-fold="cheat"><summary><h2>${CHEAT_CARD} <span class="tag2" style="background:var(--amber);color:#3a2a00">本赛季可发动 1 次</span></h2></summary>
   ${['heal','scout','cash'].map(k=>`<div class="cheat-row">${cheatBtn(k)}<span class="muted">${CHEAT_INFO[k][1]}</span></div>`).join('')}
-  ${[['rest','中场休息时发动'],['redo','终场时发动']].map(([k,w])=>`<div class="cheat-row"><span class="btn small" aria-disabled="true" style="opacity:.5;cursor:default">「${CHEAT_INFO[k][0]}」</span><span class="muted">${CHEAT_INFO[k][1]}（${w}）</span></div>`).join('')}</details>`;
+  <div class="cheat-row"><span class="btn small" aria-disabled="true" style="opacity:.5;cursor:default">「${CHEAT_INFO.redo[0]}」</span><span class="muted">${CHEAT_INFO.redo[1]}（终场时发动）</span></div></details>`;
 }
 // players out on loan: not in the 22, listed on their own with how the loan is going
 function vLoans(){
@@ -494,7 +494,6 @@ function vMatch(){
       :`<span class="tok empty gone" style="left:${x.x}%;top:${x.y}%"><span class="tc">✕</span><span class="tn">罚下</span></span>`).join('');
     ctl=`<div class="ht">${M.ht?'<b>中场·作战会议</b><p style="margin:4px 0 10px;font-size:14px">下半场，要改变命运的走向吗？</p>':`<b>暂停·调整（${M.min}'）</b><p style="margin:4px 0 10px;font-size:14px">换人或改变战术，然后继续比赛。</p>`}
     <p style="margin:0 0 10px;font-size:13px">${autoSubBtn()} <span class="muted">对手平均体能 ${oppAvgCond()}</span></p>
-    ${M.ht&&!S.cheatUsed?`<p class="cheat-row" style="margin:0 0 10px">${cheatBtn('rest')}<span class="muted" style="font-size:13px">${CHEAT_CARD}：${CHEAT_INFO.rest[1]}</span></p>`:''}
     <div class="seg" style="margin-bottom:4px">${Object.entries(TACT).map(([k,v])=>`<button data-act="tac" data-arg="${k}" aria-pressed="${M.tac===k}">${v}</button>`).join('')}</div>
     <p class="muted" style="margin:0 0 12px;font-size:12px">只影响本场。</p>
     <div class="subh">换人 ${M.subs}/${SUBS}${full?'，名额已用完':M.sel!=null?`：换下 ${findP(M.sel).name}，请在右边选替补`:'：先点球场上要换下的人，再点右边的替补'}</div>

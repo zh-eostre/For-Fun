@@ -84,20 +84,15 @@ const CHEATS={
     S.market.forEach(p=>{const price=p.price;scoutReport(p,{conf:'high',est:p.pot});p.price=price});
     UI.tab='market';toast('真理之瞳已开启，一切潜力无所遁形！');
   },
-  cash:()=>{S.budget+=CHEAT_CASH;toast(`契约成立。${money(CHEAT_CASH)} 已注入俱乐部金库`)},
-  // halftime only, and only our players on the pitch
-  rest:()=>{onPitch(my(),M[mySide()+'Ids']).forEach(p=>p&&(p.cond=100));
-    M.feed.unshift({min:45,cls:'sys',t:`${CHEAT_CARD}「${CHEAT_INFO.rest[0]}」发动——${my().short}的战士们气力重燃！`});toast('圣泉涌动，全员体能回满！')}
+  cash:()=>{S.budget+=CHEAT_CASH;toast(`契约成立。${money(CHEAT_CASH)} 已注入俱乐部金库`)}
 };
 function useCheat(kind,b){
   if(S.cheatUsed){toast(`${CHEAT_CARD}的力量已耗尽，等待下个赛季的觉醒`);return}
   if(kind==='redo'&&!(M&&M.done&&M.pre))return;
-  if(kind==='rest'&&!(M&&M.ht&&!M.done)){toast('圣泉只在中场休息时涌现');return}
   if(kind==='scout'&&!S.market.length){toast('市场空无一人，真理之瞳无处可看，打完下一场再用');return}
   if(!arm(b,'再点一次，解放封印'))return;
   if(kind==='redo'){CHEATS.redo();return}
-  // mid-match nothing is saved (a reload replays the match from kickoff); full time saves the card as spent
-  S.cheatUsed=true;CHEATS[kind]();cheatNews(kind);unlock('cheat');if(!M||M.done)save();render();
+  S.cheatUsed=true;CHEATS[kind]();cheatNews(kind);unlock('cheat');save();render();
 }
 
 function canStart(p){
