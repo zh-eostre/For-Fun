@@ -7,6 +7,9 @@ ok(mine.every(x=>x.a&&x.a.pas>=0&&x.a.ok<=x.a.pas),'every player of ours has mat
 const df=mine.filter(x=>x.role==='DF'),fw=mine.filter(x=>x.role==='FW');
 const sum=(l,k)=>l.reduce((s,x)=>s+x.a[k],0);
 ok(sum(df,'tkl')+sum(df,'int')>=sum(fw,'tkl')+sum(fw,'int'),'defenders do more defending than forwards');
+// live commentary of tackles, dribbles and passes agrees with the numbers
+const liveIds=Object.keys(M.live||{});
+ok(liveIds.length>0&&liveIds.every(id=>Object.entries(M.live[id]).every(([k,v])=>M.act[id]&&M.act[id][k]>=v)),'every action in the commentary is in the match numbers ('+liveIds.length+' players mentioned)');
 render();ok(/详细数据/.test(els.app.innerHTML)&&/关键传球/.test(els.app.innerHTML)&&!bad(els.app.innerHTML),'full-time panel has the stats table');
 M=null;UI.view='main';
 // actions move ratings: same player, a quiet game vs a busy one

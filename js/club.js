@@ -28,7 +28,7 @@ function bankPlayer(p){
   c.goals+=p.goals;c.ast=(c.ast||0)+(p.ast||0);c.apps+=p.apps;c.lapps=(c.lapps||0)+(p.lapps||0);
 }
 function acceptOffer(){
-  if(!windowOpen()){toast(WINDOW_SHUT);return}
+  if(!windowOpen()){toast(windowShut());return}
   const o=S.offer,p=findP(o.pid),club=S.teams[o.club];
   if(!p){S.offer=null;return}
   if(squadSize()<=14){toast('一线队至少要保留 14 人');return}
@@ -94,22 +94,38 @@ function resolveEvent(i){
 
 /* ---------- season awards ---------- */
 const AWARDS={mvp:'最佳球员',young:'最佳新秀',gk:'最佳门将',boot:'金靴',ast:'助攻王'};
-// per division: best average rating (8+ matches), best 21-and-under, best keeper, top scorer
+// per division: best player and best 21-and-under (8+ matches), best keeper, top scorer, top assister.
+// player awards compare each man with his own position (how many standard deviations above its average): midfielders
+// see the most of the ball and average the highest ratings, so raw averages would hand them nearly every award.
+// a gentle pool-size factor stops the big pools (four defenders a team) from producing the outliers every season
 function seasonAwards(div){
   const ps=S.teams.filter(t=>t.div===div).flatMap(t=>t.players.map(p=>({p,t})));
-  const q=ps.filter(x=>x.p.rn>=8),best=f=>q.filter(f).sort((a,b)=>avgRating(b.p)-avgRating(a.p))[0];
+  const q=ps.filter(x=>x.p.rn>=8),norm={};
+  PO.forEach(pos=>{const r=q.filter(x=>x.p.pos===pos).map(x=>avgRating(x.p)),m=r.reduce((a,b)=>a+b,0)/(r.length||1);
+    norm[pos]=[m,(Math.sqrt(r.reduce((a,b)=>a+(b-m)**2,0)/(r.length||1))||1)*Math.log(Math.max(r.length,2))**.25]});
+  const z=x=>(avgRating(x.p)-norm[x.p.pos][0])/norm[x.p.pos][1];
+  const best=f=>q.filter(f).sort((a,b)=>z(b)-z(a))[0];
   const boot=ps.filter(x=>x.p.goals>0).sort((a,b)=>b.p.goals-a.p.goals)[0],ast=ps.filter(x=>x.p.ast>0).sort((a,b)=>b.p.ast-a.p.ast||b.p.goals-a.p.goals)[0];
   const out=(x,stat)=>x&&{name:x.p.name,pos:x.p.pos,team:x.t.name,tid:x.t.id,stat};
-  return {mvp:out(best(()=>true),q.length&&avgRating(best(()=>true).p).toFixed(2)),young:out(best(x=>x.p.age<=21),best(x=>x.p.age<=21)&&avgRating(best(x=>x.p.age<=21).p).toFixed(2)),
-    gk:out(best(x=>x.p.pos==='GK'),best(x=>x.p.pos==='GK')&&avgRating(best(x=>x.p.pos==='GK').p).toFixed(2)),boot:out(boot,boot&&boot.p.goals+' 球'),ast:out(ast,ast&&ast.p.ast+' 次助攻')};
+  const rated=x=>out(x,x&&avgRating(x.p).toFixed(2));
+  return {mvp:rated(best(()=>true)),young:rated(best(x=>x.p.age<=21)),gk:rated(best(x=>x.p.pos==='GK')),boot:out(boot,boot&&boot.p.goals+' 球'),ast:out(ast,ast&&ast.p.ast+' 次助攻')};
+}
+// team of the season, 1-4-3-3 by average rating (8+ matches)
+const XI_SHAPE={GK:1,DF:4,MF:3,FW:3};
+function seasonXI(div){
+  const q=S.teams.filter(t=>t.div===div).flatMap(t=>t.players.filter(p=>p.rn>=8).map(p=>({p,t})));
+  return PO.flatMap(pos=>q.filter(x=>x.p.pos===pos).sort((a,b)=>avgRating(b.p)-avgRating(a.p)).slice(0,XI_SHAPE[pos])
+    .map(x=>({name:x.p.name,pos,team:x.t.short,tid:x.t.id,stat:avgRating(x.p).toFixed(2)})));
 }
 
 /* ---------- club history ---------- */
 function recordSeason(div,rank){
   const champ=d=>{const t=table(d)[0];return t&&t.name};
   const awards=DIVS.map((_,d)=>seasonAwards(d));
-  S.records.push({season:S.season,champs:DIVS.map((_,d)=>champ(d)),cup:S.cup.winner!=null?S.teams[S.cup.winner].name:null,div,rank,awards});
+  const xi=DIVS.map((_,d)=>seasonXI(d));
+  S.records.push({season:S.season,champs:DIVS.map((_,d)=>champ(d)),cup:S.cup.winner!=null?S.teams[S.cup.winner].name:null,div,rank,awards,xi});
   awards.forEach((a,d)=>Object.entries(a).forEach(([k,w])=>{if(w&&w.tid===S.my)news(`${w.name} 获得${DIVS[d]}${AWARDS[k]}（${w.stat}）！`)}));
+  xi.forEach((l,d)=>{const m=l.filter(w=>w.tid===S.my);if(m.length)news(`${m.map(w=>w.name).join('、')} 入选${DIVS[d]}年度最佳阵容！`)});
   // trophies won this season; a player shares in one if he made TITLE_APPS appearances
   const won=[rank===1?`第 ${S.season} 季${DIVS[div]}冠军`:'',S.cup.winner===S.my?`第 ${S.season} 季${CUP_NAME}冠军`:''].filter(Boolean);
   my().players.forEach(p=>{
@@ -215,7 +231,7 @@ function askPrice(p,t){
 }
 // why a club won't sell (or we can't buy) right now; '' when the deal can go ahead
 function buyBlock(p,t){
-  if(!windowOpen())return WINDOW_SHUT;
+  if(!windowOpen())return windowShut();
   if(t.players.length<=15)return '对方阵容人数不足，不愿出售';
   if(p.pos==='GK'&&t.players.filter(x=>x.pos==='GK').length<=2)return '对方门将不够，不愿出售';
   if(squadFull())return '你的一线队已满 22 人';
@@ -223,7 +239,7 @@ function buyBlock(p,t){
   return '';
 }
 function buyFrom(id){
-  if(!windowOpen()){toast(WINDOW_SHUT);return}
+  if(!windowOpen()){toast(windowShut());return}
   const f=findAny(id);if(!f||f.t.id===S.my)return;
   const {p,t}=f,why=buyBlock(p,t);if(why){toast(why);return}
   const price=askPrice(p,t);S.budget-=price;
@@ -381,14 +397,17 @@ function expandLeague(t1,moves){
   if(up.length||fresh.length)news(`联赛扩军，甲乙级各 ${DIV_SIZE} 队！${up.length?`${up.map(t=>t.name).join('、')} 额外升入甲级。`:''}${fresh.length?`新球队 ${fresh.map(t=>t.name).join('、')} 加入乙级。`:''}`);
 }
 
-/* ---------- preseason: transfer window and friendlies ----------
-   a season opens with S.pre days (one week) before league round 1. the transfer window is open only then, for
-   us and for AI clubs alike; two friendlies are played in it. saves from before this (S.pre undefined) keep an
-   always-open window until their next season */
-const PRESEASON=7;
-const windowOpen=()=>S.pre==null||S.day<S.pre;
-const windowLeft=()=>S.pre==null?null:Math.max(0,S.pre-S.day);
-const WINDOW_SHUT='转会窗口已关闭，下赛季季前再开放';
+/* ---------- transfer windows and preseason friendlies ----------
+   a season opens with S.pre days (one week) before league round 1, with the transfer window open for us and for
+   AI clubs alike; two friendlies are played in it. a shorter winter window opens the day after the halfway round.
+   saves from before the preseason (S.pre undefined) keep an always-open window until their next season */
+const PRESEASON=7,WINTER=12,WINTER_NEW=8;  // winter: days open, new names on the transfer list
+const winterStart=()=>leagueDay(Math.floor(rounds()/2)-1)+1;
+const inWinter=(d=S.day)=>S.pre!=null&&d>=winterStart()&&d<winterStart()+WINTER;
+const windowOpen=()=>S.pre==null||S.day<S.pre||inWinter();
+const windowLeft=()=>S.pre==null?null:S.day<S.pre?S.pre-S.day:inWinter()?winterStart()+WINTER-S.day:0;
+const windowName=()=>S.day<S.pre?'季前转会窗口':'冬季转会窗口';
+const windowShut=()=>S.pre!=null&&S.day<winterStart()?`转会窗口已关闭，冬窗${dayLabel(winterStart())}开放`:'转会窗口已关闭，下赛季季前再开放';
 // two friendlies against clubs from the other division: Wednesday at home, Saturday away
 function planFriendlies(){
   const others=shuffle(S.teams.filter(t=>t.div!==my().div).map(t=>t.id));
@@ -396,14 +415,21 @@ function planFriendlies(){
   S.teams.forEach(t=>t.winBuys=0);  // AI signings this window (capped per club)
 }
 const nextFriendly=()=>(S.friendlies||[]).find(f=>!f.res);
-// one preseason day for the AI and the market: clubs shop (harder near the deadline), bids for our players arrive,
-// and when the window shuts, any bid still open lapses
+// one window day for the AI and the market: clubs shop (harder near the deadline), bids for our players arrive,
+// and when the window shuts, any bid still open lapses. the winter window brings a few new names to the list
+// and allows each AI club one more signing
 function windowDay(){
   if(S.pre==null)return;
-  if(S.day<S.pre){
-    aiWindow(S.day===S.pre-1?.35:.06);
+  const w=winterStart();
+  if(S.day===w){
+    S.teams.forEach(t=>t.winBuys=1);
+    const n=S.market.length;addToMarket(WINTER_NEW);S.market.slice(n).forEach(p=>p.fresh=S.season);
+    news(`冬季转会窗口开启，持续 ${WINTER} 天。转会市场新到 ${S.market.length-n} 名球员。`);
+  }
+  if(S.day<S.pre||inWinter()){
+    aiWindow(S.day===S.pre-1||S.day===w+WINTER-1?.35:.06);
     rollOffer();
-  }else if(S.day===S.pre){
+  }else if(S.day===S.pre||S.day===w+WINTER){
     if(S.offer){news(`转会窗口关闭，${S.teams[S.offer.club].name} 的报价作废。`);S.offer=null}
     news('转会窗口关闭。');
   }

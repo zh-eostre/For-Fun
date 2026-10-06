@@ -33,6 +33,7 @@ function tick(skipping){
   const sh=strength(S.teams[M.h],M.hIds,ht,true,M.h===S.my?b:0,M.hForm),sa=strength(S.teams[M.a],M.aIds,at,false,M.a===S.my?b:0,M.aForm);
   sh.atk+=counter(ht,at);sa.atk+=counter(at,ht);
   side('h',xgMin(sh,sa));side('a',xgMin(sa,sh));
+  if(!M.done){flair('h');flair('a')}
   for(const s of ['h','a']){
     const team=S.teams[s==='h'?M.h:M.a],tac=s==='h'?ht:at,mine=team.id===S.my;
     onPitch(team,M[s+'Ids']).forEach(p=>p&&drain(p,tac));
@@ -118,10 +119,23 @@ function substitute(outId,inId,s=mySide(),line){
   return true;
 }
 // both sides' numbers for the live match: minutes from who came on and off, possession, shots, and how the sides compared
+// now and then a tackle, interception, dribble or killer pass makes the commentary. the side on the ball dribbles and
+// passes, the other defends; the player is picked with the same position weights as the match numbers and credited
+// with it (matchActs keeps at least what was described)
+function flair(s){
+  if(rng()>=.045)return;
+  const team=S.teams[s==='h'?M.h:M.a],ps=onPitch(team,M[s+'Ids']).filter(Boolean),onBall=(s==='h'?M.poss:100-M.poss)/100;
+  const k=rng()<onBall?(rng()<.5?'drb':'kp'):(rng()<.55?'tkl':'int'),wt=ACT_W[{tkl:'def',int:'def',drb:'drb',kp:'kp'}[k]];
+  const w=ps.map(p=>wt[M.role[p.id]||p.pos]),tot=w.reduce((a,b)=>a+b,0);if(!tot)return;
+  let r=rng()*tot,i=0;while(i<ps.length-1&&r>=w[i])r-=w[i++];
+  const p=ps[i],live=M.live||(M.live={}),l=live[p.id]||(live[p.id]={});l[k]=(l[k]||0)+1;
+  M.feed.unshift({min:M.min,cls:'',t:`${pick(FLAIR[k])(p.name)}（${team.short}）`});
+}
 function matchActs(){
   const mins={};[...M.hXI,...M.aXI].forEach(id=>{if(id!=null)mins[id]=(M.off[id]??90)-(M.on[id]??0)});
   const H=S.teams[M.h],A=S.teams[M.a],edge=rating(strength(H,M.hIds,'bal',true,0,M.hForm))-rating(strength(A,M.aIds,'bal',false,0,M.aForm));
   M.act={...matchActions(H,M.hXI,M.role,mins,M.poss/100,edge,M.st.h.sh),...matchActions(A,M.aXI,M.role,mins,1-M.poss/100,-edge,M.st.a.sh)};
+  for(const id in M.live||{}){const a=M.act[id];if(a)for(const k in M.live[id])a[k]=Math.max(a[k],M.live[id][k])}
 }
 function finish(){
   M.done=true;M.paused=false;clearTimeout(M.timer);

@@ -155,7 +155,7 @@ const ACT={
     save();render();
   },
   sell:(a,b)=>{
-    if(!windowOpen()){toast(WINDOW_SHUT);return}
+    if(!windowOpen()){toast(windowShut());return}
     const p=findP(+a);if(!p)return;
     if(!p.loan&&squadSize()<=14){toast('一线队至少要保留 14 人');return}
     if(!arm(b,'再点一次确认'))return;
@@ -164,7 +164,7 @@ const ACT={
     news(`以 ${money(price)} 出售了 ${p.name}。`);if(UI.modal&&UI.modal.id===p.id)UI.modal=null;save();toast(`${p.name} 已出售`);render();
   },
   buy:a=>{
-    if(!windowOpen()){toast(WINDOW_SHUT);return}
+    if(!windowOpen()){toast(windowShut());return}
     const p=S.market.find(x=>x.id===+a);if(!p)return;
     if(S.budget<p.price){toast('资金不够');return}
     if(squadFull()){toast('一线队已满 22 人');return}

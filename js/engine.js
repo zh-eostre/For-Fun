@@ -245,7 +245,7 @@ function rateSide(team,played,roleOf,ev,gf,ga,part=[],noTotals,act={}){
   return played.map(id=>{
     const p=id!=null&&team.players.find(x=>x.id===id);if(!p)return null;
     const role=roleOf[id]||p.pos,a=act[id],r=rate(p,role,ev[id],gf,ga,!part.includes(id),a);
-    if(!noTotals){p.rs=(p.rs||0)+r;p.rn=(p.rn||0)+1;if(a){const t=p.ss||(p.ss={pas:0,ok:0,kp:0,tkl:0,int:0,drb:0});for(const k in t)t[k]+=a[k]}}
+    if(!noTotals){p.rs=(p.rs||0)+r;p.rn=(p.rn||0)+1;if(a){const t=p.ss||(p.ss={pas:0,ok:0,kp:0,tkl:0,int:0,drb:0});for(const k of ['pas','ok','kp','tkl','int','drb'])t[k]+=a[k];t.sv=(t.sv||0)+((ev[id]||{}).sv||0)}}
     return {p,r,role,a};
   }).filter(Boolean).sort((a,b)=>b.r-a.r);
 }
@@ -352,9 +352,11 @@ function quickSim(h,a){
     const sh=strength(H,hi,th,true,0,bh.form),sa=strength(A,ai,ta,false,0,ba.form);
     sh.atk+=counter(th,ta);sa.atk+=counter(ta,th);edge=rating(sh)-rating(sa);
     const ph=xgMin(sh,sa),pa=xgMin(sa,sh);
+    // about as many saves as the live match credits to a keeper
+    const stop=(T,ids)=>{const k=keeper(T,ids);if(k)e(k.id).sv=(e(k.id).sv||0)+1};
     const assist=(T,ids,form,p)=>{const a=assister(T,ids,form,p);if(a){a.ast=(a.ast||0)+1;e(a.id).a=(e(a.id).a||0)+1}};
-    if(rng()<ph){hg++;shots.h++;const p=scorer(H,hi,bh.form);p.goals++;e(p.id).g=(e(p.id).g||0)+1;assist(H,hi,bh.form,p)}else if(rng()<ph*4.7)shots.h++;
-    if(rng()<pa){ag++;shots.a++;const p=scorer(A,ai,ba.form);p.goals++;e(p.id).g=(e(p.id).g||0)+1;assist(A,ai,ba.form,p)}else if(rng()<pa*4.7)shots.a++;
+    if(rng()<ph){hg++;shots.h++;const p=scorer(H,hi,bh.form);p.goals++;e(p.id).g=(e(p.id).g||0)+1;assist(H,hi,bh.form,p)}else{const r=rng();if(r<ph*.6){shots.h++;stop(A,ai)}else if(r<ph*4.7)shots.h++}
+    if(rng()<pa){ag++;shots.a++;const p=scorer(A,ai,ba.form);p.goals++;e(p.id).g=(e(p.id).g||0)+1;assist(A,ai,ba.form,p)}else{const r=rng();if(r<pa*.6){shots.a++;stop(H,hi)}else if(r<pa*4.7)shots.a++}
     if(rng()<CARD)book(booking(H,hi,yc));
     if(rng()<CARD)book(booking(A,ai,yc));
     injure(H,hi);injure(A,ai);

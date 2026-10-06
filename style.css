@@ -134,6 +134,7 @@ tr.down td:first-child{box-shadow:inset 4px 0 var(--red)}
 .pbar .o{background:var(--pitch)}
 .tag2{display:inline-block;font-size:11px;padding:0 6px;border-radius:4px;font-weight:700;margin-left:6px;vertical-align:2px}
 .tag2.sale{background:var(--red);color:#fff}
+.tag2.fresh{background:var(--amber);color:#3a2a00}
 .conf{font-size:11px;color:var(--muted)}
 .reveal{border:2px solid var(--amber);border-radius:12px;padding:16px;margin-bottom:14px;background:var(--card);display:grid;grid-template-columns:auto 1fr;gap:6px 16px;align-items:center}
 .reveal .big{font-family:"Teko",sans-serif;font-weight:600;font-size:72px;line-height:.85;color:var(--amber);grid-row:span 3}
@@ -320,6 +321,7 @@ tr.down td:first-child{box-shadow:inset 4px 0 var(--red)}
 .awards{display:flex;flex-direction:column;gap:2px;font-size:13px;margin:8px 0;color:var(--muted)}
 .awards b{color:var(--ink)}
 .awards .mine{color:var(--pitch);font-weight:700}
+.awards .xi-h{margin-top:4px}
 
 /* team & player pages, board, loans */
 .link{border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
