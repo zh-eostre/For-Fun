@@ -458,3 +458,20 @@ dialog.modal::backdrop{background:rgba(10,15,12,.55)}
 .tier{font-size:10px;font-weight:700;padding:0 5px;border-radius:3px;vertical-align:1px;white-space:nowrap}
 .tier.t-big{background:var(--amber);color:#3a2a00}
 .tier.t-strong{border:1px solid var(--line);color:var(--muted)}
+
+/* live stamina */
+.livecond{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:0 0 12px;background:var(--card)}
+.lc-head{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+.lc-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px 12px}
+.lc{display:grid;grid-template-columns:minmax(0,1fr) 46px 22px;align-items:center;gap:6px;font-size:12px}
+.lc-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lc-bar{height:5px;background:var(--line);border-radius:3px;overflow:hidden}
+.lc-bar i{display:block;height:100%;background:var(--accent)}
+.lc.warn .lc-bar i{background:#D9A21B}
+.lc.bad .lc-bar i{background:var(--red)}
+.lc.bad b{color:var(--red-text)}
+.lc b{font-size:15px;text-align:right}
+.tcond{font-size:9px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.8);line-height:1}
+.scond{grid-column:1/2;font-size:10px;color:var(--muted)}
+.mctl{align-items:center}
+@media (max-width:560px){.lc-list{grid-template-columns:repeat(2,minmax(0,1fr))}}

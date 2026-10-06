@@ -272,7 +272,7 @@ function tok(p,o={}){
   const oop=o.role&&p.pos!==o.role;
   return `<button class="tok ${unavail(p)?'out':''} ${oop?'oop':''} ${o.cls||''}" style="${o.style||''}" data-act="${o.act||'toggle'}" data-arg="${o.arg??p.id}" data-flip="p${p.id}" title="${p.name}${oop?`（本职${POS[p.pos]}，打${POS[o.role]}）`:''}">
     <span class="tc num ${p.cond<60?'low':''}">${p.ovr}</span><span class="tn">${oop?`<b class="mk oopk">${POS[p.pos][0]}</b>`:''}${shortName(p.name)}${p.sig?'<i>★</i>':''}${o.marks||''}</span>
-    <span class="tb"><i style="width:${p.cond}%"></i></span></button>`;
+    <span class="tb"><i style="width:${p.cond}%"></i></span>${o.cond?`<small class="tcond">${Math.round(p.cond)}</small>`:''}</button>`;
 }
 const emptySlot=(s,act,sel)=>`<button class="tok empty ${sel?'sel':''}" style="left:${s.x}%;top:${s.y}%" data-act="${act}" data-arg="${s.slot}" title="空位：${POS[s.role]}"><span class="tc">${POS[s.role][0]}</span><span class="tn">空位</span></button>`;
 const pitchBox=(inner,label,form)=>`<div class="pitch" style="--team:${my().color}" aria-label="${label}">
@@ -400,6 +400,15 @@ function vMatchStats(){
   ${M.mvp?`<p class="mvp">全场最佳：<b>${M.mvp.p.name}</b>（${S.teams.find(t=>t.players.includes(M.mvp.p)).short}，${POS[M.mvp.role]}）${rtag(M.mvp.r)}</p>`:''}
   <div class="ratings">${mine.map(x=>`<span class="rt">${POS[x.role][0]} ${shortName(x.p.name)} ${rtag(x.r)}</span>`).join('')}</div>`;
 }
+// stamina while the match runs: our players on the pitch (lowest first) and the opponents' average
+const oppAvgCond=()=>{const s=mySide()==='h'?'a':'h',ps=onPitch(S.teams[s==='h'?M.h:M.a],M[s+'Ids']).filter(Boolean);return Math.round(ps.reduce((t,p)=>t+p.cond,0)/ps.length)};
+const autoSubBtn=()=>`<button class="btn small" data-act="autoSub" aria-pressed="${S.autoSub!==false}">自动换下体力不支的球员：${S.autoSub!==false?'开':'关'}</button>`;
+function vLiveStamina(){
+  const s=mySide(),roles=slotRoles(M[s+'Form']);
+  const ps=M[s+'Ids'].map((id,i)=>{const p=id!=null&&findP(id);return p&&{p,r:roles[i]}}).filter(Boolean).sort((a,b)=>a.p.cond-b.p.cond);
+  return `<div class="livecond"><div class="lc-head"><b>场上体能</b><span class="muted">对手平均 ${oppAvgCond()}</span></div>
+  <div class="lc-list">${ps.map(({p,r})=>{const c=Math.round(p.cond);return `<span class="lc ${c<52?'bad':c<65?'warn':''}"><span class="lc-n">${POS[r][0]} ${shortName(p.name)}</span><span class="lc-bar"><i style="width:${c}%"></i></span><b class="num">${c}</b></span>`}).join('')}</div></div>`;
+}
 function vMatch(){
   const H=S.teams[M.h],A=S.teams[M.a];
   const clock=M.done?'FT':M.min>=45&&M.ht?'HT':`${M.min}'`;
@@ -412,25 +421,26 @@ function vMatch(){
     ${vMatchStats()}
     <div class="go" style="justify-content:flex-start;margin-top:0"><button class="btn primary" data-act="matchDone">回到俱乐部</button>
     ${S.cheatUsed?'':`${cheatBtn('redo')}<span class="muted" style="font-size:13px">${CHEAT_CARD}：${CHEAT_INFO.redo[1]}</span>`}</div></div>`;
-  }else if(M.ht){
+  }else if(M.ht||M.subMode){
     const s=mySide(),xi=M[s+'XI'],full=M.subs>=SUBS;
     const bench=my().players.filter(p=>!xi.includes(p.id)&&!unavail(p)).sort((a,b)=>PO.indexOf(a.pos)-PO.indexOf(b.pos)||b.ovr-a.ovr);
     const marks=p=>(M.injuries.includes(p)?'<b class="mk hurt">伤</b>':'')+(M.yc[p.id]?'<b class="mk yc"></b>':'');
     const field=pitchSpots(M[s+'Ids'],M[s+'Form']).map(x=>x.p
-      ?tok(x.p,{style:`left:${x.x}%;top:${x.y}%`,act:'subOut',role:x.role,cls:M.sel===x.p.id?'sel':'',marks:marks(x.p)})
+      ?tok(x.p,{style:`left:${x.x}%;top:${x.y}%`,act:'subOut',role:x.role,cls:M.sel===x.p.id?'sel':'',marks:marks(x.p),cond:true})
       :`<span class="tok empty gone" style="left:${x.x}%;top:${x.y}%"><span class="tc">✕</span><span class="tn">罚下</span></span>`).join('');
-    ctl=`<div class="ht"><b>中场·作战会议</b><p style="margin:4px 0 10px;font-size:14px">下半场，要改变命运的走向吗？</p>
+    ctl=`<div class="ht">${M.ht?'<b>中场·作战会议</b><p style="margin:4px 0 10px;font-size:14px">下半场，要改变命运的走向吗？</p>':`<b>暂停·调整（${M.min}'）</b><p style="margin:4px 0 10px;font-size:14px">换人或改变战术，然后继续比赛。</p>`}
+    <p style="margin:0 0 10px;font-size:13px">${autoSubBtn()} <span class="muted">对手平均体能 ${oppAvgCond()}</span></p>
     <div class="seg" style="margin-bottom:4px">${Object.entries(TACT).map(([k,v])=>`<button data-act="tac" data-arg="${k}" aria-pressed="${M.tac===k}">${v}</button>`).join('')}</div>
     <p class="muted" style="margin:0 0 12px;font-size:12px">只影响本场。</p>
     <div class="subh">换人 ${M.subs}/${SUBS}${full?'，名额已用完':M.sel!=null?`：换下 ${findP(M.sel).name}，请在右边选替补`:'：先点球场上要换下的人，再点右边的替补'}</div>
     <div class="htgrid">${pitchBox(field,'场上球员',M[s+'Form'])}
     <div class="sublist"><div class="subh" style="margin-bottom:6px">替补席</div>
     ${bench.length?bench.map(p=>`<button class="srow" data-act="subIn" data-arg="${p.id}" data-flip="p${p.id}" ${full?'disabled':''}>
-      <span class="spos">${POS[p.pos]}</span><span class="sname">${p.name}${p.sig?'<i>★</i>':''}</span><span class="num sovr">${p.ovr}</span>
+      <span class="spos">${POS[p.pos]}</span><span class="sname">${p.name}${p.sig?'<i>★</i>':''}</span><span class="num sovr">${p.ovr}</span><span class="scond">体能 ${Math.round(p.cond)}</span>
       <span class="tb"><i style="width:${p.cond}%"></i></span></button>`).join(''):'<span class="muted" style="font-size:13px">没有可用的替补</span>'}</div></div>
     <button class="btn primary" data-act="resume" style="margin-top:12px">再战，下半场！</button></div>`;
   }else{
-    ctl=`<div class="mctl"><button class="btn" data-act="speed">${M.speed===1?'加速':'正常速度'}</button><button class="btn" data-act="skip">直接看结果</button></div>`;
+    ctl=`<div class="mctl"><button class="btn" data-act="speed">${M.speed===1?'加速':'正常速度'}</button><button class="btn primary" data-act="pauseSub">换人 / 调整</button><button class="btn" data-act="skip">直接看结果</button>${autoSubBtn()}</div>${vLiveStamina()}`;
   }
   const tag=M.cup?`${CUP_NAME}·${stageName(M.stage)}`:M.derby?'宿敌之战':'';
   return `<div class="matchwrap">${tag?`<div class="mtag">${tag}</div>`:''}<div class="board">

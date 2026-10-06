@@ -177,7 +177,11 @@ const ACT={
     if(log.surprises)toast('✨ '+log.surprises[log.surprises.length-1])},
   speed:()=>{M.speed=M.speed===1?3:1;render()},
   skip:()=>skipMatch(),
-  resume:()=>{M.ht=false;M.paused=false;M.sel=null;render();M.timer=setTimeout(loop,300)},
+  resume:()=>{M.ht=false;M.subMode=false;M.paused=false;M.sel=null;render();M.timer=setTimeout(loop,300)},
+  // pause the match to make changes; the same panel as halftime
+  pauseSub:()=>{if(!M||M.done)return;clearTimeout(M.timer);M.paused=true;M.subMode=true;render()},
+  // a setting, saved with the club after the match (saving mid-match would store this match's goals)
+  autoSub:()=>{S.autoSub=S.autoSub===false;if(!M)save();render()},
   subOut:a=>{M.sel=M.sel===+a?null:+a;render()},
   subIn:a=>{
     if(M.sel==null){toast('先点选要换下的场上球员');return}

@@ -324,7 +324,7 @@ function rollSurprise(log){
 // so giants without trophies fade and clubs that keep winning rise. AI clubs' base strength follows it
 const divSize=d=>S.teams.filter(t=>t.div===d).length;
 function prestigeDelta(div,rank,size){
-  if(div===0)return rank===1?8:rank===2?5:rank===3?3:rank>size-SWAP?-6:rank<=size/2?1:-1;
+  if(div===0)return rank===1?8:rank===2?6:rank===3?4:rank>size-SWAP?-6:rank<=size/2?1:-1;
   return rank===1?5:rank<=SWAP?4:rank>size-3?-3:rank<=size/2?1:0;
 }
 // called with each division's final table (before promotion and relegation); returns lines for the news

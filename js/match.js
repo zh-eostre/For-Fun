@@ -6,9 +6,9 @@ function startMatch(){
   const pre=JSON.stringify(S);  // kept in memory for the cheat card's "重踢一场"
   if(!S.live){S.live={seed:Math.floor(Math.random()*2**31)};save()}
   rng=seeded(S.live.seed);indexNames();  // same name pool on a replay, so the post-match market comes out the same
-  const f=nextFix(),opp=S.teams[f.opp];
+  const f=nextFix(),opp=S.teams[f.opp];aiRecover(opp);
   M={h:f.h,a:f.a,cup:f.cup,derby:f.derby,stage:f.cup?S.cup.stage:null,hg:0,ag:0,min:0,feed:[],speed:1,paused:false,ht:false,done:false,
-    flash:null,injuries:[],yc:{},goals:{},subs:0,oppSubs:0,sel:null,aiTac:'bal',tac:S.tactic};  // tac: our tactic for this match only
+    flash:null,injuries:[],yc:{},goals:{},subs:0,oppSubs:0,sel:null,aiTac:'bal',tac:S.tactic,subMode:false,lastAuto:{h:-9,a:-9}};  // tac: our tactic for this match only
   // the opponent picks its best formation, and a tactic from how it rates against our XI
   const os=bestForm(opp,!f.home),mr=rating(strength(my(),S.lineup,S.tactic,f.home,S.boost>0?BOOST:0,S.formation));
   M.aiTac=tacFor(os.r,mr);
@@ -31,7 +31,15 @@ function tick(skipping){
   M.min++;M.flash=null;
   const ht=M.h===S.my?M.tac:M.aiTac,at=M.a===S.my?M.tac:M.aiTac,b=S.boost>0?BOOST:0;
   const sh=strength(S.teams[M.h],M.hIds,ht,true,M.h===S.my?b:0,M.hForm),sa=strength(S.teams[M.a],M.aIds,at,false,M.a===S.my?b:0,M.aForm);
+  sh.atk+=counter(ht,at);sa.atk+=counter(at,ht);
   side('h',xgMin(sh,sa));side('a',xgMin(sa,sh));
+  for(const s of ['h','a']){
+    const team=S.teams[s==='h'?M.h:M.a],tac=s==='h'?ht:at,mine=team.id===S.my;
+    onPitch(team,M[s+'Ids']).forEach(p=>p&&drain(p,tac));
+    if((mine&&S.autoSub===false)||M.min-M.lastAuto[s]<5)continue;
+    const sw=tiredSwap(team,M[s+'Ids'],M[s+'XI'],M[s+'Form'],mine?M.subs:M.oppSubs,M.min);
+    if(sw&&substitute(sw[0].id,sw[1].id,s,LINE.tiredSub(sw[0].name,sw[1].name)))M.lastAuto[s]=M.min;
+  }
   if(M.min===45){
     const myG=M.h===S.my?M.hg:M.ag,opG=M.h===S.my?M.ag:M.hg;
     M.aiTac=opG<myG?'att':opG>myG?'def':'bal';

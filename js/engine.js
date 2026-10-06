@@ -134,7 +134,9 @@ function genFixtures(teamIds){
 }
 const my=()=>S.teams[S.my];
 const findP=id=>my().players.find(p=>p.id===id);
-const eff=p=>p.ovr*(.84+.16*p.cond/100);
+// ability on the day: fresh legs (70+) cost at most 6%, below 70 every point of stamina costs more:
+// 100 → 100%, 70 → 94%, 55 → 85%, 40 → 76%
+const eff=p=>p.ovr*(p.cond>=70?.94+.06*(p.cond-70)/30:.94-(70-p.cond)*.006);
 // inj = days until fit again; ban / away = matches still to sit out
 const unavail=p=>p.inj>0||p.ban>0||p.away>0||!!p.loan;
 /* ---------- lineups are 11 formation slots ----------
@@ -174,7 +176,8 @@ function strength(team,ids,tac,home,bonus=0,form='4-4-2'){
   const miss=11-n;atk-=miss*6-bonus;def-=miss*6-bonus;
   return {atk,def};
 }
-const xgMin=(A,B)=>clamp(1.15*Math.exp((A.atk-B.def)/15),.2,3.5)/90;
+// goals per minute from attack against defence; the /20 keeps upsets possible (a fresh giant still beats the bottom side ~90% of the time)
+const xgMin=(A,B)=>clamp(1.15*Math.exp((A.atk-B.def)/20),.2,3.5)/90;
 const rating=s=>Math.round((s.atk+s.def)/2);
 
 // who scores depends on the role he's playing, not his natural position
@@ -237,9 +240,8 @@ function afterMatch(team,xi,isMy){
   if(isMy)team.players.forEach(p=>p.gain=0);
   team.players.forEach(p=>{
     const played=xi.includes(p.id);
-    if(played){p.cond-=ri(12,18);p.apps++}
-    if(!isMy)p.cond+=DAY_REST+5*TRAIN_DAY.normal.cond;  // the same as one of our weeks with normal training
-    p.cond=clamp(p.cond,30,100);
+    if(played)p.apps++;
+    p.cond=clamp(Math.round(p.cond),30,100);  // stamina was spent minute by minute during the match
     if(!isMy&&p.inj>0)p.inj=Math.max(0,p.inj-7);  // our injuries heal day by day in advanceDay
     if(p.ban>0&&!played)p.ban--;
     if(p.away>0&&!played)p.away--;
@@ -250,8 +252,38 @@ function afterMatch(team,xi,isMy){
     if(p.age<=23&&p.pot<95&&rng()<AWAKEN){awaken(p);if(isMy)awoken.push(p)}
     giveSig(p);
   });
+  if(!isMy)team.lastDay=team.condDay=S.day;
   return {grown,awoken};
 }
+// AI clubs recover on the same calendar as ours: the day after a match is a rest day, then training days.
+// applied lazily just before they play, from the last day their stamina was brought up to date
+function aiRecover(t){
+  if(t.id===S.my)return;
+  if(t.condDay==null){t.condDay=S.day;return}
+  for(let d=t.condDay+1;d<=S.day;d++){
+    const gain=d===t.lastDay+1?DAY_REST:TRAIN_DAY.normal.cond;
+    t.players.forEach(p=>p.cond=Math.min(100,p.cond+(p.inj?DAY_REST:gain)));
+  }
+  t.condDay=S.day;
+}
+// stamina spent by one player in one minute on the pitch: about 14 over 90 minutes, more when attacking all out,
+// less when sitting deep, a little more for players over 30
+function drain(p,tac){
+  p.cond=Math.max(30,p.cond-.16*(tac==='att'?1.25:tac==='def'?.8:1)*(p.age>=31?1.15:1)*(.8+rng()*.4));
+}
+// tired legs: from the 55th minute a side swaps its most exhausted outfield player for a fresh one of the same role
+// (one change every 5 minutes, keeping the last substitution for injuries until the 80th). returns [out, in] or null
+function tiredSwap(team,ids,xi,form,used,min){
+  if(min<55||used>=SUBS-(min<80?1:0))return null;
+  const roles=slotRoles(form);
+  const tired=ids.map((id,i)=>({p:id!=null&&team.players.find(x=>x.id===id),i})).filter(x=>x.p&&roles[x.i]!=='GK'&&x.p.cond<52).sort((a,b)=>a.p.cond-b.p.cond)[0];
+  if(!tired)return null;
+  const bench=team.players.filter(x=>!xi.includes(x.id)&&!unavail(x)).sort((a,b)=>eff(b)-eff(a)),role=roles[tired.i];
+  const fresh=bench.find(x=>x.pos===role)||standIn(bench,role);
+  return fresh?[tired.p,fresh]:null;
+}
+// a side sitting deep against a side attacking all out gets a counter-attack bonus
+const counter=(mine,theirs)=>mine==='def'&&theirs==='att'?3:0;
 // AI clubs line up in whichever formation rates best with the players they have
 function bestForm(team,home){
   let best=null;
@@ -264,18 +296,25 @@ function bestForm(team,home){
 // and pick a tactic from how they compare: clearly stronger go for it, clearly weaker sit deep
 const tacFor=(mine,theirs)=>mine>theirs+3?'att':mine<theirs-3?'def':'bal';
 function quickSim(h,a){
+  aiRecover(S.teams[h]);aiRecover(S.teams[a]);
   const H=S.teams[h],A=S.teams[a],bh=bestForm(H,true),ba=bestForm(A,false),th=tacFor(bh.r,ba.r),ta=tacFor(ba.r,bh.r);
-  const hx=bh.ids,ax=ba.ids,hi=[...hx],ai=[...ax],yc={},ev={};
+  const hx=[...bh.ids],ax=[...ba.ids],hi=[...hx],ai=[...ax],yc={},ev={},used={h:0,a:0};
   const e=id=>ev[id]||(ev[id]={}),book=b=>{if(b)e(b.p.id)[b.red?'red':'yc']=1};
   let hg=0,ag=0;const hurt=[];
   const injure=(t,ids)=>{const p=t.players.find(x=>x.id===pickOn(ids));if(p&&!hurt.includes(p)&&rng()<injRisk(p))hurt.push(p)};
   for(let i=0;i<90;i++){
     const sh=strength(H,hi,th,true,0,bh.form),sa=strength(A,ai,ta,false,0,ba.form);
+    sh.atk+=counter(th,ta);sa.atk+=counter(ta,th);
     if(rng()<xgMin(sh,sa)){hg++;const p=scorer(H,hi,bh.form);p.goals++;e(p.id).g=(e(p.id).g||0)+1}
     if(rng()<xgMin(sa,sh)){ag++;const p=scorer(A,ai,ba.form);p.goals++;e(p.id).g=(e(p.id).g||0)+1}
     if(rng()<CARD)book(booking(H,hi,yc));
     if(rng()<CARD)book(booking(A,ai,yc));
     injure(H,hi);injure(A,ai);
+    onPitch(H,hi).forEach(p=>p&&drain(p,th));onPitch(A,ai).forEach(p=>p&&drain(p,ta));
+    for(const [T,ids,xi,form,k] of [[H,hi,hx,bh.form,'h'],[A,ai,ax,ba.form,'a']]){
+      const sw=i%5===0&&tiredSwap(T,ids,xi,form,used[k],i);
+      if(sw){ids[ids.indexOf(sw[0].id)]=sw[1].id;xi.push(sw[1].id);used[k]++}
+    }
   }
   afterMatch(H,hx,false);afterMatch(A,ax,false);
   hurt.forEach(p=>p.inj=pick(INJ_DAYS));
@@ -462,7 +501,7 @@ function newSeason(){
       else if(p.age<=34)p.ovr-=ri(1,3);
       else p.ovr-=ri(2,5);
       p.ovr=clamp(p.ovr,35,92);p.pot=Math.max(p.pot,p.ovr);
-      p.cond=100;p.inj=0;p.ban=0;p.away=0;p.yc=0;p.goals=0;p.apps=0;p.lapps=0;p.rs=0;p.rn=0;p.gain=p.ovr-old;giveSig(p);
+      t.condDay=0;t.lastDay=-9;p.cond=100;p.inj=0;p.ban=0;p.away=0;p.yc=0;p.goals=0;p.apps=0;p.lapps=0;p.rs=0;p.rn=0;p.gain=p.ovr-old;giveSig(p);
     });
     const out=t.players.filter(p=>rng()<retireChance(p));
     if(t.id===S.my)out.forEach(p=>{retired.push(p.name);retireLegend(p)});
