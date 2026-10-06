@@ -101,7 +101,7 @@ function canStart(p){
 }
 const ACT={
   cheat:(a,b)=>useCheat(a,b),
-  start:a=>newGame(+a,UI.draft),
+  start:a=>{if(TEAMS[+a]&&TEAMS[+a].div===1)newGame(+a,UI.draft)},  // new managers start in 乙级
   reroll:()=>{UI.draft=teamNames();render()},
   continue:()=>{S=load();if(S)enterGame()},
   exportSave:()=>exportSave(false),

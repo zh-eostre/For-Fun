@@ -513,3 +513,6 @@ dialog.modal.wide{max-width:860px}
 .oppgrid{grid-template-columns:360px minmax(0,1fr)}
 .oppgrid .pitch{width:100%}
 @media (max-width:640px){.oppgrid{grid-template-columns:1fr}}
+.team-pick.locked{cursor:default;opacity:.55;border-left-color:var(--line)}
+.team-pick.locked:hover{border-color:var(--line)}
+.locked-list .team-pick span{font-size:12px}

@@ -53,15 +53,18 @@ function vStart(){
   <p>挑一支球队，带它打完一个又一个赛季。</p></div>
   ${saved?`<div class="panel"><b>有一份存档：</b>${saved.teams[saved.my].name}（${DIVS[saved.teams[saved.my].div]}），第 ${saved.season} 赛季第 ${Math.min(saved.round+1,saved.fixtures[0].length)} 轮${saved.live?'（比赛进行中）':''}。
   <div class="go" style="justify-content:flex-start"><button class="btn primary" data-act="continue">继续存档</button></div></div>
-  <h2>或者重新开始</h2><p class="muted" style="margin-top:-6px;font-size:14px">选新球队会覆盖旧存档。</p>`:`<h2>选择你的球队</h2>`}
+  <h2>或者重新开始</h2><p class="muted" style="margin-top:-6px;font-size:14px">选新球队会覆盖旧存档。</p>`:`<h2>选择你的球队</h2><p class="muted" style="margin-top:-6px;font-size:14px">你是一位没有履历的新教练，只有乙级球队愿意给你机会。</p>`}
   <p style="margin:-4px 0 0;display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" data-act="reroll">换一批队名</button>${canPickDir()?'<button class="btn small" data-act="listSaves">从存档文件夹读取</button>':''}<button class="btn small" data-act="importSave">从文件读取存档</button></p>
   ${UI.saveFiles?vSaveList():''}
-  ${DIVS.map((dn,div)=>`<h3>${dn}联赛${div?'<span class="muted" style="font-weight:400;font-size:14px">，从低级别打起，前 '+SWAP+' 名升级</span>':''}</h3>
-  <div class="teams" style="margin-top:8px">${TEAMS.map((t,i)=>{
+  ${[1,0].map(div=>`<h3>${DIVS[div]}联赛<span class="muted" style="font-weight:400;font-size:14px">${div?`，新教练从这里起步，前 ${SWAP} 名升级`:'，需要执教履历，暂不可选'}</span></h3>
+  <div class="teams ${div?'':'locked-list'}" style="margin-top:8px">${TEAMS.map((t,i)=>{
     if(t.div!==div)return '';
-    const tier=tierOf(t.rep),diff=div?(t.rep>=45?'冲击升级':'艰难起步'):tier==='豪门'?'争冠':tier==='强队'?'简单':tier==='中游'?'普通':'保级';
+    const tier=tierOf(t.rep);
+    // a new manager with no record only gets offers from 乙级 clubs; 甲级 is shown for orientation
+    if(!div)return `<div class="team-pick locked" style="--c:${t.color}" aria-disabled="true"><b class="disp">${UI.draft[i].name}</b><span>${tier} · 实力 ${t.str}</span></div>`;
+    const goal=t.rep>=45?'冲击升级':t.rep>=30?'站稳脚跟':'艰难起步';
     return `<button class="team-pick" style="--c:${t.color}" data-act="start" data-arg="${i}"><b class="disp">${UI.draft[i].name}</b>
-    <span>${tier} · 实力 ${t.str}，${div?'目标':'难度'}${diff}，预算 ${money(startBudget(t))}</span></button>`}).join('')}</div>`).join('')}
+    <span>${tier} · 实力 ${t.str}，目标${goal}，预算 ${money(startBudget(t))}</span></button>`}).join('')}</div>`).join('')}
   <p class="muted" style="font-size:13px;margin-top:20px">甲级和乙级各 ${DIV_SIZE} 支球队双循环，每季 ${ROUNDS} 轮。赛季结束后甲级最后 ${SWAP} 名降级，乙级前 ${SWAP} 名升级。球队都是虚构的。</p></div>`;
 }
 function vHeader(){
