@@ -177,6 +177,8 @@ function arrange(players,form){
   roles.forEach((r,i)=>{if(slots[i]!=null||r==='GK')return;const p=standIn(left,r);if(p){left.splice(left.indexOf(p),1);slots[i]=p.id}});
   if(slots[0]==null&&left.length)slots[0]=left.splice(0,1)[0].id;
   roles.forEach((r,i)=>{if(slots[i]==null&&left.length)slots[i]=left.splice(0,1)[0].id});  // last resort: a spare keeper outfield
+  // short of players and no keeper: someone has to go in goal, so move an outfield player back (a forward first)
+  if(slots[0]==null){const i=[...roles.keys()].reverse().find(i=>i>0&&slots[i]!=null);if(i!=null){slots[0]=slots[i];slots[i]=null}}
   return slots;
 }
 function autoPick(team,form){return arrange(team.players.filter(p=>!unavail(p)).sort((a,b)=>eff(b)-eff(a)),form)}

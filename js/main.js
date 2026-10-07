@@ -152,6 +152,9 @@ const ACT={
   // bench player: goes into the selected slot (replacing whoever is there), else the best empty slot
   bench:a=>{
     const p=findP(+a);if(!p||!canStart(p))return;
+    const at=S.lineup.indexOf(p.id);
+    // already starting (e.g. a quick second tap): swap him with the selected slot rather than list him twice
+    if(at>=0){if(UI.selSlot!=null&&UI.selSlot!==at)[S.lineup[UI.selSlot],S.lineup[at]]=[S.lineup[at],S.lineup[UI.selSlot]];UI.selSlot=null;save();render();return}
     if(UI.selSlot!=null){S.lineup[UI.selSlot]=p.id;UI.selSlot=null}
     else if(!placeInLineup(p)){toast('首发已满：先点球场上的一个位置，再点替补换上');return}
     save();render();
@@ -182,9 +185,9 @@ const ACT={
   // the log under the calendar adds up every day since our last match; each day's training gains also go to the news
   nextDay:()=>{const log=dayLog(),t=log.trained.length,su=(log.surprises||[]).length;
     if(advanceDay(log)){UI.dayLog=log;trainNews(log.trained.slice(t));save()}render();if((log.surprises||[]).length>su)toast('✨ '+log.surprises[su])},
-  ff:()=>{const log=dayLog(),t=log.trained.length;while(advanceDay(log));UI.dayLog=log;
+  ff:()=>{const log=dayLog(),t=log.trained.length,su=(log.surprises||[]).length;while(advanceDay(log));UI.dayLog=log;
     trainNews(log.trained.slice(t));save();render();
-    if(log.surprises)toast('✨ '+log.surprises[log.surprises.length-1])},
+    if((log.surprises||[]).length>su)toast('✨ '+log.surprises[log.surprises.length-1])},
   speed:()=>{M.speed=M.speed===1?3:1;render()},
   skip:()=>skipMatch(),
   resume:()=>{M.ht=false;M.subMode=false;M.paused=false;M.sel=null;render();M.timer=setTimeout(loop,300)},
