@@ -576,3 +576,13 @@ dialog.modal.wide{max-width:860px}
 .sc-fit.sc-back{background:var(--amber);color:#2B1D00}
 .scard.back{border-style:dashed}
 .opptac{color:var(--ink);font-weight:700}
+.opptac-line{margin:4px 0 10px;font-size:14px;text-align:center}
+
+/* rules dialog */
+.rules{columns:2 300px;column-gap:24px}
+.rule{break-inside:avoid;margin:0 0 12px}
+.rule h3{margin:0 0 4px;font-size:15px}
+.rule ul{margin:0;padding-left:18px;font-size:13.5px;line-height:1.6}
+.rule li{margin:2px 0}
+.rules-btn{margin-left:auto;align-self:center;border-color:currentColor;color:inherit;white-space:nowrap;flex:none}
+.rules-btn+.cash{margin-left:4px}

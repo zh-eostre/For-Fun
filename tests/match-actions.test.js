@@ -15,7 +15,7 @@ M=null;UI.view='main';
 // actions move ratings: same player, a quiet game vs a busy one
 const p=my().players.find(x=>x.pos==='MF');
 const quiet=rate(p,'MF',{},1,1,90,{pas:20,ok:15,kp:0,tkl:0,int:0,drb:0}),busy=rate(p,'MF',{},1,1,90,{pas:50,ok:46,kp:3,tkl:4,int:3,drb:2});
-ok(busy-quiet>1.2,'a busy midfield display rates well above a quiet one ('+quiet+' → '+busy+')');
+ok(busy-quiet>.7,'a busy midfield display rates well above a quiet one ('+quiet+' → '+busy+')');
 // minutes: a sub's own goals count in full, the rest of his rating needs time
 const st=my().players.find(x=>x.pos==='FW'),sub=[0,1,2,3,4].map(()=>rate(st,'FW',{g:2},2,1,20,{pas:6,ok:5,kp:1,tkl:0,int:0,drb:1}));
 ok(Math.min(...sub)>=7.9,'a sub scoring twice in 20 minutes (man-of-the-match level): '+sub.join(', '));

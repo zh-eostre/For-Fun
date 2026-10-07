@@ -116,6 +116,7 @@ const ACT={
   player:a=>{UI.modal={type:'player',id:+a};render()},
   // the next opponent's expected lineup; bring their stamina up to date first
   oppXI:()=>{aiRecover(S.teams[nextFix().opp]);UI.modal={type:'opp'};render()},
+  rules:()=>{UI.modal={type:'rules'};render()},
   closeModal:()=>closeModal(),
   back:()=>{UI.pages.pop();render()},
   bid:(a,b)=>{if(!arm(b,'再点一次确认签下'))return;buyFrom(+a);if(UI.modal&&UI.modal.id===+a&&findP(+a))UI.modal=null;save();render()},
@@ -220,7 +221,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(
   const f=ACT[b.dataset.act];if(f)f(b.dataset.arg,b)});
 // remember which folding panels are open across re-renders ('toggle' doesn't bubble, so listen while capturing)
 document.addEventListener('toggle',e=>{const d=e.target;if(d.dataset&&d.dataset.fold)(UI.folds=UI.folds||{})[d.dataset.fold]=d.open},true);
-function closeModal(){if(!UI.modal)return;UI.returnFocus=UI.modal.type==='opp'?{act:'oppXI'}:{act:'player',arg:UI.modal.id};UI.modal=null;render()}
+function closeModal(){if(!UI.modal)return;const t=UI.modal.type;UI.returnFocus=t==='opp'?{act:'oppXI'}:t==='rules'?{act:'rules'}:{act:'player',arg:UI.modal.id};UI.modal=null;render()}
 // Escape on the dialog: let our state close it (and re-render) rather than the browser alone
 document.addEventListener('cancel',e=>{if(e.target.matches&&e.target.matches('dialog.modal')){e.preventDefault();closeModal()}},true);
 // a click on the dialog's backdrop lands on the <dialog> itself; only close if the press also started there,

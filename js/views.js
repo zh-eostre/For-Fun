@@ -73,6 +73,7 @@ function vHeader(){
   <div class="crest disp">${t.short[0]}</div>
   <div><div class="club-name disp">${t.name}</div>
   <div class="club-meta">${DIVS[t.div]}联赛，第 ${S.season} 赛季，${S.round<rounds()?`${dayLabel(S.day)}，第 ${S.round+1}/${rounds()} 轮`:'赛季结束'}，排名第 ${myRank()}${S.boost>0?' <span class="tag2 boost">士气高涨</span>':''}</div></div>
+  <button class="btn small rules-btn" data-act="rules" aria-label="规则说明">规则</button>
   <div class="cash"><div class="club-meta">俱乐部资金</div><div class="num" style="color:${S.budget<0?'var(--red)':'inherit'}">${money(S.budget)}</div></div>
   </div></header>`;
 }
@@ -117,6 +118,7 @@ function vHome(){
   <div class="fixture"><div><div class="t disp" style="--tc:${H.color}">${H.name}</div><div class="str">综合实力 <span class="num">${hs}</span></div></div>
   <div class="vs num">VS</div>
   <div><div class="t disp" style="--tc:${A.color}">${A.name}</div><div class="str">综合实力 <span class="num">${as}</span></div></div></div>
+  ${(()=>{const t=tacFor(ob.r,rating(ms));return `<p class="opptac-line">对手预计打法 <b class="opptac">${TACT[t]}</b>${t==='att'&&S.tactic!=='def'?'<span class="muted"> · 他们会压上进攻，防守反击能多守住一些，还有反击加成</span>':t==='def'&&S.tactic==='def'?'<span class="muted"> · 双方都缩在后面，可能是一场闷战</span>':''}</p>`})()}
   ${vOppReport(opp,ob,tacFor(ob.r,rating(ms)))}
   <div class="go"><span class="muted" style="font-size:14px">阵型 ${S.formation}，战术${TACT[S.tactic]}</span>
   <button class="btn" data-act="oppXI">查看对手阵容</button><button class="btn" data-act="tab" data-arg="squad">调整阵容</button>
@@ -153,7 +155,38 @@ function vTeamPage(tid){
 // the player dialog is a native <dialog> opened with showModal() after each render: the browser keeps focus
 // inside it, makes the page behind inert and handles Escape (see the 'cancel' listener in main.js)
 function vModal(){
-  return `<dialog class="modal ${UI.modal.type==='opp'?'wide':''}" aria-labelledby="mtitle">${UI.modal.type==='opp'?vOppXI():vPlayer(UI.modal.id)}</dialog>`;
+  const t=UI.modal.type;
+  return `<dialog class="modal ${t==='opp'||t==='rules'?'wide':''}" aria-labelledby="mtitle">${t==='opp'?vOppXI():t==='rules'?vRules():vPlayer(UI.modal.id)}</dialog>`;
+}
+// how the game works, in plain words; the numbers come from the game's own settings
+function vRules(){
+  const sec=(h,items)=>`<section class="rule"><h3>${h}</h3><ul>${items.map(i=>`<li>${i}</li>`).join('')}</ul></section>`;
+  return `<section class="panel"><div class="mhead"><h2 id="mtitle">规则说明</h2><button class="btn small mclose" data-act="closeModal" aria-label="关闭">✕</button></div>
+  <div class="rules">
+  ${sec('赛季与日程',[`甲级、乙级各 ${DIV_SIZE} 队，主客场双循环共 ${ROUNDS} 轮。甲级最后 ${SWAP} 名降级，乙级前 ${SWAP} 名升级。`,
+    `季前一周：转会窗口开放，还有两场友谊赛（不计成绩、不吃牌）。第 ${Math.floor(ROUNDS/2)} 轮后开 ${WINTER} 天冬窗，其余时间不能买卖球员。`,
+    `${CUP_NAME}是单场淘汰，平局直接点球大战。杯赛在周中，3 天后就是下一轮联赛。`])}
+  ${sec('比赛怎么踢',['每分钟按双方「进攻对防守」的差距决定进球机会。实力强的一方机会更多，但强队也会输球，强队累了时弱队更有机会。',
+    '进攻主要看前锋和中场，防守主要看后卫、门将和中场；主场略占优势。',
+    `球员打非本职位置，能力打 ${Math.round(OOP*100)} 折；外场球员当门将（或门将踢外场）只剩一半。`])}
+  ${sec('战术与阵型',['全力进攻：进攻更强、防守更弱，体能消耗更大。防守反击：反过来；对上全力进攻的对手，还有额外的反击加成。',
+    'AI 实力明显占优时会全力进攻，处于下风时会防守反击；中场落后会改打全力进攻，领先会收缩。对手当前的打法在赛前和比赛中都看得到。',
+    '后腰偏防守、多抢断；前腰偏进攻、更容易进球和助攻。阵型改变的是打法，不改变总实力。'])}
+  ${sec('体能与换人',['比赛中会消耗体能：中场跑得最多，前锋、后卫其次，门将几乎不累。体能 80 以上基本不影响发挥，越低越弱（70 约九折，60 约八折）。',
+    `中场休息时，我方球员会恢复一点体能。每场最多换 ${SUBS} 人；自动换人从第 60 分钟起，把体能低于 ${TIRED}、而且替补更强的人换下，可以关掉自己来换。`,
+    '同一次暂停里的换人在继续比赛前都可以改或撤销。',
+    `赛后第一天是休息日（体能 +${DAY_REST}）；之后看训练安排：恢复训练 +${TRAIN_DAY.rest.cond}，常规训练 +${TRAIN_DAY.normal.cond}，高强度加练 +${TRAIN_DAY.hard.cond}（进步最快，但更容易受伤）。`])}
+  ${sec('伤病与红黄牌',['越疲劳越容易受伤；理疗室能降低受伤风险、加快恢复。伤停按天计算，日程里会倒数。',
+    `本赛季累计 ${YC_BAN} 张黄牌停赛一场；一场比赛吃到两张黄牌会被罚下，下一场也停赛。友谊赛不出牌。`])}
+  ${sec('评分与奖项',['评分 3–10 分，平均约 6.7：看能力、比赛结果、个人数据（传球、关键传球、抢断、拦截、过人、扑救），加上进球和助攻。',
+    '上场不到 60 分钟，基础表现按时间折算；进球、助攻、扑救、红黄牌不管上场多久都全额计入。',
+    '赛季末颁发最佳球员、最佳新秀、最佳门将、金靴、助攻王，并选出年度最佳阵容。最佳球员按「比同位置的人好多少」来评，所以各个位置都有机会。'])}
+  ${sec('成长与老化',['训练和比赛都会让球员进步，越年轻、离潜力越远进步越快；训练场等级越高进步越快。',
+    '33 岁起能力可能下滑，也可能退役（能力越高越能坚持），40 岁一定退役。在队效力够久或帮球队夺冠的退役球员会进入传奇名单。'])}
+  ${sec('转会与俱乐部',[`一线队最多 22 人，至少保留 14 人；${LOAN_AGE} 岁以下的球员可以外租，租借期间不占名额。`,
+    '球探部、理疗室、训练场、球场可以升级；青训营每个赛季会送来一批少年。董事会目标完成有奖金，教练声望够高会收到其他球队的执教邀请。',
+    `每个赛季可以发动一次${CHEAT_CARD}。`])}
+  </div></section>`;
 }
 // the next opponent's expected XI on a pitch, with their bench and who is missing. tactics and the weak spot
 // come from the scout report (scout department level 3+)
@@ -164,11 +197,11 @@ function vOppXI(){
   const bench=opp.players.filter(p=>!ob.ids.includes(p.id)&&!unavail(p)).sort((a,b)=>b.ovr-a.ovr),out=opp.players.filter(unavail);
   const avg=Math.round(xi.reduce((s,p)=>s+p.ovr,0)/xi.length),cond=Math.round(xi.reduce((s,p)=>s+p.cond,0)/xi.length);
   return `<section class="panel"><div class="mhead"><h2 id="mtitle">${opp.name} 预计阵容</h2><button class="btn small mclose" data-act="closeModal" aria-label="关闭">✕</button></div>
-  <p class="muted" style="margin:0 0 10px;font-size:13px">${fixLabel(f)}，${f.home?'我们主场':'我们客场'} · ${tierOf(opp.rep)} · 首发平均能力 ${avg} · 平均体能 ${cond}${facLv('scout')>=3?` · 预计战术：${TACT[tac]}`:''}</p>
-  <div class="oppgrid">${pitchBox(field,'对手预计首发',ob.form,{color:opp.color,note:facLv('scout')>=3?`${ob.form} · ${TACT[tac]}`:ob.form})}
+  <p class="muted" style="margin:0 0 10px;font-size:13px">${fixLabel(f)}，${f.home?'我们主场':'我们客场'} · ${tierOf(opp.rep)} · 首发平均能力 ${avg} · 平均体能 ${cond} · 预计战术：${TACT[tac]}</p>
+  <div class="oppgrid">${pitchBox(field,'对手预计首发',ob.form,{color:opp.color,note:`${ob.form} · ${TACT[tac]}`})}
   <div><div class="subh" style="margin-bottom:6px">替补</div>${bench.map(p=>`<div class="oprow"><span class="spos">${POS[p.pos]}</span><span>${p.name}${p.sig?' <i class="sig" style="font-style:normal">★</i>':''}</span><b class="num">${p.ovr}</b></div>`).join('')||'<span class="muted">没有替补</span>'}
   ${out.length?`<div class="subh" style="margin:10px 0 6px">缺阵</div>${out.map(p=>`<div class="oprow out"><span class="spos">${POS[p.pos]}</span><span>${p.name}</span><span class="muted">${p.inj?`伤停 ${p.inj} 天`:p.ban?'停赛':'请假'}</span></div>`).join('')}`:''}
-  ${facLv('scout')>=3?'':'<p class="muted" style="font-size:12px;margin:10px 0 0">球探部升到 3 级，可以看到对手的预计战术和最薄弱的一线。</p>'}</div></div></section>`;
+  ${facLv('scout')>=3?'':'<p class="muted" style="font-size:12px;margin:10px 0 0">球探部升到 3 级，赛前还能看到对手最薄弱的一线和王牌球员。</p>'}</div></div></section>`;
 }
 function vPlayer(id){
   const f=findAny(id);
