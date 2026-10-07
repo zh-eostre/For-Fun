@@ -484,14 +484,16 @@ function vMatchStats(){
   ${vSubLog()}
   <details class="fold mstat-fold" data-fold="mstats"><summary><b>详细数据</b></summary>${statTable(mine)}</details>`;
 }
+// the opponent's current tactic and average stamina
+const oppLine=()=>`对手 <b class="opptac">${TACT[M.aiTac]}</b> · 平均体能 ${oppAvgCond()}`;
 // stamina while the match runs: our players on the pitch (lowest first) and the opponents' average
 const oppAvgCond=()=>{const s=mySide()==='h'?'a':'h',ps=onPitch(S.teams[s==='h'?M.h:M.a],M[s+'Ids']).filter(Boolean);return Math.round(ps.reduce((t,p)=>t+p.cond,0)/ps.length)};
 const autoSubBtn=()=>`<button class="btn small" data-act="autoSub" aria-pressed="${S.autoSub!==false}">自动换下体力不支的球员：${S.autoSub!==false?'开':'关'}</button>`;
 function vLiveStamina(){
   const s=mySide(),roles=slotRoles(M[s+'Form']);
   const ps=M[s+'Ids'].map((id,i)=>{const p=id!=null&&findP(id);return p&&{p,r:roles[i]}}).filter(Boolean).sort((a,b)=>a.p.cond-b.p.cond);
-  return `<div class="livecond"><div class="lc-head"><b>场上体能</b><span class="muted">对手平均 ${oppAvgCond()}</span></div>
-  <div class="lc-list">${ps.map(({p,r})=>{const c=Math.round(p.cond);return `<span class="lc ${c<52?'bad':c<65?'warn':''}"><span class="lc-n">${POS[r][0]} ${shortName(p.name)}</span><span class="lc-bar"><i style="width:${c}%"></i></span><b class="num">${c}</b></span>`}).join('')}</div></div>`;
+  return `<div class="livecond"><div class="lc-head"><b>场上体能</b><span class="muted">${oppLine()}</span></div>
+  <div class="lc-list">${ps.map(({p,r})=>{const c=Math.round(p.cond);return `<span class="lc ${c<60?'bad':c<TIRED?'warn':''}"><span class="lc-n">${POS[r][0]} ${shortName(p.name)}</span><span class="lc-bar"><i style="width:${c}%"></i></span><b class="num">${c}</b></span>`}).join('')}</div></div>`;
 }
 function vMatch(){
   const H=S.teams[M.h],A=S.teams[M.a];
@@ -507,25 +509,30 @@ function vMatch(){
     ${S.cheatUsed?'':`${cheatBtn('redo')}<span class="muted" style="font-size:13px">${CHEAT_CARD}：${CHEAT_INFO.redo[1]}</span>`}</div></div>`;
   }else if(M.ht||M.subMode){
     const s=mySide(),xi=M[s+'XI'],full=M.subs>=SUBS;
-    const bench=my().players.filter(p=>!xi.includes(p.id)&&!unavail(p)).sort((a,b)=>PO.indexOf(a.pos)-PO.indexOf(b.pos)||b.ovr-a.ovr);
+    // players taken off in this stop stay on the bench list, so the change can be undone
+    const bench=my().players.filter(p=>(!xi.includes(p.id)||pendingSub(p.id,'out'))&&!unavail(p)).sort((a,b)=>PO.indexOf(a.pos)-PO.indexOf(b.pos)||b.ovr-a.ovr);
+    const redo=M.sel!=null&&pendingSub(M.sel);
     const marks=p=>(M.injuries.includes(p)?'<b class="mk hurt">伤</b>':'')+(M.yc[p.id]?'<b class="mk yc"></b>':'');
     const field=pitchSpots(M[s+'Ids'],M[s+'Form']).map(x=>x.p
       ?tok(x.p,{style:`left:${x.x}%;top:${x.y}%`,act:'subOut',role:x.role,cls:M.sel===x.p.id?'sel':'',marks:marks(x.p),cond:true})
       :`<span class="tok empty gone" style="left:${x.x}%;top:${x.y}%"><span class="tc">✕</span><span class="tn">罚下</span></span>`).join('');
     ctl=`<div class="ht">${M.ht?'<b>中场·作战会议</b><p style="margin:4px 0 10px;font-size:14px">下半场，要改变命运的走向吗？</p>':`<b>暂停·调整（${M.min}'）</b><p style="margin:4px 0 10px;font-size:14px">换人或改变战术，然后继续比赛。</p>`}
-    <p style="margin:0 0 10px;font-size:13px">${autoSubBtn()} <span class="muted">对手平均体能 ${oppAvgCond()}</span></p>
+    <p style="margin:0 0 10px;font-size:13px">${autoSubBtn()} <span class="muted">${oppLine()}</span></p>
+    ${M.aiTac==='att'&&M.tac!=='def'?'<p class="muted" style="margin:-4px 0 10px;font-size:12px">对手全力进攻，防守反击能多守住一些，还有反击加成。</p>':''}
     <div class="seg" style="margin-bottom:4px">${Object.entries(TACT).map(([k,v])=>`<button data-act="tac" data-arg="${k}" aria-pressed="${M.tac===k}">${v}</button>`).join('')}</div>
     <p class="muted" style="margin:0 0 12px;font-size:12px">只影响本场。</p>
-    <div class="subh">换人 ${M.subs}/${SUBS}${full?'，名额已用完':M.sel!=null?`：换下 ${findP(M.sel).name}，请在右边选替补`:'：先点球场上要换下的人，再点右边的替补'}</div>
+    <div class="subh">换人 ${M.subs}/${SUBS}${redo?`：${findP(M.sel).name} 刚换上，改选其他替补不另算名额，点「换回」撤销这次换人`:full?'，名额已用完':M.sel!=null?`：换下 ${findP(M.sel).name}，请在右边选替补`:'：先点球场上要换下的人，再点右边的替补'}</div>
+    ${(M.subLog||[]).some(x=>x.s===s&&x.stop===M.stop)?'<p class="muted" style="margin:2px 0 0;font-size:12px">这次暂停里的换人在继续比赛前都可以改。</p>':''}
     <div class="htgrid">${pitchBox(field,'场上球员',M[s+'Form'])}
     <div class="sublist"><div class="subh">替补席 <span class="muted" style="font-weight:400">${bench.length} 人可用</span></div>
     ${bench.length?bench.map(p=>{
       // with a player picked on the pitch: same-position subs stand out, and each shows the stamina he'd bring
       const out=M.sel!=null&&findP(M.sel),same=out&&p.pos===(M.role[out.id]||out.pos),gain=out?Math.round(p.cond-out.cond):0;
-      return `<button class="scard ${same?'fit':out?'dim':''}" data-act="subIn" data-arg="${p.id}" data-flip="p${p.id}" ${full?'disabled':''} title="${p.name}，${POS[p.pos]}，能力 ${p.ovr}，体能 ${Math.round(p.cond)}">
+      const back=pendingSub(p.id,'out');
+      return `<button class="scard ${same?'fit':out?'dim':''} ${back?'back':''}" data-act="subIn" data-arg="${p.id}" data-flip="p${p.id}" ${full&&!redo||back&&!(redo&&redo.out===p.id)?'disabled':''} title="${p.name}，${POS[p.pos]}，能力 ${p.ovr}，体能 ${Math.round(p.cond)}">
       <span class="sc-ovr num pos-${p.pos}">${p.ovr}</span>
       <span class="sc-main"><span class="sc-name">${p.name}${p.sig?'<i>★</i>':''}</span>
-      <span class="sc-meta">${POS[p.pos]} · 体能 ${Math.round(p.cond)}${out&&gain>0?` <b class="sc-gain">+${gain}</b>`:''}</span></span>${same?'<b class="sc-fit">同位置</b>':''}
+      <span class="sc-meta">${POS[p.pos]} · 体能 ${Math.round(p.cond)}${out&&gain>0?` <b class="sc-gain">+${gain}</b>`:''}</span></span>${back?'<b class="sc-fit sc-back">换回</b>':same?'<b class="sc-fit">同位置</b>':''}
       <span class="tb ${p.cond<TIRED?'low':''}"><i style="width:${p.cond}%"></i></span></button>`}).join(''):'<span class="muted" style="font-size:13px">没有可用的替补</span>'}</div></div>
     <button class="btn primary" data-act="resume" style="margin-top:12px">再战，下半场！</button></div>`;
   }else{

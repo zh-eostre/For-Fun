@@ -573,3 +573,6 @@ dialog.modal.wide{max-width:860px}
 .sublog{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;margin:0 0 10px;align-items:baseline}
 .sublog>b{margin-right:2px}
 .sublog .num{font-size:15px}
+.sc-fit.sc-back{background:var(--amber);color:#2B1D00}
+.scard.back{border-style:dashed}
+.opptac{color:var(--ink);font-weight:700}

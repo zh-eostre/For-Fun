@@ -23,6 +23,7 @@ function startMatch(){
   M.poss=possession(S.teams[M.h],M.hIds,M.hForm,M.h===S.my?M.tac:M.aiTac,S.teams[M.a],M.aIds,M.aForm,M.a===S.my?M.tac:M.aiTac);
   const hn=S.teams[M.h].name,an=S.teams[M.a].name;
   M.feed.unshift({min:0,cls:'sys',t:f.friendly?LINE.friendlyKick(hn,an):f.cup?LINE.cupKick(hn,an,stageName(M.stage)):f.derby?LINE.derbyKick(hn,an):LINE.kickoff(hn,an)});
+  M.feed.unshift({min:0,cls:'sys',t:`${opp.short}开场打法：${TACT[M.aiTac]}。`});
   UI.view='match';render();M.timer=setTimeout(loop,600);
 }
 const mySide=()=>M.h===S.my?'h':'a';
@@ -43,13 +44,14 @@ function tick(skipping){
   }
   if(M.min===45){
     const myG=M.h===S.my?M.hg:M.ag,opG=M.h===S.my?M.ag:M.hg;
-    M.aiTac=opG<myG?'att':opG>myG?'def':'bal';
+    const was=M.aiTac;M.aiTac=opG<myG?'att':opG>myG?'def':'bal';
     M.feed.unshift({min:45,cls:'sys',t:LINE.half(M.hg,M.ag)});announce(LINE.half(M.hg,M.ag));
+    if(M.aiTac!==was)M.feed.unshift({min:45,cls:'sys',t:`${S.teams[M.h===S.my?M.a:M.h].short}下半场改打${TACT[M.aiTac]}！`});
     // a perk for our side only: the halftime talk and a drink win back a little of the stamina lost
     const ours=onPitch(my(),M[mySide()+'Ids']).filter(Boolean);let got=0;
     ours.forEach(p=>{const g=Math.min(100-p.cond,Math.max(2,Math.round((100-p.cond)*HT_REST)));p.cond+=g;got+=g});
     if(got)M.feed.unshift({min:45,cls:'sys',t:`更衣室里补水调整，${my().short}的球员们缓过一口气（体能平均 +${Math.round(got/ours.length)}）。`});
-    if(!skipping){M.paused=true;M.ht=true}
+    if(!skipping){M.paused=true;M.ht=true;M.stop=(M.stop||0)+1}
   }
   if(M.min>=90){
     M.feed.unshift({min:90,cls:'sys',t:LINE.full(M.hg,M.ag)});announce(LINE.full(M.hg,M.ag));
@@ -118,10 +120,32 @@ function substitute(outId,inId,s=mySide(),line,why){
   const po=team.players.find(x=>x.id===outId),pi=team.players.find(x=>x.id===inId);
   if(M[key]>=SUBS||!po||!pi||!ids.includes(outId)||xi.includes(inId)||unavail(pi))return false;
   const slot=ids.indexOf(outId);ids[slot]=inId;xi.push(inId);M[key]++;if(key==='subs')M.sel=null;
-  M.off[outId]=M.min;M.on[inId]=M.min;(M.subLog||(M.subLog=[])).push({s,min:M.min,out:outId,in:inId,why});
+  M.off[outId]=M.min;M.on[inId]=M.min;
   M.role[inId]=slotRoles(M[s+'Form'])[slot];M.line[inId]=slotLines(M[s+'Form'])[slot];
-  M.feed.unshift({min:M.min,cls:'sys',t:line||LINE.sub(po.name,pi.name)});
+  const feed={min:M.min,cls:'sys',t:line||LINE.sub(po.name,pi.name)};M.feed.unshift(feed);
+  // stop: which halftime / pause it was made in (changes made while play runs have none)
+  (M.subLog||(M.subLog=[])).push({s,min:M.min,out:outId,in:inId,why,feed,stop:M.paused?M.stop:null});
   return true;
+}
+// a change made in the current stop (halftime or a pause) can still be redone until play resumes:
+// taking off the man who just came on puts someone else on in his place without using another substitution,
+// and bringing back the man he replaced cancels the change. returns null if outId didn't come on in this stop
+const pendingSub=(id,key='in',s=mySide())=>M.paused?(M.subLog||[]).find(x=>x.s===s&&x[key]===id&&x.stop===M.stop):null;
+function resub(outId,inId,s=mySide()){
+  const e=pendingSub(outId,'in',s);if(!e)return null;
+  const team=S.teams[s==='h'?M.h:M.a],ids=M[s+'Ids'],xi=M[s+'XI'],slot=ids.indexOf(outId),pi=team.players.find(x=>x.id===inId);
+  if(!pi||slot<0)return false;
+  xi.splice(xi.indexOf(outId),1);delete M.on[outId];
+  if(inId===e.out){  // back to how it was
+    ids[slot]=e.out;delete M.off[e.out];M[team.id===S.my?'subs':'oppSubs']--;
+    M.subLog.splice(M.subLog.indexOf(e),1);M.feed.splice(M.feed.indexOf(e.feed),1);
+  }else{
+    if(xi.includes(inId)||unavail(pi)){xi.push(outId);M.on[outId]=e.min;return false}
+    ids[slot]=inId;xi.push(inId);M.on[inId]=e.min;e.in=inId;
+    M.role[inId]=slotRoles(M[s+'Form'])[slot];M.line[inId]=slotLines(M[s+'Form'])[slot];
+    e.feed.t=LINE.sub(team.players.find(x=>x.id===e.out).name,pi.name);
+  }
+  M.sel=null;return true;
 }
 // both sides' numbers for the live match: minutes from who came on and off, possession, shots, and how the sides compared
 // now and then a tackle, interception, dribble or killer pass makes the commentary. the side on the ball dribbles and

@@ -189,13 +189,18 @@ const ACT={
   skip:()=>skipMatch(),
   resume:()=>{M.ht=false;M.subMode=false;M.paused=false;M.sel=null;render();M.timer=setTimeout(loop,300)},
   // pause the match to make changes; the same panel as halftime
-  pauseSub:()=>{if(!M||M.done)return;clearTimeout(M.timer);M.paused=true;M.subMode=true;render()},
+  pauseSub:()=>{if(!M||M.done)return;clearTimeout(M.timer);M.paused=true;M.subMode=true;M.stop=(M.stop||0)+1;render()},
   // a setting, saved with the club after the match (saving mid-match would store this match's goals)
   autoSub:()=>{S.autoSub=S.autoSub===false;if(!M)save();render()},
   subOut:a=>{M.sel=M.sel===+a?null:+a;render()},
   subIn:a=>{
     if(M.sel==null){toast('先点选要换下的场上球员');return}
-    if(!substitute(M.sel,+a))toast(`本场最多换 ${SUBS} 人`);
+    const r=resub(M.sel,+a),back=pendingSub(+a,'out');
+    if(r===false)toast('这名球员不能上场');
+    else if(r===null){
+      if(back)toast(`${findP(+a).name} 已被换下，只能换回 ${findP(back.in).name} 的位置`);
+      else if(!substitute(M.sel,+a))toast(`本场最多换 ${SUBS} 人`);
+    }
     render();
   },
   offerYes:(a,b)=>{if(!arm(b,'再点一次，签下契约'))return;acceptOffer();save();render()},
