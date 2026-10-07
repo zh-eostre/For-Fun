@@ -27,7 +27,13 @@ function startMatch(){
   UI.view='match';render();M.timer=setTimeout(loop,600);
 }
 const mySide=()=>M.h===S.my?'h':'a';
-function loop(){if(!M||M.done||M.paused)return;tick(false);render();if(!M.done&&!M.paused)M.timer=setTimeout(loop,M.speed===1?170:45)}
+// the page is redrawn every tick; while a finger or mouse button is down the match waits, so the button under it
+// isn't replaced between press and release (which would swallow the click)
+let pressing=false;
+document.addEventListener('pointerdown',()=>{pressing=true},true);
+for(const ev of ['pointerup','pointercancel'])document.addEventListener(ev,()=>{pressing=false},true);
+function loop(){if(!M||M.done||M.paused)return;if(pressing){M.timer=setTimeout(loop,40);return}
+  tick(false);render();if(!M.done&&!M.paused)M.timer=setTimeout(loop,M.speed===1?170:45)}
 function tick(skipping){
   M.min++;M.flash=null;
   const ht=M.h===S.my?M.tac:M.aiTac,at=M.a===S.my?M.tac:M.aiTac,b=S.boost>0?BOOST:0;

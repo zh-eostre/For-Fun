@@ -314,6 +314,14 @@ function vSquad(){
 // Malay and Indian players go by their given name, Western ones by their surname (like 「席尔瓦」 on a shirt)
 const EU_SET=new Set(EU_SUR);
 const shortName=n=>{const [a,b]=n.split('·');return b&&EU_SET.has(b)?b:a};
+// the short name, unique within his club: with two 阿米尔 in the squad they show as 阿米尔·阿 and 阿米尔·拉
+// (two Western players with the same surname get their first name's initial: 卡·席尔瓦); still the same: full name
+function pName(p){
+  const s=shortName(p.name),t=S.teams.find(t=>t.players.includes(p));
+  const twins=t?t.players.filter(q=>q!==p&&shortName(q.name)===s):[];if(!twins.length)return s;
+  const longer=n=>{const [a,b]=n.split('·');return !b?n:EU_SET.has(b)?a[0]+'·'+b:a+'·'+b[0]};
+  return twins.some(q=>longer(q.name)===longer(p.name))?p.name:longer(p.name);
+}
 const PITCH_Y={FW:16,AM:29,MF:43,DM:53,DF:68,GK:89};
 // one row per line, holding and attacking midfielders on rows of their own
 function pitchSpots(ids,form,team){
@@ -333,9 +341,9 @@ function pitchSpots(ids,form,team){
 // o: style, act + arg (default: toggle this player), cls, marks (extra badges after the name), role (the slot's role)
 function tok(p,o={}){
   const oop=o.role&&p.pos!==o.role;
-  if(o.static)return `<span class="tok ${unavail(p)?'out':''}" style="${o.style||''}" title="${p.name}"><span class="tc num ${p.cond<TIRED?'low':''}">${p.ovr}</span><span class="tn">${shortName(p.name)}${p.sig?'<i>★</i>':''}</span><span class="tb"><i style="width:${p.cond}%"></i></span><small class="tcond">${Math.round(p.cond)}</small></span>`;
+  if(o.static)return `<span class="tok ${unavail(p)?'out':''}" style="${o.style||''}" title="${p.name}"><span class="tc num ${p.cond<TIRED?'low':''}">${p.ovr}</span><span class="tn">${pName(p)}${p.sig?'<i>★</i>':''}</span><span class="tb"><i style="width:${p.cond}%"></i></span><small class="tcond">${Math.round(p.cond)}</small></span>`;
   return `<button class="tok ${unavail(p)?'out':''} ${oop?'oop':''} ${o.cls||''}" style="${o.style||''}" data-act="${o.act||'toggle'}" data-arg="${o.arg??p.id}" data-flip="p${p.id}" title="${p.name}${oop?`（本职${POS[p.pos]}，打${POS[o.role]}）`:''}">
-    <span class="tc num ${p.cond<TIRED?'low':''}">${p.ovr}</span><span class="tn">${oop?`<b class="mk oopk">${POS[p.pos][0]}</b>`:''}${shortName(p.name)}${p.sig?'<i>★</i>':''}${o.marks||''}</span>
+    <span class="tc num ${p.cond<TIRED?'low':''}">${p.ovr}</span><span class="tn">${oop?`<b class="mk oopk">${POS[p.pos][0]}</b>`:''}${pName(p)}${p.sig?'<i>★</i>':''}${o.marks||''}</span>
     <span class="tb"><i style="width:${p.cond}%"></i></span>${o.cond?`<small class="tcond">${Math.round(p.cond)}</small>`:''}</button>`;
 }
 const emptySlot=(s,act,sel)=>`<button class="tok empty ${sel?'sel':''}" style="left:${s.x}%;top:${s.y}%" data-act="${act}" data-arg="${s.slot}" title="空位：${LINE_NAME[s.line]||POS[s.role]}"><span class="tc">${(LINE_NAME[s.line]||POS[s.role])[0]}</span><span class="tn">空位</span></button>`;
@@ -488,7 +496,7 @@ function statTable(list){
   const pct=a=>a.pas?Math.round(a.ok/a.pas*100)+'%':'—';
   return `<div class="tw"><table class="stat-t"><thead><tr><th>球员</th><th>评分</th><th>传球</th><th>关键传球</th><th>抢断</th><th>拦截</th><th>过人</th><th>扑救</th><th>进/助</th></tr></thead>
   <tbody>${list.map(x=>{const a=x.a||{pas:0,ok:0,kp:0,tkl:0,int:0,drb:0},e=(M.ev||{})[x.p.id]||{};
-    return `<tr><td>${POS[x.role][0]} ${shortName(x.p.name)}${subMark(x.p.id)}</td><td>${rtag(x.r)}</td><td>${a.ok}/${a.pas} <small class="muted">${pct(a)}</small></td><td>${a.kp}</td><td>${a.tkl}</td><td>${a.int}</td><td>${a.drb}</td><td>${x.role==='GK'?e.sv||0:'—'}</td><td>${e.g||0}/${e.a||0}</td></tr>`}).join('')}</tbody></table></div>`;
+    return `<tr><td>${POS[x.role][0]} ${pName(x.p)}${subMark(x.p.id)}</td><td>${rtag(x.r)}</td><td>${a.ok}/${a.pas} <small class="muted">${pct(a)}</small></td><td>${a.kp}</td><td>${a.tkl}</td><td>${a.int}</td><td>${a.drb}</td><td>${x.role==='GK'?e.sv||0:'—'}</td><td>${e.g||0}/${e.a||0}</td></tr>`}).join('')}</tbody></table></div>`;
 }
 const rcls=r=>r>=8?'r-hi':r>=7?'r-ok':r<6?'r-lo':'';
 const rtag=r=>`<span class="rating ${rcls(r)}">${r.toFixed(1)}</span>`;
@@ -513,7 +521,7 @@ function vMatchStats(){
     <div class="srow2 head"><span>${H.short}</span><span></span><span>${A.short}</span></div>
     ${row('射门',M.st.h.sh,M.st.a.sh)}${row('射正',M.st.h.on,M.st.a.on)}${row('控球',M.poss+'%',(100-M.poss)+'%')}</div>
   ${M.mvp?`<p class="mvp">全场最佳：<b>${M.mvp.p.name}</b>（${S.teams.find(t=>t.players.includes(M.mvp.p)).short}，${POS[M.mvp.role]}）${rtag(M.mvp.r)}${standout(M.mvp)?` <span class="muted" style="font-size:13px">${standout(M.mvp)}</span>`:''}</p>`:''}
-  <div class="ratings">${mine.map(x=>`<span class="rt">${POS[x.role][0]} ${shortName(x.p.name)}${subMark(x.p.id)} ${rtag(x.r)}</span>`).join('')}</div>
+  <div class="ratings">${mine.map(x=>`<span class="rt">${POS[x.role][0]} ${pName(x.p)}${subMark(x.p.id)} ${rtag(x.r)}</span>`).join('')}</div>
   ${vSubLog()}
   <details class="fold mstat-fold" data-fold="mstats"><summary><b>详细数据</b></summary>${statTable(mine)}</details>`;
 }
@@ -526,7 +534,7 @@ function vLiveStamina(){
   const s=mySide(),roles=slotRoles(M[s+'Form']);
   const ps=M[s+'Ids'].map((id,i)=>{const p=id!=null&&findP(id);return p&&{p,r:roles[i]}}).filter(Boolean).sort((a,b)=>a.p.cond-b.p.cond);
   return `<div class="livecond"><div class="lc-head"><b>场上体能</b><span class="muted">${oppLine()}</span></div>
-  <div class="lc-list">${ps.map(({p,r})=>{const c=Math.round(p.cond);return `<span class="lc ${c<60?'bad':c<TIRED?'warn':''}"><span class="lc-n">${POS[r][0]} ${shortName(p.name)}</span><span class="lc-bar"><i style="width:${c}%"></i></span><b class="num">${c}</b></span>`}).join('')}</div></div>`;
+  <div class="lc-list">${ps.map(({p,r})=>{const c=Math.round(p.cond);return `<span class="lc ${c<60?'bad':c<TIRED?'warn':''}"><span class="lc-n">${POS[r][0]} ${pName(p)}</span><span class="lc-bar"><i style="width:${c}%"></i></span><b class="num">${c}</b></span>`}).join('')}</div></div>`;
 }
 function vMatch(){
   const H=S.teams[M.h],A=S.teams[M.a];
