@@ -534,8 +534,11 @@ function vLiveStamina(){
   const s=mySide(),roles=slotRoles(M[s+'Form']);
   const ps=M[s+'Ids'].map((id,i)=>{const p=id!=null&&findP(id);return p&&{p,r:roles[i]}}).filter(Boolean).sort((a,b)=>a.p.cond-b.p.cond);
   return `<div class="livecond"><div class="lc-head"><b>场上体能</b><span class="muted">${oppLine()}</span></div>
-  <div class="lc-list">${ps.map(({p,r})=>{const c=Math.round(p.cond);return `<span class="lc ${c<60?'bad':c<TIRED?'warn':''}"><span class="lc-n">${POS[r][0]} ${pName(p)}</span><span class="lc-bar"><i style="width:${c}%"></i></span><b class="num">${c}</b></span>`}).join('')}</div></div>`;
+  <div class="lc-list">${ps.map(({p,r})=>{const c=Math.round(p.cond);return `<span class="lc ${c<60?'bad':c<TIRED?'warn':''}"><span class="lc-n">${POS[r][0]} ${pName(p)}</span><span class="lc-bar"><i style="width:${c}%"></i></span><b class="num">${c}</b></span>`}).join('')}
+  ${offPitch().map(p=>`<span class="lc gone"><span class="lc-n">${subMark(p.id).trim()} ${pName(p)}</span><span class="lc-bar"><i style="width:${Math.round(p.cond)}%"></i></span><b class="num">${Math.round(p.cond)}</b></span>`).join('')}</div></div>`;
 }
+// our players who played and are no longer on the pitch (taken off or sent off), in the order they left
+const offPitch=()=>{const s=mySide();return M[s+'XI'].filter(id=>id!=null&&!M[s+'Ids'].includes(id)&&!pendingSub(id,'out')).map(findP).filter(Boolean).sort((a,b)=>(M.off[a.id]??0)-(M.off[b.id]??0))};
 function vMatch(){
   const H=S.teams[M.h],A=S.teams[M.a];
   const clock=M.done?'FT':M.min>=45&&M.ht?'HT':`${M.min}'`;
@@ -574,7 +577,8 @@ function vMatch(){
       <span class="sc-ovr num pos-${p.pos}">${p.ovr}</span>
       <span class="sc-main"><span class="sc-name">${p.name}${p.sig?'<i>★</i>':''}</span>
       <span class="sc-meta">${POS[p.pos]} · 体能 ${Math.round(p.cond)}${out&&gain>0?` <b class="sc-gain">+${gain}</b>`:''}</span></span>${back?'<b class="sc-fit sc-back">换回</b>':same?'<b class="sc-fit">同位置</b>':''}
-      <span class="tb ${p.cond<TIRED?'low':''}"><i style="width:${p.cond}%"></i></span></button>`}).join(''):'<span class="muted" style="font-size:13px">没有可用的替补</span>'}</div></div>
+      <span class="tb ${p.cond<TIRED?'low':''}"><i style="width:${p.cond}%"></i></span></button>`}).join(''):'<span class="muted" style="font-size:13px">没有可用的替补</span>'}
+    ${offPitch().length?`<div class="gone-row"><span class="muted">已换下</span>${offPitch().map(p=>`<span>${pName(p)}${subMark(p.id)} <span class="muted num">${Math.round(p.cond)}</span></span>`).join('')}</div>`:''}</div></div>
     <button class="btn primary" data-act="resume" style="margin-top:12px">再战，下半场！</button></div>`;
   }else{
     ctl=`<div class="mctl"><button class="btn" data-act="speed">${M.speed===1?'加速':'正常速度'}</button><button class="btn primary" data-act="pauseSub">换人 / 调整</button><button class="btn" data-act="skip">直接看结果</button>${autoSubBtn()}</div>${vLiveStamina()}`;

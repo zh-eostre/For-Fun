@@ -586,3 +586,9 @@ dialog.modal.wide{max-width:860px}
 .rule li{margin:2px 0}
 .rules-btn{margin-left:auto;align-self:center;border-color:currentColor;color:inherit;white-space:nowrap;flex:none}
 .rules-btn+.cash{margin-left:4px}
+
+/* players who have left the pitch */
+.lc.gone{opacity:.55}
+.lc.gone .lc-bar i{background:var(--muted)}
+.gone-row{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;padding-top:4px;border-top:1px dashed var(--line);margin-top:2px}
+.gone-row .num{font-size:13px}
