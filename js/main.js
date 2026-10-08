@@ -235,7 +235,7 @@ const ACT={
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;
   const f=ACT[b.dataset.act];if(f)f(b.dataset.arg,b)});
 // remember which folding panels are open across re-renders ('toggle' doesn't bubble, so listen while capturing)
-document.addEventListener('toggle',e=>{const d=e.target;if(d.dataset&&d.dataset.fold)(UI.folds=UI.folds||{})[d.dataset.fold]=d.open},true);
+document.addEventListener('toggle',e=>{const d=e.target;if(d.dataset&&d.dataset.fold){(UI.folds=UI.folds||{})[d.dataset.fold]=d.open;if(d.open)scrollFixtures(d)}},true);
 function closeModal(){if(!UI.modal)return;const t=UI.modal.type;UI.returnFocus=t==='opp'?{act:'oppXI'}:t==='rules'?{act:'rules'}:{act:'player',arg:UI.modal.id};UI.modal=null;render()}
 // Escape on the dialog: let our state close it (and re-render) rather than the browser alone
 document.addEventListener('cancel',e=>{if(e.target.matches&&e.target.matches('dialog.modal')){e.preventDefault();closeModal()}},true);

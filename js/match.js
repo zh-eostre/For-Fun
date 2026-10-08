@@ -44,7 +44,9 @@ const aura=()=>Math.round(((S.mgr&&S.mgr.rep)||0)*AURA_PER_REP*10)/10;
 let pressing=false;
 document.addEventListener('pointerdown',()=>{pressing=true},true);
 for(const ev of ['pointerup','pointercancel'])document.addEventListener(ev,()=>{pressing=false},true);
+// after a goal the match holds for a moment (ours 1.5s, theirs 0.8s) so it can sink in before play goes on
 function loop(){if(!M||M.done||M.paused)return;if(pressing){M.timer=setTimeout(loop,40);return}
+  if(M.hold&&Date.now()<M.hold){M.timer=setTimeout(loop,M.hold-Date.now());return}
   tick(false);render();if(!M.done&&!M.paused)M.timer=setTimeout(loop,M.speed===1?170:45)}
 function tick(skipping){
   M.min++;M.flash=null;
@@ -97,6 +99,7 @@ function side(s,p){
     const a=assister(team,ids,form,sc);if(a){ev(a.id).a=(ev(a.id).a||0)+1;if(!M.friendly)a.ast=(a.ast||0)+1}
     if(s==='h')M.hg++;else M.ag++;
     M.flash=s;M.feed.unshift({min:M.min,cls:'goal '+(mine?'mine':'theirs'),t:`进球！${t}（${team.short}${a?` · 助攻 ${a.name}`:''}）`});
+    if(!M.skip)M.hold=Date.now()+(mine?1500:800);
     if(mine&&!M.skip){const n=M.goals[sc.id];celebrate('GOAL!',`${sc.name}${n===2?' · 梅开二度':n===3?' · 帽子戏法':n>3?` · 大四喜`:''}　${M.hg} : ${M.ag}`,n>=2?'brace':'goal')}
     announce(`${M.min} 分钟，${team.short}进球，比分 ${M.hg} 比 ${M.ag}`);
   };

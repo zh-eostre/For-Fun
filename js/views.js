@@ -13,6 +13,7 @@ function render(){
   app.innerHTML=view();
   // folding panels keep whatever open/closed state the player last chose
   app.querySelectorAll('details[data-fold]').forEach(d=>{const k=d.dataset.fold;if(UI.folds&&k in UI.folds)d.open=UI.folds[k]});
+  scrollFixtures(app);
   // with the dialog open, focus is restored inside it (the page behind can hold a twin of the same button)
   const dlg=app.querySelector('dialog.modal'),scope=dlg||app;
   if(dlg&&dlg.showModal&&!dlg.open){
@@ -31,6 +32,11 @@ function render(){
     const r=el.getBoundingClientRect(),dx=b.left-r.left,dy=b.top-r.top;
     if(Math.abs(dx)+Math.abs(dy)>1)el.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'none'}],{duration:420,easing:'cubic-bezier(.2,.8,.2,1)'});
   });
+}
+// the season's fixture list opens at the next match, with the last result just above it
+function scrollFixtures(root){
+  const nx=root.querySelector&&root.querySelector('.fx-list .next');if(!nx)return;
+  const prev=nx.previousElementSibling;nx.parentNode.scrollTop=(prev||nx).offsetTop;
 }
 function view(){
   const main=mainView();
@@ -78,6 +84,28 @@ function vHeader(){
   </div></header>`;
 }
 // the next ten days, what happened over the last days skipped, and how fresh the starting XI is
+// the whole season in one list: friendlies, every league round, our cup ties, the windows and the last day.
+// played ones show the score, the next one is marked; the summary line says how far in we are and when it ends
+function vFixtures(){
+  const div=my().div,rows=[],end=leagueDay(rounds()-1),res=(h,a,hg,ag)=>{const me=h===S.my,f=me?hg:ag,o=me?ag:hg;return {f,o,w:f>o?'胜':f<o?'负':'平'}};
+  (S.friendlies||[]).forEach(f=>rows.push({day:f.day,kind:'友谊赛',opp:f.opp,home:f.home,r:f.res&&res(f.home?S.my:f.opp,f.home?f.opp:S.my,f.res.hg,f.res.ag)}));
+  (S.fixtures[div]||[]).forEach((rd,r)=>{const fx=rd.find(x=>x.includes(S.my));if(!fx)return;
+    const done=(S.results[div][r]||[]).find(x=>x.h===S.my||x.a===S.my);
+    rows.push({day:leagueDay(r),kind:`第 ${r+1} 轮`,opp:fx[0]===S.my?fx[1]:fx[0],home:fx[0]===S.my,r:done&&res(done.h,done.a,done.hg,done.ag)})});
+  const C=S.cup;(C.rounds||[]).forEach((rd,k)=>{const x=rd.find(r=>r.h===S.my||r.a===S.my);if(x)rows.push({day:cupDay(k),kind:`${CUP_NAME}·${stageName(k)}`,opp:x.h===S.my?x.a:x.h,home:x.h===S.my,r:{...res(x.h,x.a,x.hg,x.ag),w:x.w===S.my?'胜':'负',pens:x.hp!=null?`点球 ${x.h===S.my?x.hp:x.ap}:${x.h===S.my?x.ap:x.hp}`:''}})});
+  if(cupAlive()&&C.stage<cupFmt().names.length)for(let k=C.stage;k<cupFmt().names.length;k++){const t=k===C.stage&&C.ties.find(x=>x.includes(S.my));
+    if(k===C.stage&&!t)continue;rows.push({day:cupDay(k),kind:`${CUP_NAME}·${stageName(k)}`,opp:t?(t[0]===S.my?t[1]:t[0]):null,home:t?t[0]===S.my:null})}
+  if(S.pre!=null)rows.push({day:winterStart(),kind:'冬季转会窗开启',note:`${WINTER} 天`});
+  rows.push({day:end+1,kind:'赛季结束',note:'颁奖、升降级'});
+  rows.sort((a,b)=>a.day-b.day);const next=rows.find(x=>x.opp!=null&&!x.r&&x.day>=S.day);
+  const played=S.round,left=rounds()-S.round;
+  const sum=`第 ${Math.min(played+1,rounds())}/${rounds()} 轮 · 还剩 ${left} 轮联赛 · 赛季在${dayLabel(end)}结束（还有 ${Math.max(0,end-S.day)} 天）`;
+  return `<details class="fold fixtures" data-fold="fixtures"><summary><span><b>全赛季赛程</b> <span class="muted">${sum}</span></span></summary>
+  <div class="fx-prog" aria-hidden="true"><i style="width:${Math.round(played/rounds()*100)}%"></i></div>
+  <div class="fx-list">${rows.map(x=>`<div class="fx-row ${x===next?'next':''} ${x.r?'done':''} ${x.opp==null?'evt':''}"><span class="fx-d">${dayLabel(x.day)}</span><span class="fx-k">${x.kind}</span>
+    <span class="fx-o">${x.opp!=null?`${x.home?'主':'客'} ${S.teams[x.opp].name}`:x.kind.startsWith(CUP_NAME)?'对手待定':x.note||''}</span>
+    <span class="fx-r">${x.r?`<b class="wdl ${x.r.w==='胜'?'w':x.r.w==='负'?'l':'d'}">${x.r.w}</b> ${x.r.f}:${x.r.o}${x.r.pens?` <small>${x.r.pens}</small>`:''}`:x===next?'<b class="nexttag">下一场</b>':''}</span></div>`).join('')}</div></details>`;
+}
 function vCalendar(){
   const days=matchDays(),T=TRAIN[S.training][0],today=dayType(S.day,days);
   const cell=d=>{
@@ -90,14 +118,18 @@ function vCalendar(){
       what=m.cup?CUP_NAME:'联赛';sub=`${fx[0]===S.my?'主':'客'} ${opp.short}`;
     }else if(t==='rest'){what='休息';sub=`体能 +${restAmt()}`}
     else{what='训练';sub=T}
-    return `<div class="day ${t} ${d===S.day?'today':''}"><span class="wd">${WEEKDAYS[d%7]}</span><b>${what}</b><small>${sub}</small></div>`;
+    // marks for the transfer windows and the last round
+    const mark=d===winterStart()?'冬窗开启':S.pre!=null&&d===winterStart()+WINTER?'冬窗关闭':S.pre!=null&&d===S.pre?'转会窗关闭':m&&!m.cup&&!m.friendly&&m.r===rounds()-1?'最后一轮':'';
+    return `<div class="day ${t} ${d===S.day?'today':''}"><span class="wd">${d%7===0||d===S.day?`<i>第${Math.floor(d/7)+1}周</i>`:''}${WEEKDAYS[d%7]}</span><b>${what}</b><small>${sub}</small>${mark?`<em>${mark}</em>`:''}</div>`;
   };
-  const strip=Array.from({length:10},(_,i)=>S.day+i).filter(d=>d<=leagueDay(rounds()-1)).map(cell).join('');
+  // four weeks ahead (swipe sideways), up to the last round
+  const strip=Array.from({length:28},(_,i)=>S.day+i).filter(d=>d<=leagueDay(rounds()-1)).map(cell).join('');
   const xi=S.lineup.map(id=>id!=null&&findP(id)).filter(Boolean),avg=xi.length?Math.round(xi.reduce((s,p)=>s+p.cond,0)/xi.length):0;
   const tired=xi.filter(p=>p.cond<80).sort((a,b)=>a.cond-b.cond).slice(0,3);
   const L=UI.dayLog,left=nextMatchDay()-S.day;
   return `<section class="panel"><h2>日程 <span class="muted" style="font-weight:400;font-size:14px">${dayLabel(S.day)}，今天${today==='match'?'是比赛日':today==='rest'?'休息':`训练（${T}）`}</span></h2>
-  <div class="days">${strip}</div>
+  <div class="days" tabindex="0" aria-label="接下来四周的日程，可以左右滑动">${strip}</div>
+  ${vFixtures()}
   ${L?`<p class="daylog">过了 ${L.days} 天：全队体能共 ${L.cond>=0?'+':''}${L.cond}${L.trained.length?`；训练中进步：${[...new Set(L.trained)].map(p=>{const n=L.trained.filter(x=>x===p).length;return `${p.name}（${p.ovr}${n>1?`，+${n}`:''}）`}).join('、')}`:'；训练中没有人进步'}${L.healed.length?`；伤愈复出：${L.healed.map(p=>p.name).join('、')}`:''}。</p>`:''}
   ${L&&L.surprises?L.surprises.map(t=>`<p class="surprise">✨ ${t}</p>`).join(''):''}
   <p class="muted" style="margin:8px 0 0;font-size:14px">首发平均体能 <b>${avg}</b>${tired.length?`，偏低：${tired.map(p=>`${p.name} ${p.cond}`).join('、')}`:'，全员状态良好'}。</p>
