@@ -208,7 +208,8 @@ const ACT={
   ff:()=>{const log=dayLog(),t=log.trained.length,su=(log.surprises||[]).length;while(advanceDay(log));UI.dayLog=log;
     trainNews(log.trained.slice(t));save();render();
     if((log.surprises||[]).length>su)toast('✨ '+log.surprises[log.surprises.length-1])},
-  speed:()=>{M.speed=M.speed===1?3:1;render()},
+  // match pace, kept for later matches (a setting, so it can be saved even mid-match)
+  pace:a=>{if(!PACE[a])return;S.pace=a;try{const d=JSON.parse(localStorage.getItem(KEY));if(d){d.pace=a;localStorage.setItem(KEY,JSON.stringify(d))}}catch(e){}render()},
   // halftime team talk, once a match; a roar works more often for a manager with a name
   talk:a=>{if(!M||!M.ht||M.talk||!TALK[a])return;M.talk=a;
     if(a==='roar')M.talkOK=rng()<.45+((S.mgr&&S.mgr.rep)||0)/200;

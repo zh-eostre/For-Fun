@@ -658,7 +658,7 @@ function vMatch(){
     ${offPitch().length?`<div class="gone-row"><span class="muted">已换下</span>${offPitch().map(p=>`<span>${pName(p)}${subMark(p.id)} <span class="muted num">${Math.round(p.cond)}</span></span>`).join('')}</div>`:''}</div></div>
     <button class="btn primary" data-act="resume" style="margin-top:12px">再战，下半场！</button></div>`;
   }else{
-    ctl=`<div class="mctl"><button class="btn" data-act="speed">${M.speed===1?'加速':'正常速度'}</button><button class="btn primary" data-act="pauseSub">换人 / 调整</button><button class="btn" data-act="skip">直接看结果</button>${autoSubBtn()}</div>${vLiveStamina()}`;
+    ctl=`<div class="mctl"><div class="seg sm pace" role="group" aria-label="比赛速度">${Object.entries(PACE).map(([k,[l]])=>`<button data-act="pace" data-arg="${k}" aria-pressed="${(S.pace||'normal')===k}">${l}</button>`).join('')}</div><button class="btn primary" data-act="pauseSub">换人 / 调整</button><button class="btn" data-act="skip">直接看结果</button>${autoSubBtn()}</div>${vLiveStamina()}`;
   }
   const tag=M.friendly?'季前友谊赛':M.cup?`${CUP_NAME}·${stageName(M.stage)}`:M.derby?'宿敌之战':'';
   return `<div class="matchwrap">${tag?`<div class="mtag">${tag}</div>`:''}<div class="board">

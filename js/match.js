@@ -9,7 +9,7 @@ function startMatch(){
   S.live={seed:Math.floor(Math.random()*2**31)};save();
   rng=seeded(S.live.seed);indexNames();
   const f=nextFix(),opp=S.teams[f.opp];aiRecover(opp);
-  M={h:f.h,a:f.a,cup:f.cup,derby:f.derby,friendly:!!f.friendly,fIdx:f.idx,stage:f.cup?S.cup.stage:null,hg:0,ag:0,min:0,feed:[],speed:1,paused:false,ht:false,done:false,
+  M={h:f.h,a:f.a,cup:f.cup,derby:f.derby,friendly:!!f.friendly,fIdx:f.idx,stage:f.cup?S.cup.stage:null,hg:0,ag:0,min:0,feed:[],paused:false,ht:false,done:false,
     flash:null,injuries:[],yc:{},goals:{},on:{},off:{},subs:0,oppSubs:0,sel:null,aiTac:'bal',tac:S.tactic,subMode:false,lastAuto:{h:-9,a:-9},talk:null,trailed:false,despair:false};  // tac: our tactic for this match only
   // the opponent picks its best formation, and a tactic from how it rates against our XI
   const os=bestForm(opp,!f.home),mr=rating(strength(my(),S.lineup,S.tactic,f.home,S.boost>0?BOOST:0,S.formation));
@@ -51,7 +51,9 @@ for(const ev of ['pointerup','pointercancel'])document.addEventListener(ev,()=>{
 // after a goal the match holds for a moment (ours 1.5s, theirs 0.8s) so it can sink in before play goes on
 function loop(){if(!M||M.done||M.paused)return;if(pressing){M.timer=setTimeout(loop,40);return}
   if(M.hold&&Date.now()<M.hold){M.timer=setTimeout(loop,M.hold-Date.now());return}
-  tick(false);render();if(!M.done&&!M.paused)M.timer=setTimeout(loop,M.speed===1?170:45)}
+  const n=M.feed.length;tick(false);render();
+  const [,base,perLine]=PACE[S.pace]||PACE.normal;
+  if(!M.done&&!M.paused)M.timer=setTimeout(loop,base+perLine*Math.min(3,M.feed.length-n))}
 function tick(skipping){
   M.min++;M.flash=null;
   const ht=M.h===S.my?M.tac:M.aiTac,at=M.a===S.my?M.tac:M.aiTac,b=S.boost>0?BOOST:0;

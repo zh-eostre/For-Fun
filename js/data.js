@@ -48,6 +48,8 @@ const FORMS={'4-4-2':{GK:1,DF:4,MF:4,FW:2},'4-3-3':{GK:1,DF:4,MF:3,FW:3},'4-2-3-
   '5-3-2':{GK:1,DF:5,MF:3,FW:2},'5-4-1':{GK:1,DF:5,MF:4,FW:1}};
 const LINE_NAME={DM:'后腰',AM:'前腰'};
 const TACT={def:'防守反击',bal:'平衡',att:'全力进攻'};
+// match pace: ms per minute of play, plus ms for each new line of commentary so there's time to read it
+const PACE={slow:['慢',260,1800],normal:['正常',150,1000],fast:['快',45,0]};
 const TRAIN={rest:['恢复训练','训练日体能 +10，不会通过训练进步'],normal:['常规训练','训练日体能 +4，有一定机会进步'],hard:['高强度加练','训练日体能 +1，进步最快，但疲劳的球员更容易受伤']};
 const CARD=.02;   // chance per team per minute of a booking (about 1.8 per team per match)
 // chance to retire at the end of a season by age (33-39; 40+ always retires), scaled by ability below
