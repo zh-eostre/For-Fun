@@ -131,6 +131,7 @@ const ACT={
   loan:(a,b)=>{if(!arm(b,'再点一次确认租借'))return;loanOut(+a);save();render()},
   recall:a=>{recallLoan(+a);save();render()},
   div:a=>{UI.div=+a;render()},
+  seDiv:a=>{UI.seDiv=+a;render()},
   lb:a=>{const [d,k]=a.split(':');UI.lb={...(UI.lb&&typeof UI.lb==='object'?UI.lb:{}),[d]:k};render()},
   hlb:a=>{UI.hlb=a;render()},
   mf:a=>{const [k,v]=a.split(':');UI.mf[k]=v;UI.mpage=0;render()},

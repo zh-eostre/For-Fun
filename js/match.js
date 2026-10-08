@@ -4,10 +4,10 @@ function startMatch(){
   if(S.event&&!S.live){toast('有一件事等着你做决定');UI.tab='home';render();return}
   if(!S.live&&!isMatchDay()){toast('今天不是比赛日');return}
   const pre=JSON.stringify(S);  // kept in memory for the cheat card's "重踢一场"
-  if(!S.live){S.live={seed:Math.floor(Math.random()*2**31)};save()}
-  // the dice come from the seed fixed on match day mixed with our plan at kickoff (formation, tactic, XI): reloading
-  // with the same plan replays the same match (no rerolling by refreshing), a different plan is a different match
-  rng=seeded(hashStr(S.live.seed+'|'+S.formation+'|'+S.tactic+'|'+S.lineup.join(',')));indexNames();  // same name pool on a replay, so the post-match market comes out the same
+  // fresh dice at every kickoff: a match cut short by a reload starts again from 0:0 and can go differently.
+  // S.live only marks that a match is under way (the save holds the state from before kickoff)
+  S.live={seed:Math.floor(Math.random()*2**31)};save();
+  rng=seeded(S.live.seed);indexNames();
   const f=nextFix(),opp=S.teams[f.opp];aiRecover(opp);
   M={h:f.h,a:f.a,cup:f.cup,derby:f.derby,friendly:!!f.friendly,fIdx:f.idx,stage:f.cup?S.cup.stage:null,hg:0,ag:0,min:0,feed:[],speed:1,paused:false,ht:false,done:false,
     flash:null,injuries:[],yc:{},goals:{},on:{},off:{},subs:0,oppSubs:0,sel:null,aiTac:'bal',tac:S.tactic,subMode:false,lastAuto:{h:-9,a:-9},talk:null,trailed:false,despair:false};  // tac: our tactic for this match only

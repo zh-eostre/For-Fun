@@ -1,4 +1,4 @@
-// Six seasons with every system in play: subs, youth, injuries, views render cleanly, replay after reload is identical.
+// Six seasons with every system in play: subs, youth, injuries, views render cleanly, a reload restarts the match from kickoff.
 require('./harness').run(`
 let badViews=[];
 const allTabs=()=>{UI.view='main';for(const t of ['home','squad','table','cup','market','academy','honours']){UI.tab=t;render();if(bad(els.app.innerHTML))badViews.push(t)}};
@@ -49,6 +49,8 @@ console.log('latest intake (lv '+S.academy.lv+'):',S.academy.intake.map(p=>POS[p
 console.log('achievements:',Object.keys(S.ach).map(k=>ACH[k][0]).join(' '));
 const names=S.teams.flatMap(t=>t.players).map(p=>p.name).concat(S.academy.intake.map(p=>p.name));ok(names.length===new Set(names).size,'no duplicate player names');
 ok(!badViews.length,'all views render cleanly'+(badViews.length?': '+[...new Set(badViews)]:''));
-S.event=null;ACT.ff();startMatch();const snap=localStorage.getItem(KEY);skipMatch();const r1=JSON.stringify([S.results,S.cup,S.offer,S.event,S.budget,S.academy]);
-localStorage.setItem(KEY,snap);M=null;ACT.continue();skipMatch();ok(JSON.stringify([S.results,S.cup,S.offer,S.event,S.budget,S.academy])===r1,'replay after reload is identical');
+S.event=null;S.offer=null;ACT.ff();startMatch();ok(M&&!M.done,'a match is under way');
+const snap=localStorage.getItem(KEY);while(M.min<30)tick(true);
+localStorage.setItem(KEY,snap);M=null;ACT.continue();
+ok(M&&M.min===0&&M.hg===0&&M.ag===0&&JSON.stringify(S.results)===JSON.stringify(JSON.parse(snap).results),'a reload restarts the interrupted match from kickoff');skipMatch();
 `);

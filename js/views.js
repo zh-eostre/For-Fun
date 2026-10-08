@@ -566,6 +566,15 @@ function vMatchStats(){
   ${vSubLog()}
   <details class="fold mstat-fold" data-fold="mstats"><summary><b>详细数据</b></summary>${statTable(mine)}</details>`;
 }
+// the team of the season on a pitch (1-4-3-3): each man's average rating in his club's colours, ours in gold;
+// tap a name for his details. older records without ids or colours still show
+function xiPitch(xi){
+  const inner=['FW','MF','DF','GK'].map(pos=>{const l=xi.filter(w=>w.pos===pos),n=l.length,gap=n<=2?28:Math.min(24,80/(n-1));
+    return l.map((w,k)=>{const x=50+(k-(n-1)/2)*gap,c=(x-50)/40,y=PITCH_Y[pos]-(n>=4?6*c*c:0),mine=w.tid===S.my,live=w.id!=null&&findAny(w.id);
+      return `<${live?'button':'span'} class="tok xi-tok ${mine?'mine':''}" style="left:${x}%;top:${y}%;--team:${w.color||'#2C6E49'}" ${live?`data-act="player" data-arg="${w.id}"`:''} title="${w.name}（${w.team}），场均 ${w.stat}">
+        <span class="tc num">${Number(w.stat).toFixed(1)}</span><span class="tn">${shortName(w.name)}</span><small class="tt">${w.team}</small></${live?'button':'span'}>`}).join('')}).join('');
+  return pitchBox(inner,'年度最佳阵容','4-3-3',{color:'#2C6E49',note:'4-3-3 · 赛季平均评分'});
+}
 // the opponent's current tactic and average stamina
 const oppLine=()=>`对手 <b class="opptac">${TACT[M.aiTac]}</b> · 平均体能 ${oppAvgCond()}`;
 // stamina while the match runs: our players on the pitch (lowest first) and the opponents' average
@@ -678,12 +687,10 @@ function vSeasonEnd(){
   // our season's standouts: top scorer, top assister, best average rating
   const ps=my().players,best=f=>[...ps].sort((a,b)=>f(b)-f(a))[0],sc=best(p=>p.goals),as=best(p=>p.ast||0),rt=best(p=>p.rn>=Math.max(3,rounds()/3)?avgRating(p):0);
   const star=(l,p,v)=>p&&v?`<div class="se-star"><small>${l}</small><b>${p.name}</b><span class="num">${v}</span></div>`:'';
-  const a=seasonAwards(div),xi=seasonXI(div);
+  // awards and team of the season for any division (ours first)
+  const ad=UI.seDiv!=null&&divSize(UI.seDiv)?UI.seDiv:div,a=seasonAwards(ad),xi=seasonXI(ad);
   const awardCards=Object.entries(AWARDS).map(([k,l])=>a[k]?`<div class="aw ${a[k].tid===S.my?'mine':''}"><small>${l}</small><b>${a[k].name}</b><span>${a[k].team} · ${a[k].stat}</span></div>`:'').join('');
-  const xiRow=pos=>`<div class="xi-row">${xi.filter(w=>w.pos===pos).map(w=>`<span class="${w.tid===S.my?'mine':''}"><b>${w.name}</b><small>${w.team}</small></span>`).join('')}</div>`;
-  const others=DIVS.map((odn,d)=>{if(d===div||!divSize(d))return '';const oa=seasonAwards(d),ox=seasonXI(d);
-    return `<div class="se-other"><b>${odn}</b>${Object.entries(AWARDS).map(([k,l])=>oa[k]?`<span class="${oa[k].tid===S.my?'mine':''}">${l}：${oa[k].name}（${oa[k].team}，${oa[k].stat}）</span>`:'').join('')}
-      ${ox.length?`<span>最佳阵容：${ox.map(w=>w.name).join('、')}</span>`:''}</div>`}).join('');
+  const divSw=act=>`<div class="seg sm" style="margin-bottom:10px">${DIVS.map((n,d)=>!divSize(d)?'':`<button data-act="${act}" data-arg="${d}" aria-pressed="${d===ad}">${n}${d===div?'（本队）':''}</button>`).join('')}</div>`;
   return `${glory.length?`<section class="glory"><div class="cup">🏆</div><div class="disp">${glory.join(' · ')}</div><small>${my().name} · 第 ${S.season} 赛季</small></section>`:''}
   <section class="panel se-hero ${z}" style="--team:${my().color}">
     <div class="se-top"><div class="se-place"><small>第 ${S.season} 赛季 · ${dn}</small><b class="disp">第 ${rank}</b></div><p>${msg}</p></div>
@@ -699,14 +706,12 @@ function vSeasonEnd(){
     <section class="panel"><h2>教练声望</h2>${vCareerEnd()}</section>
   </div><div class="col">
     ${sc&&sc.goals||as&&as.ast||rt&&rt.rn?`<section class="panel"><h2>本队之星</h2><div class="se-stars">${star('射手',sc,sc&&sc.goals?sc.goals+' 球':'')}${star('助攻',as,as&&as.ast?as.ast+' 次':'')}${star('评分',rt,rt&&rt.rn>=Math.max(3,rounds()/3)?avgRating(rt).toFixed(2):'')}</div></section>`:''}
-    <section class="panel"><h2>${dn}个人奖项</h2><div class="aws">${awardCards}</div>
-      ${xi.length?`<h3>${dn}年度最佳阵容</h3><div class="xi-pitch">${['FW','MF','DF','GK'].map(xiRow).join('')}</div>`:''}
-      ${others?`<details class="fold" data-fold="seOthers" style="margin-top:10px"><summary><b>其他级别的奖项</b></summary>${others}</details>`:''}
+    <section class="panel"><h2>个人奖项与最佳阵容</h2>${divSw('seDiv')}<div class="aws">${awardCards}</div>
+      ${xi.length?`<h3>${DIVS[ad]}年度最佳阵容</h3>${xiPitch(xi)}`:''}
     </section>
   </div></div>
-  <section class="panel"><h2>${dn}最终排名</h2>${standings(div)}
-    ${DIVS.map((odn,d)=>d===div||!divSize(d)?'':`<details class="fold" data-fold="seTable${d}"><summary><b>${odn}最终排名</b></summary>${standings(d)}</details>`).join('')}
-  </section>
+  <h2 class="se-sec">联赛数据</h2>
+  ${vTable(UI.div!=null&&divSize(UI.div)?UI.div:div)}
   <div class="go" style="justify-content:flex-start">${next}</div>
   <p class="muted" style="font-size:13px">新赛季球员长一岁，33 岁以上的老将可能退役（能力越高越能坚持），黄牌和停赛清零。</p>`;
 }

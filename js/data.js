@@ -223,7 +223,6 @@ const MF0={pos:'all',age:'all',sort:'ovr'};
 let S=null, M=null, UI={tab:'home',view:'main',mf:{...MF0}};
 let usedNames=new Set();  // not saved; rebuilt from S by indexNames()
 // matches run on a seeded rng saved at kickoff, so reloading mid-match replays the same match instead of rerolling it
-const hashStr=s=>{let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
 const seeded=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
 let rng=Math.random;
 const rnd=(a,b)=>a+rng()*(b-a);

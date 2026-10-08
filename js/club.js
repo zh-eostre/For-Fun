@@ -120,7 +120,7 @@ const XI_SHAPE={GK:1,DF:4,MF:3,FW:3};
 function seasonXI(div){
   const q=S.teams.filter(t=>t.div===div).flatMap(t=>t.players.filter(p=>p.rn>=8).map(p=>({p,t})));
   return PO.flatMap(pos=>q.filter(x=>x.p.pos===pos).sort((a,b)=>avgRating(b.p)-avgRating(a.p)).slice(0,XI_SHAPE[pos])
-    .map(x=>({name:x.p.name,pos,team:x.t.short,tid:x.t.id,stat:avgRating(x.p).toFixed(2)})));
+    .map(x=>({name:x.p.name,pos,team:x.t.short,tid:x.t.id,id:x.p.id,color:x.t.color,stat:avgRating(x.p).toFixed(2)})));
 }
 
 /* ---------- club history ---------- */

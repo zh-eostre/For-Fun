@@ -1,16 +1,13 @@
-// A reload replays the match only for the same plan; during a stop players can swap places, fill a red card's
-// gap, and the shape can change.
+// A reload starts the match afresh; during a stop players can swap places, fill a red card's gap, and the shape can change.
 require('./harness').run(`
 newGame(TEAMS.findIndex(t=>t.div===2),teamNames());
 while(nextFix().friendly){ACT.ff();S.event=null;S.offer=null;startMatch();skipMatch();ACT.matchDone()}
 ACT.ff();S.event=null;S.offer=null;
 const story=()=>M.feed.filter(e=>/进球|红牌|罚下/.test(e.t)).map(e=>e.min+e.t).join('|')+' '+M.hg+':'+M.ag;
 startMatch();clearTimeout(M.timer);const saved=store[KEY];skipMatch();const first=story();
-// "refresh": back to the save made at kickoff, same plan
-store[KEY]=saved;S=load();M=null;startMatch();clearTimeout(M.timer);skipMatch();ok(story()===first,'same plan after a reload: the same match ('+first.slice(-5)+')');
-// same match day, another tactic: a different match
-let differ=0;for(const t of ['def','att']){store[KEY]=saved;S=load();M=null;S.tactic=t;startMatch();clearTimeout(M.timer);skipMatch();if(story()!==first)differ++}
-ok(differ===2,'changing the tactic before kickoff gives a different match');
+// "refresh": back to the save made at kickoff. fresh dice each time, so the match can go differently
+const stories=new Set([first]);for(let k=0;k<4;k++){store[KEY]=saved;S=load();M=null;startMatch();clearTimeout(M.timer);skipMatch();stories.add(story())}
+ok(stories.size>=3,'reloading gives a new match each time ('+stories.size+' different out of 5)');
 // a stop: swap two men, fill a red card's gap, change shape
 store[KEY]=saved;S=load();M=null;S.autoSub=false;startMatch();clearTimeout(M.timer);while(M.min<30)tick(false);ACT.pauseSub();
 const s=mySide(),ids=M[s+'Ids'],roles=()=>slotRoles(M[s+'Form']);
