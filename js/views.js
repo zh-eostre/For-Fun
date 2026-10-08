@@ -552,18 +552,26 @@ function subMark(id){
 // our changes in order: minute, who went off and why, who came on
 function vSubLog(){
   const l=(M.subLog||[]).filter(x=>x.s===mySide());if(!l.length)return '<p class="sublog muted">本场没有换人。</p>';
-  const why={tired:'体能',inj:'伤'};
-  return `<div class="sublog"><b>换人 ${l.length}/${SUBS}</b>${l.map(x=>`<span><span class="num">${x.min}'</span> <span class="subm off">↓</span>${findP(x.out)?.name||'?'}${why[x.why]?`<small class="muted">（${why[x.why]}）</small>`:''} <span class="subm on">↑</span>${findP(x.in)?.name||'?'}</span>`).join('')}</div>`;
+  const why={tired:'体能',inj:'受伤'};
+  return `<div class="subh" style="margin:12px 0 6px">换人 ${l.length}/${SUBS}</div><div class="subline">${l.map(x=>`<div class="subev"><span class="submin num">${x.min}'</span>
+    <span class="subwho"><span><span class="subm off">↓</span>${findP(x.out)?.name||'?'}${why[x.why]?`<small>${why[x.why]}</small>`:''}</span><span><span class="subm on">↑</span>${findP(x.in)?.name||'?'}</span></span></div>`).join('')}</div>`;
 }
 // full-time box: shots / on target / possession, man of the match, and our players' ratings
 function vMatchStats(){
   const H=S.teams[M.h],A=S.teams[M.a],mine=mySide()==='h'?M.rh:M.ra;
-  const row=(l,h,a)=>`<div class="srow2"><span class="num">${h}</span><span>${l}</span><span class="num">${a}</span></div>`;
-  return `<div class="mstats">
-    <div class="srow2 head"><span>${H.short}</span><span></span><span>${A.short}</span></div>
-    ${row('射门',M.st.h.sh,M.st.a.sh)}${row('射正',M.st.h.on,M.st.a.on)}${row('控球',M.poss+'%',(100-M.poss)+'%')}</div>
-  ${M.mvp?`<p class="mvp">全场最佳：<b>${M.mvp.p.name}</b>（${S.teams.find(t=>t.players.includes(M.mvp.p)).short}，${POS[M.mvp.role]}）${rtag(M.mvp.r)}${standout(M.mvp)?` <span class="muted" style="font-size:13px">${standout(M.mvp)}</span>`:''}</p>`:''}
-  <div class="ratings">${mine.map(x=>`<span class="rt">${POS[x.role][0]} ${pName(x.p)}${subMark(x.p.id)} ${rtag(x.r)}</span>`).join('')}</div>
+  // each stat with a bar split between the two sides in their colours
+  // ours in our colour, theirs in grey, so the two can't be confused when the clubs' colours are alike
+  const hc=M.h===S.my?H.color:'#8A96A3',ac=M.a===S.my?A.color:'#8A96A3';
+  const row=(l,h,a,hs=h,as=a)=>{const t=(+hs)+(+as)||1,hp=Math.round(hs/t*100);
+    return `<div class="cmp"><b class="num">${h}</b><div><span>${l}</span><div class="cmp-bar"><i style="width:${hp}%;background:${hc}"></i><i style="width:${100-hp}%;background:${ac}"></i></div></div><b class="num">${a}</b></div>`};
+  const mv=M.mvp,mvT=mv&&S.teams.find(t=>t.players.includes(mv.p));
+  return `<div class="ft-grid"><div class="mstats">
+    <div class="cmp-head"><span><i style="background:${hc}"></i>${H.short}</span><span>${A.short}<i style="background:${ac}"></i></span></div>
+    ${row('射门',M.st.h.sh,M.st.a.sh)}${row('射正',M.st.h.on,M.st.a.on)}${row('控球',M.poss+'%',(100-M.poss)+'%',M.poss,100-M.poss)}</div>
+  ${mv?`<div class="motm ${mvT.id===S.my?'mine':''}" style="--c:${mvT.color}"><small>全场最佳</small><div class="motm-r num">${mv.r.toFixed(1)}</div>
+    <b>${mv.p.name}</b><span>${mvT.short} · ${POS[mv.role]}</span>${standout(mv)?`<em>${standout(mv)}</em>`:''}</div>`:''}</div>
+  <div class="subh" style="margin:12px 0 6px">我方评分</div>
+  <div class="rgrid">${mine.map(x=>`<div class="rrow ${x===mv?'best':''}"><span class="rpos pos-${x.role}">${POS[x.role][0]}</span><span class="rname">${pName(x.p)}${subMark(x.p.id)}</span>${rtag(x.r)}</div>`).join('')}</div>
   ${vSubLog()}
   <details class="fold mstat-fold" data-fold="mstats"><summary><b>详细数据</b></summary>${statTable(mine)}</details>`;
 }
@@ -605,8 +613,13 @@ function vMatch(){
   let ctl='';
   if(M.done){
     const s=M.summary;
-    ctl=`<div class="ht" style="border-color:var(--pitch)"><div class="verdict disp" style="color:${s.w==='胜'?'var(--pitch)':s.w==='负'?'var(--red)':'var(--ink)'}">${s.w==='胜'?LINE.win:s.w==='负'?LINE.lose:LINE.draw}</div>
-    <p style="margin:0 0 10px;font-size:14px">${s.pens?`点球大战 ${s.mp}:${s.op}。`:''}${M.friendly?'友谊赛不计成绩。':`比赛收入 ${money(s.income)}`}${M.derby?'（宿敌之战，翻倍）':''}。${M.myInjuries.length?`伤病：${M.myInjuries.map(p=>p.name).join('、')}。`:''}${s.banned.length?`下轮停赛：${s.banned.map(p=>p.name).join('、')}。`:''}${s.grown.length?`比赛中成长：${s.grown.map(p=>p.name).join('、')}。`:''}</p>
+    const wcls=s.w==='胜'?'win':s.w==='负'?'loss':'draw',chip=(cls,t)=>`<span class="ft-chip ${cls}">${t}</span>`;
+    ctl=`<div class="ht ft ${wcls}"><div class="ft-head"><div class="verdict disp">${s.w==='胜'?LINE.win:s.w==='负'?LINE.lose:LINE.draw}</div>
+      <span class="ft-score num">${s.mg} : ${s.og}${s.pens?` <small>点球 ${s.mp}:${s.op}</small>`:''}</span></div>
+    <div class="ft-chips">${M.friendly?chip('','友谊赛不计成绩'):chip('money',`💰 收入 ${money(s.income)}${M.derby?'（宿敌之战翻倍）':''}`)}
+      ${s.grown.map(p=>chip('grow',`↑ ${p.name} ${p.ovr}`)).join('')}
+      ${M.myInjuries.map(p=>chip('hurt',`🚑 ${p.name} 伤停 ${p.inj} 天`)).join('')}
+      ${s.banned.map(p=>chip('ban',`⛔ ${p.name} 下轮停赛`)).join('')}</div>
     ${s.awoken.map(p=>`<p class="awake">${LINE.awaken(p.name)}能力 ${p.ovr}，潜力 ${p.pot}${p.sig?`，领悟必杀技「${p.sig}」`:''}</p>`).join('')}
     ${vMatchStats()}
     <div class="go" style="justify-content:flex-start;margin-top:0"><button class="btn primary" data-act="matchDone">回到俱乐部</button>
