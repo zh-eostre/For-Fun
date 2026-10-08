@@ -184,7 +184,8 @@ function arrange(players,form){
   if(slots[0]==null){const i=[...roles.keys()].reverse().find(i=>i>0&&slots[i]!=null);if(i!=null){slots[0]=slots[i];slots[i]=null}}
   return slots;
 }
-function autoPick(team,form){return arrange(team.players.filter(p=>!unavail(p)).sort((a,b)=>eff(b)-eff(a)),form)}
+// the best available XI for a formation; byAbility ignores today's stamina (a post-match pick for a match days away)
+function autoPick(team,form,byAbility){return arrange(team.players.filter(p=>!unavail(p)).sort(byAbility?(a,b)=>b.ovr-a.ovr:(a,b)=>eff(b)-eff(a)),form)}
 
 function strength(team,ids,tac,home,bonus=0,form='4-4-2'){
   const roles=slotRoles(form),lines=slotLines(form),g={GK:[],DF:[],MF:[],FW:[]};let n=0,tilt=0;
@@ -513,7 +514,7 @@ function newGame(id,names){
   S.teams=TEAMS.map((t,i)=>({...t,...names[i],id:i,players:makeSquad(t.str)}));
   S.fixtures=newFixtures();S.results=DIVS.map(()=>[]);S.cup=newCup();S.rival=pickRival();
   S.budget=startBudget(TEAMS[id]);
-  S.lineup=autoPick(my(),S.formation);
+  S.lineup=autoPick(my(),S.formation);S.autoXI=true;
   S.pre=PRESEASON;refreshMarket();planFriendlies();
   news(`你正式成为${my().name}的主教练。董事会给了你 ${money(S.budget)} 的预算。季前一周转会窗口开放，还有两场友谊赛。`);
   news(`宿敌：${S.teams[S.rival].name}。与他们的对决，收入翻倍，赢了全队士气高涨。`);
@@ -557,7 +558,10 @@ const lineupCount=()=>S.lineup.filter(id=>id!=null&&findP(id)).length;
 // players in our lineup playing outside their own position
 const outOfPos=()=>{const roles=slotRoles(S.formation);return S.lineup.map((id,i)=>{const p=id!=null&&findP(id);return p&&p.pos!==roles[i]?p:null}).filter(Boolean)};
 // after a match: empty the slots of anyone now unavailable, and if the XI was full, refill those slots
+// after a match or an event: a lineup we haven't arranged by hand is simply picked afresh (so a star back from
+// injury walks straight back into his place); one we arranged keeps our choices and only has its gaps filled
 function fixLineup(){
+  if(S.autoXI!==false){S.lineup=autoPick(my(),S.formation,true);return}
   const full=lineupCount()===11;
   S.lineup=S.lineup.map(id=>{const p=id!=null&&findP(id);return p&&!unavail(p)?id:null});
   if(full)fillSlots();
@@ -635,7 +639,7 @@ function newSeason(moveTo){
   // summer window: bigger clubs poach stars from clubs playing above their level, every AI club gets one shot
   // at the market, then the player sees a fresh list
   S.pre=PRESEASON;S.day=0;aiPoach();refreshMarket();planFriendlies();
-  S.lineup=autoPick(my(),S.formation);
+  S.lineup=autoPick(my(),S.formation);S.autoXI=true;
   news(`升级：${names('up')}。降级：${names('down')}。`);
   prestigeNotes.forEach(t=>news(t+'。'));
   const mz=moves.find(m=>m.t.id===S.my);

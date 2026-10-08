@@ -140,13 +140,14 @@ const ACT={
   mpage:a=>{UI.mpage=Math.max(0,+a);render()},
   fup:(a,b)=>{if(!arm(b,'再点一次确认升级'))return;upgradeFac(a);save();render()},
   train:a=>{S.training=a;save();render()},
-  form:a=>{S.formation=a;S.lineup=autoPick(my(),a);UI.selSlot=null;save();toast(`已按 ${a} 重新选好首发`);render()},
+  form:a=>{S.formation=a;S.lineup=autoPick(my(),a);S.autoXI=true;UI.selSlot=null;save();toast(`已按 ${a} 重新选好首发`);render()},
   // in a match only that match's tactic changes; otherwise it's the club's default for coming matches
   tac:a=>{if(M&&!M.done)M.tac=a;else{S.tactic=a;save()}render()},
-  auto:()=>{S.lineup=autoPick(my(),S.formation);UI.selSlot=null;save();render()},
+  auto:()=>{S.lineup=autoPick(my(),S.formation);S.autoXI=true;UI.selSlot=null;save();render()},
   // player list rows: add to / remove from the XI
   toggle:a=>{
     const id=+a,p=findP(id);if(!p)return;
+    S.autoXI=false;  // arranged by hand from now on
     if(S.lineup.includes(id)){dropFromLineup(id);save();render();return}
     if(!canStart(p))return;
     if(!placeInLineup(p)){toast('首发已满，先在球场上移出一个人');return}
@@ -156,13 +157,14 @@ const ACT={
   slot:a=>{
     const i=+a,sel=UI.selSlot;
     if(sel==null){UI.selSlot=i}
-    else if(sel===i){if(S.lineup[i]!=null){dropFromLineup(S.lineup[i]);save()}UI.selSlot=null}
-    else{[S.lineup[sel],S.lineup[i]]=[S.lineup[i],S.lineup[sel]];UI.selSlot=null;save()}
+    else if(sel===i){if(S.lineup[i]!=null){dropFromLineup(S.lineup[i]);S.autoXI=false;save()}UI.selSlot=null}
+    else{[S.lineup[sel],S.lineup[i]]=[S.lineup[i],S.lineup[sel]];S.autoXI=false;UI.selSlot=null;save()}
     render();
   },
   // bench player: goes into the selected slot (replacing whoever is there), else the best empty slot
   bench:a=>{
     const p=findP(+a);if(!p||!canStart(p))return;
+    S.autoXI=false;
     const at=S.lineup.indexOf(p.id);
     // already starting (e.g. a quick second tap): swap him with the selected slot rather than list him twice
     if(at>=0){if(UI.selSlot!=null&&UI.selSlot!==at)[S.lineup[UI.selSlot],S.lineup[at]]=[S.lineup[at],S.lineup[UI.selSlot]];UI.selSlot=null;save();render();return}

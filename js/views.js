@@ -341,6 +341,7 @@ function vSquad(){
   <div class="toolbar" style="align-items:center;margin:0">
   <div class="count">首发 <span class="num">${lineupCount()}</span>/11</div>
   <button class="btn" data-act="auto">按 ${S.formation} 自动选人</button>
+  <span class="xi-mode ${S.autoXI!==false?'auto':''}" title="${S.autoXI!==false?'每场赛后都按最佳阵容重新安排，伤愈的主力会自动回到首发':'保留你的安排，只在有人缺阵时自动补位；点「自动选人」恢复自动'}">${S.autoXI!==false?'首发：自动':'首发：手动'}</span>
   ${iss.length?`<span class="warn">${iss[0]}</span>`:`<span class="muted" style="font-size:14px">${formNote(S.formation)}</span>`}
   </div></section>
   <div class="cols squad"><div class="col">${vPitch()}</div>
