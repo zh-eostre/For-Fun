@@ -10,6 +10,13 @@ function celebrate(big,small,kind){
   void el.offsetWidth;el.className='show '+kind;
   clearTimeout(celebrate.t);celebrate.t=setTimeout(()=>{el.className='';el.innerHTML=''},kind==='party'?4500:1800);
 }
+// a short card at the top for something that matters during a match (a change, an injury, a red card, a goal
+// against); several stack. the match holds for a moment (see M.hold in match.js)
+function notice(kind,title,sub){
+  const box=document.getElementById('banner');if(!box||!box.appendChild)return;
+  const el=document.createElement('div');el.className='bn '+kind;el.innerHTML=`<b>${title}</b>${sub?`<span>${sub}</span>`:''}`;
+  box.appendChild(el);setTimeout(()=>el.classList.add('out'),2400);setTimeout(()=>el.remove(),2800);
+}
 function toast(t){
   const el=document.getElementById('toast');el.textContent=t;el.hidden=false;
   if(el.showPopover){try{el.hidePopover()}catch(e){}el.showPopover()}

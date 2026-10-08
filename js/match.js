@@ -29,6 +29,8 @@ function startMatch(){
   UI.view='match';render();M.timer=setTimeout(loop,600);
 }
 const mySide=()=>M.h===S.my?'h':'a';
+// an important moment in live play: a card at the top and a short hold (nothing while skipping to the result)
+function flag(kind,title,sub,ms){if(M.skip)return;M.hold=Math.max(M.hold||0,Date.now()+ms);notice(kind,title,sub);announce(`${title}，${sub}`)}
 // our side's extras this minute: the halftime talk (second half), 绝境爆发 when behind from the 75th minute,
 // and the manager's aura from the 75th (more with reputation). AI sides get none of these
 function myBoost(){
@@ -36,7 +38,7 @@ function myBoost(){
   if(M.min>45&&M.talk)add(TALK_FX[M.talk==='roar'?(M.talkOK?'roarOk':'roarBad'):M.talk]);
   const home=M.h===S.my,myG=home?M.hg:M.ag,opG=home?M.ag:M.hg;
   if(M.min>=75&&myG<opG){b.atk+=home?DESPAIR.home:DESPAIR.away;
-    if(!M.despair){M.despair=true;M.feed.unshift({min:M.min,cls:'sys',t:`绝境之中，${my().short}的血液沸腾了——全员压上，誓要扳回！`})}}
+    if(!M.despair){M.despair=true;M.feed.unshift({min:M.min,cls:'sys',t:`绝境之中，${my().short}的血液沸腾了——全员压上，誓要扳回！`});flag('hot','🔥 绝境爆发',`落后之下全员压上，进攻 +${home?DESPAIR.home:DESPAIR.away}`,600)}}
   if(M.min>=75)b.atk+=aura();
   return b;
 }
@@ -102,6 +104,7 @@ function side(s,p){
     if(s==='h')M.hg++;else M.ag++;
     M.flash=s;M.feed.unshift({min:M.min,cls:'goal '+(mine?'mine':'theirs'),t:`进球！${t}（${team.short}${a?` · 助攻 ${a.name}`:''}）`});
     if(!M.skip)M.hold=Date.now()+(mine?1500:800);
+    if(!mine&&!M.skip)notice('against',`失球 ${M.min}'　${M.hg} : ${M.ag}`,`${sc.name}（${team.short}）${a?` · 助攻 ${a.name}`:''}`);
     if(mine&&!M.skip){const n=M.goals[sc.id];celebrate('GOAL!',`${sc.name}${n===2?' · 梅开二度':n===3?' · 帽子戏法':n>3?` · 大四喜`:''}　${M.hg} : ${M.ag}`,n>=2?'brace':'goal')}
     announce(`${M.min} 分钟，${team.short}进球，比分 ${M.hg} 比 ${M.ag}`);
   };
@@ -120,7 +123,7 @@ function side(s,p){
   }else if(rng()<p*3.5)st.sh++;  // speculative efforts that never make the commentary
   if(!M.friendly&&rng()<CARD){
     const b=booking(team,ids,M.yc);
-    if(b){ev(b.p.id)[b.red?'red':'yc']=1;if(b.red)M.off[b.p.id]=M.min}
+    if(b){ev(b.p.id)[b.red?'red':'yc']=1;if(b.red){M.off[b.p.id]=M.min;flag('red',`🟥 红牌 ${M.min}'`,`${b.p.name}（${team.short}）两黄变一红，被罚下`,1200)}}
     if(b)M.feed.unshift(b.red
       ?(announce(LINE.red(b.p.name,team.short)),{min:M.min,cls:'red',t:LINE.red(b.p.name,team.short)})
       :{min:M.min,cls:'',t:LINE.yellow(b.p.name,team.short)+(b.banned?LINE.ban:'')});
@@ -129,10 +132,11 @@ function side(s,p){
   // and our physio room lowers it. from physio level 4 some of our knocks can be played through
   const pl=team.players.find(x=>x.id===pickOn(ids));
   if(pl&&rng()<injRisk(pl)*(mine?physioRisk():1)*(M.friendly?.5:1)){
-    if(mine&&rng()<knockChance()){pl.cond=Math.max(30,pl.cond-10);M.feed.unshift({min:M.min,cls:'',t:LINE.knock(pl.name)})}
+    if(mine&&rng()<knockChance()){pl.cond=Math.max(30,pl.cond-10);M.feed.unshift({min:M.min,cls:'',t:LINE.knock(pl.name)});flag('inj',`🩹 碰撞 ${M.min}'`,`${pl.name} 受了点小伤，坚持比赛`,700)}
     else if(!M.injuries.includes(pl)){
       M.injuries.push(pl);pl.cond=Math.max(30,pl.cond-30);
       M.feed.unshift({min:M.min,cls:'',t:LINE.injury(pl.name)});
+      if(mine)flag('inj',`🚑 受伤 ${M.min}'`,`${pl.name} 倒地不起`,900);
       // an injured player is carried off if a substitution is left: best fresh player for his slot's role, else anyone
       const xi=M[s+'XI'],role=slotRoles(form)[ids.indexOf(pl.id)],bench=team.players.filter(x=>!xi.includes(x.id)&&!unavail(x)).sort((a,b)=>eff(b)-eff(a));
       const sub=bench.find(x=>x.pos===role)||standIn(bench,role);
@@ -152,6 +156,7 @@ function substitute(outId,inId,s=mySide(),line,why){
   const feed={min:M.min,cls:'sys',t:line||LINE.sub(po.name,pi.name)};M.feed.unshift(feed);
   // stop: which halftime / pause it was made in (changes made while play runs have none)
   (M.subLog||(M.subLog=[])).push({s,min:M.min,out:outId,in:inId,why,feed,stop:M.paused?M.stop:null});
+  if(key==='subs'&&!M.paused)flag('sub',`🔄 换人 ${M.min}'`,`↓ ${po.name}${why==='inj'?'（受伤）':why==='tired'?'（体能）':''}　↑ ${pi.name}`,1000);
   return true;
 }
 // during a stop our players can change places: swap two slots, or move into a slot left empty by a red card
