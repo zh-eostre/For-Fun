@@ -2,6 +2,14 @@
 // read out key match moments (goals, red cards, half and full time) for screen readers
 function announce(t){const el=document.getElementById('sr');if(el)el.textContent=t}
 // the toast is a popover so it shows above an open <dialog> (both live in the browser's top layer)
+// a big moment over the page (goal, brace, title). it lives outside #app, so the per-minute redraw doesn't restart it
+function celebrate(big,small,kind){
+  const el=document.getElementById('fx');if(!el||!el.classList)return;
+  const bits=kind==='party'?Array.from({length:70},(_,i)=>`<i style="left:${Math.random()*100}%;animation-delay:${(Math.random()*1.2).toFixed(2)}s;background:${['#F5B841','#4FA36F','#C6402F','#3567A6','#fff'][i%5]}"></i>`).join(''):'';
+  el.className='';el.innerHTML=`<div class="fx-box"><b class="disp">${big}</b>${small?`<span>${small}</span>`:''}</div>${bits}`;
+  void el.offsetWidth;el.className='show '+kind;
+  clearTimeout(celebrate.t);celebrate.t=setTimeout(()=>{el.className='';el.innerHTML=''},kind==='party'?4500:1800);
+}
 function toast(t){
   const el=document.getElementById('toast');el.textContent=t;el.hidden=false;
   if(el.showPopover){try{el.hidePopover()}catch(e){}el.showPopover()}
@@ -191,6 +199,12 @@ const ACT={
     trainNews(log.trained.slice(t));save();render();
     if((log.surprises||[]).length>su)toast('✨ '+log.surprises[log.surprises.length-1])},
   speed:()=>{M.speed=M.speed===1?3:1;render()},
+  // halftime team talk, once a match; a roar works more often for a manager with a name
+  talk:a=>{if(!M||!M.ht||M.talk||!TALK[a])return;M.talk=a;
+    if(a==='roar')M.talkOK=rng()<.45+((S.mgr&&S.mgr.rep)||0)/200;
+    const fx=TALK_FX[a==='roar'?(M.talkOK?'roarOk':'roarBad'):a];
+    M.feed.unshift({min:45,cls:'sys',t:`更衣室训话「${TALK[a][0]}」：${TALK[a][1]}${a==='roar'?(M.talkOK?'——全队被点燃了！':'——球员们面面相觑，气氛有些僵硬……'):''}`});
+    toast(`${TALK[a][0]}：下半场进攻 ${fx.atk>=0?'+':''}${fx.atk}、防守 ${fx.def>=0?'+':''}${fx.def}`);render()},
   skip:()=>skipMatch(),
   resume:()=>{M.ht=false;M.subMode=false;M.paused=false;M.sel=null;render();M.timer=setTimeout(loop,300)},
   // pause the match to make changes; the same panel as halftime

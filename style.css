@@ -591,3 +591,41 @@ dialog.modal.wide{max-width:860px}
 .gone-row{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;padding-top:4px;border-top:1px dashed var(--line);margin-top:2px}
 .gone-row .num{font-size:13px}
 .tag2.now{background:var(--pitch-soft);color:var(--pitch)}
+
+/* halftime team talk */
+.talk{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0 0 12px}
+.talk .subh{grid-column:1/-1}
+.talk-opt{display:flex;flex-direction:column;gap:2px;text-align:left;padding:8px 10px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);cursor:pointer}
+.talk-opt:hover{border-color:var(--pitch)}
+.talk-opt b{font-size:15px}
+.talk-opt span{font-size:12.5px}
+.talk-opt small{font-size:11px;color:var(--muted);line-height:1.4}
+.talk-done{margin:0 0 12px;font-size:13px;font-weight:700;color:var(--pitch)}
+@media (max-width:560px){.talk{grid-template-columns:1fr}}
+/* live boosts on the scoreboard */
+.bchips{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+.bchip{font-size:11px;font-weight:700;padding:1px 8px;border-radius:99px;background:#2C6E49;color:#fff}
+.bchip.hot{background:#C6402F;animation:pulse 1s ease-in-out infinite alternate}
+.bchip.bad{background:#56635A}
+@keyframes pulse{to{filter:brightness(1.35)}}
+/* win streak */
+.tag2.fire{background:#C6402F;color:#fff}
+/* goal / title overlay (outside #app) */
+#fx{position:fixed;inset:0;pointer-events:none;z-index:50;display:none;overflow:hidden}
+#fx.show{display:grid;place-items:center}
+#fx .fx-box{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+#fx .fx-box b{font-size:clamp(64px,16vw,140px);line-height:1;color:#F5B841;text-shadow:0 4px 0 #18201B,0 0 30px rgba(245,184,65,.6)}
+#fx .fx-box span{font-size:clamp(15px,3.5vw,22px);font-weight:700;color:#fff;background:rgba(10,15,12,.75);padding:4px 14px;border-radius:99px}
+#fx.brace .fx-box b{color:#FF7A45}
+#fx.party .fx-box b{font-size:clamp(40px,10vw,84px)}
+#fx.party{background:rgba(10,15,12,.35)}
+#fx i{position:absolute;top:-12px;width:8px;height:14px;border-radius:2px;animation:fall 3.2s linear forwards}
+@keyframes fall{to{transform:translateY(105vh) rotate(720deg)}}
+@media (prefers-reduced-motion:no-preference){#fx.show .fx-box{animation:fxpop 1.8s ease-out forwards}#fx.party .fx-box{animation:fxpop 4.5s ease-out forwards}}
+@keyframes fxpop{0%{transform:scale(.3);opacity:0}12%{transform:scale(1.12);opacity:1}20%{transform:scale(1)}80%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){#fx i{display:none}}
+/* season-end glory */
+.glory{text-align:center;padding:18px 12px;margin:0 0 12px;border-radius:14px;color:#2B1D00;background:linear-gradient(135deg,#F5B841,#FFE29A 50%,#F5B841)}
+.glory .cup{font-size:44px;line-height:1}
+.glory .disp{font-size:clamp(26px,6vw,40px);line-height:1.2}
+.glory small{font-size:13px;opacity:.8}

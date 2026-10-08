@@ -72,7 +72,7 @@ function vHeader(){
   return `<header class="club" style="--team:${t.color}"><div class="wrap">
   <div class="crest disp">${t.short[0]}</div>
   <div><div class="club-name disp">${t.name}</div>
-  <div class="club-meta">${DIVS[t.div]}联赛，第 ${S.season} 赛季，${S.round<rounds()?`${dayLabel(S.day)}，第 ${S.round+1}/${rounds()} 轮`:'赛季结束'}，排名第 ${myRank()}${S.boost>0?' <span class="tag2 boost">士气高涨</span>':''}</div></div>
+  <div class="club-meta">${DIVS[t.div]}联赛，第 ${S.season} 赛季，${S.round<rounds()?`${dayLabel(S.day)}，第 ${S.round+1}/${rounds()} 轮`:'赛季结束'}，排名第 ${myRank()}${S.boost>0?' <span class="tag2 boost">士气高涨</span>':''}${(S.streak||0)>=3?` <span class="tag2 fire">🔥 ${S.streak} 连胜</span>`:''}</div></div>
   <button class="btn small rules-btn" data-act="rules" aria-label="规则说明">规则</button>
   <div class="cash"><div class="club-meta">俱乐部资金</div><div class="num" style="color:${S.budget<0?'var(--red)':'inherit'}">${money(S.budget)}</div></div>
   </div></header>`;
@@ -172,6 +172,9 @@ function vRules(){
   ${sec('战术与阵型',['全力进攻：进攻加成比防守代价大，实力占优时最能拿分，但更累。防守反击：防守更强、进攻更弱，对上全力进攻的对手还有反击加成，实力处于下风时最划算。平衡：波动最小。',
     'AI 实力明显占优时会全力进攻，处于下风时会防守反击；中场落后会改打全力进攻，领先会收缩。对手当前的打法在赛前和比赛中都看得到。',
     '后腰偏防守、多抢断；前腰偏进攻、更容易进球和助攻。阵型改变的是打法，不改变总实力。'])}
+  ${sec('只属于你的加成',['中场可以训话一次：鼓舞（下半场进攻 +3）、冷静（防守 +3），或者怒吼赌一把（成功进攻 +5、防守 +2，失败攻防各 −2；教练声望越高越容易成功）。',
+    `比赛第 75 分钟后落后，会触发「绝境爆发」：进攻提升（主场 +${DESPAIR.home}、客场 +${DESPAIR.away}）。`,
+    '第 75 分钟后还有「名帅光环」：教练声望越高，进攻加成越大，必杀技也越容易打出来。落后逆转取胜可以解锁「逆转之王」。'])}
   ${sec('体能与换人',['比赛中会消耗体能：中场跑得最多，前锋、后卫其次，门将几乎不累。体能 80 以上基本不影响发挥，越低越弱（70 约九折，60 约八折）。',
     `中场休息时，我方球员会恢复一点体能。每场最多换 ${SUBS} 人；自动换人从第 60 分钟起，把体能低于 ${TIRED}、而且替补更强的人换下，可以关掉自己来换。`,
     '同一次暂停里的换人在继续比赛前都可以改或撤销。',
@@ -539,6 +542,15 @@ function vLiveStamina(){
 }
 // our players who played and are no longer on the pitch (taken off or sent off), in the order they left
 const offPitch=()=>{const s=mySide();return M[s+'XI'].filter(id=>id!=null&&!M[s+'Ids'].includes(id)&&!pendingSub(id,'out')).map(findP).filter(Boolean).sort((a,b)=>(M.off[a.id]??0)-(M.off[b.id]??0))};
+// our extras that are on right now (team talk, 绝境爆发, the manager's aura)
+function boostChips(){
+  if(M.done)return '';
+  const c=[],home=M.h===S.my,behind=(home?M.hg:M.ag)<(home?M.ag:M.hg);
+  if(M.talk&&M.min>45)c.push(`<span class="bchip ${M.talk==='roar'&&!M.talkOK?'bad':''}">训话·${TALK[M.talk][0]}</span>`);
+  if(M.min>=75&&behind)c.push('<span class="bchip hot">绝境爆发</span>');
+  if(M.min>=75&&aura()>=1)c.push(`<span class="bchip">名帅光环 +${aura()}</span>`);
+  return c.length?`<div class="bchips">${c.join('')}</div>`:'';
+}
 function vMatch(){
   const H=S.teams[M.h],A=S.teams[M.a];
   const clock=M.done?'FT':M.min>=45&&M.ht?'HT':`${M.min}'`;
@@ -563,6 +575,8 @@ function vMatch(){
     ctl=`<div class="ht">${M.ht?'<b>中场·作战会议</b><p style="margin:4px 0 10px;font-size:14px">下半场，要改变命运的走向吗？</p>':`<b>暂停·调整（${M.min}'）</b><p style="margin:4px 0 10px;font-size:14px">换人或改变战术，然后继续比赛。</p>`}
     <p style="margin:0 0 10px;font-size:13px">${autoSubBtn()} <span class="muted">${oppLine()}</span></p>
     ${M.aiTac==='att'&&M.tac!=='def'?'<p class="muted" style="margin:-4px 0 10px;font-size:12px">对手全力进攻，防守反击能多守住一些，还有反击加成。</p>':''}
+    ${M.ht?(M.talk?`<p class="talk-done">训话「${TALK[M.talk][0]}」${M.talk==='roar'?(M.talkOK?'奏效了！进攻 +5、防守 +2':'适得其反，攻防各 −2'):`：${TALK[M.talk][2]}`}</p>`
+      :`<div class="talk"><div class="subh">更衣室训话 <span class="muted" style="font-weight:400">（每场一次）</span></div>${Object.entries(TALK).map(([k,[n,line,fx]])=>`<button class="talk-opt" data-act="talk" data-arg="${k}"><b>${n}</b><span>${line}</span><small>${fx}</small></button>`).join('')}</div>`):''}
     <div class="seg" style="margin-bottom:4px">${Object.entries(TACT).map(([k,v])=>`<button data-act="tac" data-arg="${k}" aria-pressed="${M.tac===k}">${v}</button>`).join('')}</div>
     <p class="muted" style="margin:0 0 12px;font-size:12px">只影响本场。</p>
     <div class="subh">换人 ${M.subs}/${SUBS}${redo?`：${findP(M.sel).name} 刚换上，改选其他替补不另算名额，点「换回」撤销这次换人`:full?'，名额已用完':M.sel!=null?`：换下 ${findP(M.sel).name}，请在右边选替补`:'：先点球场上要换下的人，再点右边的替补'}</div>
@@ -588,7 +602,7 @@ function vMatch(){
   <div class="side disp">${H.name}<small>主队</small></div>
   <div class="score"><span class="${M.flash==='h'?'flash':''}">${M.hg}</span><span class="colon">:</span><span class="${M.flash==='a'?'flash':''}">${M.ag}</span></div>
   <div class="side disp">${A.name}<small>客队</small></div>
-  <div class="clock">${clock}${M.hp!==undefined?` <span class="pk">点球 ${M.hp}:${M.ap}</span>`:''}<small>你的战术：${TACT[M.tac]}${S.boost>0?'，士气高涨':''}</small></div></div>
+  <div class="clock">${clock}${M.hp!==undefined?` <span class="pk">点球 ${M.hp}:${M.ap}</span>`:''}<small>你的战术：${TACT[M.tac]}${S.boost>0?'，士气高涨':''}</small>${boostChips()}</div></div>
   ${ctl}
   <ul class="feed">${M.feed.map(e=>`<li class="${e.cls}"><span class="m">${e.min==='PK'?'PK':e.min+"'"}</span><span>${e.t}</span></li>`).join('')}</ul></div>`;
 }
@@ -618,7 +632,8 @@ function vSeasonEnd(){
     :rank===1?'冠军！整个城市都在为你们庆祝，董事会激动得说不出话。'
     :board+(div>0?'下赛季继续冲击升级。':'');
   const top=S.teams.filter(t=>t.div===div).flatMap(t=>t.players.map(p=>({p,t}))).sort((a,b)=>b.p.goals-a.p.goals)[0];
-  return `<section class="panel"><h2 class="disp" style="font-size:34px;line-height:1.2">第 ${S.season} 赛季结束，${dn}第 ${rank}</h2>
+  const glory=[rank===1?`${dn}冠军`:'',z==='up'?`升级${DIVS[div-1]}`:'',S.cup.winner===S.my?`${CUP_NAME}冠军`:''].filter(Boolean);
+  return `${glory.length?`<section class="glory"><div class="cup">🏆</div><div class="disp">${glory.join(' · ')}</div><small>${my().name} · 第 ${S.season} 赛季</small></section>`:''}<section class="panel"><h2 class="disp" style="font-size:34px;line-height:1.2">第 ${S.season} 赛季结束，${dn}第 ${rank}</h2>
   <p>${msg}赛季奖金 ${money(prize)}。</p>
   ${top&&top.p.goals?`<p class="muted" style="font-size:14px">${dn}金靴：${top.p.name}（${top.t.name}），${top.p.goals} 球。</p>`:''}
   <p class="muted" style="font-size:14px">${CUP_NAME}：${cupStatus()}</p>

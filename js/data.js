@@ -97,8 +97,18 @@ const ACH={
   cheat:['禁忌的窥视者','发动禁断之牌'],
   deal:['黄金交易人','以 200 万以上卖出球员'],
   vet:['老兵不死','执教满 5 个赛季'],
-  academy:['青训之光','青训出身的球员能力达到 75']
+  academy:['青训之光','青训出身的球员能力达到 75'],
+  comeback:['逆转之王','落后的情况下逆转取胜']
 };
+// halftime team talk (once a match): [name, what the manager says, what it does]
+const TALK={
+  inspire:['鼓舞','「这一战，我们注定要赢！」','下半场进攻 +3'],
+  calm:['冷静','「呼吸。看清对手，再出手。」','下半场防守 +3'],
+  roar:['怒吼','「你们就只有这点能耐吗！？」','赌一把：成功则进攻 +5、防守 +2，失败则攻防各 −2；教练声望越高越容易成功']
+};
+const TALK_FX={inspire:{atk:3,def:0},calm:{atk:0,def:3},roarOk:{atk:5,def:2},roarBad:{atk:-2,def:-2}};
+// late-match boosts for our side: trailing from the 75th minute (绝境爆发), and the manager's aura (by reputation)
+const DESPAIR={home:4,away:3},AURA_PER_REP=1/30;
 
 // the once-per-season cheat card: display name, and [name, description] per effect
 const CHEAT_CASH=150;

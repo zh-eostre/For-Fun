@@ -8,7 +8,7 @@ function startMatch(){
   rng=seeded(S.live.seed);indexNames();  // same name pool on a replay, so the post-match market comes out the same
   const f=nextFix(),opp=S.teams[f.opp];aiRecover(opp);
   M={h:f.h,a:f.a,cup:f.cup,derby:f.derby,friendly:!!f.friendly,fIdx:f.idx,stage:f.cup?S.cup.stage:null,hg:0,ag:0,min:0,feed:[],speed:1,paused:false,ht:false,done:false,
-    flash:null,injuries:[],yc:{},goals:{},on:{},off:{},subs:0,oppSubs:0,sel:null,aiTac:'bal',tac:S.tactic,subMode:false,lastAuto:{h:-9,a:-9}};  // tac: our tactic for this match only
+    flash:null,injuries:[],yc:{},goals:{},on:{},off:{},subs:0,oppSubs:0,sel:null,aiTac:'bal',tac:S.tactic,subMode:false,lastAuto:{h:-9,a:-9},talk:null,trailed:false,despair:false};  // tac: our tactic for this match only
   // the opponent picks its best formation, and a tactic from how it rates against our XI
   const os=bestForm(opp,!f.home),mr=rating(strength(my(),S.lineup,S.tactic,f.home,S.boost>0?BOOST:0,S.formation));
   M.aiTac=tacFor(os.r,mr);
@@ -27,6 +27,18 @@ function startMatch(){
   UI.view='match';render();M.timer=setTimeout(loop,600);
 }
 const mySide=()=>M.h===S.my?'h':'a';
+// our side's extras this minute: the halftime talk (second half), 绝境爆发 when behind from the 75th minute,
+// and the manager's aura from the 75th (more with reputation). AI sides get none of these
+function myBoost(){
+  const b={atk:0,def:0},add=f=>{b.atk+=f.atk;b.def+=f.def};
+  if(M.min>45&&M.talk)add(TALK_FX[M.talk==='roar'?(M.talkOK?'roarOk':'roarBad'):M.talk]);
+  const home=M.h===S.my,myG=home?M.hg:M.ag,opG=home?M.ag:M.hg;
+  if(M.min>=75&&myG<opG){b.atk+=home?DESPAIR.home:DESPAIR.away;
+    if(!M.despair){M.despair=true;M.feed.unshift({min:M.min,cls:'sys',t:`绝境之中，${my().short}的血液沸腾了——全员压上，誓要扳回！`})}}
+  if(M.min>=75)b.atk+=aura();
+  return b;
+}
+const aura=()=>Math.round(((S.mgr&&S.mgr.rep)||0)*AURA_PER_REP*10)/10;
 // the page is redrawn every tick; while a finger or mouse button is down the match waits, so the button under it
 // isn't replaced between press and release (which would swallow the click)
 let pressing=false;
@@ -39,7 +51,9 @@ function tick(skipping){
   const ht=M.h===S.my?M.tac:M.aiTac,at=M.a===S.my?M.tac:M.aiTac,b=S.boost>0?BOOST:0;
   const sh=strength(S.teams[M.h],M.hIds,ht,true,M.h===S.my?b:0,M.hForm),sa=strength(S.teams[M.a],M.aIds,at,false,M.a===S.my?b:0,M.aForm);
   sh.atk+=counter(ht,at);sa.atk+=counter(at,ht);
+  const mb=myBoost(),ms=M.h===S.my?sh:sa;ms.atk+=mb.atk;ms.def+=mb.def;
   side('h',xgMin(sh,sa));side('a',xgMin(sa,sh));
+  const myG=M.h===S.my?M.hg:M.ag,opG=M.h===S.my?M.ag:M.hg;if(myG<opG)M.trailed=true;
   if(!M.done){flair('h');flair('a')}
   for(const s of ['h','a']){
     const team=S.teams[s==='h'?M.h:M.a],tac=s==='h'?ht:at,mine=team.id===S.my;
@@ -48,6 +62,7 @@ function tick(skipping){
     const sw=tiredSwap(team,M[s+'Ids'],M[s+'XI'],M[s+'Form'],mine?M.subs:M.oppSubs,M.min);
     if(sw&&substitute(sw[0].id,sw[1].id,s,LINE.tiredSub(sw[0].name,sw[1].name),'tired'))M.lastAuto[s]=M.min;
   }
+  if(M.min===75&&aura()>=1)M.feed.unshift({min:75,cls:'sys',t:`场边的主教练站了起来。名帅的气场笼罩全场，${my().short}的球员们眼神变了（进攻 +${aura()}）。`});
   if(M.min===45){
     const myG=M.h===S.my?M.hg:M.ag,opG=M.h===S.my?M.ag:M.hg;
     const was=M.aiTac;M.aiTac=opG<myG?'att':opG>myG?'def':'bal';
@@ -82,6 +97,7 @@ function side(s,p){
     const a=assister(team,ids,form,sc);if(a){ev(a.id).a=(ev(a.id).a||0)+1;if(!M.friendly)a.ast=(a.ast||0)+1}
     if(s==='h')M.hg++;else M.ag++;
     M.flash=s;M.feed.unshift({min:M.min,cls:'goal '+(mine?'mine':'theirs'),t:`进球！${t}（${team.short}${a?` · 助攻 ${a.name}`:''}）`});
+    if(mine&&!M.skip){const n=M.goals[sc.id];celebrate('GOAL!',`${sc.name}${n===2?' · 梅开二度':n===3?' · 帽子戏法':n>3?` · 大四喜`:''}　${M.hg} : ${M.ag}`,n>=2?'brace':'goal')}
     announce(`${M.min} 分钟，${team.short}进球，比分 ${M.hg} 比 ${M.ag}`);
   };
   if(r<p){
@@ -92,7 +108,7 @@ function side(s,p){
   }else if(r<p*2.2){
     const sc=scorer(team,ids,form);
     // a shooter with a signature move can occasionally turn a chance into a goal
-    if(sc.sig&&rng()<.12)goal(sc,LINE.sigGoal(sc.name,sc.sig),true);
+    if(sc.sig&&rng()<.12*(mine&&M.min>=75?1+((S.mgr&&S.mgr.rep)||0)/100:1))goal(sc,LINE.sigGoal(sc.name,sc.sig),true);
     // otherwise half of the near-misses are saves, credited to the opposing keeper if he's still on the pitch
     else if(gk&&rng()<.5){M.feed.unshift({min:M.min,cls:'',t:gk.sig&&rng()<.5?LINE.sigSave(gk.name,gk.sig,sc.name):pick(SAVE)(sc.name,gk.name)});ev(gk.id).sv=(ev(gk.id).sv||0)+1;st.sh++;st.on++}
     else{M.feed.unshift({min:M.min,cls:'',t:pick(MISS)(sc.name)});ev(sc.id).miss=(ev(sc.id).miss||0)+1;st.sh++}
@@ -209,7 +225,11 @@ function finish(){
   if(S.streak>=5)unlock('streak');
   if(mg-og>=5)unlock('rout');
   if(pens&&w==='胜')unlock('pens');
+  if(w==='胜'&&M.trailed){unlock('comeback');news('逆转！落后的情况下拿下了比赛。')}
   if(M.cup)playCupStage(res);else{loanRound();S.round++;if(S.round>=rounds())careerSeasonEnd()}
+  // a title or promotion settled by this match: confetti
+  const party=M.cup&&S.cup.winner===S.my?`${CUP_NAME}冠军！`:S.round>=rounds()&&!M.cup?(myRank()===1?`${DIVS[my().div]}冠军！`:zone(my().div,myRank())==='up'?'升级成功！':''):'';
+  if(party)celebrate(party,my().name,'party');
   NEWS_TAG=null;
   rollEvent();
   fixLineup();
@@ -236,4 +256,4 @@ function finishFriendly(){
   delete S.live;rng=Math.random;
   save();
 }
-function skipMatch(){if(!M||M.done)return;clearTimeout(M.timer);M.paused=false;M.ht=false;while(!M.done)tick(true);render()}
+function skipMatch(){if(!M||M.done)return;clearTimeout(M.timer);M.paused=false;M.ht=false;M.skip=true;while(!M.done)tick(true);render()}
