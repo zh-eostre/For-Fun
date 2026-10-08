@@ -256,7 +256,7 @@ function buyFrom(id){
 }
 
 /* ---------- loans ---------- */
-// a loaned player goes to a club outside our two divisions (丙级 or another region below 50 ability,
+// a loaned player goes to a club outside our pyramid (a regional league or another region below 50 ability,
 // another region or abroad from 50): each of our league rounds he gets a match there (counting toward his
 // debut as an academy kid) with the usual match growth chance. as in real football he doesn't take up one of our
 // 22 registered places while away; recalling him needs a free place. loans end with the season
@@ -289,7 +289,7 @@ function endLoans(){
 
 /* ---------- board objectives ---------- */
 // each season: finish at or above the expected position, and in 甲级 also reach the cup quarter-finals
-const GOAL_BONUS={league:[120,70],cup:60};
+const GOAL_BONUS={league:[120,70,45],cup:60};
 function setGoals(){S.goal={rank:expectedRank(),cup:my().div===0?cupFmt().names.indexOf('八强'):-1}}
 // how far we got in the cup: index of the stage we went out in, the number of stages if we won it, -1 if we didn't take part
 function cupReached(){
@@ -347,8 +347,10 @@ function rollSurprise(log){
 }
 
 /* ---------- 底蕴 (club prestige) ---------- */
-// every club's 底蕴 moves at season end with where it finished, and drifts 6% of the way back to 50 each year,
-// so giants without trophies fade and clubs that keep winning rise. AI clubs' base strength follows it
+// every club's 底蕴 moves at season end with where it finished, and drifts 6% of the way back to its division's
+// usual level each year, so giants without trophies fade, clubs that keep winning rise, and the three divisions
+// stay apart. AI clubs' base strength follows it
+const REP_ANCHOR=[55,38,22];
 const MIN_GIANTS=2;
 const divSize=d=>S.teams.filter(t=>t.div===d).length;
 function prestigeDelta(div,rank,size){
@@ -363,7 +365,7 @@ function updatePrestige(tables){
     // gains shrink as a club gets grander, so a perennial champion settles in the high 80s rather than at the cap
     let delta=prestigeDelta(d,i+1,T.length)+(S.cup.winner===t.id?4:0);
     if(delta>0)delta*=1-t.rep/120;
-    t.rep=clamp(Math.round(t.rep+delta+(50-t.rep)*.06),5,98);
+    t.rep=clamp(Math.round(t.rep+delta+(REP_ANCHOR[d]-t.rep)*.06),5,98);
     t.str=strFromRep(t.rep);
     const after=tierOf(t.rep);
     if(t.id!==S.my&&before!==after&&(after==='豪门'||before==='豪门'))notes.push(after==='豪门'?`${t.name} 跻身豪门`:`${t.name} 跌出豪门行列`);
@@ -394,14 +396,18 @@ function aiPoach(){
   if(lines.length)news(`夏季转会：${lines.join('；')}。`);
 }
 
-/* ---------- league expansion (saves from the 8-club format) ---------- */
-// after promotion and relegation: 乙级's next best clubs step up until 甲级 has DIV_SIZE, then new clubs join 乙级
-function expandLeague(t1,moves){
-  const up=[];
-  for(const r of t1){if(divSize(0)>=DIV_SIZE)break;const t=S.teams[r.id];if(t.div===1){t.div=0;up.push(t);moves.push({t,z:'up'})}}
-  const slots=TEAMS.filter(t=>t.div===1).slice(-Math.max(0,DIV_SIZE-divSize(1))),names=teamNames(slots,S.teams),fresh=[];
-  slots.forEach((sl,i)=>{const t={...sl,...names[i],id:S.teams.length,div:1,rep:sl.rep,str:strFromRep(sl.rep),players:[]};S.teams.push(t);t.players=makeSquad(t.str);fresh.push(t)});
-  if(up.length||fresh.length)news(`联赛扩军，甲乙级各 ${DIV_SIZE} 队！${up.length?`${up.map(t=>t.name).join('、')} 额外升入甲级。`:''}${fresh.length?`新球队 ${fresh.map(t=>t.name).join('、')} 加入乙级。`:''}`);
+/* ---------- league expansion ---------- */
+// at a season start, after promotion and relegation: a division short of its size (a save from an older, smaller
+// format) gets new clubs, built from that division's slots, so the pyramid is 10 / 12 / 14
+function growLeague(){
+  const added=[];
+  DIVS.forEach((dn,d)=>{
+    const short=DIV_SIZES[d]-divSize(d);if(short<=0)return;
+    const slots=TEAMS.filter(t=>t.div===d).slice(-short),names=teamNames(slots,S.teams);
+    slots.forEach((sl,i)=>{const t={...sl,...names[i],id:S.teams.length,div:d,rep:sl.rep,str:strFromRep(sl.rep),players:[]};S.teams.push(t);t.players=makeSquad(t.str)});
+    added.push(`${dn}新增 ${short} 队`);
+  });
+  if(added.length)news(`联赛扩军，金字塔成形：甲级 ${DIV_SIZES[0]} 队、乙级 ${DIV_SIZES[1]} 队、丙级 ${DIV_SIZES[2]} 队（${added.join('，')}）！`);
 }
 
 /* ---------- transfer windows and preseason friendlies ----------
@@ -409,7 +415,8 @@ function expandLeague(t1,moves){
    AI clubs alike; two friendlies are played in it. a shorter winter window opens the day after the halfway round.
    saves from before the preseason (S.pre undefined) keep an always-open window until their next season */
 const PRESEASON=7,WINTER=12,WINTER_NEW=8;  // winter: days open, new names on the transfer list
-const winterStart=()=>leagueDay(Math.floor(rounds()/2)-1)+1;
+// the day after the halfway week's Saturday (by 甲级's weekly rounds, the same for every division)
+const winterStart=()=>(S.pre||0)+7*(Math.floor(weeks()/2)-1)+6;
 const inWinter=(d=S.day)=>S.pre!=null&&d>=winterStart()&&d<winterStart()+WINTER;
 const windowOpen=()=>S.pre==null||S.day<S.pre||inWinter();
 const windowLeft=()=>S.pre==null?null:S.day<S.pre?S.pre-S.day:inWinter()?winterStart()+WINTER-S.day:0;
@@ -450,16 +457,16 @@ const mgrTitle=r=>MGR_TITLES.find(([m])=>r>=m)[1];
 // the reputation a club wants before it calls: 乙级 clubs are easy, 甲级 giants want a proven name (~80)
 const jobReq=t=>t.div?Math.round(t.rep*.5):Math.round(25+t.rep*.6);
 // what a club offers to spend in our first season there
-const jobBudget=t=>Math.round((t.div?150:300)+t.rep*(t.div?3:6));
+const jobBudget=t=>Math.round([300,150,100][t.div]+t.rep*[6,3,2][t.div]);
 // called once, right after the last league match: reputation change and the offers for the summer
 function careerSeasonEnd(){
   const div=my().div,rank=myRank(),size=divSize(div),g=goalStatus();
   // against expectations (capped), then the big moments; gains slow down as the name grows, and every year the
   // reputation drifts a little toward 40, so it has to be kept up
   let d=clamp(expectedRank()-rank,-8,8);
-  if(rank===1)d+=div===0?12:5;
-  if(div===1&&rank<=SWAP)d+=5;
-  if(div===0&&rank>size-SWAP)d-=10;
+  if(rank===1)d+=[12,5,3][div];
+  if(div>0&&rank<=SWAP)d+=5;
+  if(div<DIVS.length-1&&rank>size-SWAP)d-=div===0?10:6;
   if(S.cup.winner===S.my)d+=6;else if(!S.cup.skipped&&cupReached()>=cupFmt().names.length-1)d+=3;
   if(g&&g.league)d+=2;
   const before=S.mgr.rep;

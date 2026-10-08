@@ -16,7 +16,7 @@ ok(!isLegend(S.club[d.id]),'5 seasons, no title: not a legend');
 ok(!isLegend(S.club[e.id]),'7 seasons, no title: not yet');
 // retiring through a real season change (which adds that season): b reaches 3 seasons with his title, e reaches 8
 [a,b,c,d,e].forEach(p=>{p.age=39;p.ovr=50});
-const n=S.legends.length;S.round=ROUNDS;newSeason();
+const n=S.legends.length;S.round=rounds();newSeason();
 const names=S.legends.slice(n).map(l=>l.name);
 ok(names.length===4&&[a,b,c,e].every(p=>names.includes(p.name))&&!names.includes(d.name),'legends: a, b, c, e retired as legends; d (6 seasons, no title) did not');
 const la=S.legends.find(l=>l.name===a.name);ok(la.seasons>=3&&la.titles.length>=1,'record keeps seasons ('+la.seasons+') and trophies ('+la.titles.length+')');

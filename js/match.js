@@ -198,7 +198,7 @@ function finish(){
   if(M.cup)NEWS_TAG=`${CUP_NAME}${stageName(M.stage)}`;
   const res={h:M.h,a:M.a,hg:M.hg,ag:M.ag},home=M.h===S.my,myXI=home?M.hXI:M.aXI,oppId=home?M.a:M.h,oppXI=home?M.aXI:M.hXI;
   if(M.cup){if(M.hp!==undefined){res.hp=M.hp;res.ap=M.ap}}
-  else S.fixtures.forEach((fx,div)=>S.results[div].push(fx[S.round].map(([h,a])=>(h===S.my||a===S.my)?res:quickSim(h,a))));
+  else{const d=my().div;S.results[d].push(S.fixtures[d][S.round].map(([h,a])=>(h===S.my||a===S.my)?res:quickSim(h,a)))}
   afterMatch(S.teams[oppId],oppXI,false);
   const {grown,awoken}=afterMatch(my(),myXI,true);
   S.lastMatchDay=S.day;

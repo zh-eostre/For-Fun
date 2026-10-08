@@ -53,7 +53,7 @@ function liveMatch(){
   if(!S.cheatUsed&&R()<.08&&M.pre){twice('cheat','redo');if(M&&!M.done){clearTimeout(M.timer);skipMatch()}}
   ACT.matchDone();
 }
-const team=pk(TEAMS.map((t,i)=>[t,i]).filter(([t])=>t.div===1))[1];
+const team=pk(TEAMS.map((t,i)=>[t,i]).filter(([t])=>t.div===DIVS.length-1))[1];
 ACT.start(String(team));
 let seasons=0,guard=0;
 while(seasons<${SEASONS}&&guard++<20000){

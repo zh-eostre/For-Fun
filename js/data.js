@@ -1,35 +1,44 @@
 /* ---------- constants, shared state, small helpers ---------- */
 const KEY='lvyin-fm-v1';  // localStorage key; kept as-is so old saves are still found
-const SAVE_V=15;         // bump when the save format changes, and add a step to MIGRATE in engine.js
+const SAVE_V=16;         // bump when the save format changes, and add a step to MIGRATE in engine.js
 // a club's base strength (its typical best-XI level) from its 底蕴: 98 → 84, 86 → 80, 50 → 68, 14 → 55
 function strFromRep(rep){return Math.round(50+rep*.35)}
 const TIERS=[[80,'豪门'],[65,'强队'],[45,'中游'],[0,'弱旅']];
 const tierOf=rep=>TIERS.find(([m])=>rep>=m)[1];
-const DIV_SIZE=10;
-// twenty club slots, ten per division. rep (底蕴, 0-100) sets an AI club's target strength and how hard it
-// strengthens; it moves with results every season. each new game gives the slots random names from CITY + NICK
+// a pyramid of three divisions, fewer clubs at the top (like the real thing): 甲级 10, 乙级 12, 丙级 14.
+// each plays a double round robin, so 甲级 has 18 rounds, 乙级 22 and 丙级 26 (the extra ones midweek)
+const DIVS=['甲级','乙级','丙级'];
+const DIV_SIZES=[10,12,14];
+// club slots per division. rep (底蕴, 0-100) sets an AI club's target strength and how hard it strengthens;
+// it moves with results every season. each new game gives the slots random names from CITY + NICK
 const TEAMS=[
   {div:0,color:'#B23A2E',rep:92},{div:0,color:'#1F5F99',rep:86},{div:0,color:'#C9822B',rep:76},{div:0,color:'#2C6E49',rep:72},
   {div:0,color:'#7A5C2E',rep:68},{div:0,color:'#4B4B8F',rep:58},{div:0,color:'#8C2F5A',rep:54},{div:0,color:'#1E7F86',rep:50},
   {div:0,color:'#2A8C8C',rep:40},{div:0,color:'#7B3F00',rep:34},
   {div:1,color:'#5E7D2B',rep:56},{div:1,color:'#9C4A1A',rep:44},{div:1,color:'#3D6B8E',rep:40},{div:1,color:'#6B3F7A',rep:36},
   {div:1,color:'#A8862B',rep:32},{div:1,color:'#2F7F6A',rep:30},{div:1,color:'#8E3B46',rep:26},{div:1,color:'#5A4FCF',rep:22},
-  {div:1,color:'#54606B',rep:18},{div:1,color:'#B5527A',rep:14}
+  {div:1,color:'#54606B',rep:18},{div:1,color:'#B5527A',rep:14},{div:1,color:'#3F7FBF',rep:48},{div:1,color:'#9A5B2E',rep:24},
+  {div:2,color:'#6E8B3D',rep:38},{div:2,color:'#A0522D',rep:34},{div:2,color:'#4682B4',rep:30},{div:2,color:'#8B4789',rep:27},
+  {div:2,color:'#B8860B',rep:24},{div:2,color:'#2E8B57',rep:21},{div:2,color:'#A52A2A',rep:19},{div:2,color:'#6A5ACD',rep:17},
+  {div:2,color:'#708090',rep:15},{div:2,color:'#C71585',rep:13},{div:2,color:'#5F9EA0',rep:11},{div:2,color:'#8B7355',rep:9},
+  {div:2,color:'#556B2F',rep:7},{div:2,color:'#CD5C5C',rep:5}
 ].map(t=>({...t,str:strFromRep(t.rep)}));
-const DIVS=['甲级','乙级'];
-const ROUNDS=2*(DIV_SIZE-1);  // a new season's length; a save mid-way through an older format uses rounds()
-const SWAP=2;           // teams relegated from 甲级 and promoted from 乙级 each season
-const PRIZE2=[240,200,170,140,120,105,95,85,78,70];
-const DIV_INCOME=[1,.6];  // 乙级 gates and bonuses are smaller
+const SWAP=2;           // clubs promoted from / relegated to the division below, each season, between every pair
+// season prize money by final place, per division (RM 万)
+const PRIZES=[[500,400,320,260,220,190,165,145,130,120],[240,200,170,140,120,105,95,85,78,70,64,58],
+  [120,100,85,72,62,55,50,45,41,38,35,32,30,28]];
+const DIV_INCOME=[1,.6,.4];  // lower divisions' gates and bonuses are smaller
 // fictional places for club names
-const CITY=['青岚','赤崖','白沙湾','雾港','星原','苍木','金穗','碧潭','风鸣','霜城','云岭','落日湾','铁砧','翠谷','银滩','烈风原','月牙泉','黑石','红树林','晨曦','潮汐镇','雷鸣谷','琥珀城','松涛','鹰嘴岩','蓝鲸湾','紫霞','白桦林'];
-// loan destinations outside our two divisions: [league, club names]
+const CITY=['青岚','赤崖','白沙湾','雾港','星原','苍木','金穗','碧潭','风鸣','霜城','云岭','落日湾','铁砧','翠谷','银滩','烈风原','月牙泉','黑石','红树林','晨曦','潮汐镇','雷鸣谷','琥珀城','松涛','鹰嘴岩','蓝鲸湾','紫霞','白桦林',
+  '玉泉','沧澜','雪峰','枫叶港','砂石镇','灯塔湾','长风','暮云','石榴城','青石滩','火山口','珊瑚礁'];
+// loan destinations outside our league pyramid: [league, club names]
 const LOAN_LEAGUES={
-  low:['丙级联赛',['柳溪竞技','石桥联队','枫林体育会','沙丘矿工','竹湾渔港','松坡青年队','鹿鸣竞技','蓝湖联队']],
+  low:['地区联赛',['柳溪竞技','石桥联队','枫林体育会','沙丘矿工','竹湾渔港','松坡青年队','鹿鸣竞技','蓝湖联队']],
   away:['外地联赛',['北原城','南岭联','西川流浪者','东滨竞技','高原雄鹰','河谷联队']],
   abroad:['海外联赛',['北境皇家','南洋星辰','西陆白狼','极光城','暮光港','翡翠海岸']]
 };
-const NICK=['流星','铁骑','海鹰','石狮','古城','南风','浪潮','犀鸟','猛虎','黑豹','雷霆','飞马','巨鳄','金鹰','烈火','白鲨','野牛','红隼','战象','疾风','银狼','火凤','苍龙','赤狐','冰熊','钢鹰','夜枭','狂狮'];
+const NICK=['流星','铁骑','海鹰','石狮','古城','南风','浪潮','犀鸟','猛虎','黑豹','雷霆','飞马','巨鳄','金鹰','烈火','白鲨','野牛','红隼','战象','疾风','银狼','火凤','苍龙','赤狐','冰熊','钢鹰','夜枭','狂狮',
+  '游隼','黑熊','雪豹','蓝鲸','角马','灰狼','金狮','铁甲','麒麟','闪电','巨浪','山鹰'];
 const POS={GK:'门将',DF:'后卫',MF:'中场',FW:'前锋'};
 const PO=['GK','DF','MF','FW'];
 // players per role; dm / am: how many of the midfielders play as holding (后腰) or attacking (前腰) midfielders
@@ -40,16 +49,15 @@ const FORMS={'4-4-2':{GK:1,DF:4,MF:4,FW:2},'4-3-3':{GK:1,DF:4,MF:3,FW:3},'4-2-3-
 const LINE_NAME={DM:'后腰',AM:'前腰'};
 const TACT={def:'防守反击',bal:'平衡',att:'全力进攻'};
 const TRAIN={rest:['恢复训练','训练日体能 +10，不会通过训练进步'],normal:['常规训练','训练日体能 +4，有一定机会进步'],hard:['高强度加练','训练日体能 +1，进步最快，但疲劳的球员更容易受伤']};
-const PRIZE=[500,400,320,260,220,190,165,145,130,120];
 const CARD=.02;   // chance per team per minute of a booking (about 1.8 per team per match)
 // chance to retire at the end of a season by age (33-39; 40+ always retires), scaled by ability below
 const RETIRE_AGE={33:.08,34:.2,35:.4,36:.6,37:.75,38:.85,39:.95};
 const YC_BAN=3;   // yellow cards that add up to a one-match ban
 // player name parts; genName in engine.js combines them
-// calendar: a season is one week per league round; league matches on Saturdays, cup ties on the Wednesday of the week whose
-// league round is the cup format's at[k] (see CUP_FORMAT). the day after any of our matches is a rest day, every other day is a training day
+// calendar: a season has one week per 甲级 round; league matches on Saturdays (the bigger divisions add some on
+// Tuesdays, see seasonDays in engine.js), cup ties on the Wednesday of week at[k] of the cup format.
+// the day after any of our matches is a rest day, every other day is a training day
 const WEEKDAYS=['周一','周二','周三','周四','周五','周六','周日'];
-const leagueDay=r=>(S.pre||0)+7*r+5;   // S.pre: preseason days before round 1 (see club.js)
 const DAY_REST=10;   // stamina everyone gets back on a rest day
 // per training day, depending on the training setting: stamina change, and chance to improve by 1
 const TRAIN_DAY={rest:{cond:10,grow:0},normal:{cond:4,grow:.028},hard:{cond:1,grow:.05}};
@@ -65,6 +73,12 @@ const CUP_FORMAT={
   prize:[0,0,30,60,120,250]     // by the stage you went out in; the last entry is for winning it
 };
 const CUP_LEGACY={names:['十六强','八强','半决赛','决赛'],at:[3,6,9,12],prize:[0,30,60,120,250]};
+// the 36-club pyramid: the 8 lowest clubs (by 底蕴) play a qualifying round, the other 28 join them in the last 32
+const CUP_FORMAT32={
+  names:['资格赛','三十二强','十六强','八强','半决赛','决赛'],
+  at:[1,4,7,10,13,16],
+  prize:[0,0,10,30,60,120,250]
+};
 
 const INJ_RATE=.0007;    // chance per team per minute of an injury (about one every 16 matches per team)
 const INJ_DAYS=[2,3,4,4,5,6,7,9,12,16,21];  // how many days an injury lasts, picked at random

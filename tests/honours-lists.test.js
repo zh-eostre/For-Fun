@@ -10,7 +10,7 @@ UI.tab='honours';render();const h=els.app.innerHTML;
 ok((h.match(/class="scrollbox"/g)||[]).length===2&&/class="tw scrollbox"/.test(h),'awards, legends and records scroll in their boxes');
 ok(/12 项/.test(h)&&/12 人/.test(h),'headings show how many');
 ok(h.indexOf('传奇12')<h.indexOf('传奇1<')||h.indexOf('传奇12')<h.indexOf('传奇11'),'newest legend first');
-S.round=ROUNDS;render();const e=els.app.innerHTML;
+S.round=rounds();render();const e=els.app.innerHTML;
 ok(/最近 6 季/.test(e)&&!/第 1 季甲级第 1/.test(e.slice(e.indexOf('往季排名'),e.indexOf('往季排名')+400)),'season end shows only the last 6 seasons');
 ok(!bad(h)&&!bad(e),'pages render cleanly');
 `);

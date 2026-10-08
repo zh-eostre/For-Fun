@@ -23,7 +23,7 @@ function physio(L){
     my().players.forEach(p=>{p.cond=55;p.inj=0;p.ban=0;p.away=0});S.lineup=autoPick(my(),S.formation);
     S.day=nextMatchDay();S.event=null;S.offer=null;startMatch();skipMatch();matches++;
     const mine=M.myInjuries;inj+=mine.length;ones+=mine.filter(p=>p.inj===1).length;knocks+=M.feed.filter(e=>e.t.includes('只是轻伤')).length;M=null;
-    if(S.round>=ROUNDS)newSeason();
+    if(S.round>=rounds())newSeason();
   }
   return {injPerMatch:(inj/matches).toFixed(3),oneRound:inj?(ones/inj*100).toFixed(0)+'%':'-',knocksPerMatch:(knocks/matches).toFixed(3),restDay:restAmt()};
 }

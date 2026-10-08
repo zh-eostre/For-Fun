@@ -3,7 +3,7 @@ require('./harness').run(`
 newGame(6,teamNames());
 const tally={};
 for(let s=0;s<4;s++){
-  while(S.round<ROUNDS){if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ACT.ff();S.lineup=autoPick(my(),S.formation);startMatch();skipMatch();M=null;UI.view='main'}
+  while(S.round<rounds()){if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ACT.ff();S.lineup=autoPick(my(),S.formation);startMatch();skipMatch();M=null;UI.view='main'}
   if(s===0){
     const xi=seasonXI(my().div);
     ok(xi.length===11&&PO.every(pos=>xi.filter(w=>w.pos===pos).length===XI_SHAPE[pos]),'team of the season is a 1-4-3-3: '+xi.map(w=>w.name).join('、'));
@@ -13,7 +13,7 @@ for(let s=0;s<4;s++){
   }
   for(const d of [0,1]){const a=seasonAwards(d);if(a.mvp)tally[a.mvp.pos]=(tally[a.mvp.pos]||0)+1}
   newSeason();
-  if(s===0)ok(S.records[0].xi&&S.records[0].xi.length===2,'team of the season is recorded for both divisions');
+  if(s===0)ok(S.records[0].xi&&S.records[0].xi.length===DIVS.length,'team of the season is recorded for both divisions');
 }
 console.log('  best player by position over 8 awards:',JSON.stringify(tally));
 ok(Object.keys(tally).length>=2,'best player is not always the same position');

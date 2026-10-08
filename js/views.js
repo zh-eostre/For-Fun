@@ -57,21 +57,23 @@ function vStart(){
   if(!UI.draft)UI.draft=teamNames();
   return `<div class="wrap"><div class="start-hero"><h1 class="disp">绿茵经理</h1>
   <p>挑一支球队，带它打完一个又一个赛季。</p></div>
-  ${saved?`<div class="panel"><b>有一份存档：</b>${saved.teams[saved.my].name}（${DIVS[saved.teams[saved.my].div]}），第 ${saved.season} 赛季第 ${Math.min(saved.round+1,saved.fixtures[0].length)} 轮${saved.live?'（比赛进行中）':''}。
+  ${saved?`<div class="panel"><b>有一份存档：</b>${saved.teams[saved.my].name}（${DIVS[saved.teams[saved.my].div]}），第 ${saved.season} 赛季第 ${Math.min(saved.round+1,saved.fixtures[saved.teams[saved.my].div].length)} 轮${saved.live?'（比赛进行中）':''}。
   <div class="go" style="justify-content:flex-start"><button class="btn primary" data-act="continue">继续存档</button></div></div>
-  <h2>或者重新开始</h2><p class="muted" style="margin-top:-6px;font-size:14px">选新球队会覆盖旧存档。</p>`:`<h2>选择你的球队</h2><p class="muted" style="margin-top:-6px;font-size:14px">你是一位没有履历的新教练，只有乙级球队愿意给你机会。</p>`}
+  <h2>或者重新开始</h2><p class="muted" style="margin-top:-6px;font-size:14px">选新球队会覆盖旧存档。</p>`:`<h2>选择你的球队</h2><p class="muted" style="margin-top:-6px;font-size:14px">你是一位没有履历的新教练，只有丙级球队愿意给你机会。</p>`}
   <p style="margin:-4px 0 0;display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" data-act="reroll">换一批队名</button>${canPickDir()?'<button class="btn small" data-act="listSaves">从存档文件夹读取</button>':''}<button class="btn small" data-act="importSave">从文件读取存档</button></p>
   ${UI.saveFiles?vSaveList():''}
-  ${[1,0].map(div=>`<h3>${DIVS[div]}联赛<span class="muted" style="font-weight:400;font-size:14px">${div?`，新教练从这里起步，前 ${SWAP} 名升级`:'，需要执教履历，暂不可选'}</span></h3>
-  <div class="teams ${div?'':'locked-list'}" style="margin-top:8px">${TEAMS.map((t,i)=>{
-    if(t.div!==div)return '';
-    const tier=tierOf(t.rep);
-    // a new manager with no record only gets offers from 乙级 clubs; 甲级 is shown for orientation
-    if(!div)return `<div class="team-pick locked" style="--c:${t.color}" aria-disabled="true"><b class="disp">${UI.draft[i].name}</b><span>${tier} · 实力 ${t.str}</span></div>`;
-    const goal=t.rep>=45?'冲击升级':t.rep>=30?'站稳脚跟':'艰难起步';
-    return `<button class="team-pick" style="--c:${t.color}" data-act="start" data-arg="${i}"><b class="disp">${UI.draft[i].name}</b>
-    <span>${tier} · 实力 ${t.str}，目标${goal}，预算 ${money(startBudget(t))}</span></button>`}).join('')}</div>`).join('')}
-  <p class="muted" style="font-size:13px;margin-top:20px">甲级和乙级各 ${DIV_SIZE} 支球队双循环，每季 ${ROUNDS} 轮。赛季结束后甲级最后 ${SWAP} 名降级，乙级前 ${SWAP} 名升级。球队都是虚构的。</p></div>`;
+  ${(()=>{
+    // a new manager with no record only gets offers from the bottom division; the higher ones are shown for orientation
+    const low=DIVS.length-1,pick=div=>{const list=TEAMS.map((t,i)=>({t,i})).filter(x=>x.t.div===div),reps=list.map(x=>x.t.rep).sort((a,b)=>b-a);
+      return `<div class="teams ${div===low?'':'locked-list'}" style="margin-top:8px">${list.map(({t,i})=>{const tier=tierOf(t.rep);
+        if(div!==low)return `<div class="team-pick locked" style="--c:${t.color}" aria-disabled="true"><b class="disp">${UI.draft[i].name}</b><span>${tier} · 实力 ${t.str}</span></div>`;
+        const k=reps.indexOf(t.rep)/reps.length,goal=k<1/3?'冲击升级':k<2/3?'站稳脚跟':'艰难起步';
+        return `<button class="team-pick" style="--c:${t.color}" data-act="start" data-arg="${i}"><b class="disp">${UI.draft[i].name}</b>
+        <span>${tier} · 实力 ${t.str}，目标${goal}，预算 ${money(startBudget(t))}</span></button>`}).join('')}</div>`};
+    return `<h3>${DIVS[low]}联赛<span class="muted" style="font-weight:400;font-size:14px">，新教练从这里起步，前 ${SWAP} 名升级</span></h3>${pick(low)}
+    <details class="fold" style="margin-top:14px"><summary><h3 style="margin:0">更高级别 <span class="muted" style="font-weight:400;font-size:14px">需要执教履历，暂不可选</span></h3></summary>
+    ${DIVS.map((dn,d)=>d===low?'':`<h3>${dn}联赛</h3>${pick(d)}`).reverse().join('')}</details>`})()}
+  <p class="muted" style="font-size:13px;margin-top:20px">联赛分三级：${DIVS.map((dn,d)=>`${dn} ${DIV_SIZES[d]} 队（每季 ${2*(DIV_SIZES[d]-1)} 轮）`).join('、')}，越往上球队越少。每级前 ${SWAP} 名升级、后 ${SWAP} 名降级。球队都是虚构的。</p></div>`;
 }
 function vHeader(){
   const t=my();
@@ -195,8 +197,9 @@ function vRules(){
   const sec=(h,items)=>`<section class="rule"><h3>${h}</h3><ul>${items.map(i=>`<li>${i}</li>`).join('')}</ul></section>`;
   return `<section class="panel"><div class="mhead"><h2 id="mtitle">规则说明</h2><button class="btn small mclose" data-act="closeModal" aria-label="关闭">✕</button></div>
   <div class="rules">
-  ${sec('赛季与日程',[`甲级、乙级各 ${DIV_SIZE} 队，主客场双循环共 ${ROUNDS} 轮。甲级最后 ${SWAP} 名降级，乙级前 ${SWAP} 名升级。`,
-    `季前一周：转会窗口开放，还有两场友谊赛（不计成绩、不吃牌）。第 ${Math.floor(ROUNDS/2)} 轮后开 ${WINTER} 天冬窗，其余时间不能买卖球员。`,
+  ${sec('赛季与日程',[`联赛是金字塔：${DIVS.map((dn,d)=>`${dn} ${DIV_SIZES[d]} 队`).join('、')}，各自主客场双循环（${DIVS.map((dn,d)=>`${dn} ${2*(DIV_SIZES[d]-1)} 轮`).join('、')}）。每级前 ${SWAP} 名升级、后 ${SWAP} 名降级。`,
+    `甲级每周六一轮；乙级、丙级场次多，有些周的周二会加踢一轮（避开杯赛周），三个级别在同一天结束。`,
+    `季前一周：转会窗口开放，还有两场友谊赛（不计成绩、不吃牌）。赛季过半后开 ${WINTER} 天冬窗，其余时间不能买卖球员。`,
     `${CUP_NAME}是单场淘汰，平局直接点球大战。杯赛在周中，3 天后就是下一轮联赛。`])}
   ${sec('比赛怎么踢',['每分钟按双方「进攻对防守」的差距决定进球机会。实力强的一方机会更多，但强队也会输球，强队累了时弱队更有机会。',
     '进攻主要看前锋和中场，防守主要看后卫、门将和中场；主场略占优势。',
@@ -430,7 +433,7 @@ function vTable(div,switcher=true){
   const sc=S.teams.filter(t=>t.div===div).flatMap(t=>t.players.filter(p=>p.goals>0).map(p=>({p,t}))).sort((a,b)=>b.p.goals-a.p.goals||a.p.apps-b.p.apps).slice(0,8);
   const as=S.teams.filter(t=>t.div===div).flatMap(t=>t.players.filter(p=>p.ast>0).map(p=>({p,t}))).sort((a,b)=>b.p.ast-a.p.ast||b.p.goals-a.p.goals).slice(0,8);
   const RL_MIN=Math.max(1,Math.floor(res.length/2)),rl=S.teams.filter(t=>t.div===div).flatMap(t=>t.players.filter(p=>p.rn>=RL_MIN).map(p=>({p,t}))).sort((a,b)=>avgRating(b.p)-avgRating(a.p)).slice(0,8);
-  const pickDiv=switcher?`<div class="seg sm" style="margin-bottom:10px">${DIVS.map((dn,d)=>`<button data-act="div" data-arg="${d}" aria-pressed="${d===div}">${dn}${d===my().div?'（本队）':''}</button>`).join('')}</div>`:'';
+  const pickDiv=switcher?`<div class="seg sm" style="margin-bottom:10px">${DIVS.map((dn,d)=>!divSize(d)?'':`<button data-act="div" data-arg="${d}" aria-pressed="${d===div}">${dn}${d===my().div?'（本队）':''}</button>`).join('')}</div>`:'';
   const legend=[div>0?`<span class="zl up">前 ${SWAP} 名升级</span>`:'',div<DIVS.length-1?`<span class="zl down">后 ${SWAP} 名降级</span>`:''].join('');
   return `<div class="cols"><div class="col"><section class="panel"><h2>${DIVS[div]}积分榜</h2>${pickDiv}<div class="tw"><table>
   <thead><tr><th>#</th><th>球队</th><th>场</th><th>胜</th><th>平</th><th>负</th><th>进/失</th><th>积分</th></tr></thead>
@@ -677,7 +680,7 @@ function vSeasonEnd(){
   ${vCareerEnd()}
   <div class="go" style="justify-content:flex-start"><button class="btn primary" data-act="newSeason">${(S.jobOffers||[]).length?`留在 ${my().name}，`:''}开始第 ${S.season+1} 赛季</button></div>
   <p class="muted" style="font-size:13px;margin-bottom:0">新赛季球员长一岁，33 岁以上的老将可能退役（能力越高越能坚持），黄牌和停赛清零。</p></section>
-  ${DIVS.map((_,d)=>vTable(d,false)).join('')}`;
+  ${DIVS.map((_,d)=>divSize(d)?vTable(d,false):'').join('')}`;
 }
 
 /* ---------- cup & honours ---------- */
@@ -689,8 +692,8 @@ function cupStatus(){
   const k=C.rounds.findIndex(rd=>rd.some(r=>(r.h===S.my||r.a===S.my)&&r.w!==S.my));
   if(k>=0)return `止步${stageName(k)}。`;
   if(C.winner!=null)return '已结束。';
-  if((C.byes||[]).includes(S.my))return `首轮轮空，直接进入${stageName(C.stage+1)}（联赛第 ${cupFmt().at[C.stage+1]} 轮之后）。`;
-  return `仍在争夺，下一场是${stageName(C.stage)}（联赛第 ${cupFmt().at[C.stage]} 轮之后）。`;
+  if((C.byes||[]).includes(S.my))return `首轮轮空，直接进入${stageName(C.stage+1)}（${dayLabel(cupDay(C.stage+1))}）。`;
+  return `仍在争夺，下一场是${stageName(C.stage)}（${dayLabel(cupDay(C.stage))}）。`;
 }
 function vCup(){
   const C=S.cup,nm=id=>S.teams[id].name;
@@ -698,7 +701,7 @@ function vCup(){
     const me=r.h===S.my||r.a===S.my,cls=id=>id===r.w?'w':'l';
     return `<div class="res cupres ${me?'me':''}"><span class="${cls(r.h)}">${nm(r.h)}</span><span class="num">${r.hg} : ${r.ag}${r.hp!==undefined?`<small>点球 ${r.hp}:${r.ap}</small>`:''}</span><span class="${cls(r.a)}">${nm(r.a)}</span></div>`;
   };
-  const pending=C.ties.length?`<section class="panel"><h2>${stageName(C.stage)}<span class="muted" style="font-weight:400;font-size:14px">，联赛第 ${cupFmt().at[C.stage]} 轮之后进行</span></h2>
+  const pending=C.ties.length?`<section class="panel"><h2>${stageName(C.stage)}<span class="muted" style="font-weight:400;font-size:14px">，${dayLabel(cupDay(C.stage))}进行</span></h2>
     ${C.ties.map(([h,a])=>`<div class="res cupres ${h===S.my||a===S.my?'me':''}"><span>${nm(h)}</span><span class="muted">VS</span><span>${nm(a)}</span></div>`).join('')}${(C.byes||[]).length?`<p class="muted" style="font-size:13px;margin:8px 0 0">轮空，直接进入${stageName(C.stage+1)}：${C.byes.map(id=>id===S.my?`<b>${nm(id)}</b>`:nm(id)).join('、')}</p>`:''}</section>`:'';
   return `<section class="panel"><h2>${CUP_NAME}</h2>
   <p class="muted" style="margin:-4px 0 0;font-size:14px">${(()=>{const F=cupFmt(C),at=n=>F.prize[F.names.indexOf(n)];
@@ -722,7 +725,7 @@ function vHonours(){
   const H=S.history,R=S.records;
   const count=(f)=>H.filter(f).length;
   const cups=R.filter(r=>r.cup===my().name).length+(S.cup.winner===S.my?1:0);
-  const trophies=[['甲级冠军',count(h=>h.div===0&&h.rank===1)],['乙级冠军',count(h=>h.div===1&&h.rank===1)],[`${CUP_NAME}`,cups],['升级',count(h=>h.div===1&&h.rank<=SWAP)],['青训出身（现役）',my().players.filter(p=>p.youth).length]];
+  const trophies=[...DIVS.map((dn,d)=>[`${dn}冠军`,count(h=>(h.div||0)===d&&h.rank===1)]),[`${CUP_NAME}`,cups],['升级',count(h=>(h.div||0)>0&&h.rank<=SWAP)],['青训出身（现役）',my().players.filter(p=>p.youth).length]];
   return `<div class="cols"><div class="col"><section class="panel"><h2>奖杯柜</h2><div class="trophies">${trophies.map(([l,n])=>`<div class="trophy ${n?'got':''}"><div class="num">${n}</div><div>${l}</div></div>`).join('')}</div></section>
   <section class="panel"><h2>称号 <span class="muted" style="font-weight:400;font-size:14px">${Object.keys(S.ach).length}/${Object.keys(ACH).length}</span></h2>
   <div class="achs">${Object.entries(ACH).map(([k,[n,d]])=>S.ach[k]
@@ -735,6 +738,6 @@ function vHonours(){
   ${vClubBoards()}
   <section class="panel"><h2>传奇退役${S.legends.length?` <span class="muted" style="font-weight:400;font-size:13px">${S.legends.length} 人</span>`:''}</h2>${S.legends.length?'<div class="scrollbox">'+[...S.legends].reverse().map(l=>`<div class="res" style="grid-template-columns:1fr auto"><span style="text-align:left">${l.name} <span class="muted">${POS[l.pos]}，第 ${l.season} 季${l.club&&l.club!==my().name?`于${l.club}`:''}退役${l.seasons?`，效力 ${l.seasons} 季`:''}${l.titles&&l.titles.length?`，${l.titles.length} 座冠军`:''}</span></span><span class="muted">${l.apps} 场 ${l.goals} 球</span></div>`).join('')+'</div>':`<p class="muted" style="margin:0">在队效力 ${LEGEND_TITLE_SEASONS} 季以上并帮球队夺冠，或效力 ${LEGEND_SEASONS} 季以上的球员，在队退役后会记在这里。</p>`}</section>
   ${vCareer()}
-  <section class="panel"><h2>历届冠军</h2>${R.length?`<div class="tw scrollbox"><table class="sticky-head"><thead><tr><th>季</th><th>甲级</th><th>乙级</th><th>${CUP_NAME}</th><th>本队</th></tr></thead>
-  <tbody>${R.slice().reverse().map(r=>`<tr><td>${r.season}</td><td>${r.champs[0]||'—'}</td><td>${r.champs[1]||'—'}</td><td>${r.cup||'—'}</td><td>${DIVS[r.div]}第 ${r.rank}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted" style="margin:0">打完第一个赛季后，这里会记录每季的冠军。</p>'}</section></div></div>`;
+  <section class="panel"><h2>历届冠军</h2>${R.length?`<div class="tw scrollbox"><table class="sticky-head"><thead><tr><th>季</th>${DIVS.map(dn=>`<th>${dn}</th>`).join('')}<th>${CUP_NAME}</th><th>本队</th></tr></thead>
+  <tbody>${R.slice().reverse().map(r=>`<tr><td>${r.season}</td>${DIVS.map((_,d)=>`<td>${r.champs[d]||'—'}</td>`).join('')}<td>${r.cup||'—'}</td><td>${DIVS[r.div]}第 ${r.rank}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted" style="margin:0">打完第一个赛季后，这里会记录每季的冠军。</p>'}</section></div></div>`;
 }

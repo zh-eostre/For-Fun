@@ -64,7 +64,10 @@ const MIGRATE={
     const titles=(d.history||[]).filter(h=>h.rank===1).length,ups=(d.history||[]).filter(h=>h.div===1&&h.rank<=SWAP).length;
     d.mgr={rep:clamp(15+(d.history||[]).length*3+titles*10+ups*6,10,85),last:0};
     (d.history||[]).forEach(h=>{if(!h.club)h.club=d.teams[d.my].name});
-  }
+  },
+  // v15 -> v16: the three-division pyramid. a save from the 2 x 10 format finishes its season as it is (the new
+  // 丙级 stays empty) and grows at the next season start (growLeague in club.js)
+  15:d=>{while(d.fixtures.length<DIVS.length)d.fixtures.push([]);while(d.results.length<DIVS.length)d.results.push([])}
 };
 // a save can come from anywhere (a shared file, an edited one), and its text ends up in the page's HTML, so
 // every string in it loses the characters that could form markup before the game touches it
@@ -477,8 +480,30 @@ function aiWindow(chance){
 let NEWS_TAG=null;  // set while a cup match is being wrapped up, so its news is labelled with the cup stage
 function news(t){S.news.unshift({r:`S${S.season} ${NEWS_TAG||`第${Math.min(S.round+1,rounds())}轮`}`,t});S.news=S.news.slice(0,30)}
 
-// rounds in the current season (an older save can still be mid-way through a 14-round season)
-const rounds=()=>S.fixtures[0].length;
+// rounds in the current season for a division (ours by default); 甲级's count is the number of weeks
+const rounds=d=>S.fixtures[d??my().div].length;
+const weeks=()=>S.fixtures[0].length;
+// a division's league match days this season: the top flight plays every Saturday; a bigger division fits its extra
+// rounds into Tuesdays of weeks without a cup tie, spread through the season, so every division ends the same day
+function seasonDays(d=my().div){
+  const W=weeks(),R=S.fixtures[d].length,pre=S.pre||0,days=[];
+  for(let w=0;w<Math.min(W,R);w++)days.push(pre+7*w+5);
+  const extra=R-W;
+  if(extra>0){
+    const cupW=new Set(S.cup&&!S.cup.skipped?cupFmt().at:[]),cand=[];
+    for(let w=1;w<W-1;w++)if(!cupW.has(w))cand.push(w);
+    for(let i=0;i<extra;i++)days.push(pre+7*cand[Math.round(i*(cand.length-1)/Math.max(1,extra-1))]+1);
+  }
+  return days.sort((a,b)=>a-b);
+}
+const leagueDay=(r,d)=>{const s=seasonDays(d);return r<s.length?s[r]:s[s.length-1]+7*(r-s.length+1)};
+// divisions other than ours play their rounds on their own match days (ours is played along with our match)
+function playOtherDivisions(){
+  S.fixtures.forEach((fx,d)=>{
+    if(d===my().div)return;
+    while(S.results[d].length<fx.length&&leagueDay(S.results[d].length,d)<=S.day)S.results[d].push(fx[S.results[d].length].map(([h,a])=>quickSim(h,a)));
+  });
+}
 const divIds=div=>S.teams.filter(t=>t.div===div).map(t=>t.id);
 const newFixtures=()=>DIVS.map((_,div)=>genFixtures(divIds(div)));
 function newGame(id,names){
@@ -563,7 +588,7 @@ function retireChance(p){
   return Math.min(1,base*(p.ovr>=75?.4:p.ovr>=70?.7:p.ovr<60?1.3:1));
 }
 function expectedRank(){return S.teams.filter(t=>t.div===my().div).sort((a,b)=>b.str-a.str).findIndex(t=>t.id===S.my)+1}
-const prizeFor=(div,rank)=>(div?PRIZE2:PRIZE)[rank-1];
+const prizeFor=(div,rank)=>PRIZES[div][Math.min(rank,PRIZES[div].length)-1];
 // moveTo: the id of a club whose offer we accept (otherwise we stay)
 function newSeason(moveTo){
   const move=moveTo!=null&&(S.jobOffers||[]).find(o=>o.club===moveTo);
@@ -578,7 +603,7 @@ function newSeason(moveTo){
   const moves=[];
   finals.forEach((T,d)=>T.forEach((r,i)=>{const z=zone(d,i+1);if(z)moves.push({t:S.teams[r.id],z})}));
   moves.forEach(({t,z})=>{t.div+=z==='up'?-1:1});
-  if(divSize(0)<DIV_SIZE||divSize(1)<DIV_SIZE)expandLeague(finals[1],moves);
+  if(DIV_SIZES.some((n,d)=>divSize(d)<n))growLeague();
   const names=z=>moves.filter(m=>m.z===z).map(m=>m.t.name).join('、');
   const retired=[];
   S.teams.forEach(t=>{
@@ -620,7 +645,7 @@ function newSeason(moveTo){
   if(S.academy.intake.length)news(`上一批没有签下的 ${S.academy.intake.length} 名青训少年离开了。`);
   newIntake();
   if(my().players.some(p=>p.youth&&p.ovr>=75))unlock('academy');
-  if(mz&&mz.z==='up'&&div===1)unlock('promo');
+  if(mz&&mz.z==='up')unlock('promo');
   if(S.history.length>=5)unlock('vet');
   save();UI.tab='home';render();
 }
@@ -648,6 +673,7 @@ const dayLabel=d=>`第 ${Math.floor(d/7)+1} 周${WEEKDAYS[d%7]}`;
 function advanceDay(log){
   if(S.round>=rounds()||S.day>=nextMatchDay())return false;
   S.day++;
+  playOtherDivisions();
   const type=dayType(S.day),mode=type==='rest'?{cond:restAmt(),grow:0}:TRAIN_DAY[S.training];
   if(type!=='match')my().players.forEach(p=>{
     const before=p.cond;

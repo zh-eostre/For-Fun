@@ -6,7 +6,7 @@ ok(new Set(names).size===TEAMS.length,TEAMS.length+' unique club names from fict
 newGame(2,teamNames());
 const lg={};for(let i=0;i<400;i++){const o=30+i%40,h=loanHost({ovr:o});(lg[(o<50?'<50':'50+')]=lg[(o<50?'<50':'50+')]||{})[h.league]=1}
 console.log('  loan leagues by ability:',JSON.stringify(lg));
-ok(Object.keys(lg['<50']).sort().join()==='丙级联赛,外地联赛'&&Object.keys(lg['50+']).sort().join()==='外地联赛,海外联赛','below 50: 丙级/外地; 50+: 外地/海外');
+ok(Object.keys(lg['<50']).sort().join()==='地区联赛,外地联赛'&&Object.keys(lg['50+']).sort().join()==='外地联赛,海外联赛','below 50: 地区/外地; 50+: 外地/海外');
 const ourClubs=new Set(S.teams.map(t=>t.name));ok(Object.values(LOAN_LEAGUES).every(([l,cs])=>cs.every(c=>!ourClubs.has(c))),'no loan club is one of our 16');
 const kid=my().players.filter(p=>p.age<=LOAN_AGE)[0];const b={dataset:{},textContent:'',isConnected:true};ACT.loan(String(kid.id),b);ACT.loan(String(kid.id),b);
 UI.tab='squad';render();ok(new RegExp(loanLabel(kid)).test(els.app.innerHTML)&&!bad(els.app.innerHTML),'squad shows: 租借至'+loanLabel(kid));

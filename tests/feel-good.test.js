@@ -15,7 +15,7 @@ const roar=rep=>{let ok=0;for(let k=0;k<400;k++){M.talk=null;M.ht=true;S.mgr.rep
 const lo=roar(0),hi=roar(100);ok(lo>35&&lo<55&&hi>85,'怒吼 works '+lo+'% of the time for an unknown manager, '+hi+'% for a famous one');
 // late boosts: behind from the 75th minute, and the aura
 M.talk=null;S.mgr.rep=60;while(M.min<79)tick(true);
-const home=M.h===S.my;if(home){M.hg=0;M.ag=2}else{M.hg=2;M.ag=0}M.despair=false;
+const home=M.h===S.my;if(home){M.hg=0;M.ag=2}else{M.hg=2;M.ag=0}M.despair=false;M.feed=M.feed.filter(e=>!/血液沸腾/.test(e.t));  // it may already have fired in the simulated minutes
 const b=myBoost();ok(b.atk>=(home?DESPAIR.home:DESPAIR.away)+2,'behind at '+M.min+'\\': 绝境爆发 + aura 2 = attack +'+b.atk);
 ok(M.feed.filter(e=>/血液沸腾/.test(e.t)).length===1,'绝境爆发 is announced once');myBoost();ok(M.feed.filter(e=>/血液沸腾/.test(e.t)).length===1,'and not again');
 render();ok(/绝境爆发/.test(els.app.innerHTML)&&/名帅光环 \\+2/.test(els.app.innerHTML),'scoreboard shows the active boosts');
