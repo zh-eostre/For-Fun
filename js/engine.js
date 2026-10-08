@@ -297,7 +297,10 @@ function booking(team,ids,yc){
   return {p};
 }
 // growth multiplier: young players and those far below their potential improve faster
-const growF=p=>(p.age<=21?1.3:1)*clamp((p.pot-p.ovr)/8,.5,2);
+// how fast a player improves (training and matches): young and far below potential is fastest; it fades with age
+// and stops at 33 (veterans only hold their level, they don't train back what age takes)
+const AGE_GROW=a=>a<=21?1.3:a<=27?1:a<=30?.6:a<=32?.3:0;
+const growF=p=>AGE_GROW(p.age)*clamp((p.pot-p.ovr)/8,.5,2);
 // xi = everyone who played this match; anyone banned or away who sat it out has now served a match.
 // our squad only takes the match itself here (fatigue, match growth); rest and training happen day by day.
 // AI clubs have no calendar, so their recovery and training are folded into each match
@@ -618,7 +621,7 @@ function newSeason(moveTo){
       else if(p.age<=32)p.ovr+=ri(-1,1);  // peak years: holds steady until 33
       else if(p.age<=34)p.ovr-=ri(1,3);
       else p.ovr-=ri(2,5);
-      p.ovr=clamp(p.ovr,35,92);p.pot=Math.max(p.pot,p.ovr);
+      p.ovr=clamp(p.ovr,35,92);p.pot=p.age>=33?p.ovr:Math.max(p.pot,p.ovr);  // past 33 the decline is for good
       t.condDay=0;t.lastDay=-9;p.cond=100;p.inj=0;p.ban=0;p.away=0;p.yc=0;p.goals=0;p.ast=0;p.ss=null;p.apps=0;p.lapps=0;p.rs=0;p.rn=0;p.gain=p.ovr-old;giveSig(p);
     });
     const out=t.players.filter(p=>rng()<retireChance(p));
