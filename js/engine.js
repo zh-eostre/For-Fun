@@ -126,16 +126,29 @@ function makePlayer(pos,base,age){
 const sigCount=t=>t.players.filter(p=>p.sig).length;
 // in form this season: enough rated matches and an average of at least SIG_FORM
 const inForm=(p,n=5)=>(p.rn||0)>=n&&avgRating(p)>=SIG_FORM;
-// a player learns a signature move with the given chance, if he has none and his club is under its SIG_CAP.
-// returns true when he does
+// a player good enough (SIG_OVR) learns a signature move with the given chance, if he has none. a club holds at most SIG_CAP: when it is
+// full, the holder in the worst form this season (if clearly worse than the newcomer) loses his to make room.
+// returns true when he learns one
+const formNow=p=>(p.rn||0)>=5?avgRating(p):0;
 function learnSig(p,chance){
-  const f=findAny(p.id);if(!f||p.sig||sigCount(f.t)>=SIG_CAP||rng()>=chance)return false;
+  const f=findAny(p.id);if(!f||p.sig||p.ovr<SIG_OVR||rng()>=chance)return false;
+  if(sigCount(f.t)>=SIG_CAP){
+    const weakest=f.t.players.filter(x=>x.sig).sort((a,b)=>formNow(a)-formNow(b))[0];
+    if(!weakest||formNow(weakest)>formNow(p)-.3)return false;
+    if(f.t.id===S.my)news(`${weakest.name} 的必杀技「${weakest.sig}」渐渐生疏，${p.name} 接过了王牌的担子。`);
+    delete weakest.sig;
+  }
   p.sig=pick(SIG_A)+'·'+pick(SIG_B);return true;
 }
-// end of season: every division's best-rated players (8+ rated matches) may learn one
+// end of season: moves fade for veterans past their best and anyone who had a poor season; then every division's
+// best-rated players (8+ rated matches) who don't have one yet may learn one
 function seasonSigs(){
-  DIVS.forEach((_,d)=>S.teams.filter(t=>t.div===d).flatMap(t=>t.players).filter(p=>(p.rn||0)>=8)
-    .sort((a,b)=>avgRating(b)-avgRating(a)).slice(0,SIG_TOPN)
+  S.teams.forEach(t=>t.players.forEach(p=>{
+    if(!p.sig)return;const n=p.rn||0,a=avgRating(p);
+    if((p.age>=33&&(n<8||a<6.9))||(n>=8&&a<6.5)){if(t.id===S.my)news(`${p.name} 状态下滑，必杀技「${p.sig}」生疏了。`);delete p.sig}
+  }));
+  DIVS.forEach((_,d)=>S.teams.filter(t=>t.div===d).flatMap(t=>t.players).filter(p=>!p.sig&&p.ovr>=SIG_OVR&&(p.rn||0)>=8)
+    .sort((a,b)=>avgRating(b)-avgRating(a)).slice(0,SIG_TOPN[d])
     .forEach(p=>{if(learnSig(p,.4)&&my().players.includes(p))news(`${p.name} 凭借出色的赛季表现，领悟了必杀技「${p.sig}」！`)}));
 }
 function awaken(p){
