@@ -19,7 +19,7 @@ const trial=c=>{let w=0;for(let k=0;k<300;k++){strong.players.forEach(p=>{p.cond
 const fresh=trial(100),tired=trial(55);
 ok(tired>fresh+10,'甲级 bottom side avoids defeat vs a giant: '+fresh+'% when the giant is fresh, '+tired+'% when it is tired');
 // counter-attack bonus
-ok(counter('def','att')===3&&counter('att','def')===0&&counter('def','def')===0,'防守反击 gets +3 attack against 全力进攻');
+ok(counter('def','att')===2&&counter('att','def')===0&&counter('def','def')===0,'防守反击 gets +2 attack against 全力进攻');
 S.day=day0;  // the recovery checks above moved the date by hand; put it back before playing
 // live match: our tired players come off automatically; pausing opens the substitution panel
 ACT.ff();S.event=null;S.offer=null;S.autoSub=true;my().players.forEach(p=>p.cond=60);

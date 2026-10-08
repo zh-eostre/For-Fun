@@ -190,7 +190,8 @@ function strength(team,ids,tac,home,bonus=0,form='4-4-2'){
   const gk=g.GK.length?g.GK[0]:25,d=avg(g.DF),m=avg(g.MF),f=avg(g.FW);
   let atk=f*.5+m*.4+d*.1+(g.FW.length-2)*2+(g.MF.length-4)*.8+tilt;
   let def=d*.5+gk*.3+m*.2+(g.DF.length-4)*2+(g.MF.length-4)*.8-tilt;
-  if(tac==='att'){atk+=4;def-=4}else if(tac==='def'){atk-=4;def+=4}
+  // all out gains a little more going forward than it gives away at the back, so it pays when you're the better side
+  if(tac==='att'){atk+=6;def-=4}else if(tac==='def'){atk-=4;def+=4}
   if(home){atk+=1.5;def+=1}
   const miss=11-n;atk-=miss*6-bonus;def-=miss*6-bonus;
   return {atk,def};
@@ -335,7 +336,7 @@ function aiRecover(t){
 // covered: midfielders run the most, keepers hardly at all. enough that fresh legs from the bench matter by the hour
 const DRAIN_ROLE={GK:.22,DF:.95,DM:1.1,MF:1.1,AM:1.05,FW:1};
 function drain(p,tac,role){
-  p.cond=Math.max(30,p.cond-.33*(DRAIN_ROLE[role]??1)*(tac==='att'?1.12:tac==='def'?.9:1)*(p.age>=31?1.15:1)*(.8+rng()*.4));
+  p.cond=Math.max(30,p.cond-.33*(DRAIN_ROLE[role]??1)*(tac==='att'?1.08:tac==='def'?.95:1)*(p.age>=31?1.15:1)*(.8+rng()*.4));
 }
 // tired legs: from the hour a side swaps its most exhausted outfield player (below TIRED stamina) for a fresh one of
 // the same role (one change every 5 minutes, keeping the last substitution for injuries until the 80th). [out, in] or null
@@ -352,7 +353,7 @@ function tiredSwap(team,ids,xi,form,used,min){
   return null;
 }
 // a side sitting deep against a side attacking all out gets a counter-attack bonus
-const counter=(mine,theirs)=>mine==='def'&&theirs==='att'?3:0;
+const counter=(mine,theirs)=>mine==='def'&&theirs==='att'?2:0;
 // AI clubs line up in a formation that rates best with the players they have. any within half a point of the best
 // will do, and each club has its own order of favourites among those, so the league isn't all 4-4-2.
 // deterministic, so the opponent preview shows the formation the match will use
