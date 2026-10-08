@@ -2,3 +2,6 @@
 # personal save files (the folder itself is kept)
 saves/*.json
 tools/.corpus/
+
+# screenshots taken while working on the game
+/*.png
