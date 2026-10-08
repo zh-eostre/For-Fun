@@ -14,7 +14,8 @@ M=null;UI.view='main';
 S.friendlies.forEach(f=>f.res={hg:0,ag:0});  // skip the preseason friendlies so four days are free
 const p=my().players.find(x=>!unavail(x));p.inj=4;dropFromLineup(p.id);
 const log={days:0,cond:0,trained:[],healed:[]};let d=0;while(p.inj>0&&advanceDay(log))d++;
-ok(p.inj===0&&d===4&&log.healed.includes(p),'a 4-day injury heals after 4 calendar days');
+// (a surprise visit from the old healer can cure him sooner)
+ok(p.inj===0&&(d===4&&log.healed.includes(p)||d<4&&(log.surprises||[]).length>0),'a 4-day injury heals after 4 calendar days ('+d+')');
 UI.tab='squad';p.inj=6;render();ok(/伤停 6 天/.test(els.app.innerHTML),'squad shows 伤停 6 天');
 // value: no discount until 31
 const v=a=>value({age:a,ovr:75,pot:75});ok(v(30)===v(29)&&v(31)<v(30),'value 29:'+v(29)+' 30:'+v(30)+' 31:'+v(31));

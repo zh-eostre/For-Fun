@@ -319,7 +319,8 @@ function afterMatch(team,xi,isMy,friendly){
   const grown=[],awoken=[];
   // AI clubs develop players according to where they stand against their 底蕴: below their level faster,
   // above it slower. this anchors each club near its tier instead of the whole league drifting upward
-  const g=isMy?0:aiGap(team),aiGrow=isMy?0:.17*(.7+(team.rep||50)/100*.7)*(g>2?1.5:g<-2?.25:1);
+  // an AI club well above its 底蕴's level stops developing until it falls back, so the league can't drift upward
+  const g=isMy?0:aiGap(team),aiGrow=isMy?0:.17*(.7+(team.rep||50)/100*.7)*(g>2?1.5:g>0?1:g>-2?.4:0);
   if(isMy)team.players.forEach(p=>p.gain=0);
   team.players.forEach(p=>{
     const played=xi.includes(p.id);
@@ -452,7 +453,7 @@ function leagueShift(){
 // the season's transfer list, generated at the start of the season (n players; the scouts can add more later)
 function refreshMarket(){S.market=[];addToMarket(marketSize(),true)}
 function addToMarket(n,season){
-  const sh=leagueShift(),start=S.market.length;
+  const sh=Math.round(leagueShift()/2),start=S.market.length;  // half the league's rise, so the market doesn't feed it
   for(let i=0;i<n;i++){
     const pos=pick(['GK','DF','DF','DF','MF','MF','MF','FW','FW','FW']);
     let p;

@@ -94,7 +94,7 @@ const OOP=.85;           // ability multiplier for a player in another outfield 
 const SIG_OVR=88,SIG_FADE=34;
 const SIG_A=['苍雷','黑炎','绝影','天狼','冥王','流星','修罗','月影','虚空','龙卷','赤焰','霜华','雷神','幻影','极光'];
 const SIG_B=['贯穿','断罪','葬送','乱舞','一闪','崩坏','螺旋','终焉','天翔','灭杀','裂空','轮回'];
-const AWAKEN=.015;       // chance per match that a player aged 23 or under awakens
+const AWAKEN=.004;       // chance per match that a player aged 23 or under awakens (rare: once in a career for a few)
 const BOOST=2;           // strength bonus while morale is high (after a derby win or some events)
 const OFFER_CHANCE=.2;   // chance after each match that an AI club bids for one of your players
 const EVENT_CHANCE=.2;   // chance after each match of a random event
