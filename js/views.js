@@ -535,7 +535,7 @@ function vLiveStamina(){
   const ps=M[s+'Ids'].map((id,i)=>{const p=id!=null&&findP(id);return p&&{p,r:roles[i]}}).filter(Boolean).sort((a,b)=>a.p.cond-b.p.cond);
   return `<div class="livecond"><div class="lc-head"><b>场上体能</b><span class="muted">${oppLine()}</span></div>
   <div class="lc-list">${ps.map(({p,r})=>{const c=Math.round(p.cond);return `<span class="lc ${c<60?'bad':c<TIRED?'warn':''}"><span class="lc-n">${POS[r][0]} ${pName(p)}</span><span class="lc-bar"><i style="width:${c}%"></i></span><b class="num">${c}</b></span>`}).join('')}
-  ${offPitch().map(p=>`<span class="lc gone"><span class="lc-n">${subMark(p.id).trim()} ${pName(p)}</span><span class="lc-bar"><i style="width:${Math.round(p.cond)}%"></i></span><b class="num">${Math.round(p.cond)}</b></span>`).join('')}</div></div>`;
+</div></div>`;
 }
 // our players who played and are no longer on the pitch (taken off or sent off), in the order they left
 const offPitch=()=>{const s=mySide();return M[s+'XI'].filter(id=>id!=null&&!M[s+'Ids'].includes(id)&&!pendingSub(id,'out')).map(findP).filter(Boolean).sort((a,b)=>(M.off[a.id]??0)-(M.off[b.id]??0))};
