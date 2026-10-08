@@ -90,9 +90,10 @@ const ACADEMY_COST=[0,80,150,250,400];
 const FAC_COST=[0,60,120,200,320];
 const SUBS=5;          // halftime substitutions allowed
 const OOP=.85;           // ability multiplier for a player in another outfield line (keeper <-> outfield is .5)
-// signature moves are for the league's elite: only players in its top SIG_TOP by ability (never below SIG_FLOOR)
-// can learn one, at most SIG_CAP per club, and only at a big moment (see learnSig in engine.js)
-const SIG_TOP=.03,SIG_CAP=2,SIG_FLOOR=75;
+// signature moves are earned by playing well, not by ability alone (see learnSig in engine.js): each summer the
+// SIG_TOPN best-rated players of every division may learn one, and in a season so far averaging SIG_FORM or better a
+// hat-trick or an 8.5+ game can bring one. at most SIG_CAP per club
+const SIG_CAP=2,SIG_TOPN=3,SIG_FORM=7.2;
 const SIG_A=['苍雷','黑炎','绝影','天狼','冥王','流星','修罗','月影','虚空','龙卷','赤焰','霜华','雷神','幻影','极光'];
 const SIG_B=['贯穿','断罪','葬送','乱舞','一闪','崩坏','螺旋','终焉','天翔','灭杀','裂空','轮回'];
 const AWAKEN=.015;       // chance per match that a player aged 23 or under awakens
