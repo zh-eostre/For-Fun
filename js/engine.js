@@ -68,10 +68,12 @@ const MIGRATE={
   // v15 -> v16: the three-division pyramid. a save from the 2 x 10 format finishes its season as it is (the new
   // 丙级 stays empty) and grows at the next season start (growLeague in club.js)
   15:d=>{while(d.fixtures.length<DIVS.length)d.fixtures.push([]);while(d.results.length<DIVS.length)d.results.push([])},
-  // v16 -> v17: signature moves became rare. each club keeps them only for its best SIG_CAP holders among the league's
+  // v16 -> v17: signature moves became rare. each club keeps them only for its best two holders among the league's
   // most able (top few percent); everyone else's move is gone
-  16:d=>{const o=d.teams.flatMap(t=>t.players.map(p=>p.ovr)).sort((a,b)=>b-a),bar=Math.max(75,o[Math.floor(o.length*.03)]||75);d.teams.forEach(t=>{const keep=t.players.filter(p=>p.sig&&p.ovr>=bar-2).sort((a,b)=>b.ovr-a.ovr).slice(0,SIG_CAP);
-      t.players.forEach(p=>{if(p.sig&&!keep.includes(p))delete p.sig})})}
+  16:d=>{const o=d.teams.flatMap(t=>t.players.map(p=>p.ovr)).sort((a,b)=>b-a),bar=Math.max(75,o[Math.floor(o.length*.03)]||75);d.teams.forEach(t=>{const keep=t.players.filter(p=>p.sig&&p.ovr>=bar-2).sort((a,b)=>b.ovr-a.ovr).slice(0,2);
+      t.players.forEach(p=>{if(p.sig&&!keep.includes(p))delete p.sig})})},
+  // v17 -> v18: signature moves simply follow ability (88+) and age (gone at 34)
+  17:d=>d.teams.forEach(t=>t.players.forEach(p=>{if(p.ovr<88||p.age>=34)delete p.sig;else if(!p.sig)p.sig=pick(SIG_A)+'·'+pick(SIG_B)}))
 };
 // a save can come from anywhere (a shared file, an edited one), and its text ends up in the page's HTML, so
 // every string in it loses the characters that could form markup before the game touches it
@@ -124,35 +126,13 @@ function makePlayer(pos,base,age){
   return {id:S.pid++,name:genName(),pos,ovr,age,pot,cond:100,inj:0,ban:0,away:0,yc:0,goals:0,apps:0};
 }
 const sigCount=t=>t.players.filter(p=>p.sig).length;
-// in form this season: enough rated matches and an average of at least SIG_FORM
-const inForm=(p,n=5)=>(p.rn||0)>=n&&avgRating(p)>=SIG_FORM;
-// a player good enough (SIG_OVR) learns a signature move with the given chance, if he has none. a club holds at most SIG_CAP: when it is
-// full, the holder in the worst form this season (if clearly worse than the newcomer) loses his to make room.
-// returns true when he learns one
-const formNow=p=>(p.rn||0)>=5?avgRating(p):0;
-function learnSig(p,chance){
-  const f=findAny(p.id);if(!f||p.sig||p.ovr<SIG_OVR||rng()>=chance)return false;
-  if(sigCount(f.t)>=SIG_CAP){
-    const weakest=f.t.players.filter(x=>x.sig).sort((a,b)=>formNow(a)-formNow(b))[0];
-    if(!weakest||formNow(weakest)>formNow(p)-.3)return false;
-    if(f.t.id===S.my)news(`${weakest.name} 的必杀技「${weakest.sig}」渐渐生疏，${p.name} 接过了王牌的担子。`);
-    delete weakest.sig;
-  }
+// a player learns a signature move once his ability reaches SIG_OVR (and he's younger than SIG_FADE); returns true when he does
+function learnSig(p){
+  if(p.sig||p.ovr<SIG_OVR||p.age>=SIG_FADE)return false;
   p.sig=pick(SIG_A)+'·'+pick(SIG_B);return true;
 }
-// end of season: moves fade for veterans past their best and anyone who had a poor season; then every division's
-// best-rated players (8+ rated matches) who don't have one yet may learn one
-function seasonSigs(){
-  S.teams.forEach(t=>t.players.forEach(p=>{
-    if(!p.sig)return;const n=p.rn||0,a=avgRating(p);
-    if((p.age>=33&&(n<8||a<6.9))||(n>=8&&a<6.5)){if(t.id===S.my)news(`${p.name} 状态下滑，必杀技「${p.sig}」生疏了。`);delete p.sig}
-  }));
-  DIVS.forEach((_,d)=>S.teams.filter(t=>t.div===d).flatMap(t=>t.players).filter(p=>!p.sig&&p.ovr>=SIG_OVR&&(p.rn||0)>=8)
-    .sort((a,b)=>avgRating(b)-avgRating(a)).slice(0,SIG_TOPN[d])
-    .forEach(p=>{if(learnSig(p,.4)&&my().players.includes(p))news(`${p.name} 凭借出色的赛季表现，领悟了必杀技「${p.sig}」！`)}));
-}
 function awaken(p){
-  const a=ri(2,4);p.pot=Math.min(95,p.pot+ri(4,8));p.ovr=Math.min(p.pot,p.ovr+a);p.gain=(p.gain||0)+a;if(inForm(p))learnSig(p,.5);
+  const a=ri(2,4);p.pot=Math.min(95,p.pot+ri(4,8));p.ovr=Math.min(p.pot,p.ovr+a);p.gain=(p.gain||0)+a;learnSig(p);
 }
 function value(p){const f=p.age<=23?1.3:p.age<=30?1:p.age<=32?.7:.45,r=p.age<=23?p.ovr*.6+p.pot*.4:p.ovr;return Math.max(5,Math.round(((r-35)**2)/6*f))}
 // what buyers pay: academy kids who haven't proven themselves in the first team are valued on ability alone
@@ -350,7 +330,7 @@ function afterMatch(team,xi,isMy,friendly){
     if(!friendly&&p.away>0&&!played)p.away--;
     if(p.ovr<p.pot){
       const ch=isMy?(played?MATCH_GROW:0):aiGrow;
-      if(ch&&rng()<ch*growF(p)){p.ovr++;if(isMy){grown.push(p);p.gain=(p.gain||0)+1}}
+      if(ch&&rng()<ch*growF(p)){p.ovr++;learnSig(p);if(isMy){grown.push(p);p.gain=(p.gain||0)+1}}
     }
     if(p.age<=23&&p.pot<95&&rng()<AWAKEN){awaken(p);if(isMy)awoken.push(p)}
   });
@@ -546,8 +526,7 @@ function newGame(id,names){
   usedNames=new Set();
   S.teams=TEAMS.map((t,i)=>({...t,...names[i],id:i,players:makeSquad(t.str)}));
   S.fixtures=newFixtures();S.results=DIVS.map(()=>[]);S.cup=newCup();S.rival=pickRival();
-  // the league's established stars start with their moves: its ten most able players
-  S.teams.flatMap(t=>t.players).sort((a,b)=>b.ovr-a.ovr).slice(0,10).forEach(p=>learnSig(p,1));
+  S.teams.forEach(t=>t.players.forEach(learnSig));
   S.budget=startBudget(TEAMS[id]);
   S.lineup=autoPick(my(),S.formation);S.autoXI=true;
   S.pre=PRESEASON;refreshMarket();planFriendlies();
@@ -635,7 +614,6 @@ function newSeason(moveTo){
   S.history.push({season:S.season,div,rank,pts:table()[rank-1].pts,club:my().name});
   S.budget+=prize;
   recordSeason(div,rank);
-  seasonSigs();  // before this season's ratings are cleared
   payGoals(div);
   endLoans();
   // 底蕴 from the final tables, then promotion and relegation between neighbouring divisions
@@ -656,6 +634,8 @@ function newSeason(moveTo){
       else p.ovr-=ri(2,5);
       p.ovr=clamp(p.ovr,35,92);p.pot=p.age>=33?p.ovr:Math.max(p.pot,p.ovr);  // past 33 the decline is for good
       t.condDay=0;t.lastDay=-9;p.cond=100;p.inj=0;p.ban=0;p.away=0;p.yc=0;p.goals=0;p.ast=0;p.ss=null;p.apps=0;p.lapps=0;p.rs=0;p.rn=0;p.gain=p.ovr-old;
+      if(p.sig&&p.age>=SIG_FADE){if(t.id===S.my)news(`${p.name} 年满 ${p.age} 岁，必杀技「${p.sig}」渐渐生疏了。`);delete p.sig}
+      else if(learnSig(p)&&t.id===S.my)news(`${p.name} 能力升至 ${p.ovr}，领悟了必杀技「${p.sig}」！`);
     });
     const out=t.players.filter(p=>rng()<retireChance(p));
     if(t.id===S.my)out.forEach(p=>{retired.push(p.name);retireLegend(p)});
@@ -721,7 +701,7 @@ function advanceDay(log){
     p.cond=clamp(p.cond+(wasHurt?restAmt():mode.cond),30,100);
     if(wasHurt&&--p.inj===0)(log.healed||(log.healed=[])).push(p);
     log.cond+=p.cond-before;
-    if(mode.grow&&!p.inj&&!p.away&&p.ovr<p.pot&&rng()<mode.grow*growF(p)*groundMult()){p.ovr++;p.gain=(p.gain||0)+1;log.trained.push(p)}
+    if(mode.grow&&!p.inj&&!p.away&&p.ovr<p.pot&&rng()<mode.grow*growF(p)*groundMult()){p.ovr++;p.gain=(p.gain||0)+1;learnSig(p);log.trained.push(p)}
   });
   log.days++;
   windowDay();

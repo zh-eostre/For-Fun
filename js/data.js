@@ -1,6 +1,6 @@
 /* ---------- constants, shared state, small helpers ---------- */
 const KEY='lvyin-fm-v1';  // localStorage key; kept as-is so old saves are still found
-const SAVE_V=17;         // bump when the save format changes, and add a step to MIGRATE in engine.js
+const SAVE_V=18;         // bump when the save format changes, and add a step to MIGRATE in engine.js
 // a club's base strength (its typical best-XI level) from its 底蕴: 98 → 84, 86 → 80, 50 → 68, 14 → 55
 function strFromRep(rep){return Math.round(50+rep*.35)}
 const TIERS=[[80,'豪门'],[65,'强队'],[45,'中游'],[0,'弱旅']];
@@ -90,10 +90,8 @@ const ACADEMY_COST=[0,80,150,250,400];
 const FAC_COST=[0,60,120,200,320];
 const SUBS=5;          // halftime substitutions allowed
 const OOP=.85;           // ability multiplier for a player in another outfield line (keeper <-> outfield is .5)
-// signature moves need ability (SIG_OVR) and are earned by playing well (see learnSig in engine.js): each summer the
-// best-rated players of every division (more at the top) may learn one, and in a season so far averaging SIG_FORM or better a
-// hat-trick or an 8.5+ game can bring one. at most SIG_CAP per club
-const SIG_OVR=75,SIG_CAP=2,SIG_TOPN=[3,2,1],SIG_FORM=7.2;  // SIG_OVR: the ability needed at all; SIG_TOPN: candidates each summer per division
+// signature moves: a player learns one the moment his ability goes above 87, and it fades in the summer he turns 34
+const SIG_OVR=88,SIG_FADE=34;
 const SIG_A=['苍雷','黑炎','绝影','天狼','冥王','流星','修罗','月影','虚空','龙卷','赤焰','霜华','雷神','幻影','极光'];
 const SIG_B=['贯穿','断罪','葬送','乱舞','一闪','崩坏','螺旋','终焉','天翔','灭杀','裂空','轮回'];
 const AWAKEN=.015;       // chance per match that a player aged 23 or under awakens
