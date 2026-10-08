@@ -621,7 +621,7 @@ dialog.modal.wide{max-width:860px}
 #fx.party{background:rgba(10,15,12,.35)}
 #fx i{position:absolute;top:-12px;width:8px;height:14px;border-radius:2px;animation:fall 3.2s linear forwards}
 @keyframes fall{to{transform:translateY(105vh) rotate(720deg)}}
-@media (prefers-reduced-motion:no-preference){#fx.show .fx-box{animation:fxpop 1.8s ease-out forwards}#fx.party .fx-box{animation:fxpop 4.5s ease-out forwards}}
+@media (prefers-reduced-motion:no-preference){#fx.show .fx-box{animation:fxpop 2.8s ease-out forwards}#fx.party .fx-box{animation:fxpop 4.5s ease-out forwards}}
 @keyframes fxpop{0%{transform:scale(.3);opacity:0}12%{transform:scale(1.12);opacity:1}20%{transform:scale(1)}80%{opacity:1}100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){#fx i{display:none}}
 /* season-end glory */
@@ -762,3 +762,13 @@ button.xi-tok{cursor:pointer}
 .subwho{display:flex;flex-direction:column;font-size:13px;min-width:0}
 .subwho>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .subwho small{font-size:11px;color:var(--muted);margin-left:4px}
+
+/* signature move cut-in */
+#fx.sig{background:rgba(10,15,12,.35)}
+#fx .cut{width:120vw;transform:rotate(-6deg);padding:14px 0;text-align:center;display:flex;flex-direction:column;align-items:center;gap:2px;
+  background:linear-gradient(90deg,transparent,var(--c) 18%,#18201B 50%,var(--c) 82%,transparent);color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+#fx .cut small{font-size:13px;letter-spacing:.3em;color:#F5B841;font-weight:700}
+#fx .cut b{font-size:clamp(30px,8vw,64px);line-height:1.1;text-shadow:0 3px 0 rgba(0,0,0,.5),0 0 24px rgba(245,184,65,.6)}
+#fx .cut span{font-size:clamp(14px,3.5vw,20px);font-weight:700}
+@media (prefers-reduced-motion:no-preference){#fx.sig .cut{animation:cutin 1.3s cubic-bezier(.2,.8,.2,1) forwards}
+  @keyframes cutin{0%{transform:translateX(-60%) rotate(-6deg);opacity:0}18%{transform:translateX(0) rotate(-6deg);opacity:1}80%{transform:translateX(0) rotate(-6deg);opacity:1}100%{transform:translateX(30%) rotate(-6deg);opacity:0}}}

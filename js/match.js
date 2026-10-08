@@ -98,27 +98,37 @@ function side(s,p){
   const team=S.teams[s==='h'?M.h:M.a],ids=s==='h'?M.hIds:M.aIds,form=M[s+'Form'],mine=team.id===S.my,r=rng();
   const opp=S.teams[s==='h'?M.a:M.h],gk=keeper(opp,s==='h'?M.aIds:M.hIds);
   const ev=id=>M.ev[id]||(M.ev[id]={}),st=M.st[s];
-  const goal=(sc,t,sig)=>{
+  // a signature move that decides something: a cut-in banner first, and the match holds for it
+  const sigShow=(p,t)=>{if(M.skip)return false;M.hold=Math.max(M.hold||0,Date.now()+1400);cutIn(p.name,p.sig,t.color);return true};
+  // goal: sig marks a signature goal; by = a midfielder whose signature pass made it (he gets the assist)
+  const goal=(sc,t,sig,by)=>{
     // goals and assists in friendlies show in the match but don't count toward season tallies
     if(!M.friendly)sc.goals++;
     M.goals[sc.id]=(M.goals[sc.id]||0)+1;ev(sc.id).g=(ev(sc.id).g||0)+1;if(sig)ev(sc.id).sig=(ev(sc.id).sig||0)+1;st.sh++;st.on++;
-    const a=assister(team,ids,form,sc);if(a){ev(a.id).a=(ev(a.id).a||0)+1;if(!M.friendly)a.ast=(a.ast||0)+1}
+    const a=by||assister(team,ids,form,sc);if(a){ev(a.id).a=(ev(a.id).a||0)+1;if(!M.friendly)a.ast=(a.ast||0)+1}
+    if(by)ev(by.id).sig=(ev(by.id).sig||0)+1;
     if(s==='h')M.hg++;else M.ag++;
     M.flash=s;M.feed.unshift({min:M.min,cls:'goal '+(mine?'mine':'theirs'),t:`进球！${t}（${team.short}${a?` · 助攻 ${a.name}`:''}）`});
-    if(!M.skip)M.hold=Date.now()+(mine?1500:800);
+    const star=by||(sig?sc:null);  // a signature move behind it: its cut-in plays first
+    if(!M.skip)M.hold=Date.now()+(mine?2600:800)+(star?1300:0);
     if(!mine&&!M.skip)notice('against',`失球 ${M.min}'　${M.hg} : ${M.ag}`,`${sc.name}（${team.short}）${a?` · 助攻 ${a.name}`:''}`);
-    if(mine&&!M.skip){const n=M.goals[sc.id];celebrate('GOAL!',`${sc.name}${n===2?' · 梅开二度':n===3?' · 帽子戏法':n>3?` · 大四喜`:''}　${M.hg} : ${M.ag}`,n>=2?'brace':'goal')}
+    const n=M.goals[sc.id],cel=()=>celebrate('GOAL!',`${sc.name}${n===2?' · 梅开二度':n===3?' · 帽子戏法':n>3?` · 大四喜`:''}　${M.hg} : ${M.ag}`,n>=2?'brace':'goal');
+    if(!M.skip){if(star)cutIn(star.name,star.sig,team.color,mine?cel:null);else if(mine)cel()}
     announce(`${M.min} 分钟，${team.short}进球，比分 ${M.hg} 比 ${M.ag}`);
   };
+  const oppIds=s==='h'?M.aIds:M.hIds,blocker=sigOn(opp,oppIds,'DF');
   if(r<p){
     const sc=scorer(team,ids,form);
-    // a keeper with a signature move can occasionally deny a sure goal
-    if(gk&&gk.sig&&rng()<.08){M.feed.unshift({min:M.min,cls:'save',t:LINE.sigSave(gk.name,gk.sig,sc.name)});ev(gk.id).sv=(ev(gk.id).sv||0)+1;st.sh++;st.on++}
+    // a defender with a signature move can throw himself in front of a sure goal; a keeper with one can deny it
+    if(blocker&&rng()<.05){M.feed.unshift({min:M.min,cls:'save',t:LINE.sigBlock(blocker.name,blocker.sig,sc.name)});ev(blocker.id).blk=(ev(blocker.id).blk||0)+1;st.sh++;sigShow(blocker,opp)}
+    else if(gk&&gk.sig&&rng()<.08){M.feed.unshift({min:M.min,cls:'save',t:LINE.sigSave(gk.name,gk.sig,sc.name)});ev(gk.id).sv=(ev(gk.id).sv||0)+1;st.sh++;st.on++;sigShow(gk,opp)}
     else{const sig=sc.sig&&rng()<.4;goal(sc,sig?LINE.sigGoal(sc.name,sc.sig):pick(GOAL)(sc.name),sig)}
   }else if(r<p*2.2){
-    const sc=scorer(team,ids,form);
+    const sc=scorer(team,ids,form),maker=sigOn(team,ids,'MF',sc);
     // a shooter with a signature move can occasionally turn a chance into a goal
     if(sc.sig&&rng()<.12*(mine&&M.min>=75?1+((S.mgr&&S.mgr.rep)||0)/100:1))goal(sc,LINE.sigGoal(sc.name,sc.sig),true);
+    // or a midfielder with one plays the pass that makes it a sure thing
+    else if(maker&&rng()<.04)goal(sc,LINE.sigPass(maker.name,maker.sig,sc.name),false,maker);
     // otherwise half of the near-misses are saves, credited to the opposing keeper if he's still on the pitch
     else if(gk&&rng()<.5){M.feed.unshift({min:M.min,cls:'',t:gk.sig&&rng()<.5?LINE.sigSave(gk.name,gk.sig,sc.name):pick(SAVE)(sc.name,gk.name)});ev(gk.id).sv=(ev(gk.id).sv||0)+1;st.sh++;st.on++}
     else{M.feed.unshift({min:M.min,cls:'',t:pick(MISS)(sc.name)});ev(sc.id).miss=(ev(sc.id).miss||0)+1;st.sh++}
@@ -145,6 +155,10 @@ function side(s,p){
       if(!(sub&&substitute(pl.id,sub.id,s,LINE.injSub(pl.name,sub.name),'inj')))M.feed.unshift({min:M.min,cls:'sys',t:LINE.injStay(pl.name)});
     }
   }
+}
+// the best man on the pitch for a side, in the given role, who has a signature move (not `but`)
+function sigOn(team,ids,role,but){
+  return onPitch(team,ids).filter(p=>p&&p!==but&&p.sig&&M.role[p.id]===role).sort((a,b)=>b.ovr-a.ovr)[0]||null;
 }
 // out must be on the pitch, in must not have played yet. s = 'h'/'a', defaults to our side
 // why: 'tired' / 'inj' for automatic changes, empty for ours by hand; every change is kept in M.subLog

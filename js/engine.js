@@ -256,7 +256,7 @@ function rate(p,role,ev={},gf,ga,mins=90,act){
   // the base needs time to show: on for 10 minutes it moves the rating about 30% as far from 6 as over an hour or more.
   // what he did himself (goals, assists, saves, misses, cards) counts in full however long he played
   const f=Math.min(1,.15+.85*mins/60);
-  const r=6+(base-6)*f+(ev.g||0)*(role==='FW'?1.25:1.1)+(ev.a||0)*.6+(ev.sig||0)*.2+(ev.sv||0)*.3-(ev.miss||0)*.15-(ev.yc||0)*.3-(ev.red||0)*1.5;
+  const r=6+(base-6)*f+(ev.g||0)*(role==='FW'?1.25:1.1)+(ev.a||0)*.6+(ev.sig||0)*.2+(ev.sv||0)*.3+(ev.blk||0)*.4-(ev.miss||0)*.15-(ev.yc||0)*.3-(ev.red||0)*1.5;
   // squeezed to the spread of real match ratings (average about 6.75, 8+ for roughly one starter in 17, 9+ about 1%,
   // under 6 about one in 10). the poor side is squeezed hardest; the very top less, so a man of the match is ~8.2.
   // the order of players within a match doesn't change

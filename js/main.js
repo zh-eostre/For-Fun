@@ -3,12 +3,19 @@
 function announce(t){const el=document.getElementById('sr');if(el)el.textContent=t}
 // the toast is a popover so it shows above an open <dialog> (both live in the browser's top layer)
 // a big moment over the page (goal, brace, title). it lives outside #app, so the per-minute redraw doesn't restart it
+// a signature move's cut-in: a slanted banner with the move and the player, in the club's colour; then (optional) next()
+function cutIn(name,sig,color,next){
+  const el=document.getElementById('fx');if(!el||!el.classList){if(next)next();return}
+  el.className='';el.innerHTML=`<div class="cut" style="--c:${color}"><small>必杀技发动</small><b class="disp">「${sig}」</b><span>${name}</span></div>`;
+  void el.offsetWidth;el.className='show sig';
+  clearTimeout(celebrate.t);celebrate.t=setTimeout(()=>{if(next)next();else{el.className='';el.innerHTML=''}},1300);
+}
 function celebrate(big,small,kind){
   const el=document.getElementById('fx');if(!el||!el.classList)return;
   const bits=kind==='party'?Array.from({length:70},(_,i)=>`<i style="left:${Math.random()*100}%;animation-delay:${(Math.random()*1.2).toFixed(2)}s;background:${['#F5B841','#4FA36F','#C6402F','#3567A6','#fff'][i%5]}"></i>`).join(''):'';
   el.className='';el.innerHTML=`<div class="fx-box"><b class="disp">${big}</b>${small?`<span>${small}</span>`:''}</div>${bits}`;
   void el.offsetWidth;el.className='show '+kind;
-  clearTimeout(celebrate.t);celebrate.t=setTimeout(()=>{el.className='';el.innerHTML=''},kind==='party'?4500:1800);
+  clearTimeout(celebrate.t);celebrate.t=setTimeout(()=>{el.className='';el.innerHTML=''},kind==='party'?4500:2800);
 }
 // a short card at the top for something that matters during a match (a change, an injury, a red card, a goal
 // against); several stack. the match holds for a moment (see M.hold in match.js)

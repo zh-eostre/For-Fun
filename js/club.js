@@ -331,7 +331,7 @@ const SURPRISES=[
   {w:2,run:()=>{const m=ri(20,50);S.budget+=m;return `球迷自发众筹，为球队送来 ${money(m)}！`}},
   {w:2,run:()=>{raiseMorale();return '一位退役的传奇前辈回到训练场为全队打气，下一场士气高涨！'}},
   {w:1,ok:()=>S.market.length>0,run:()=>{
-    const g=makeGem();S.market[ri(0,S.market.length-1)]=g;
+    const g=makeGem();S.market.push(g);  // added to the list (it used to replace someone already on it)
     return `一位老球探寄来密信：转会市场上有一颗被埋没的明珠，${g.name}（${POS[g.pos]}，${g.age} 岁）……`}},
   {w:1,ok:()=>!!S.academy,run:()=>{
     const p=makePlayer(pick(['DF','MF','FW']),40+S.academy.lv*3,ri(16,17));p.pot=ri(85,92);p.youth=true;scoutYouth(p,S.academy.lv);
