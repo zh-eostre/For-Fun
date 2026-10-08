@@ -592,3 +592,4 @@ dialog.modal.wide{max-width:860px}
 .lc.gone .lc-bar i{background:var(--muted)}
 .gone-row{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;padding-top:4px;border-top:1px dashed var(--line);margin-top:2px}
 .gone-row .num{font-size:13px}
+.tag2.now{background:var(--pitch-soft);color:var(--pitch)}

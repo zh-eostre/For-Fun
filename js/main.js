@@ -124,6 +124,7 @@ const ACT={
   recall:a=>{recallLoan(+a);save();render()},
   div:a=>{UI.div=+a;render()},
   lb:a=>{UI.lb=a;render()},
+  hlb:a=>{UI.hlb=a;render()},
   mf:a=>{const [k,v]=a.split(':');UI.mf[k]=v;UI.mpage=0;render()},
   closeReveal:()=>{UI.reveal=null;render()},
   scout:()=>{const c=scoutCost();if(S.budget<c){toast('资金不够');return}S.budget-=c;addToMarket(4);save();toast('球探带回了 4 名新球员');render()},

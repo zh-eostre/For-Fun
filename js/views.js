@@ -661,23 +661,32 @@ function vCup(){
   ${pending}
   <div class="grid2">${C.rounds.map((rd,k)=>`<section class="panel"><h2>${stageName(k)}</h2>${rd.map(row).join('')}</section>`).reverse().join('')}</div>`;
 }
+// our club's all-time boards: scorers, assists, average rating (players still here are marked)
+function vClubBoards(){
+  const all=clubCareer(),k=['goals','ast','rating'].includes(UI.hlb)?UI.hlb:'goals';
+  const B={goals:['射手',c=>c.goals,c=>c.goals,c=>`${c.apps} 场`],ast:['助攻',c=>c.ast||0,c=>c.ast||0,c=>`${c.goals} 球 · ${c.apps} 场`],
+    rating:['评分',c=>(c.rn||0)>=CAREER_RATED?c.rs/c.rn:0,c=>(c.rs/c.rn).toFixed(2),c=>`${c.rn} 场`]};
+  const [,val,label,sub]=B[k],list=all.filter(c=>val(c)>0).sort((a,b)=>val(b)-val(a)||a.apps-b.apps).slice(0,10);
+  const sw=`<div class="seg sm lb-switch">${Object.entries(B).map(([key,[l]])=>`<button data-act="hlb" data-arg="${key}" aria-pressed="${key===k}">${l}</button>`).join('')}</div>`;
+  return `<section class="panel"><h2>队史${B[k][0]}榜</h2>${sw}${list.length?list.map((c,i)=>`<div class="res" style="grid-template-columns:24px 1fr auto"><span class="muted">${i+1}</span><span style="text-align:left">${c.name}${c.now?' <span class="tag2 now">现役</span>':''} <span class="muted">${POS[c.pos]}，${sub(c)}</span></span><span class="num" style="min-width:0">${label(c)}</span></div>`).join('')
+    :`<p class="muted" style="margin:0">${k==='rating'?`在队有评分的比赛满 ${CAREER_RATED} 场的球员会列在这里（从这个版本起开始累计）。`:k==='ast'?'还没有人为球队助攻。':'还没有人为球队进球。'}</p>`}</section>`;
+}
 function vHonours(){
   const H=S.history,R=S.records;
   const count=(f)=>H.filter(f).length;
   const cups=R.filter(r=>r.cup===my().name).length+(S.cup.winner===S.my?1:0);
   const trophies=[['甲级冠军',count(h=>h.div===0&&h.rank===1)],['乙级冠军',count(h=>h.div===1&&h.rank===1)],[`${CUP_NAME}`,cups],['升级',count(h=>h.div===1&&h.rank<=SWAP)],['青训出身（现役）',my().players.filter(p=>p.youth).length]];
-  const sc=clubScorers();
   return `<div class="cols"><div class="col"><section class="panel"><h2>奖杯柜</h2><div class="trophies">${trophies.map(([l,n])=>`<div class="trophy ${n?'got':''}"><div class="num">${n}</div><div>${l}</div></div>`).join('')}</div></section>
   <section class="panel"><h2>称号 <span class="muted" style="font-weight:400;font-size:14px">${Object.keys(S.ach).length}/${Object.keys(ACH).length}</span></h2>
   <div class="achs">${Object.entries(ACH).map(([k,[n,d]])=>S.ach[k]
     ?`<div class="ach got"><b>「${n}」</b><span>${d}</span><small>第 ${S.ach[k]} 赛季解锁</small></div>`
     :`<div class="ach"><b>「？？？」</b><span>${d}</span></div>`).join('')}</div></section>
   </div><div class="col">
-  ${(()=>{const won=R.flatMap(r=>(r.awards||[]).flatMap((a,d)=>Object.entries(a).filter(([k,w])=>w&&w.tid===S.my).map(([k,w])=>({r,d,k,w})))
-      .concat((r.xi||[]).flatMap((l,d)=>l.filter(w=>w.tid===S.my).map(w=>({r,d,k:'xi',w})))));
+  ${(()=>{const won=R.flatMap(r=>(r.awards||[]).flatMap((a,d)=>Object.entries(a).filter(([k,w])=>w&&w.tid===(r.my??S.my)).map(([k,w])=>({r,d,k,w})))
+      .concat((r.xi||[]).flatMap((l,d)=>l.filter(w=>w.tid===(r.my??S.my)).map(w=>({r,d,k:'xi',w})))));
     return `<section class="panel"><h2>个人奖项${won.length?` <span class="muted" style="font-weight:400;font-size:13px">${won.length} 项</span>`:''}</h2>${won.length?'<div class="scrollbox">'+won.reverse().map(x=>`<div class="res" style="grid-template-columns:1fr auto"><span style="text-align:left">第 ${x.r.season} 季${DIVS[x.d]}${AWARDS[x.k]||'最佳阵容'}：${x.w.name}</span><span class="muted">${x.w.stat}</span></div>`).join('')+'</div>':'<p class="muted" style="margin:0">还没有球员拿过个人奖项。</p>'}</section>`})()}
-  <section class="panel"><h2>队史射手榜</h2>${sc.length?sc.map((c,i)=>`<div class="res" style="grid-template-columns:24px 1fr auto"><span class="muted">${i+1}</span><span style="text-align:left">${c.name} <span class="muted">${POS[c.pos]}，${c.apps} 场</span></span><span class="num" style="min-width:0">${c.goals}</span></div>`).join(''):'<p class="muted" style="margin:0">还没有人为球队进球。</p>'}</section>
-  <section class="panel"><h2>传奇退役${S.legends.length?` <span class="muted" style="font-weight:400;font-size:13px">${S.legends.length} 人</span>`:''}</h2>${S.legends.length?'<div class="scrollbox">'+[...S.legends].reverse().map(l=>`<div class="res" style="grid-template-columns:1fr auto"><span style="text-align:left">${l.name} <span class="muted">${POS[l.pos]}，第 ${l.season} 季退役${l.seasons?`，效力 ${l.seasons} 季`:''}${l.titles&&l.titles.length?`，${l.titles.length} 座冠军`:''}</span></span><span class="muted">${l.apps} 场 ${l.goals} 球</span></div>`).join('')+'</div>':`<p class="muted" style="margin:0">在队效力 ${LEGEND_TITLE_SEASONS} 季以上并帮球队夺冠，或效力 ${LEGEND_SEASONS} 季以上的球员，在队退役后会记在这里。</p>`}</section>
+  ${vClubBoards()}
+  <section class="panel"><h2>传奇退役${S.legends.length?` <span class="muted" style="font-weight:400;font-size:13px">${S.legends.length} 人</span>`:''}</h2>${S.legends.length?'<div class="scrollbox">'+[...S.legends].reverse().map(l=>`<div class="res" style="grid-template-columns:1fr auto"><span style="text-align:left">${l.name} <span class="muted">${POS[l.pos]}，第 ${l.season} 季${l.club&&l.club!==my().name?`于${l.club}`:''}退役${l.seasons?`，效力 ${l.seasons} 季`:''}${l.titles&&l.titles.length?`，${l.titles.length} 座冠军`:''}</span></span><span class="muted">${l.apps} 场 ${l.goals} 球</span></div>`).join('')+'</div>':`<p class="muted" style="margin:0">在队效力 ${LEGEND_TITLE_SEASONS} 季以上并帮球队夺冠，或效力 ${LEGEND_SEASONS} 季以上的球员，在队退役后会记在这里。</p>`}</section>
   ${vCareer()}
   <section class="panel"><h2>历届冠军</h2>${R.length?`<div class="tw scrollbox"><table class="sticky-head"><thead><tr><th>季</th><th>甲级</th><th>乙级</th><th>${CUP_NAME}</th><th>本队</th></tr></thead>
   <tbody>${R.slice().reverse().map(r=>`<tr><td>${r.season}</td><td>${r.champs[0]||'—'}</td><td>${r.champs[1]||'—'}</td><td>${r.cup||'—'}</td><td>${DIVS[r.div]}第 ${r.rank}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted" style="margin:0">打完第一个赛季后，这里会记录每季的冠军。</p>'}</section></div></div>`;

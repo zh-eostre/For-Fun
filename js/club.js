@@ -26,6 +26,7 @@ function rollOffer(){
 function bankPlayer(p){
   const c=S.club[p.id]||(S.club[p.id]={name:p.name,pos:p.pos,goals:0,apps:0});
   c.goals+=p.goals;c.ast=(c.ast||0)+(p.ast||0);c.apps+=p.apps;c.lapps=(c.lapps||0)+(p.lapps||0);
+  c.rs=(c.rs||0)+(p.rs||0);c.rn=(c.rn||0)+(p.rn||0);  // ratings, for the all-time rating board
 }
 function acceptOffer(){
   if(!windowOpen()){toast(windowShut());return}
@@ -127,7 +128,7 @@ function recordSeason(div,rank){
   const champ=d=>{const t=table(d)[0];return t&&t.name};
   const awards=DIVS.map((_,d)=>seasonAwards(d));
   const xi=DIVS.map((_,d)=>seasonXI(d));
-  S.records.push({season:S.season,champs:DIVS.map((_,d)=>champ(d)),cup:S.cup.winner!=null?S.teams[S.cup.winner].name:null,div,rank,awards,xi});
+  S.records.push({season:S.season,champs:DIVS.map((_,d)=>champ(d)),cup:S.cup.winner!=null?S.teams[S.cup.winner].name:null,div,rank,awards,xi,my:S.my});  // my: our club that season
   awards.forEach((a,d)=>Object.entries(a).forEach(([k,w])=>{if(w&&w.tid===S.my)news(`${w.name} 获得${DIVS[d]}${AWARDS[k]}（${w.stat}）！`)}));
   xi.forEach((l,d)=>{const m=l.filter(w=>w.tid===S.my);if(m.length)news(`${m.map(w=>w.name).join('、')} 入选${DIVS[d]}年度最佳阵容！`)});
   // trophies won this season; a player shares in one if he made TITLE_APPS appearances
@@ -145,15 +146,17 @@ const TITLE_APPS=5,LEGEND_TITLE_SEASONS=3,LEGEND_SEASONS=8;
 const isLegend=c=>!!c&&((c.seasons||0)>=LEGEND_SEASONS||((c.seasons||0)>=LEGEND_TITLE_SEASONS&&(c.titles||[]).length>0));
 function retireLegend(p){
   const c=S.club[p.id];
-  if(isLegend(c))S.legends.push({name:p.name,pos:p.pos,goals:c.goals,apps:c.apps,seasons:c.seasons,titles:c.titles||[],season:S.season});
+  if(isLegend(c))S.legends.push({name:p.name,pos:p.pos,goals:c.goals,apps:c.apps,seasons:c.seasons,titles:c.titles||[],season:S.season,club:my().name});
 }
-// all-time scorers for our club: banked seasons plus the current one
-function clubScorers(){
+// everyone's record at our club: banked seasons plus the current one (goals, assists, appearances, ratings)
+function clubCareer(){
   const m={};
-  Object.entries(S.club).forEach(([id,c])=>m[id]={...c});
-  my().players.forEach(p=>{const c=m[p.id]||(m[p.id]={name:p.name,pos:p.pos,goals:0,apps:0});c.goals+=p.goals;c.apps+=p.apps});
-  return Object.values(m).filter(c=>c.goals>0).sort((a,b)=>b.goals-a.goals||a.apps-b.apps).slice(0,10);
+  Object.entries(S.club).forEach(([id,c])=>m[id]={...c,id:+id});
+  my().players.forEach(p=>{const c=m[p.id]||(m[p.id]={name:p.name,pos:p.pos,goals:0,apps:0,id:p.id});
+    c.goals+=p.goals;c.ast=(c.ast||0)+(p.ast||0);c.apps+=p.apps;c.rs=(c.rs||0)+(p.rs||0);c.rn=(c.rn||0)+(p.rn||0);c.now=true});
+  return Object.values(m);
 }
+const CAREER_RATED=10;  // rated matches for the all-time rating board
 
 /* ---------- youth academy ---------- */
 // each season the academy sends 3 (4 from level 3) prospects with scout reports; better levels mean
@@ -477,5 +480,6 @@ function switchClub(o){
   S.my=t.id;S.budget=o.budget;
   S.fac={scout:lv,physio:lv,ground:lv,stadium:lv};S.academy={lv,intake:[]};
   S.offer=null;S.event=null;S.boost=0;S.streak=0;S.rival=pickRival();UI.selSlot=null;
+  S.club={};  // the club records (all-time boards, legend status) start afresh at the new club
   news(`你离开了 ${old.name}，正式执掌 ${t.name}（${DIVS[t.div]}，${tierOf(t.rep)}）！转会预算 ${money(o.budget)}。`);
 }
