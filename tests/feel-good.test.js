@@ -20,7 +20,7 @@ const b=myBoost();ok(b.atk>=(home?DESPAIR.home:DESPAIR.away)+2,'behind at '+M.mi
 ok(M.feed.filter(e=>/血液沸腾/.test(e.t)).length===1,'绝境爆发 is announced once');myBoost();ok(M.feed.filter(e=>/血液沸腾/.test(e.t)).length===1,'and not again');
 render();ok(/绝境爆发/.test(els.app.innerHTML)&&/名帅光环 \\+2/.test(els.app.innerHTML),'scoreboard shows the active boosts');
 // come back and win
-while(M.min<89)tick(true);if(home){M.hg=3;M.ag=2}else{M.hg=2;M.ag=3}M.trailed=true;
+while(M.min<89)tick(true);if(home){M.hg=4;M.ag=2}else{M.hg=2;M.ag=4}M.trailed=true;  // two clear: a goal in the last minute can't undo the win
 tick(true);
 ok(M.done&&!M.friendly&&S.ach.comeback&&S.news.some(n=>n.t.startsWith('逆转')),'winning from behind unlocks 「逆转之王」');
 // streak flame and season-end glory
