@@ -250,6 +250,9 @@ function finish(){
   matchActs();
   M.rh=rateSide(S.teams[M.h],M.hXI,M.role,M.ev,M.hg,M.ag,M.mins,false,M.act);M.ra=rateSide(S.teams[M.a],M.aXI,M.role,M.ev,M.ag,M.hg,M.mins,false,M.act);
   M.mvp=[...M.rh,...M.ra].sort((a,b)=>b.r-a.r)[0];
+  // a hat-trick or a game of 8.5+ is the kind of night a player can find a signature move in
+  [...M.rh,...M.ra].forEach(x=>{if(((M.ev[x.p.id]||{}).g||0)>=3||x.r>=8.5){if(learnSig(x.p,.5)){
+    const ours=my().players.includes(x.p);M.feed.unshift({min:90,cls:'sys',t:`${x.p.name} 在这场比赛中领悟了必杀技「${x.p.sig}」！`});if(ours)news(`${x.p.name} 在比赛中领悟了必杀技「${x.p.sig}」！`)}}});
   M.summary={w,mg,og,mp,op,pens,income,grown,awoken,banned};
   news(`${w} ${mg}:${og}${pens?`（点球 ${mp}:${op}）`:''} 对阵${S.teams[oppId].name}${M.derby?'（宿敌之战）':''}。比赛收入 ${money(income)}。`);
   hurt.forEach(p=>news(`${p.name} 受伤，预计伤停 ${p.inj} 天。`));

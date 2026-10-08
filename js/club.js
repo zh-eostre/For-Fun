@@ -63,11 +63,11 @@ const EVENTS={
     ['原封退回','什么都不会发生',()=>{}]]},
   homesick:{who:()=>pick(S.lineup.map(findP).filter(p=>p&&!unavail(p))),
     text:p=>`${p.name} 收到一封家书，想回家探亲一轮。`,opts:[
-    ['准假','他缺席下一场，回来后能力 +2',p=>{p.away=1;p.ovr=Math.min(95,p.ovr+2);p.pot=Math.max(p.pot,p.ovr);giveSig(p)}],
+    ['准假','他缺席下一场，回来后能力 +2',p=>{p.away=1;p.ovr=Math.min(95,p.ovr+2);p.pot=Math.max(p.pot,p.ovr);learnSig(p,.3)}],
     ['留下','他会留队，但心不在焉：体能 -20',p=>{p.cond=Math.max(30,p.cond-20)}]]},
   master:{who:()=>my().players.filter(p=>p.age<=23&&p.pot-p.ovr>=4).sort((a,b)=>b.pot-a.pot)[0],
     text:p=>`隐居山中的传奇教练路过，说 ${p.name} 身上有「龙的气息」，愿意指点一番，只收 40 万。`,opts:[
-    ['拜师','花 40 万，他的能力 +2、潜力 +4',p=>{S.budget-=40;p.pot=Math.min(95,p.pot+4);p.ovr=Math.min(p.pot,p.ovr+2);giveSig(p)},()=>S.budget>=40],
+    ['拜师','花 40 万，他的能力 +2、潜力 +4',p=>{S.budget-=40;p.pot=Math.min(95,p.pot+4);p.ovr=Math.min(p.pot,p.ovr+2);learnSig(p,.3)},()=>S.budget>=40],
     ['婉拒','什么都不会发生',()=>{}]]},
   storm:{text:()=>'一场暴风雨摧毁了训练场，草皮被掀得一片狼藉。',opts:[
     ['花 30 万抢修','资金 -30 万',()=>{S.budget-=30},()=>S.budget>=30],
@@ -278,7 +278,7 @@ function recallLoan(id){const p=findP(id);if(!p||!p.loan)return;if(squadFull()){
 function loanRound(){
   my().players.filter(p=>p.loan).forEach(p=>{
     p.lapps=(p.lapps||0)+1;
-    if(p.ovr<p.pot&&rng()<MATCH_GROW*growF(p)){p.ovr++;p.gain=(p.gain||0)+1;giveSig(p)}
+    if(p.ovr<p.pot&&rng()<MATCH_GROW*growF(p)){p.ovr++;p.gain=(p.gain||0)+1}
   });
 }
 function endLoans(){
@@ -322,7 +322,7 @@ const SURPRISES=[
   {w:3,ok:()=>firstTeam().some(p=>p.ovr<95),run:()=>{
     const young=firstTeam().filter(p=>p.age<=25&&p.ovr<95),all=firstTeam().filter(p=>p.ovr<95);
     const p=pick(young.length&&rng()<.7?young:all),old=p.ovr;
-    p.ovr=Math.min(95,p.ovr+ri(2,3));p.pot=Math.max(p.pot,p.ovr);const a=p.ovr-old;p.gain=(p.gain||0)+a;giveSig(p);
+    p.ovr=Math.min(95,p.ovr+ri(2,3));p.pot=Math.max(p.pot,p.ovr);const a=p.ovr-old;p.gain=(p.gain||0)+a;learnSig(p,.5);
     return `${p.name} 在训练中突然顿悟，能力 +${a}，现在是 ${p.ovr}！`}},
   {w:2,run:(log={cond:0})=>{firstTeam().forEach(p=>{log.cond+=100-p.cond;p.cond=100});return '一位瑜伽大师路过训练场，带全队冥想了一整天。全队体能完全恢复！'}},
   {w:2,ok:()=>firstTeam().some(p=>p.inj>0),run:(log={})=>{
