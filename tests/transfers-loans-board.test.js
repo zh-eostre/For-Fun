@@ -32,7 +32,7 @@ UI.tab='fac';render();ok(/球场/.test(els.app.innerHTML)&&!bad(els.app.innerHTM
 const bb=S.budget;twice('fup','stadium');ok(facLv('stadium')===2&&S.budget===bb-100&&stadiumMult()===1.25,'stadium level 2 costs 100, gate x1.25');
 // finish the season: loans end, goals paid, player history
 while(S.round<rounds()){ACT.ff();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();if(!M){console.log("STUCK: "+els.toast.textContent+" | day "+S.day+" next "+nextMatchDay()+" round "+S.round+" | issues "+lineupIssues().join(";")+" | squad "+squadSize()+" | GKs: "+my().players.filter(p=>p.pos==="GK").map(p=>p.name+"(inj "+p.inj+" ban "+p.ban+" away "+p.away+" loan "+!!p.loan+")").join(",")+" | available "+my().players.filter(p=>!unavail(p)).length);throw "stuck"}skipMatch();M=null;UI.view="main"}
-render();ok(/董事会目标：/.test(els.app.innerHTML)&&!bad(els.app.innerHTML),'season end shows the board result');
+render();ok(/class="se-goal (ok|no)"/.test(els.app.innerHTML)&&!bad(els.app.innerHTML),'season end shows the board result');
 const st=goalStatus(),bud=S.budget;newSeason();
 ok(!kid.loan&&kid.lapps===0,'loan ended at season end');
 ok(S.news.some(n=>/董事会目标/.test(n.t))&&S.goal.rank===expectedRank(),'board paid out ('+JSON.stringify(st)+') and set new goals');

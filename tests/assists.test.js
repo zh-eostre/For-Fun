@@ -12,8 +12,10 @@ const goals=all().reduce((s,p)=>s+p.goals,0),ast=all().reduce((s,p)=>s+(p.ast||0
 ok(ratio>.7&&ratio<.86,'assists on '+Math.round(ratio*100)+'% of '+goals+' goals');
 const byPos={};all().forEach(p=>byPos[p.pos]=(byPos[p.pos]||0)+(p.ast||0));console.log('  assists by position: '+JSON.stringify(byPos));
 ok(byPos.MF>byPos.FW&&byPos.FW>byPos.DF&&byPos.DF>byPos.GK,'midfielders assist most, keepers least');
-UI.tab='table';render();ok(/data-act="lb" data-arg="ast"/.test(els.app.innerHTML),'data panel has a 助攻 switch');
-ACT.lb('ast');const h=els.app.innerHTML;ok(/助攻榜/.test(h)&&!/射手榜/.test(h)&&!bad(h),'switching shows the 助攻榜');
+const r0=S.round;S.round=rounds()-1;  // the table page (the season-end page has no leaderboards)
+UI.tab='table';render();ok(new RegExp('data-act="lb" data-arg="'+my().div+':ast"').test(els.app.innerHTML),'data panel has a 助攻 switch');
+ACT.lb(my().div+':ast');const h=els.app.innerHTML;ok(/助攻榜/.test(h)&&!/射手榜/.test(h)&&!bad(h),'switching shows the 助攻榜');
+S.round=r0;
 const aw=seasonAwards(my().div);ok(aw.ast&&/次助攻/.test(aw.ast.stat),'助攻王 award: '+aw.ast.name+'（'+aw.ast.stat+'）');
 newSeason();ok(all().every(p=>!p.ast),'assists reset for the new season');
 UI.tab='squad';render();ok(/球 \\d+ 助/.test(els.app.innerHTML),'squad list shows goals and assists');

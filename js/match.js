@@ -5,7 +5,9 @@ function startMatch(){
   if(!S.live&&!isMatchDay()){toast('今天不是比赛日');return}
   const pre=JSON.stringify(S);  // kept in memory for the cheat card's "重踢一场"
   if(!S.live){S.live={seed:Math.floor(Math.random()*2**31)};save()}
-  rng=seeded(S.live.seed);indexNames();  // same name pool on a replay, so the post-match market comes out the same
+  // the dice come from the seed fixed on match day mixed with our plan at kickoff (formation, tactic, XI): reloading
+  // with the same plan replays the same match (no rerolling by refreshing), a different plan is a different match
+  rng=seeded(hashStr(S.live.seed+'|'+S.formation+'|'+S.tactic+'|'+S.lineup.join(',')));indexNames();  // same name pool on a replay, so the post-match market comes out the same
   const f=nextFix(),opp=S.teams[f.opp];aiRecover(opp);
   M={h:f.h,a:f.a,cup:f.cup,derby:f.derby,friendly:!!f.friendly,fIdx:f.idx,stage:f.cup?S.cup.stage:null,hg:0,ag:0,min:0,feed:[],speed:1,paused:false,ht:false,done:false,
     flash:null,injuries:[],yc:{},goals:{},on:{},off:{},subs:0,oppSubs:0,sel:null,aiTac:'bal',tac:S.tactic,subMode:false,lastAuto:{h:-9,a:-9},talk:null,trailed:false,despair:false};  // tac: our tactic for this match only
@@ -151,6 +153,17 @@ function substitute(outId,inId,s=mySide(),line,why){
   // stop: which halftime / pause it was made in (changes made while play runs have none)
   (M.subLog||(M.subLog=[])).push({s,min:M.min,out:outId,in:inId,why,feed,stop:M.paused?M.stop:null});
   return true;
+}
+// during a stop our players can change places: swap two slots, or move into a slot left empty by a red card
+function placeOnPitch(id,slot,s=mySide()){M.role[id]=slotRoles(M[s+'Form'])[slot];M.line[id]=slotLines(M[s+'Form'])[slot]}
+function swapSlots(a,b,s=mySide()){
+  const ids=M[s+'Ids'];[ids[a],ids[b]]=[ids[b],ids[a]];[a,b].forEach(i=>{if(ids[i]!=null)placeOnPitch(ids[i],i,s)});
+}
+// a new shape mid-match: the men on the pitch are rearranged for it (a sent-off player's place stays empty)
+function changeMatchForm(f,s=mySide()){
+  const on=M[s+'Ids'].filter(x=>x!=null).map(findP).filter(Boolean).sort((a,b)=>eff(b)-eff(a));
+  M[s+'Form']=f;M[s+'Ids']=arrange(on,f);M[s+'Ids'].forEach((id,i)=>{if(id!=null)placeOnPitch(id,i,s)});
+  M.feed.unshift({min:M.min,cls:'sys',t:`${my().short}调整阵型为 ${f}。`});
 }
 // a change made in the current stop (halftime or a pause) can still be redone until play resumes:
 // taking off the man who just came on puts someone else on in his place without using another substitution,

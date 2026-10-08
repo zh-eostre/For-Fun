@@ -131,7 +131,7 @@ const ACT={
   loan:(a,b)=>{if(!arm(b,'再点一次确认租借'))return;loanOut(+a);save();render()},
   recall:a=>{recallLoan(+a);save();render()},
   div:a=>{UI.div=+a;render()},
-  lb:a=>{UI.lb=a;render()},
+  lb:a=>{const [d,k]=a.split(':');UI.lb={...(UI.lb&&typeof UI.lb==='object'?UI.lb:{}),[d]:k};render()},
   hlb:a=>{UI.hlb=a;render()},
   mf:a=>{const [k,v]=a.split(':');UI.mf[k]=v;UI.mpage=0;render()},
   closeReveal:()=>{UI.reveal=null;render()},
@@ -211,7 +211,14 @@ const ACT={
   pauseSub:()=>{if(!M||M.done)return;clearTimeout(M.timer);M.paused=true;M.subMode=true;M.stop=(M.stop||0)+1;render()},
   // a setting, saved with the club after the match (saving mid-match would store this match's goals)
   autoSub:()=>{S.autoSub=S.autoSub===false;if(!M)save();render()},
-  subOut:a=>{M.sel=M.sel===+a?null:+a;render()},
+  // a man on the pitch: select him; with another already selected, the two swap places
+  subOut:a=>{const id=+a,ids=M[mySide()+'Ids'];
+    if(M.sel!=null&&M.sel!==id&&ids.includes(M.sel)&&ids.includes(id)){const x=findP(M.sel),y=findP(id);swapSlots(ids.indexOf(M.sel),ids.indexOf(id));M.sel=null;toast(`${x.name} 和 ${y.name} 互换位置`);render();return}
+    M.sel=M.sel===id?null:id;render()},
+  // an empty place (a red card): the selected man moves into it
+  toSlot:a=>{const ids=M[mySide()+'Ids'],from=ids.indexOf(M.sel),to=+a;if(M.sel==null||from<0||ids[to]!=null)return;
+    ids[to]=M.sel;ids[from]=null;placeOnPitch(M.sel,to);toast(`${findP(M.sel).name} 移到${POS[slotRoles(M[mySide()+'Form'])[to]]}位置`);M.sel=null;render()},
+  mform:a=>{if(!M||M.done||!M.paused||!FORMS[a]||M[mySide()+'Form']===a)return;M.sel=null;changeMatchForm(a);render()},
   subIn:a=>{
     if(M.sel==null){toast('先点选要换下的场上球员');return}
     const r=resub(M.sel,+a),back=pendingSub(+a,'out');
