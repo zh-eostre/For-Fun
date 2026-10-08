@@ -414,7 +414,7 @@ function growLeague(){
    a season opens with S.pre days (one week) before league round 1, with the transfer window open for us and for
    AI clubs alike; two friendlies are played in it. a shorter winter window opens the day after the halfway round.
    saves from before the preseason (S.pre undefined) keep an always-open window until their next season */
-const PRESEASON=7,WINTER=12,WINTER_NEW=8;  // winter: days open, new names on the transfer list
+const PRESEASON=7,WINTER=12,WINTER_NEW=12;  // winter: days open, new names on the transfer list
 // the day after the halfway week's Saturday (by 甲级's weekly rounds, the same for every division)
 const winterStart=()=>(S.pre||0)+7*(Math.floor(weeks()/2)-1)+6;
 const inWinter=(d=S.day)=>S.pre!=null&&d>=winterStart()&&d<winterStart()+WINTER;

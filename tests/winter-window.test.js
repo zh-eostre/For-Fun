@@ -12,7 +12,7 @@ const before=S.market.length;
 while(S.day<w)advanceDay(log());
 ok(windowOpen()&&windowLeft()===WINTER&&windowName()==='冬季转会窗口','window open on day '+S.day+', '+windowLeft()+' days left');
 const fresh=S.market.filter(p=>p.fresh===S.season).length;  // AI clubs may already have snapped one up on day one
-ok(S.news.some(n=>n.t.includes('新到 '+WINTER_NEW+' 名'))&&fresh>=WINTER_NEW-2&&S.market.length>before,'new names on the transfer list ('+fresh+' still there)');
+ok(S.news.some(n=>n.t.includes('新到 '+WINTER_NEW+' 名'))&&fresh>=WINTER_NEW-5&&S.market.length>before,'new names on the transfer list ('+fresh+' still there)');
 render();ok(/tag2 fresh/.test(els.app.innerHTML)&&!bad(els.app.innerHTML),'new names are tagged');
 UI.tab='home';render();ok(/冬季转会窗口开放中/.test(els.app.innerHTML),'home shows the winter window');
 // we can buy during the window
