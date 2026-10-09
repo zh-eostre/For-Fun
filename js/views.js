@@ -210,7 +210,7 @@ function vRules(){
     '后腰偏防守、多抢断；前腰偏进攻、更容易进球和助攻。阵型改变的是打法，不改变总实力。'])}
   ${sec('只属于你的加成',['中场可以训话一次：鼓舞（下半场进攻 +3）、冷静（防守 +3），或者怒吼赌一把（成功进攻 +5、防守 +2，失败攻防各 −2；教练声望越高越容易成功）。',
     `比赛第 75 分钟后落后，会触发「绝境爆发」：进攻提升（主场 +${DESPAIR.home}、客场 +${DESPAIR.away}）。`,
-    `球探部 3 级以上，赛前情报会指出对方最薄弱的一线；你的阵型或战术针对它时（后防弱：三前锋或全力进攻；锋线弱：全力进攻或三后卫；中场弱：五中场），进攻 +${TARGET_BONUS}。`,
+    `球探部 3 级以上，赛前情报会指出对方最薄弱的一线。阵型或战术针对它的话，进攻会有加成（比分板会亮出「针对弱点」）；怎么针对要自己琢磨，球探部升到 4、5 级后情报会说得更清楚。`,
     '第 75 分钟后还有「名帅光环」：教练声望越高，进攻加成越大，必杀技也越容易打出来。落后逆转取胜可以解锁「逆转之王」。'])}
   ${sec('体能与换人',['比赛中会消耗体能：中场跑得最多，前锋、后卫其次，门将几乎不累。体能 80 以上基本不影响发挥，越低越弱（70 约九折，60 约八折）。',
     `中场休息时，我方球员会恢复一点体能。每场最多换 ${SUBS} 人；自动换人从第 60 分钟起，把体能低于 ${TIRED}、而且替补更强的人换下，可以关掉自己来换。`,
@@ -241,7 +241,7 @@ function vOppXI(){
   <div class="oppgrid">${pitchBox(field,'对手预计首发',ob.form,{color:opp.color,note:`${ob.form} · ${TACT[tac]}`})}
   <div><div class="subh" style="margin-bottom:6px">替补</div>${bench.map(p=>`<div class="oprow"><span class="spos">${POS[p.pos]}</span><span>${p.name}${p.sig?' <i class="sig" style="font-style:normal">★</i>':''}</span><b class="num">${p.ovr}</b></div>`).join('')||'<span class="muted">没有替补</span>'}
   ${out.length?`<div class="subh" style="margin:10px 0 6px">缺阵</div>${out.map(p=>`<div class="oprow out"><span class="spos">${POS[p.pos]}</span><span>${p.name}</span><span class="muted">${p.inj?`伤停 ${p.inj} 天`:p.ban?'停赛':'请假'}</span></div>`).join('')}`:''}
-  ${facLv('scout')>=3?'':'<p class="muted" style="font-size:12px;margin:10px 0 0">球探部升到 3 级，赛前还能看到对手最薄弱的一线和王牌球员。</p>'}</div></div></section>`;
+  ${facLv('scout')>=3?'':'<p class="muted" style="font-size:12px;margin:10px 0 0">球探部升到 3 级，赛前还能看到对手最薄弱的一线和王牌球员（4、5 级说得更详细）。</p>'}</div></div></section>`;
 }
 function vPlayer(id){
   const f=findAny(id);
@@ -478,10 +478,11 @@ function vOppReport(opp,ob,tac){
   xi.forEach((p,i)=>{if(p)(line[roles[i]]=line[roles[i]]||[]).push(p.ovr)});
   const avg=PO.map(pos=>({pos,v:line[pos]?Math.round(line[pos].reduce((a,b)=>a+b,0)/line[pos].length):0}));
   const wl=weakLine(opp,ob.ids,ob.form),weak=avg.find(a=>a.pos===wl),star=xi.filter(Boolean).sort((a,b)=>b.ovr-a.ovr)[0];
-  const hurt=opp.players.filter(unavail).length,on=targets(wl,S.formation,S.tactic);
+  // the better the scouts, the more they spell out: 3 the weak line, 4 how to go at it, 5 whether we already do
+  const hurt=opp.players.filter(unavail).length,on=targets(wl,S.formation,S.tactic),lv=facLv('scout');
   return `<div class="oppr"><b>球探情报：${opp.name}</b>（预计 ${ob.form}，${TACT[tac]}）
   <div class="lines">${avg.map(a=>`<span class="${a===weak?'weak':''}">${POS[a.pos]} <b class="num">${a.v}</b></span>`).join('')}</div>
-  ${wl?`<div class="target ${on?'on':''}"><b>${TARGET[wl][0]}</b>（平均 ${weak.v}）：${TARGET[wl][1]}，进攻 +${TARGET_BONUS}。<span>${on?'✓ 你目前的安排已针对':'· 你目前的安排未针对'}</span></div>`:''}
+  ${wl?`<div class="target ${lv>=5&&on?'on':''}"><b>${TARGET[wl][0]}</b>（平均 ${weak.v}）${lv>=4?`：${TARGET[wl][1]}，进攻 +${TARGET_BONUS}。`:'。'}${lv>=5?`<span>${on?'✓ 你目前的安排已针对':'· 你目前的安排未针对'}</span>`:''}</div>`:''}
   <span>王牌：${star.name}（${POS[star.pos]}，${star.ovr}${star.sig?`，必杀「${star.sig}」`:''}）。${hurt?`对方 ${hurt} 人伤停。`:''}</span></div>`;
 }
 function vAcademy(){

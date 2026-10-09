@@ -11,5 +11,9 @@ const plan={DF:['4-3-3','bal'],FW:['4-4-2','att'],MF:['4-5-1','bal']}[M.weak];M[
 const b1=myBoost().atk;M.tac=M.weak==='MF'?'bal':'def';M[mySide()+'Form']=M.weak==='MF'?'4-4-2':'5-4-1';const b0=myBoost().atk;
 ok(b1-b0>=TARGET_BONUS-.01,'going at it adds '+TARGET_BONUS+' attack ('+b0+' → '+b1+')');
 M.tac=plan[1];M[mySide()+'Form']=plan[0];render();ok(/针对弱点/.test(els.app.innerHTML),'the scoreboard shows 针对弱点');
-skipMatch();ACT.matchDone();UI.tab='home';render();ok(/class="target/.test(els.app.innerHTML)&&/你目前的安排(已|未)针对/.test(els.app.innerHTML),'the scout report gives advice and says whether we follow it');
+skipMatch();ACT.matchDone();UI.tab='home';
+// the scout report spells out more with each level
+S.fac.scout=3;render();let h=els.app.innerHTML;ok(/class="target/.test(h)&&!/进攻 \+/.test(h.slice(h.indexOf('class="target'),h.indexOf('class="target')+300))&&!/你目前的安排/.test(h),'level 3: only the weak line');
+S.fac.scout=4;render();h=els.app.innerHTML;ok(/class="target/.test(h)&&h.includes('进攻 +'+TARGET_BONUS)&&!/你目前的安排/.test(h),'level 4: plus how to go at it');
+S.fac.scout=5;render();h=els.app.innerHTML;ok(/你目前的安排(已|未)针对/.test(h),'level 5: plus whether we already do');
 `);

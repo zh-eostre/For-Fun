@@ -212,7 +212,7 @@ const groundMult=()=>1+.15*(facLv('ground')-1);
 const pct=x=>Math.round(x*100)+'%';
 // what a facility does at level L, for the facilities page
 const FAC={
-  scout:{name:'球探部',fx:L=>`名单 ${36+4*(L-1)} 人 · 报告准确率 ${pct(.25+.1*(L-1))} · 加派球探 ${money(20-2.5*(L-1))}${L>=3?' · 对手情报':''}`},
+  scout:{name:'球探部',fx:L=>`名单 ${36+4*(L-1)} 人 · 报告准确率 ${pct(.25+.1*(L-1))} · 加派球探 ${money(20-2.5*(L-1))}${L>=5?' · 对手情报：薄弱一线、针对建议、是否已针对':L>=4?' · 对手情报：薄弱一线、针对建议':L>=3?' · 对手情报：薄弱一线':''}`},
   physio:{name:'理疗室',fx:L=>`受伤风险 ${pct(1-.075*(L-1))} · 休息日体能 +${DAY_REST+L-1}${L>=4?' · 部分伤病可带伤再战':''}`},
   ground:{name:'训练场',fx:L=>`训练成长 ×${(1+.15*(L-1)).toFixed(2)}`},
   stadium:{name:'球场',cost:[0,100,200,350,550],fx:L=>`主场门票收入 ×${(1+.25*(L-1)).toFixed(2)}`}
