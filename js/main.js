@@ -203,7 +203,7 @@ const ACT={
     if(S.budget<p.price){toast('资金不够');return}
     if(squadFull()){toast(`一线队已满 ${SQUAD_MAX} 人`);return}
     S.budget-=p.price;S.market=S.market.filter(x=>x!==p);const price=p.price,est=shownPot(p);
-    delete p.price;delete p.scout;delete p.sale;my().players.push(p);
+    delete p.price;delete p.scout;delete p.sale;delete p.ex;my().players.push(p);
     const diff=p.pot-est;
     news(`以 ${money(price)} 签下 ${p.name}（${POS[p.pos]}，能力 ${p.ovr}，真实潜力 ${p.pot}）。${diff>=6?'球探严重低估了他！':''}`);
     if(p.age<=23)UI.reveal={name:p.name,pot:p.pot,est,diff};else toast(`签下 ${p.name}，记得去阵容页安排他`);

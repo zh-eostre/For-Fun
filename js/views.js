@@ -530,6 +530,7 @@ function vMarket(){
   return vReveal()+`<section class="panel"><h2>转会市场</h2>
   <p class="window ${open?'open':'shut'}">${open?(windowLeft()==null?'转会窗口开放中':`${windowName()}开放中，还剩 ${windowLeft()} 天`):windowShut()+'。名单可以先看，球探也可以先派。'}</p>
   <p class="muted" style="margin-top:6px;font-size:14px">本赛季名单 · 一线队 ${squadSize()}/${SQUAD_MAX}${my().players.length>squadSize()?`（另有 ${my().players.length-squadSize()} 人租借在外）`:''} · 绿条是能力，金条是球探估计的潜力 · 想买其他球队的人，在积分榜点球队名</p>
+  ${(()=>{const ex=S.market.filter(p=>p.ex);return ex.length?`<p class="muted" style="margin-top:4px;font-size:14px">${ex[0].ex}挂牌的老部下：${ex.map(p=>`${p.name}（${POS[p.pos]} ${p.ovr}）`).join('、')}</p>`:''})()}
   <div class="filters">
    <div><label>位置</label>${seg('pos',[['all','全部'],['GK','门将'],['DF','后卫'],['MF','中场'],['FW','前锋']])}</div>
    <div><label>年龄</label>${seg('age',[['all','全部'],['y','21 岁以下'],['m','22 到 28'],['o','29 岁以上']])}</div>
@@ -538,7 +539,7 @@ function vMarket(){
   <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
    <button class="btn small" data-act="scout" ${S.budget<scoutCost()?'disabled':''}>加派球探，名单多 4 人（${money(scoutCost())}）</button>
    <span class="muted" style="font-size:13px">符合条件 ${list.length}/${S.market.length} 人</span>${pager}</div>
-  ${list.length?'<div class="mlist">'+shown.map(p=>`<div class="mrow"><div style="min-width:0"><div class="pname">${p.name}${gem(p)} ${p.sale?'<span class="tag2 sale">急售半价</span>':''}${p.fresh===S.season?'<span class="tag2 fresh" title="冬窗新到">新到</span>':''} <span class="muted" style="font-weight:400">${POS[p.pos]}，${p.age} 岁</span></div>
+  ${list.length?'<div class="mlist">'+shown.map(p=>`<div class="mrow"><div style="min-width:0"><div class="pname">${p.name}${gem(p)} ${p.sale?'<span class="tag2 sale">急售半价</span>':''}${p.fresh===S.season?'<span class="tag2 fresh" title="冬窗新到">新到</span>':''}${p.ex?`<span class="tag2 fresh" title="从${p.ex}放出">老部下</span>`:''} <span class="muted" style="font-weight:400">${POS[p.pos]}，${p.age} 岁</span></div>
   ${p.sig?`<div class="sig">必杀「${p.sig}」</div>`:''}
   <div class="pbar" aria-hidden="true"><i class="p" style="width:${pctR(p.scout?p.scout.hi:p.pot)}%"></i><i class="o" style="width:${pctR(p.ovr)}%"></i></div>
   <div class="price">转会费 ${money(p.price)}${p.scout&&p.scout.conf!=='high'?`<span class="conf">，球探把握${p.scout.conf==='mid'?'一般':'很低'}</span>`:''}</div></div>

@@ -15,10 +15,16 @@ ok(offersSeen&&offersSeen.every(o=>{const t=S.teams[o.club];return t.id!==S.my&&
 render();ok(/执教邀请|想请你执教/.test(els.app.innerHTML)&&/data-act="takeJob"/.test(els.app.innerHTML)&&!bad(els.app.innerHTML),'season end shows the offers');
 // accept the first offer
 const old=my(),o=offersSeen[0],target=S.teams[o.club];old.players[0].loan={club:'x',league:'y',ovr0:50};
+while(squadSize()<SQUAD_MAX){const p=makePlayer(pick(['DF','MF','FW']),60,ri(20,30));my().players.push(p)}  // a full 25 plus one on loan
 const b={dataset:{},textContent:'',isConnected:true};ACT.takeJob(String(o.club),b);ACT.takeJob(String(o.club),b);
 ok(S.my===target.id&&S.budget===o.budget,'moved to '+target.name+' with budget '+money(o.budget));
 ok(S.rival!==S.my&&S.teams[S.rival].div===my().div,'new rival in our new division');
 ok(old.players.every(p=>!p.loan),'loans at the old club came home');
+{const n={GK:0,DF:0,MF:0,FW:0};old.players.forEach(p=>n[p.pos]++);const gone=S.market.filter(p=>p.ex===old.name);
+  ok(old.players.length===AI_SQUAD_MAX&&n.GK>=2&&n.DF>=5&&n.MF>=5&&n.FW>=3,'the club we left is back to '+old.players.length+' with every line covered');
+  ok(gone.length>=1&&gone.every(p=>p.price>0&&p.scout&&!p.youth),gone.length+' released players are on the transfer list');
+  ok(S.news.some(x=>x.t.includes(old.name+'清理阵容')),'the news says so');
+  UI.tab='market';render();ok(/挂牌的老部下/.test(els.app.innerHTML)&&gone.every(p=>els.app.innerHTML.includes(p.name)),'the market lists them as 老部下');UI.tab='home';}
 ok(S.fac.scout===clamp(1+Math.floor(target.rep/25),1,5)&&S.academy.intake.length>0,'new club facilities (level '+S.fac.scout+') and a fresh academy intake');
 ok(lineupIssues().length===0&&S.lineup.every(id=>id==null||findP(id)),'lineup is from the new squad');
 ok(!S.jobOffers,'offers cleared');

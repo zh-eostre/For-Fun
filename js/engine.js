@@ -495,7 +495,7 @@ function aiSign(t){
   for(const w of xi){
     const c=S.market.filter(p=>p.pos===w.pos&&p.ovr>=w.ovr+3&&p.ovr<=aiCeiling(t)).sort((x,y)=>y.ovr-x.ovr)[0];
     if(!c)continue;
-    S.market=S.market.filter(x=>x!==c);delete c.price;delete c.scout;delete c.sale;
+    S.market=S.market.filter(x=>x!==c);delete c.price;delete c.scout;delete c.sale;delete c.ex;
     t.players.push(c);
     if(t.players.length>20){
       const drop=t.players.filter(p=>p.pos===c.pos&&p!==c).sort((x,y)=>x.ovr-y.ovr||y.age-x.age)[0];
@@ -687,12 +687,14 @@ function newSeason(moveTo){
     }
   });
   S.season++;S.cal=CAL_V;S.round=0;S.results=DIVS.map(()=>[]);S.fixtures=newFixtures();S.cheatUsed=false;S.cup=newCup();S.day=0;S.lastMatchDay=-9;
+  const left=move?my():null;
   if(move)switchClub(move);
   S.jobOffers=null;
   if(S.teams[S.rival].div!==my().div){S.rival=pickRival();news(`新的宿敌出现了：${S.teams[S.rival].name}。`)}
   // summer window: bigger clubs poach stars from clubs playing above their level, every AI club gets one shot
   // at the market, then the player sees a fresh list
   S.pre=PRESEASON;S.day=0;aiPoach();refreshMarket();planFriendlies();
+  if(left)releaseSurplus(left);
   S.intl=newIntl(intlHome);
   S.lineup=autoPick(my(),S.formation);S.autoXI=true;
   news(`升级：${names('up')}。降级：${names('down')}。`);

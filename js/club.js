@@ -485,6 +485,21 @@ function careerSeasonEnd(){
   news(`教练声望 ${S.mgr.last>=0?'+':''}${S.mgr.last}，现在 ${S.mgr.rep}（${mgrTitle(S.mgr.rep)}）。${S.jobOffers.length?`收到 ${S.jobOffers.length} 份执教邀请！`:''}`);
 }
 // moving to a new club at the start of a season: its money, facilities and academy, not the ones we leave behind
+// the club we left goes back to an AI-sized squad: the weakest (older first among equals) go on the transfer list,
+// keeping at least 2 keepers, 5 defenders, 5 midfielders and 3 forwards. run after the summer market is drawn
+const AI_SQUAD_MAX=22,POS_MIN={GK:2,DF:5,MF:5,FW:3};
+function releaseSurplus(t){
+  const n={GK:0,DF:0,MF:0,FW:0};t.players.forEach(p=>n[p.pos]++);
+  const out=[];
+  for(const p of [...t.players].sort((a,b)=>a.ovr-b.ovr||b.age-a.age)){
+    if(t.players.length-out.length<=AI_SQUAD_MAX)break;
+    if(n[p.pos]>POS_MIN[p.pos]){n[p.pos]--;out.push(p)}
+  }
+  t.players=t.players.filter(p=>!out.includes(p));
+  out.forEach(p=>{['youth','joined','loan','lapps','hist','chosen'].forEach(k=>delete p[k]);scoutReport(p);p.ex=t.name;S.market.push(p)});
+  if(out.length)news(`${t.name}清理阵容，${out.length} 名球员挂牌出售：${out.map(p=>p.name).join('、')}。`);
+  return out;
+}
 function switchClub(o){
   const old=my(),t=S.teams[o.club],lv=clamp(1+Math.floor(t.rep/25),1,5);
   old.players.forEach(p=>{if(p.loan)p.loan=null});
