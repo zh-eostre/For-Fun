@@ -129,7 +129,7 @@ function vCalendar(){
   const xi=S.lineup.map(id=>id!=null&&findP(id)).filter(Boolean),avg=xi.length?Math.round(xi.reduce((s,p)=>s+p.cond,0)/xi.length):0;
   const tired=xi.filter(p=>p.cond<80).sort((a,b)=>a.cond-b.cond).slice(0,3);
   const L=UI.dayLog,left=nextMatchDay()-S.day;
-  return `<section class="panel"><h2>日程 <span class="muted" style="font-weight:400;font-size:14px">${dayLabel(S.day)}，今天${today==='match'?'是比赛日':today==='rest'?'休息':`训练（${T}）`}</span></h2>
+  return `<section class="panel"><h2>日程 <span class="muted" style="font-weight:400;font-size:14px">${dayLabel(S.day)}，今天${today==='match'?'是比赛日':today==='rest'?'休息（进入下一天时恢复）':`训练（${T}，进入下一天时生效）`}</span></h2>
   <div class="days" tabindex="0" aria-label="接下来四周的日程，可以左右滑动">${strip}</div>
   ${vFixtures()}
   ${L?`<p class="daylog">过了 ${L.days} 天：全队体能共 ${L.cond>=0?'+':''}${L.cond}${L.trained.length?`；训练中进步：${[...new Set(L.trained)].map(p=>{const n=L.trained.filter(x=>x===p).length;return `${p.name}（${p.ovr}${n>1?`，+${n}`:''}）`}).join('、')}`:'；训练中没有人进步'}${L.healed.length?`；伤愈复出：${L.healed.map(p=>p.name).join('、')}`:''}。</p>`:''}

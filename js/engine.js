@@ -695,9 +695,11 @@ const dayLabel=d=>`第 ${Math.floor(d/7)+1} 周${WEEKDAYS[d%7]}`;
 // injured players rest instead of training. cup ties we're not part of are played on their own date
 function advanceDay(log){
   if(S.round>=rounds()||S.day>=nextMatchDay())return false;
+  // today's programme counts as we move on: the training chosen today (so the eve of a match counts too), a rest day
+  // the day after one of our matches, nothing more on a day we played
+  const today=S.day,type=S.lastMatchDay===today?'match':dayType(today),mode=type==='rest'?{cond:restAmt(),grow:0}:TRAIN_DAY[S.training];
   S.day++;
   playOtherDivisions();
-  const type=dayType(S.day),mode=type==='rest'?{cond:restAmt(),grow:0}:TRAIN_DAY[S.training];
   if(type!=='match')my().players.forEach(p=>{
     const before=p.cond;
     const wasHurt=p.inj>0;

@@ -12,6 +12,7 @@ const srBefore=els.sr.textContent;skipMatch();ok(els.sr.textContent!==''&&/ç»ˆç„
 M=null;UI.view='main';
 // injuries in days heal on the calendar
 S.friendlies.forEach(f=>f.res={hg:0,ag:0});  // skip the preseason friendlies so four days are free
+advanceDay({days:0,cond:0,trained:[],healed:[]});  // off the match day (the day we played doesn't count toward recovery)
 const p=my().players.find(x=>!unavail(x));p.inj=4;dropFromLineup(p.id);
 const log={days:0,cond:0,trained:[],healed:[]};let d=0;while(p.inj>0&&advanceDay(log))d++;
 // (a surprise visit from the old healer can cure him sooner)
