@@ -45,7 +45,7 @@ function view(){
 function mainView(){
   if(!S)return vStart();
   if(UI.view==='match'&&M)return vMatch();
-  if(S.round>=rounds())return vHeader()+`<div class="wrap">${vSeasonEnd()}</div>`;
+  if(seasonDone())return vHeader()+`<div class="wrap">${vSeasonEnd()}</div>`;
   const tabs=[['home','俱乐部',vHome],['squad','阵容',vSquad],['table','积分榜',()=>vTable()],['cup','杯赛',vCup],['market','转会市场',vMarket],['fac','设施',vAcademy],['honours','荣誉室',vHonours]];
   const pg=UI.pages&&UI.pages[UI.pages.length-1];
   if(pg)return vHeader()+`<div class="wrap"><button class="btn small" data-act="back" style="margin-bottom:12px">← 返回</button>${vTeamPage(pg.id)}</div>`;
@@ -80,7 +80,7 @@ function vHeader(){
   return `<header class="club" style="--team:${t.color}"><div class="wrap">
   <div class="crest disp">${t.short[0]}</div>
   <div><div class="club-name disp">${t.name}</div>
-  <div class="club-meta">${DIVS[t.div]}联赛，第 ${S.season} 赛季，${S.round<rounds()?`${dayLabel(S.day)}，第 ${S.round+1}/${rounds()} 轮`:'赛季结束'}，排名第 ${myRank()}${S.boost>0?' <span class="tag2 boost">士气高涨</span>':''}${(S.streak||0)>=3?` <span class="tag2 fire">🔥 ${S.streak} 连胜</span>`:''}</div></div>
+  <div class="club-meta">${DIVS[t.div]}联赛，第 ${S.season} 赛季，${S.round<rounds()?`${dayLabel(S.day)}，第 ${S.round+1}/${rounds()} 轮`:seasonDone()?'赛季结束':`${dayLabel(S.day)}，联赛已结束`}，排名第 ${myRank()}${S.boost>0?' <span class="tag2 boost">士气高涨</span>':''}${(S.streak||0)>=3?` <span class="tag2 fire">🔥 ${S.streak} 连胜</span>`:''}</div></div>
   <button class="btn small rules-btn" data-act="rules" aria-label="规则说明">规则</button>
   <div class="cash"><div class="club-meta">俱乐部资金</div><div class="num" style="color:${S.budget<0?'var(--red)':'inherit'}">${money(S.budget)}</div></div>
   </div></header>`;
@@ -89,8 +89,8 @@ function vHeader(){
 // the whole season in one list: friendlies, every league round, our cup ties, the windows and the last day.
 // played ones show the score, the next one is marked; the summary line says how far in we are and when it ends
 function vFixtures(){
-  const div=my().div,rows=[],end=leagueDay(rounds()-1),res=(h,a,hg,ag)=>{const me=h===S.my,f=me?hg:ag,o=me?ag:hg;return {f,o,w:f>o?'胜':f<o?'负':'平'}};
-  (S.friendlies||[]).forEach(f=>rows.push({day:f.day,kind:`友谊赛 · ${DIVS[S.teams[f.opp].div]}`,opp:f.opp,home:f.home,r:f.res&&res(f.home?S.my:f.opp,f.home?f.opp:S.my,f.res.hg,f.res.ag)}));
+  const div=my().div,rows=[],end=seasonEndDay(),res=(h,a,hg,ag)=>{const me=h===S.my,f=me?hg:ag,o=me?ag:hg;return {f,o,w:f>o?'胜':f<o?'负':'平'}};
+  (S.friendlies||[]).forEach(f=>rows.push({day:f.day,kind:`${f.warm?'热身赛':'友谊赛'} · ${divName(S.teams[f.opp])}`,opp:f.opp,home:f.home,r:f.res&&res(f.home?S.my:f.opp,f.home?f.opp:S.my,f.res.hg,f.res.ag)}));
   (S.fixtures[div]||[]).forEach((rd,r)=>{const fx=rd.find(x=>x.includes(S.my));if(!fx)return;
     const done=(S.results[div][r]||[]).find(x=>x.h===S.my||x.a===S.my);
     rows.push({day:leagueDay(r),kind:`第 ${r+1} 轮`,opp:fx[0]===S.my?fx[1]:fx[0],home:fx[0]===S.my,r:done&&res(done.h,done.a,done.hg,done.ag)})});
@@ -128,7 +128,7 @@ function vCalendar(){
     const t=d===S.lastMatchDay?'match':dayType(d,days),m=days.find(x=>x.day===d);
     let what='',sub='';
     if(d===S.lastMatchDay){what='比赛';sub='已结束'}
-    else if(t==='match'&&m.friendly){what='友谊赛';sub=`${m.home?'主':'客'} ${S.teams[m.opp].short}·${DIVS[S.teams[m.opp].div]}`}
+    else if(t==='match'&&m.friendly){what=S.friendlies[m.i].warm?'热身赛':'友谊赛';sub=`${m.home?'主':'客'} ${S.teams[m.opp].short}·${divName(S.teams[m.opp])}`}
     else if(t==='match'){
       const fx=m.cup?S.cup.ties.find(x=>x.includes(S.my)):m.intl?intlMatches().find(x=>x.includes(S.my)):S.fixtures[my().div][m.r].find(x=>x.includes(S.my));
       const opp=S.teams[fx[0]===S.my?fx[1]:fx[0]];
@@ -140,7 +140,7 @@ function vCalendar(){
     return `<div class="day ${t} ${m&&m.intl?'intl':''} ${d===S.day?'today':''}"><span class="wd">${d%7===0||d===S.day?`<i>第${Math.floor(d/7)+1}周</i>`:''}${WEEKDAYS[d%7]}</span><b>${what}</b><small>${sub}</small>${mark?`<em>${mark}</em>`:''}</div>`;
   };
   // four weeks ahead (swipe sideways), up to the last round
-  const strip=Array.from({length:28},(_,i)=>S.day+i).filter(d=>d<=leagueDay(rounds()-1)).map(cell).join('');
+  const strip=Array.from({length:28},(_,i)=>S.day+i).filter(d=>d<=seasonEndDay()).map(cell).join('');
   const xi=S.lineup.map(id=>id!=null&&findP(id)).filter(Boolean),avg=xi.length?Math.round(xi.reduce((s,p)=>s+p.cond,0)/xi.length):0;
   const tired=xi.filter(p=>p.cond<80).sort((a,b)=>a.cond-b.cond).slice(0,3);
   const L=UI.dayLog,left=nextMatchDay()-S.day;
@@ -213,7 +213,9 @@ function vRules(){
   return `<section class="panel"><div class="mhead"><h2 id="mtitle">规则说明</h2><button class="btn small mclose" data-act="closeModal" aria-label="关闭">✕</button></div>
   <div class="rules">
   ${sec('赛季与日程',[`联赛是金字塔：${DIVS.map((dn,d)=>`${dn} ${DIV_SIZES[d]} 队`).join('、')}，各自主客场双循环（${DIVS.map((dn,d)=>`${dn} ${2*(DIV_SIZES[d]-1)} 轮`).join('、')}）。每级前 ${SWAP} 名升级、后 ${SWAP} 名降级。`,
-    `联赛只在周六进行，一个赛季 ${weeks()} 周（按丙级的轮数）。甲级、乙级轮数少，有些周末轮空：甲级轮空在${INTL_NAME}周，乙级轮空在${CUP_NAME}周，三个级别在同一天结束。`,
+    `一个赛季 ${weeks()} 周，联赛在周六进行，三个级别在同一天结束。甲级只有 18 轮，有 4 个周末轮空（在${INTL_NAME}周）；乙级每周六一轮；丙级 26 轮，有 4 轮放在周二（避开杯赛周）。`,
+    `${CUP_NAME}决赛在联赛最后一轮的前一周，${INTL_NAME}决赛在联赛最后一轮的后一周（进了决赛，赛季就踢到决赛为止）。`,
+    `哪一周你没有正式比赛（联赛轮空、杯赛已出局），那周六会自动安排一场热身赛，对手是海外球队，不计成绩、不吃牌。`,
     `季前一周：转会窗口开放，还有两场友谊赛（对手是本国其他级别的球队，不计成绩、不吃牌）。赛季过半后开 ${WINTER} 天冬窗，其余时间不能买卖球员。`,
     `${CUP_NAME}是单场淘汰，平局直接点球大战。杯赛在周中，3 天后就是下一轮联赛。`,
     `${INTL_NAME}：16 队参加，本国派出甲级前两名和${CUP_NAME}冠军（冠军已在前两名时由甲级第三名替补），其余 13 队来自海外。4 个小组主客场双循环，前两名进八强，之后单场淘汰。比赛在周三，收入 1.5 倍；小组赛胜 ${money(INTL_PRIZE.win)}、平 ${money(INTL_PRIZE.draw)}，进八强 ${money(INTL_PRIZE.ko[0])}、四强 ${money(INTL_PRIZE.ko[1])}、决赛 ${money(INTL_PRIZE.ko[2])}，冠军 ${money(INTL_PRIZE.champion)}。海外球队不参加联赛和${CUP_NAME}，也不买卖球员。`])}
@@ -690,7 +692,7 @@ function vMatch(){
   }else{
     ctl=M.pk?vShootout():`<div class="mctl"><div class="seg sm pace" role="group" aria-label="比赛速度">${Object.entries(PACE).map(([k,[l]])=>`<button data-act="pace" data-arg="${k}" aria-pressed="${(S.pace||'normal')===k}">${l}</button>`).join('')}</div><button class="btn primary" data-act="pauseSub">换人 / 调整</button><button class="btn" data-act="skip">直接看结果</button>${autoSubBtn()}</div>${vLiveStamina()}`;
   }
-  const tag=M.friendly?`季前友谊赛 · 对手${DIVS[S.teams[M.h===S.my?M.a:M.h].div]}`:M.cup?`${CUP_NAME}·${stageName(M.stage)}`:M.intl?`${INTL_NAME}·${INTL_STAGES[M.stage]}`:M.derby?'宿敌之战':'';
+  const tag=M.friendly?`${M.warm?'热身赛':'季前友谊赛'} · 对手${divName(S.teams[M.h===S.my?M.a:M.h])}`:M.cup?`${CUP_NAME}·${stageName(M.stage)}`:M.intl?`${INTL_NAME}·${INTL_STAGES[M.stage]}`:M.derby?'宿敌之战':'';
   return `<div class="matchwrap">${tag?`<div class="mtag">${tag}</div>`:''}<div class="board">
   <div class="side disp">${H.name}<small>主队</small></div>
   <div class="score"><span class="${M.flash==='h'?'flash':''}">${M.hg}</span><span class="colon">:</span><span class="${M.flash==='a'?'flash':''}">${M.ag}</span></div>

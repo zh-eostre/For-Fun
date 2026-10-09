@@ -1,7 +1,7 @@
 // 天际冠军杯: 16 clubs (甲级's top two, the 天穹杯 winner and 13 from abroad), four groups home and away, then
 // quarter-finals, semi-finals and a final. clubs from abroad stay out of the league, the 天穹杯 and transfers.
 require('./harness').run(`
-const play=()=>{let n=0;while(S.round<rounds()){if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ACT.ff();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);
+const play=()=>{let n=0;while(!seasonDone()){if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ACT.ff();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);
   if(nextFix().intl)n++;startMatch();if(!M)throw 'stuck: '+lineupIssues();skipMatch();ACT.matchDone()}return n};
 const top=TEAMS.map((t,i)=>[t,i]).filter(([t])=>t.div===0).sort((a,b)=>b[0].rep-a[0].rep)[0][1];
 newGame(top,teamNames());
@@ -17,7 +17,11 @@ ok(DIVS.every((_,d)=>divSize(d)===DIV_SIZES[d])&&domestic().length===36,'the pyr
 ok(/海外/.test(buyBlock(away[0].players[0],away[0])),'their players are not for sale');
 // the calendar: Wednesdays that never meet a 天穹杯 tie, all before the league ends
 const iDays=INTL_WEEKS.map((_,k)=>intlDay(k)),cDays=cupFmt().names.map((_,k)=>cupDay(k));
-ok(iDays.every(d=>d%7===2&&!cDays.includes(d)&&d<leagueDay(rounds()-1)),'every stage on a Wednesday, apart from 天穹杯 ties, before the last round');
+const last=leagueDay(rounds()-1);
+ok(iDays.every(d=>d%7===2&&!cDays.includes(d))&&iDays.slice(0,-1).every(d=>d<last),'every stage on a Wednesday, apart from 天穹杯 ties; all but the final before the last round');
+const wkOf=d=>Math.floor((d-S.pre)/7);
+ok(wkOf(iDays[iDays.length-1])===wkOf(last)+1,'the 冠军杯 final comes the week after the last league round');
+ok(wkOf(cDays[cDays.length-1])===wkOf(last)-1,'the 天穹杯 final is in the week before it');
 // screens
 UI.tab='home';render();ok(!bad(els.app.innerHTML)&&els.app.innerHTML.includes(INTL_NAME),'home: the season list shows our 冠军杯 matches');
 {const d0=S.day;S.day=S.pre+7*3;render();ok(/联赛轮空/.test(els.app.innerHTML),'甲级 off weekends are labelled on the strip');S.day=d0;render()}

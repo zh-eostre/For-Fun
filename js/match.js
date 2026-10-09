@@ -9,7 +9,7 @@ function startMatch(){
   S.live={seed:Math.floor(Math.random()*2**31)};save();
   rng=seeded(S.live.seed);indexNames();
   const f=nextFix(),opp=S.teams[f.opp];aiRecover(opp);abroadForm(opp);
-  M={h:f.h,a:f.a,cup:f.cup,intl:!!f.intl,derby:f.derby,friendly:!!f.friendly,fIdx:f.idx,stage:f.cup?S.cup.stage:f.intl?S.intl.stage:null,hg:0,ag:0,min:0,feed:[],paused:false,ht:false,done:false,
+  M={h:f.h,a:f.a,cup:f.cup,intl:!!f.intl,derby:f.derby,friendly:!!f.friendly,warm:!!f.warm,fIdx:f.idx,stage:f.cup?S.cup.stage:f.intl?S.intl.stage:null,hg:0,ag:0,min:0,feed:[],paused:false,ht:false,done:false,
     flash:null,injuries:[],yc:{},goals:{},on:{},off:{},subs:0,oppSubs:0,sel:null,aiTac:'bal',tac:S.tactic,subMode:false,lastAuto:{h:-9,a:-9},talk:null,trailed:false,despair:false};  // tac: our tactic for this match only
   // the opponent picks its best formation, and a tactic from how it rates against our XI
   const os=bestForm(opp,!f.home),mr=rating(strength(my(),S.lineup,S.tactic,f.home,S.boost>0?BOOST:0,S.formation));
@@ -25,7 +25,7 @@ function startMatch(){
   M.role={...roleMap(M.hXI,M.hForm),...roleMap(M.aXI,M.aForm)};M.line={...lineMap(M.hXI,M.hForm),...lineMap(M.aXI,M.aForm)};M.ev={};M.st={h:{sh:0,on:0},a:{sh:0,on:0}};
   M.poss=possession(S.teams[M.h],M.hIds,M.hForm,M.h===S.my?M.tac:M.aiTac,S.teams[M.a],M.aIds,M.aForm,M.a===S.my?M.tac:M.aiTac);
   const hn=S.teams[M.h].name,an=S.teams[M.a].name;
-  M.feed.unshift({min:0,cls:'sys',t:f.friendly?LINE.friendlyKick(hn,an):f.cup?LINE.cupKick(hn,an,stageName(M.stage)):f.intl?LINE.intlKick(hn,an,INTL_STAGES[M.stage],M.stage>=6):f.derby?LINE.derbyKick(hn,an):LINE.kickoff(hn,an)});
+  M.feed.unshift({min:0,cls:'sys',t:f.friendly?(f.warm?LINE.warmKick(hn,an):LINE.friendlyKick(hn,an)):f.cup?LINE.cupKick(hn,an,stageName(M.stage)):f.intl?LINE.intlKick(hn,an,INTL_STAGES[M.stage],M.stage>=6):f.derby?LINE.derbyKick(hn,an):LINE.kickoff(hn,an)});
   M.feed.unshift({min:0,cls:'sys',t:`${opp.short}开场打法：${TACT[M.aiTac]}。`});
   UI.view='match';render();M.timer=setTimeout(loop,600);
 }
@@ -279,7 +279,8 @@ function finish(){
   if(mg-og>=5)unlock('rout');
   if(pens&&w==='胜')unlock('pens');
   if(w==='胜'&&M.trailed){unlock('comeback');news('逆转！落后的情况下拿下了比赛。')}
-  if(M.cup)playCupStage(res);else if(M.intl)playIntl(res);else{loanRound();S.round++;if(S.round>=rounds())careerSeasonEnd()}
+  if(M.cup)playCupStage(res);else if(M.intl)playIntl(res);else{loanRound();S.round++}
+  if(!M.cup&&seasonDone())careerSeasonEnd();  // after the last league round, or after a 冠军杯 final that comes after it
   // a title or promotion settled by this match: confetti
   const party=M.cup&&S.cup.winner===S.my?`${CUP_NAME}冠军！`:M.intl&&S.intl.winner===S.my?`${INTL_NAME}冠军！`:S.round>=rounds()&&!M.cup&&!M.intl?(myRank()===1?`${DIVS[my().div]}冠军！`:zone(my().div,myRank())==='up'?'升级成功！':''):'';
   if(party)celebrate(party,my().name,'party');
@@ -303,7 +304,7 @@ function finishFriendly(){
   M.mvp=[...M.rh,...M.ra].sort((a,b)=>b.r-a.r)[0];
   M.summary={w,mg,og,income:0,grown,awoken,banned:[],pens:false};
   S.friendlies[M.fIdx].res={hg:M.hg,ag:M.ag};
-  news(`季前友谊赛：${w} ${mg}:${og} 对阵${opp.name}。`);
+  news(`${M.warm?'热身赛':'季前友谊赛'}：${w} ${mg}:${og} 对阵${opp.name}。`);
   M.myInjuries.forEach(p=>news(`${p.name} 在友谊赛中受伤，预计伤停 ${p.inj} 天。`));
   fixLineup();
   delete S.live;rng=Math.random;

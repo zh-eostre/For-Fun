@@ -432,6 +432,18 @@ function planFriendlies(){
   S.teams.forEach(t=>t.winBuys=0);  // AI signings this window (capped per club)
 }
 const nextFriendly=()=>(S.friendlies||[]).find(f=>!f.res);
+// calendar 3: a week of the season in which we have no match (our division's weekend off, and no cup or 冠军杯 tie
+// for us) gets a warm-up friendly on its Saturday, against a club from abroad. decided when the week comes round,
+// since only then do we know whether we're still in the cups
+function planWarmups(){
+  if(!(S.cal>=3)||S.pre==null||S.round>=rounds())return;
+  const w=Math.floor((S.day-S.pre)/7);if(w<0||w>=weeks())return;
+  const a=S.pre+7*w,b=a+6,sat=a+5,inWeek=d=>d>=a&&d<=b;if(S.day>sat)return;
+  if(matchDays().some(m=>inWeek(m.day))||(S.friendlies||[]).some(f=>inWeek(f.day)))return;
+  const abroad=S.teams.filter(t=>t.foreign),opp=pick(abroad.length?abroad:S.teams.filter(t=>t.div!==my().div)).id;
+  (S.friendlies=S.friendlies||[]).push({day:sat,opp,home:rng()<.5,warm:true});
+  news(`本周没有正式比赛，${dayLabel(sat)}安排了一场热身赛，对手是${S.teams[opp].name}。`);
+}
 // one window day for the AI and the market: clubs shop (harder near the deadline), bids for our players arrive,
 // and when the window shuts, any bid still open lapses. the winter window brings a few new names to the list
 // and allows each AI club one more signing
@@ -463,6 +475,7 @@ const jobReq=t=>t.div?Math.round(t.rep*.5):Math.round(25+t.rep*.6);
 const jobBudget=t=>Math.round([300,150,100][t.div]+t.rep*[6,3,2][t.div]);
 // called once, right after the last league match: reputation change and the offers for the summer
 function careerSeasonEnd(){
+  finishIntl();
   const div=my().div,rank=myRank(),size=divSize(div),g=goalStatus();
   // against expectations (capped), then the big moments; gains slow down as the name grows, and every year the
   // reputation drifts a little toward 40, so it has to be kept up

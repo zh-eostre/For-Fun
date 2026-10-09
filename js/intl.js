@@ -95,5 +95,8 @@ function playIntl(myRes){
     if(mine&&mine.w!==S.my)news(`${INTL_NAME}止步${INTL_STAGES[k]}，被 ${S.teams[mine.h===S.my?mine.a:mine.h].name} 淘汰。`);
   }
 }
+// whatever is left once the season is over (the final, after the league, when we're not in it; any stage a test or
+// an old save skipped): played now, ours included, so the season's record has a winner
+function finishIntl(){while(S.intl&&S.intl.stage<intlStages())playIntl(null)}
 // AI-only stages are played on their own Wednesdays as the days go by
 function intlCatchUp(){while(S.intl&&S.intl.stage<intlStages()&&!intlMine()&&S.day>=intlDay(S.intl.stage))playIntl(null)}

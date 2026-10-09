@@ -515,24 +515,26 @@ function aiWindow(chance){
 let NEWS_TAG=null;  // set while a cup match is being wrapped up, so its news is labelled with the cup stage
 function news(t){S.news.unshift({r:`S${S.season} ${NEWS_TAG||`第${Math.min(S.round+1,rounds())}轮`}`,t});S.news=S.news.slice(0,30)}
 
-// rounds in the current season for a division (ours by default); the biggest division's count is the number of weeks
+// rounds in the current season for a division (ours by default), and the season's league weeks (by calendar)
 const rounds=d=>S.fixtures[d??my().div].length;
-const weeks=()=>S.cal>=2?Math.max(...S.fixtures.map(f=>f.length)):S.fixtures[0].length;
+const weeks=()=>S.cal>=3?SEASON_WEEKS:S.cal>=2?Math.max(...S.fixtures.map(f=>f.length)):S.fixtures[0].length;
 // spreads n picks evenly over a list
 const spread=(a,n)=>n<=0?[]:n>=a.length?[...a]:Array.from({length:n},(_,i)=>a[Math.round(i*(a.length-1)/Math.max(1,n-1))]);
-// a division's league match days this season, all on Saturdays. a division with fewer rounds than weeks sits some
-// weekends out: 甲级 on its 冠军杯 weeks first, then any division on 天穹杯 weeks, then spread through the season.
-// the first and last weeks are always played, so every division ends the same day
+// a division's league match days this season. every week has a Saturday round, except that a division with fewer
+// rounds than weeks sits some weekends out: 甲级 on its 冠军杯 weeks first, then any division on 天穹杯 weeks, then
+// spread through the season. a division with more rounds than weeks (calendar 3: 丙级) plays the extra ones on
+// Tuesdays of weeks without a cup tie. the first and last weeks are always played, so every division ends the same day
 function seasonDays(d=my().div){
   if(!(S.cal>=2))return seasonDaysV1(d);
   const W=weeks(),R=S.fixtures[d].length,pre=S.pre||0;
   let off=W-R;const out=new Set(),mid=w=>w>0&&w<W-1&&!out.has(w);
-  const intlW=d===0?(S.intl&&S.intl.weeks)||INTL_WEEKS:[],cupW=S.cup&&!S.cup.skipped?cupFmt().at:[];
+  const intlW=d===0?(S.intl&&S.intl.weeks)||(S.cal>=3?INTL_WEEKS:INTL_WEEKS_V2):[],cupW=S.cup&&!S.cup.skipped?cupFmt().at:[];
   for(const pool of [intlW,cupW,Array.from({length:W},(_,w)=>w)]){
     const take=spread(pool.filter(mid),off);take.forEach(w=>out.add(w));off-=take.length;
   }
   const days=[];for(let w=0;w<W;w++)if(!out.has(w))days.push(pre+7*w+5);
-  return days;
+  if(R>W)spread(Array.from({length:W},(_,w)=>w).filter(w=>w>0&&w<W-1&&!cupW.includes(w)),R-W).forEach(w=>days.push(pre+7*w+1));
+  return days.sort((a,b)=>a-b);
 }
 // the calendar before version 2: the top flight every Saturday, a bigger division's extra rounds on Tuesdays
 function seasonDaysV1(d){
@@ -588,14 +590,15 @@ const zone=(div,rank)=>div>0&&rank<=SWAP?'up':div<DIVS.length-1&&rank>divSize(di
 // the next match: a cup tie when one is due and we're still in it, otherwise the league round
 function nextFix(){
   const fr=nextFriendly();
-  if(fr){const h=fr.home?S.my:fr.opp,a=fr.home?fr.opp:S.my;return {h,a,home:fr.home,opp:fr.opp,cup:false,derby:false,friendly:true,idx:S.friendlies.indexOf(fr)}}
+  if(fr){const h=fr.home?S.my:fr.opp,a=fr.home?fr.opp:S.my;return {h,a,home:fr.home,opp:fr.opp,cup:false,derby:false,friendly:true,warm:!!fr.warm,idx:S.friendlies.indexOf(fr)}}
   let cup=cupDue()&&inCup(),intl=intlDue()&&intlMine();
   if(cup&&intl){if(cupDay(S.cup.stage)<intlDay(S.intl.stage))intl=false;else cup=false}
   const m=cup?S.cup.ties.find(t=>t.includes(S.my)):intl?intlMatches().find(t=>t.includes(S.my)):S.fixtures[my().div][S.round].find(m=>m.includes(S.my));
   const opp=m[0]===S.my?m[1]:m[0];
   return {h:m[0],a:m[1],home:m[0]===S.my,opp,cup,intl,derby:!intl&&opp===S.rival};
 }
-const fixLabel=f=>f.friendly?`季前友谊赛 ${f.idx+1}/2（对手${DIVS[S.teams[f.opp].div]}）`:f.cup?`${CUP_NAME}·${stageName(S.cup.stage)}`:f.intl?`${INTL_NAME}·${INTL_STAGES[S.intl.stage]}`:`联赛第 ${S.round+1} 轮`;
+const divName=t=>t.foreign?'海外':DIVS[t.div];
+const fixLabel=f=>f.friendly?(f.warm?`热身赛（对手${divName(S.teams[f.opp])}）`:`季前友谊赛 ${f.idx+1}/2（对手${divName(S.teams[f.opp])}）`):f.cup?`${CUP_NAME}·${stageName(S.cup.stage)}`:f.intl?`${INTL_NAME}·${INTL_STAGES[S.intl.stage]}`:`联赛第 ${S.round+1} 轮`;
 function lineupIssues(){
   const ps=S.lineup.map(id=>id==null?null:findP(id)),n=ps.filter(Boolean).length,iss=[];
   // fewer than 11 is only allowed when nobody else is fit to play, and never below the 7 the rules require
@@ -647,6 +650,7 @@ function expectedRank(){return S.teams.filter(t=>t.div===my().div).sort((a,b)=>b
 const prizeFor=(div,rank)=>PRIZES[div][Math.min(rank,PRIZES[div].length)-1];
 // moveTo: the id of a club whose offer we accept (otherwise we stay)
 function newSeason(moveTo){
+  finishIntl();
   const move=moveTo!=null&&(S.jobOffers||[]).find(o=>o.club===moveTo);
   const div=my().div,rank=myRank(),prize=prizeFor(div,rank);
   S.history.push({season:S.season,div,rank,pts:table()[rank-1].pts,club:my().name});
@@ -722,8 +726,12 @@ function matchDays(){
   if(intlMine())list.push({day:intlDay(S.intl.stage),intl:true,k:S.intl.stage});
   return list.sort((a,b)=>a.day-b.day);
 }
+// the last day of our season: the last league round, or a later 冠军杯 final we're in
+const seasonEndDay=()=>Math.max(leagueDay(rounds()-1),...matchDays().map(m=>m.day));
 const nextMatchDay=()=>{const fr=nextFriendly();if(fr)return fr.day;const c=[leagueDay(S.round)];if(cupDue()&&inCup())c.push(cupDay(S.cup.stage));if(intlDue()&&intlMine())c.push(intlDay(S.intl.stage));return Math.min(...c)};
-const isMatchDay=()=>S.round<rounds()&&S.day===nextMatchDay();
+// the season is over once the league is done and we have no 冠军杯 match left (the final comes after the league)
+const seasonDone=()=>S.round>=rounds()&&!(intlMine()&&S.intl.stage<intlStages());
+const isMatchDay=()=>!seasonDone()&&S.day===nextMatchDay();
 // 'match', 'rest' (the day after one of our matches) or 'train'
 function dayType(d,days=matchDays()){
   if(days.some(m=>m.day===d))return 'match';
@@ -734,7 +742,7 @@ const dayLabel=d=>`第 ${Math.floor(d/7)+1} 周${WEEKDAYS[d%7]}`;
 // moves one day forward: a rest day restores stamina; a training day follows the training setting.
 // injured players rest instead of training. cup ties we're not part of are played on their own date
 function advanceDay(log){
-  if(S.round>=rounds()||S.day>=nextMatchDay())return false;
+  if(seasonDone()||S.day>=nextMatchDay())return false;
   // today's programme counts as we move on: the training chosen today (so the eve of a match counts too), a rest day
   // the day after one of our matches, nothing more on a day we played
   const today=S.day,type=S.lastMatchDay===today?'match':dayType(today),mode=type==='rest'?{cond:restAmt(),grow:0}:TRAIN_DAY[S.training];
@@ -753,5 +761,6 @@ function advanceDay(log){
   rollSurprise(log);
   while(cupDue()&&!inCup()&&S.day>=cupDay(S.cup.stage))playCupStage(null);
   intlCatchUp();
+  planWarmups();
   return true;
 }
