@@ -107,6 +107,7 @@ const INJ_DAYS=[2,3,4,4,5,6,7,9,12,16,21];  // how many days an injury lasts, pi
 const ACADEMY_COST=[0,80,150,250,400];
 // scout department, physio room, training ground: cost to go from level n to n+1, indexed by n
 const FAC_COST=[0,60,120,200,320];
+const SQUAD_MAX=25;    // our first team (players out on loan don't count), as the 25-man lists of the big leagues
 const SUBS=5;          // halftime substitutions allowed
 const OOP=.85;           // ability multiplier for a player in another outfield line (keeper <-> outfield is .5)
 // signature moves: a player learns one the moment his ability goes above 87, and it fades in the summer he turns 34

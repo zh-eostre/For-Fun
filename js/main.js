@@ -201,7 +201,7 @@ const ACT={
     if(!windowOpen()){toast(windowShut());return}
     const p=S.market.find(x=>x.id===+a);if(!p)return;
     if(S.budget<p.price){toast('资金不够');return}
-    if(squadFull()){toast('一线队已满 22 人');return}
+    if(squadFull()){toast(`一线队已满 ${SQUAD_MAX} 人`);return}
     S.budget-=p.price;S.market=S.market.filter(x=>x!==p);const price=p.price,est=shownPot(p);
     delete p.price;delete p.scout;delete p.sale;my().players.push(p);
     const diff=p.pot-est;

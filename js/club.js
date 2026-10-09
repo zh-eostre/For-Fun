@@ -181,7 +181,7 @@ function newIntake(){
 }
 function signYouth(id){
   const p=S.academy.intake.find(x=>x.id===id);if(!p)return;
-  if(squadFull()){toast('一线队已满 22 人');return}
+  if(squadFull()){toast(`一线队已满 ${SQUAD_MAX} 人`);return}
   const est=p.scout.est;delete p.scout;delete p.chosen;
   S.academy.intake=S.academy.intake.filter(x=>x!==p);p.joined=S.season;my().players.push(p);
   UI.reveal={name:p.name,pot:p.pot,est,diff:p.pot-est};
@@ -244,7 +244,7 @@ function buyBlock(p,t){
   if(!windowOpen())return windowShut();
   if(t.players.length<=15)return '对方阵容人数不足，不愿出售';
   if(p.pos==='GK'&&t.players.filter(x=>x.pos==='GK').length<=2)return '对方门将不够，不愿出售';
-  if(squadFull())return '你的一线队已满 22 人';
+  if(squadFull())return `你的一线队已满 ${SQUAD_MAX} 人`;
   if(S.budget<askPrice(p,t))return '资金不够';
   return '';
 }
@@ -266,7 +266,7 @@ function buyFrom(id){
 const LOAN_AGE=23;
 const firstTeam=()=>my().players.filter(p=>!p.loan);  // registered first-team players
 const squadSize=()=>firstTeam().length;
-const squadFull=()=>squadSize()>=22;
+const squadFull=()=>squadSize()>=SQUAD_MAX;
 function loanOut(id){
   const p=findP(id);if(!p||p.loan||p.age>LOAN_AGE)return;
   p.loan={...loanHost(p),ovr0:p.ovr};dropFromLineup(p.id);
@@ -277,7 +277,7 @@ function loanHost(p){
   return {league,club:pick(clubs)};
 }
 const loanLabel=p=>`${p.loan.league}的${p.loan.club}`;
-function recallLoan(id){const p=findP(id);if(!p||!p.loan)return;if(squadFull()){toast('一线队已满 22 人，先卖掉一人才能召回');return}news(`${p.name} 从${p.loan.club}提前召回。`);p.loan=null;toast(`${p.name} 已召回`)}
+function recallLoan(id){const p=findP(id);if(!p||!p.loan)return;if(squadFull()){toast(`一线队已满 ${SQUAD_MAX} 人，先卖掉一人才能召回`);return}news(`${p.name} 从${p.loan.club}提前召回。`);p.loan=null;toast(`${p.name} 已召回`)}
 function loanRound(){
   my().players.filter(p=>p.loan).forEach(p=>{
     p.lapps=(p.lapps||0)+1;
@@ -287,7 +287,7 @@ function loanRound(){
 function endLoans(){
   const back=my().players.filter(p=>p.loan);
   back.forEach(p=>p.loan=null);
-  if(back.length)news(`租借结束：${back.map(p=>`${p.name}（${p.lapps||0} 场）`).join('、')} 回到球队。${squadSize()>22?`一线队现在有 ${squadSize()} 人，超过 22 人上限，卖掉多余的人之前不能再签新人。`:''}`);
+  if(back.length)news(`租借结束：${back.map(p=>`${p.name}（${p.lapps||0} 场）`).join('、')} 回到球队。${squadSize()>SQUAD_MAX?`一线队现在有 ${squadSize()} 人，超过 ${SQUAD_MAX} 人上限，卖掉多余的人之前不能再签新人。`:''}`);
 }
 
 /* ---------- board objectives ---------- */

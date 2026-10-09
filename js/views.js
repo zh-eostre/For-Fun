@@ -239,7 +239,7 @@ function vRules(){
     '赛季末颁发最佳球员、最佳新秀、最佳门将、金靴、助攻王，并选出年度最佳阵容。最佳球员按「比同位置的人好多少」来评，所以各个位置都有机会。'])}
   ${sec('成长与老化',['训练和比赛都会让球员进步，越年轻、离潜力越远进步越快；训练场等级越高进步越快。',
     '33 岁起能力可能下滑，也可能退役（能力越高越能坚持），40 岁一定退役。在队效力够久或帮球队夺冠的退役球员会进入传奇名单。'])}
-  ${sec('转会与俱乐部',[`一线队最多 22 人，至少保留 14 人；${LOAN_AGE} 岁以下的球员可以外租，租借期间不占名额。`,
+  ${sec('转会与俱乐部',[`一线队最多 ${SQUAD_MAX} 人，至少保留 14 人；${LOAN_AGE} 岁以下的球员可以外租，租借期间不占名额。`,
     '球探部、理疗室、训练场、球场可以升级；青训营每个赛季会送来一批少年。董事会目标完成有奖金，教练声望够高会收到其他球队的执教邀请。',
     `每个赛季可以发动一次${CHEAT_CARD}。`])}
   </div></section>`;
@@ -329,7 +329,7 @@ function vLoans(){
   ${L.map(p=>{const d=p.ovr-(p.loan.ovr0??p.ovr);return `<div class="mrow"><div style="min-width:0"><div class="pname"><button class="link" data-act="player" data-arg="${p.id}">${p.name}</button> <span class="muted" style="font-weight:400">${POS[p.pos]}，${p.age} 岁</span></div>
     <div class="price">租借至${loanLabel(p)} · 本季出场 ${p.lapps||0} 场${d?` · 租借以来能力 ${d>0?'+':''}${d}`:''}</div></div>
     <div><div class="ovr num">${p.ovr}</div><div class="potl">潜力 ${p.pot}</div></div>
-    <button class="btn small" data-act="recall" data-arg="${p.id}" ${squadFull()?'disabled title="一线队已满 22 人"':''}>召回</button></div>`}).join('')}
+    <button class="btn small" data-act="recall" data-arg="${p.id}" ${squadFull()?`disabled title="一线队已满 ${SQUAD_MAX} 人"`:''}>召回</button></div>`}).join('')}
   <p class="muted" style="margin:8px 0 0;font-size:12px">赛季结束时自动回归。召回需要一线队有空位。</p></section>`;
 }
 // what the chosen formation's midfield does, for the ones with holding or attacking midfielders
@@ -363,7 +363,7 @@ function vSquad(){
   ${iss.length?`<span class="warn">${iss[0]}</span>`:`<span class="muted" style="font-size:14px">${formNote(S.formation)}</span>`}
   </div></section>
   <div class="cols squad"><div class="col">${vPitch()}</div>
-  <div class="col"><section class="panel" style="padding:4px 6px"><h2 style="margin:10px 10px 0">一线队 <span class="muted" style="font-weight:400;font-size:14px">${squadSize()}/22 · 点名字看详情</span></h2>${rows}</section>
+  <div class="col"><section class="panel" style="padding:4px 6px"><h2 style="margin:10px 10px 0">一线队 <span class="muted" style="font-weight:400;font-size:14px">${squadSize()}/${SQUAD_MAX} · 点名字看详情</span></h2>${rows}</section>
   ${vLoans()}</div></div>`;
 }
 // the XI drawn on a pitch, attacking upwards. every slot of the formation gets a spot, so the shape always matches
@@ -517,7 +517,7 @@ function vAcademy(){
     <div><div class="ovr num">${p.ovr}</div><div class="potl">${potText(p)}</div></div>
     <div style="display:flex;flex-direction:column;gap:4px"><button class="btn small primary" data-act="ysign" data-arg="${p.id}" ${squadFull()?'disabled':''}>签入</button><button class="btn small" data-act="yrel" data-arg="${p.id}">放走</button></div></div>`).join('')
   :'<p class="muted" style="margin:0">这一批少年都处理完了，下个赛季会有新人。</p>'}
-  ${squadFull()?'<p class="warn">一线队已满 22 人，先卖掉一些人才能签入。</p>':''}</section>
+  ${squadFull()?`<p class="warn">一线队已满 ${SQUAD_MAX} 人，先卖掉一些人才能签入。</p>`:''}</section>
   </div><div class="col"><section class="panel"><h2>青训出品</h2>${grads.length?grads.map(p=>`<div class="res" style="grid-template-columns:1fr auto"><span style="text-align:left">${p.name} <span class="muted">${POS[p.pos]}，${p.age} 岁，${p.apps} 场 ${p.goals} 球</span></span><span class="num">${p.ovr}<span class="muted" style="font-size:13px">/${p.pot}</span></span></div>`).join(''):'<p class="muted" style="margin:0">一线队里还没有青训出身的球员。</p>'}</section></div></div>`;
 }
 function vMarket(){
@@ -529,7 +529,7 @@ function vMarket(){
   const seg=(key,opts)=>`<div class="seg sm">${opts.map(([v,l])=>`<button data-act="mf" data-arg="${key}:${v}" aria-pressed="${F[key]===v}">${l}</button>`).join('')}</div>`;
   return vReveal()+`<section class="panel"><h2>转会市场</h2>
   <p class="window ${open?'open':'shut'}">${open?(windowLeft()==null?'转会窗口开放中':`${windowName()}开放中，还剩 ${windowLeft()} 天`):windowShut()+'。名单可以先看，球探也可以先派。'}</p>
-  <p class="muted" style="margin-top:6px;font-size:14px">本赛季名单 · 一线队 ${squadSize()}/22${my().players.length>squadSize()?`（另有 ${my().players.length-squadSize()} 人租借在外）`:''} · 绿条是能力，金条是球探估计的潜力 · 想买其他球队的人，在积分榜点球队名</p>
+  <p class="muted" style="margin-top:6px;font-size:14px">本赛季名单 · 一线队 ${squadSize()}/${SQUAD_MAX}${my().players.length>squadSize()?`（另有 ${my().players.length-squadSize()} 人租借在外）`:''} · 绿条是能力，金条是球探估计的潜力 · 想买其他球队的人，在积分榜点球队名</p>
   <div class="filters">
    <div><label>位置</label>${seg('pos',[['all','全部'],['GK','门将'],['DF','后卫'],['MF','中场'],['FW','前锋']])}</div>
    <div><label>年龄</label>${seg('age',[['all','全部'],['y','21 岁以下'],['m','22 到 28'],['o','29 岁以上']])}</div>

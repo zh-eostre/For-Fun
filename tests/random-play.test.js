@@ -19,7 +19,7 @@ function check(){
   if(S.lineup.length!==slotRoles(S.formation).length)fails.push(where+' lineup length '+S.lineup.length);
   const li=S.lineup.filter(x=>x!=null);if(new Set(li).size!==li.length)fails.push(where+' duplicate in lineup');
   li.forEach(id=>{if(!my().players.some(p=>p.id===id))fails.push(where+' lineup has non-squad '+id)});
-  if(squadSize()>22)fails.push(where+' squad '+squadSize());
+  if(squadSize()>SQUAD_MAX)fails.push(where+' squad '+squadSize());
   if(M&&!M.done){for(const s of ['h','a']){const on=M[s+'Ids'].filter(x=>x!=null);if(new Set(on).size!==on.length)fails.push(where+' dup on pitch');
       on.forEach(id=>{if(!M[s+'XI'].includes(id))fails.push(where+' on pitch not in XI '+id)})}
     if(M.subs>SUBS||M.oppSubs>SUBS)fails.push(where+' subs '+M.subs+'/'+M.oppSubs)}
