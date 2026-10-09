@@ -778,3 +778,12 @@ button.xi-tok{cursor:pointer}
 .oppr .target.on{border:1px solid var(--pitch);background:var(--pitch-soft)}
 .oppr .target span{display:block;font-size:12px;color:var(--muted)}
 .oppr .target.on span{color:var(--pitch);font-weight:700}
+.ycwarn{color:var(--red-text,var(--red));font-weight:700}
+
+/* penalty shootout */
+.pk{border:1.5px solid var(--amber);border-radius:12px;padding:10px 12px;margin:0 0 12px}
+.pk-row{display:grid;grid-template-columns:70px 1fr 30px;align-items:center;gap:8px;padding:4px 0}
+.pk-row span{display:flex;gap:6px;flex-wrap:wrap}
+.pk-row i{font-style:normal;font-size:18px;line-height:1}
+.pk-row i.in{color:#2C6E49}.pk-row i.miss{color:var(--red)}.pk-row i.todo{color:var(--muted)}
+.pk-row .num{font-size:22px;text-align:right}

@@ -302,8 +302,9 @@ const injRisk=p=>INJ_RATE*(p.cond>=75?.45:p.cond>=60?.7:p.cond>=45?1.4:2.2);
 // a second yellow sends him off (his slot becomes null) and YC_BAN yellows over the season earn a ban
 function booking(team,ids,yc){
   const p=team.players.find(x=>x.id===pickOn(ids));if(!p)return null;
-  if(yc[p.id]){ids[ids.indexOf(p.id)]=null;p.ban=Math.max(p.ban,1);return {p,red:true}}
-  yc[p.id]=1;p.yc++;
+  // season totals: ycs yellows, rcs reds (a second yellow counts as both); p.yc counts toward the next ban
+  if(yc[p.id]){ids[ids.indexOf(p.id)]=null;p.ban=Math.max(p.ban,1);p.ycs=(p.ycs||0)+1;p.rcs=(p.rcs||0)+1;return {p,red:true}}
+  yc[p.id]=1;p.yc++;p.ycs=(p.ycs||0)+1;
   if(p.yc>=YC_BAN){p.yc=0;p.ban=Math.max(p.ban,1);return {p,banned:true}}
   return {p};
 }
@@ -647,7 +648,7 @@ function newSeason(moveTo){
       else if(p.age<=34)p.ovr-=ri(1,3);
       else p.ovr-=ri(2,5);
       p.ovr=clamp(p.ovr,35,92);p.pot=p.age>=33?p.ovr:Math.max(p.pot,p.ovr);  // past 33 the decline is for good
-      t.condDay=0;t.lastDay=-9;p.cond=100;p.inj=0;p.ban=0;p.away=0;p.yc=0;p.goals=0;p.ast=0;p.ss=null;p.apps=0;p.lapps=0;p.rs=0;p.rn=0;p.gain=p.ovr-old;
+      t.condDay=0;t.lastDay=-9;p.cond=100;p.inj=0;p.ban=0;p.away=0;p.yc=0;p.ycs=0;p.rcs=0;p.goals=0;p.ast=0;p.ss=null;p.apps=0;p.lapps=0;p.rs=0;p.rn=0;p.gain=p.ovr-old;
       if(p.sig&&p.age>=SIG_FADE){if(t.id===S.my)news(`${p.name} 年满 ${p.age} 岁，必杀技「${p.sig}」渐渐生疏了。`);delete p.sig}
       else if(learnSig(p)&&t.id===S.my)news(`${p.name} 能力升至 ${p.ovr}，领悟了必杀技「${p.sig}」！`);
     });

@@ -27,6 +27,7 @@ function bankPlayer(p){
   const c=S.club[p.id]||(S.club[p.id]={name:p.name,pos:p.pos,goals:0,apps:0});
   c.goals+=p.goals;c.ast=(c.ast||0)+(p.ast||0);c.apps+=p.apps;c.lapps=(c.lapps||0)+(p.lapps||0);
   c.rs=(c.rs||0)+(p.rs||0);c.rn=(c.rn||0)+(p.rn||0);  // ratings, for the all-time rating board
+  c.ycs=(c.ycs||0)+(p.ycs||0);c.rcs=(c.rcs||0)+(p.rcs||0);
 }
 function acceptOffer(){
   if(!windowOpen()){toast(windowShut());return}

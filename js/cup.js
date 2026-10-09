@@ -23,19 +23,21 @@ const cupAlive=()=>{const C=S.cup;if(C.skipped)return false;if(C.winner!=null)re
 function shootout(H,hi,A,ai,log){
   const takers=(t,ids)=>ids.map(id=>t.players.find(p=>p.id===id)).filter(Boolean).sort((x,y)=>y.ovr-x.ovr);
   const ht=takers(H,hi),at=takers(A,ai),hk=keeper(H,hi),ak=keeper(A,ai);
-  const kick=(t,list,k,i)=>{
-    const p=list[i%list.length],ok=rng()<.76;
-    if(log)log(ok?LINE.penIn(p.name,t.short):LINE.penMiss(p.name,k&&rng()<.6?k.name:null));
-    return ok;
+  // kicks: every kick in order ({s: 'h'/'a', ok, line}) so a live match can reveal them one at a time
+  const kicks=[],kick=(t,list,k,i,side)=>{
+    const p=list[i%list.length],ok=rng()<.76,line=ok?LINE.penIn(p.name,t.short):LINE.penMiss(p.name,k&&rng()<.6?k.name:null);
+    if(log)log(line);kicks.push({s:side,ok,line});return ok;
   };
   let hp=0,ap=0;
   for(let i=0;i<30;i++){
-    if(kick(H,ht,ak,i))hp++;
-    if(kick(A,at,hk,i))ap++;
+    if(kick(H,ht,ak,i,'h'))hp++;
+    // the second team doesn't kick when the first five can no longer be caught
+    if(i<5&&(hp-ap>5-i||ap-hp>4-i))break;
+    if(kick(A,at,hk,i,'a'))ap++;
     const left=4-i;  // pairs still to come within the first five
     if(left>0?Math.abs(hp-ap)>left:hp!==ap)break;
   }
-  return {hp,ap};
+  return {hp,ap,kicks};
 }
 const tieWinner=r=>r.hg>r.ag||(r.hg===r.ag&&r.hp>r.ap)?r.h:r.a;
 

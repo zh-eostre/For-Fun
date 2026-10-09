@@ -53,6 +53,7 @@ for(const ev of ['pointerup','pointercancel'])document.addEventListener(ev,()=>{
 // after a goal the match holds for a moment (ours 1.5s, theirs 0.8s) so it can sink in before play goes on
 function loop(){if(!M||M.done||M.paused)return;if(pressing){M.timer=setTimeout(loop,40);return}
   if(M.hold&&Date.now()<M.hold){M.timer=setTimeout(loop,M.hold-Date.now());return}
+  if(M.pk){pkStep();render();if(!M.done)M.timer=setTimeout(loop,1200);return}
   const n=M.feed.length;tick(false);render();
   const [,base,perLine]=PACE[S.pace]||PACE.normal;
   if(!M.done&&!M.paused)M.timer=setTimeout(loop,base+perLine*Math.min(3,M.feed.length-n))}
@@ -88,13 +89,22 @@ function tick(skipping){
   if(M.min>=90){
     M.feed.unshift({min:90,cls:'sys',t:LINE.full(M.hg,M.ag)});announce(LINE.full(M.hg,M.ag));
     if(M.cup&&M.hg===M.ag){
-      const H=S.teams[M.h],A=S.teams[M.a];
-      M.feed.unshift({min:'PK',cls:'sys',t:LINE.pensStart});
-      const r=shootout(H,M.hIds,A,M.aIds,t=>M.feed.unshift({min:'PK',cls:'',t}));
-      M.hp=r.hp;M.ap=r.ap;
-      M.feed.unshift({min:'PK',cls:'sys',t:LINE.pensEnd(r.hp,r.ap,(r.hp>r.ap?H:A).name)});
+      // a shootout: decided now, then revealed one kick at a time (all at once when skipping)
+      M.feed.unshift({min:'PK',cls:'sys',t:LINE.pensStart});announce(LINE.pensStart);
+      M.pk={kicks:shootout(S.teams[M.h],M.hIds,S.teams[M.a],M.aIds,null).kicks,i:0,hp:0,ap:0};M.hp=0;M.ap=0;
+      if(!skipping){M.hold=Date.now()+900;return}
+      while(M.pk)pkStep();return;
     }
     finish();
+  }
+}
+// the next kick of a shootout; after the last one the shootout is over and the match finishes
+function pkStep(){
+  const P=M.pk,k=P.kicks[P.i++];
+  if(k){if(k.ok)P[k.s+'p']++;M.hp=P.hp;M.ap=P.ap;M.feed.unshift({min:'PK',cls:k.ok?'':'',t:k.line});announce(`点球 ${P.hp} 比 ${P.ap}`)}
+  if(P.i>=P.kicks.length){
+    const H=S.teams[M.h],A=S.teams[M.a];M.pk=null;
+    M.feed.unshift({min:'PK',cls:'sys',t:LINE.pensEnd(M.hp,M.ap,(M.hp>M.ap?H:A).name)});finish();
   }
 }
 function side(s,p){
@@ -296,4 +306,4 @@ function finishFriendly(){
   delete S.live;rng=Math.random;
   save();
 }
-function skipMatch(){if(!M||M.done)return;clearTimeout(M.timer);M.paused=false;M.ht=false;M.skip=true;while(!M.done)tick(true);render()}
+function skipMatch(){if(!M||M.done)return;clearTimeout(M.timer);M.paused=false;M.ht=false;M.skip=true;while(!M.done){if(M.pk)pkStep();else tick(true)}render()}

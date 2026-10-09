@@ -22,6 +22,7 @@ function celebrate(big,small,kind){
 function notice(kind,title,sub){
   const box=document.getElementById('banner');if(!box||!box.appendChild)return;
   const el=document.createElement('div');el.className='bn '+kind;el.innerHTML=`<b>${title}</b>${sub?`<span>${sub}</span>`:''}`;
+  while(box.children.length>=3)box.firstChild.remove();  // at most three at a time: the oldest goes
   box.appendChild(el);setTimeout(()=>el.classList.add('out'),2400);setTimeout(()=>el.remove(),2800);
 }
 function toast(t){
