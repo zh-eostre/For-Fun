@@ -35,4 +35,19 @@ S.round=0;UI.tab='table';render();ok(/data-arg="\\d+:cards"/.test(els.app.innerH
   M.paused=false;M.subMode=false;skipMatch();
   ok(pl.ban===1&&!pl.banNext&&unavail(pl)&&M.summary.banned.includes(pl),'after the final whistle: banned for the next match, shown in the summary');
   ACT.matchDone();ok(!S.lineup.includes(pid),'and left out of the next lineup');}
+// a red card: he leaves the pitch, the live stamina list and every later goal or assist
+{newGame(TEAMS.findIndex(t=>t.div===2),teamNames());
+  while(nextFix().friendly){ACT.ff();S.event=null;S.offer=null;startMatch();skipMatch();ACT.matchDone()}
+  ACT.ff();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();clearTimeout(M.timer);
+  const s=mySide(),pid=M[s+'Ids'][9],pl=findP(pid);
+  // he is already on a yellow; nobody else is, so he is the only one a booking can send off
+  let tries=0;while(M[s+'Ids'].includes(pid)&&tries++<500){M.yc={[pid]:1};booking(my(),M[s+'Ids'],M.yc)}
+  ok(!M[s+'Ids'].includes(pid)&&M[s+'Ids'].filter(x=>x!=null).length===10,'second yellow: sent off, ten men left');
+  M.ev[pid]=Object.assign(M.ev[pid]||{},{red:1});M.off[pid]=M.min;render();
+  ok(!vLiveStamina().includes(pName(pl)),'not on the live stamina list');
+  let sc=0,as=0;for(let i=0;i<3000;i++){const p=scorer(my(),M[s+'Ids'],M[s+'Form']);if(p===pl)sc++;const a=assister(my(),M[s+'Ids'],M[s+'Form'],p);if(a===pl)as++}
+  ok(sc===0&&as===0,'3000 chances later: never the scorer or the one who set it up');
+  M.paused=true;M.subMode=true;render();ok(/已下场/.test(els.app.innerHTML)&&/红牌 [0-9]+'/.test(els.app.innerHTML),'in a stop he is listed as gone, with his red card');
+  const bench=my().players.find(p=>!M[s+'XI'].includes(p.id)&&!unavail(p));ok(!substitute(pid,bench.id)&&!substitute(M[s+'Ids'][1],pid),'he can be neither taken off nor brought back');
+  M.paused=false;M.subMode=false;skipMatch();ACT.matchDone();}
 `);

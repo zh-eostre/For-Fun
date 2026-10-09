@@ -684,7 +684,7 @@ function vMatch(){
       <span class="sc-main"><span class="sc-name">${p.name}${p.sig?'<i>★</i>':''}</span>
       <span class="sc-meta">${POS[p.pos]} · 体能 ${Math.round(p.cond)}${out&&gain>0?` <b class="sc-gain">+${gain}</b>`:''}</span></span>${back?'<b class="sc-fit sc-back">换回</b>':same?'<b class="sc-fit">同位置</b>':''}
       <span class="tb ${p.cond<TIRED?'low':''}"><i style="width:${p.cond}%"></i></span></button>`}).join(''):'<span class="muted" style="font-size:13px">没有可用的替补</span>'}
-    ${offPitch().length?`<div class="gone-row"><span class="muted">已换下</span>${offPitch().map(p=>`<span>${pName(p)}${subMark(p.id)} <span class="muted num">${Math.round(p.cond)}</span></span>`).join('')}</div>`:''}</div></div>
+    ${offPitch().length?`<div class="gone-row"><span class="muted">已下场</span>${offPitch().map(p=>`<span>${pName(p)}${subMark(p.id)}${(M.ev[p.id]||{}).red?'':` <span class="muted num">${Math.round(p.cond)}</span>`}</span>`).join('')}</div>`:''}</div></div>
     <button class="btn primary" data-act="resume" style="margin-top:12px">再战，下半场！</button></div>`;
   }else{
     ctl=M.pk?vShootout():`<div class="mctl"><div class="seg sm pace" role="group" aria-label="比赛速度">${Object.entries(PACE).map(([k,[l]])=>`<button data-act="pace" data-arg="${k}" aria-pressed="${(S.pace||'normal')===k}">${l}</button>`).join('')}</div><button class="btn primary" data-act="pauseSub">换人 / 调整</button><button class="btn" data-act="skip">直接看结果</button>${autoSubBtn()}</div>${vLiveStamina()}`;
