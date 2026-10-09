@@ -67,8 +67,9 @@ function tick(skipping){
     const team=S.teams[s==='h'?M.h:M.a],tac=s==='h'?ht:at,mine=team.id===S.my;
     const lines=slotLines(M[s+'Form']);onPitch(team,M[s+'Ids']).forEach((p,j)=>p&&drain(p,tac,lines[j]));
     if((mine&&S.autoSub===false)||M.min-M.lastAuto[s]<5)continue;
-    const sw=tiredSwap(team,M[s+'Ids'],M[s+'XI'],M[s+'Form'],mine?M.subs:M.oppSubs,M.min);
-    if(sw&&substitute(sw[0].id,sw[1].id,s,LINE.tiredSub(sw[0].name,sw[1].name),'tired'))M.lastAuto[s]=M.min;
+    // one change every five minutes, or two at once when a second man is spent (under 60) too
+    for(let n=0;n<2;n++){const sw=tiredSwap(team,M[s+'Ids'],M[s+'XI'],M[s+'Form'],mine?M.subs:M.oppSubs,M.min);
+      if(!sw||n&&sw[0].cond>=60||!substitute(sw[0].id,sw[1].id,s,LINE.tiredSub(sw[0].name,sw[1].name),'tired'))break;M.lastAuto[s]=M.min}
   }
   if(M.min===75&&aura()>=1)M.feed.unshift({min:75,cls:'sys',t:`场边的主教练站了起来。名帅的气场笼罩全场，${my().short}的球员们眼神变了（进攻 +${aura()}）。`});
   if(M.min===45){

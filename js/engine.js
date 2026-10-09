@@ -363,10 +363,11 @@ function tiredSwap(team,ids,xi,form,used,min){
   if(min<60||min>88||used>=SUBS-(min<80?1:0))return null;
   const roles=slotRoles(form),bench=team.players.filter(x=>!xi.includes(x.id)&&!unavail(x)).sort((a,b)=>eff(b)-eff(a));
   const tired=ids.map((id,i)=>({p:id!=null&&team.players.find(x=>x.id===id),i})).filter(x=>x.p&&roles[x.i]!=='GK'&&x.p.cond<TIRED).sort((a,b)=>a.p.cond-b.p.cond);
-  // only when the sub would actually do better than the tired man; if not, try the next most tired
+  // only when the sub would do better than the tired man (if not, try the next most tired). a man under 60 is
+  // spent and injury-prone, so he goes off for anyone nearly as good (up to 3 points worse on the day)
   for(const t of tired){
     const role=roles[t.i],fresh=bench.find(x=>x.pos===role)||standIn(bench,role);
-    if(fresh&&eff(fresh)*fit(fresh,role)>eff(t.p)*fit(t.p,role))return [t.p,fresh];
+    if(fresh&&eff(fresh)*fit(fresh,role)>eff(t.p)*fit(t.p,role)-(t.p.cond<60?3:0))return [t.p,fresh];
   }
   return null;
 }
@@ -409,8 +410,9 @@ function quickSim(h,a){
     const rH=slotLines(bh.form),rA=slotLines(ba.form);
     onPitch(H,hi).forEach((p,j)=>p&&drain(p,th,rH[j]));onPitch(A,ai).forEach((p,j)=>p&&drain(p,ta,rA[j]));
     for(const [T,ids,xi,form,k] of [[H,hi,hx,bh.form,'h'],[A,ai,ax,ba.form,'a']]){
-      const sw=i%5===0&&tiredSwap(T,ids,xi,form,used[k],i);
-      if(sw){ids[ids.indexOf(sw[0].id)]=sw[1].id;xi.push(sw[1].id);used[k]++;off[sw[0].id]=i;on[sw[1].id]=i}
+      // up to two changes at once when a second man is spent too
+      for(let n=0;n<2&&i%5===0;n++){const sw=tiredSwap(T,ids,xi,form,used[k],i);if(!sw||n&&sw[0].cond>=60)break;
+        ids[ids.indexOf(sw[0].id)]=sw[1].id;xi.push(sw[1].id);used[k]++;off[sw[0].id]=i;on[sw[1].id]=i}
     }
   }
   afterMatch(H,hx,false);afterMatch(A,ax,false);
