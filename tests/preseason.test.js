@@ -6,6 +6,7 @@ const toDay=n=>{let g=0;while(S.day<n&&g++<50){const log={days:0,cond:0,trained:
 newGame(3,teamNames());S.budget=3000;S.event=null;
 ok(S.pre===7&&windowOpen()&&S.friendlies.length===2&&S.market.length===36,'new game: 7-day window, 2 friendlies, 36-player list');
 ok(S.friendlies.every(f=>S.teams[f.opp].div!==my().div),'friendlies are against the other division');
+UI.tab='home';render();{const o=S.teams[S.friendlies[0].opp];ok(els.app.innerHTML.includes('对手'+DIVS[o.div])&&els.app.innerHTML.includes('友谊赛 · '+DIVS[o.div]),'the opponent\u2019s division is shown ('+DIVS[o.div]+')')}
 ok(leagueDay(0)===12&&S.friendlies[0].day===2&&S.friendlies[1].day===5,'friendlies Wed and Sat, league starts '+dayLabel(leagueDay(0)));
 // AI clubs do business during the week
 const before=JSON.stringify(S.teams.map(t=>t.players.length));

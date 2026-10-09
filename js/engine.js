@@ -594,7 +594,7 @@ function nextFix(){
   const opp=m[0]===S.my?m[1]:m[0];
   return {h:m[0],a:m[1],home:m[0]===S.my,opp,cup,intl,derby:!intl&&opp===S.rival};
 }
-const fixLabel=f=>f.friendly?`季前友谊赛 ${f.idx+1}/2`:f.cup?`${CUP_NAME}·${stageName(S.cup.stage)}`:f.intl?`${INTL_NAME}·${INTL_STAGES[S.intl.stage]}`:`联赛第 ${S.round+1} 轮`;
+const fixLabel=f=>f.friendly?`季前友谊赛 ${f.idx+1}/2（对手${DIVS[S.teams[f.opp].div]}）`:f.cup?`${CUP_NAME}·${stageName(S.cup.stage)}`:f.intl?`${INTL_NAME}·${INTL_STAGES[S.intl.stage]}`:`联赛第 ${S.round+1} 轮`;
 function lineupIssues(){
   const ps=S.lineup.map(id=>id==null?null:findP(id)),n=ps.filter(Boolean).length,iss=[];
   // fewer than 11 is only allowed when nobody else is fit to play, and never below the 7 the rules require
