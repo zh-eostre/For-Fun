@@ -51,7 +51,7 @@ const TACT={def:'防守反击',bal:'平衡',att:'全力进攻'};
 // match pace: ms per minute of play, plus ms for each new line of commentary so there's time to read it
 const PACE={slow:['慢',260,1800],normal:['正常',150,1000],fast:['快',45,0]};
 const TRAIN={rest:['恢复训练','训练日体能 +10，不会通过训练进步'],normal:['常规训练','训练日体能 +4，有一定机会进步'],hard:['高强度加练','训练日体能 +1，进步最快，但疲劳的球员更容易受伤']};
-const CARD=.02;   // chance per team per minute of a booking (about 1.8 per team per match)
+const CARD=.013;   // chance per team per minute of a booking (about 1.2 per team per match)
 // chance to retire at the end of a season by age (33-39; 40+ always retires), scaled by ability below
 const RETIRE_AGE={33:.08,34:.2,35:.4,36:.6,37:.75,38:.85,39:.95};
 const YC_BAN=3;   // yellow cards that add up to a one-match ban
@@ -106,7 +106,7 @@ const CUP_FORMAT32={
   prize:[0,0,10,30,60,120,250]
 };
 
-const INJ_RATE=.0007;    // chance per team per minute of an injury (about one every 16 matches per team)
+const INJ_RATE=.00046;    // chance per team per minute of an injury, scaled by stamina (about one every 40-60 matches per team)
 const INJ_DAYS=[2,3,4,4,5,6,7,9,12,16,21];  // how many days an injury lasts, picked at random
 // youth academy: upgrade cost to reach the next level, by current level (max level 5)
 const ACADEMY_COST=[0,80,150,250,400];

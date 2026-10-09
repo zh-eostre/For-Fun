@@ -50,4 +50,14 @@ S.round=0;UI.tab='table';render();ok(/data-arg="\\d+:cards"/.test(els.app.innerH
   M.paused=true;M.subMode=true;render();ok(/已下场/.test(els.app.innerHTML)&&/红牌 [0-9]+'/.test(els.app.innerHTML),'in a stop he is listed as gone, with his red card');
   const bench=my().players.find(p=>!M[s+'XI'].includes(p.id)&&!unavail(p));ok(!substitute(pid,bench.id)&&!substitute(M[s+'Ids'][1],pid),'he can be neither taken off nor brought back');
   M.paused=false;M.subMode=false;skipMatch();ACT.matchDone();}
+// who gets booked: one of the eleven on the pitch, each as likely as the next (not the first in the squad list)
+{newGame(TEAMS.findIndex(t=>t.div===2),teamNames());const T=my(),ids=autoPick(T,S.formation,true),n={};let got=0;
+  for(let i=0;i<11000;i++){const b=booking(T,[...ids],{});if(b){got++;n[b.p.id]=(n[b.p.id]||0)+1}}
+  T.players.forEach(p=>{p.yc=0;p.ycs=0;p.rcs=0;delete p.banNext});
+  const sh=ids.map(id=>(n[id]||0)/got);
+  ok(got===11000&&sh.every(x=>x>.07&&x<.11),'every booking finds a man on the pitch, about 9% each ('+sh.map(x=>Math.round(x*100)).join(' ')+')');
+// a third yellow and a sending-off in the same match: two matches out
+  const p=T.players.find(x=>x.pos!=='GK');p.yc=YC_BAN-1;const yc={};
+  const b1=booking(T,[p.id],yc),b2=booking(T,[p.id],yc);afterMatch(T,[p.id],true);
+  ok(b1.banned&&b2.red&&p.ban===2,'third yellow, then a second yellow in the game: banned for '+p.ban+' matches');}
 `);

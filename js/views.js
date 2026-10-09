@@ -236,7 +236,7 @@ function vRules(){
     '同一次暂停里的换人在继续比赛前都可以改或撤销。',
     `赛后第一天是休息日（体能 +${DAY_REST}）；之后看训练安排：恢复训练 +${TRAIN_DAY.rest.cond}，常规训练 +${TRAIN_DAY.normal.cond}，高强度加练 +${TRAIN_DAY.hard.cond}（进步最快，但更容易受伤）。`])}
   ${sec('伤病与红黄牌',['越疲劳越容易受伤；理疗室能降低受伤风险、加快恢复。伤停按天计算，日程里会倒数。',
-    `本赛季累计 ${YC_BAN} 张黄牌停赛一场：吃到第 ${YC_BAN} 张的那场比赛照常踢完，从下一场开始停赛。一场比赛吃到两张黄牌会当场被罚下，下一场也停赛。友谊赛不出牌。`])}
+    `本赛季累计 ${YC_BAN} 张黄牌停赛一场：吃到第 ${YC_BAN} 张的那场比赛照常踢完，从下一场开始停赛。一场比赛吃到两张黄牌会当场被罚下，下一场也停赛；同一场里既集满累计黄牌又被罚下，停赛两场。友谊赛不出牌。`])}
   ${sec('评分与奖项',['评分 3–10 分，平均约 6.7：看能力、比赛结果、个人数据（传球、关键传球、抢断、拦截、过人、扑救），加上进球和助攻。',
     '上场不到 60 分钟，基础表现按时间折算；进球、助攻、扑救、红黄牌不管上场多久都全额计入。',
     '赛季末颁发最佳球员、最佳新秀、最佳门将、金靴、助攻王，并选出年度最佳阵容。最佳球员按「比同位置的人好多少」来评，所以各个位置都有机会。'])}
@@ -652,7 +652,7 @@ function vMatch(){
     <div class="ft-chips">${M.friendly?chip('','友谊赛不计成绩'):chip('money',`💰 收入 ${money(s.income)}${M.derby?'（宿敌之战翻倍）':''}`)}
       ${s.grown.map(p=>chip('grow',`↑ ${p.name} ${p.ovr}`)).join('')}
       ${M.myInjuries.map(p=>chip('hurt',`🚑 ${p.name} 伤停 ${p.inj} 天`)).join('')}
-      ${s.banned.map(p=>chip('ban',`⛔ ${p.name} 下轮停赛`)).join('')}</div>
+      ${s.banned.map(p=>chip('ban',`⛔ ${p.name} ${p.ban>1?`停赛 ${p.ban} 场`:'下轮停赛'}`)).join('')}</div>
     ${s.awoken.map(p=>`<p class="awake">${LINE.awaken(p.name)}能力 ${p.ovr}，潜力 ${p.pot}${p.sig?`，领悟必杀技「${p.sig}」`:''}</p>`).join('')}
     ${vMatchStats()}
     <div class="go" style="justify-content:flex-start;margin-top:0"><button class="btn primary" data-act="matchDone">回到俱乐部</button>

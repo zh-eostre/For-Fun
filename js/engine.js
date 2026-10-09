@@ -312,13 +312,14 @@ const injRisk=p=>INJ_RATE*(p.cond>=75?.45:p.cond>=60?.7:p.cond>=45?1.4:2.2);
 // books a random player on the pitch; yc tracks yellows within this match.
 // a second yellow sends him off (his slot becomes null) and YC_BAN yellows over the season earn a ban. either ban
 // starts once the match is over (p.banNext, applied in afterMatch): a man on his third yellow plays on, and nobody
-// counts as suspended while the match is still being played
+// counts as suspended while the match is still being played. both in one match (his third yellow, then a second
+// yellow of the game) add up to two matches out
 function booking(team,ids,yc){
-  const p=team.players.find(x=>x.id===pickOn(ids));if(!p)return null;
+  const id=pickOn(ids),p=team.players.find(x=>x.id===id);if(!p)return null;  // one man on the pitch, at random
   // season totals: ycs yellows, rcs reds (a second yellow counts as both); p.yc counts toward the next ban
-  if(yc[p.id]){ids[ids.indexOf(p.id)]=null;p.banNext=1;p.ycs=(p.ycs||0)+1;p.rcs=(p.rcs||0)+1;return {p,red:true}}
+  if(yc[p.id]){ids[ids.indexOf(p.id)]=null;p.banNext=(p.banNext||0)+1;p.ycs=(p.ycs||0)+1;p.rcs=(p.rcs||0)+1;return {p,red:true}}
   yc[p.id]=1;p.yc++;p.ycs=(p.ycs||0)+1;
-  if(p.yc>=YC_BAN){p.yc=0;p.banNext=1;return {p,banned:true}}
+  if(p.yc>=YC_BAN){p.yc=0;p.banNext=(p.banNext||0)+1;return {p,banned:true}}
   return {p};
 }
 // growth multiplier: young players and those far below their potential improve faster
@@ -419,7 +420,7 @@ function quickSim(h,a){
   const e=id=>ev[id]||(ev[id]={}),book=b=>{if(b){e(b.p.id)[b.red?'red':'yc']=1;if(b.red)off[b.p.id]=minute}};
   const poss=possession(H,hi,bh.form,th,A,ai,ba.form,ta)/100;
   let hg=0,ag=0;const hurt=[];
-  const injure=(t,ids)=>{const p=t.players.find(x=>x.id===pickOn(ids));if(p&&!hurt.includes(p)&&rng()<injRisk(p))hurt.push(p)};
+  const injure=(t,ids)=>{const id=pickOn(ids),p=t.players.find(x=>x.id===id);if(p&&!hurt.includes(p)&&rng()<injRisk(p))hurt.push(p)};
   let edge=0;
   for(let i=0;i<90;i++){
     minute=i;

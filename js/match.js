@@ -155,7 +155,7 @@ function side(s,p){
   }
   // each minute one random player on the pitch is at risk; the risk grows as his stamina drops
   // and our physio room lowers it. from physio level 4 some of our knocks can be played through
-  const pl=team.players.find(x=>x.id===pickOn(ids));
+  const at=pickOn(ids),pl=team.players.find(x=>x.id===at);
   if(pl&&rng()<injRisk(pl)*(mine?physioRisk():1)*(M.friendly?.5:1)){
     if(mine&&rng()<knockChance()){pl.cond=Math.max(30,pl.cond-10);M.feed.unshift({min:M.min,cls:'',t:LINE.knock(pl.name)});flag('inj',`🩹 碰撞 ${M.min}'`,`${pl.name} 受了点小伤，坚持比赛`,700)}
     else if(!M.injuries.includes(pl)){
@@ -269,7 +269,7 @@ function finish(){
   M.summary={w,mg,og,mp,op,pens,income,grown,awoken,banned};
   news(`${w} ${mg}:${og}${pens?`（点球 ${mp}:${op}）`:''} 对阵${S.teams[oppId].name}${M.derby?'（宿敌之战）':''}。比赛收入 ${money(income)}。`);
   hurt.forEach(p=>news(`${p.name} 受伤，预计伤停 ${p.inj} 天。`));
-  if(banned.length)news(`${banned.map(p=>p.name).join('、')} 下一轮停赛。`);
+  if(banned.length)news(`${banned.map(p=>p.ban>1?`${p.name}（${p.ban} 场）`:p.name).join('、')} 停赛${banned.every(p=>p.ban===1)?'一场':''}。`);
   if(grown.length)news(`在比赛中成长：${grown.map(p=>`${p.name}（${p.ovr}）`).join('、')}。`);
   awoken.forEach(p=>news(`${LINE.awaken(p.name)}能力升至 ${p.ovr}，潜力 ${p.pot}。`));
   if(awoken.length)unlock('awaken');
