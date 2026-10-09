@@ -7,9 +7,9 @@ const cupDay=k=>(S.pre||0)+7*cupFmt().at[k]+2;
 const pairUp=ids=>{const t=[];for(let i=0;i+1<ids.length;i+=2)t.push([ids[i],ids[i+1]]);return t};
 function newCup(){
   // the main draw is the biggest power of two that fits (16 or 32); the clubs over it play a qualifying round
-  const n=S.teams.length,base=n>=32?32:16,extra=Math.max(0,n-base);
-  if(!extra)return {fmt:CUP_LEGACY,stage:0,ties:pairUp(shuffle(S.teams.map(t=>t.id))),byes:[],rounds:[],winner:null};
-  const order=[...S.teams].sort((a,b)=>(a.rep||0)-(b.rep||0)).map(t=>t.id);
+  const home=S.teams.filter(t=>!t.foreign),n=home.length,base=n>=32?32:16,extra=Math.max(0,n-base);
+  if(!extra)return {fmt:CUP_LEGACY,stage:0,ties:pairUp(shuffle(home.map(t=>t.id))),byes:[],rounds:[],winner:null};
+  const order=[...home].sort((a,b)=>(a.rep||0)-(b.rep||0)).map(t=>t.id);
   return {fmt:base===32?CUP_FORMAT32:CUP_FORMAT,stage:0,ties:pairUp(shuffle(order.slice(0,extra*2))),byes:order.slice(extra*2),rounds:[],winner:null};
 }
 // the next cup stage comes before our next league match (by date: lower divisions also play midweek rounds)

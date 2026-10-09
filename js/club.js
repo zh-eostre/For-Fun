@@ -16,7 +16,7 @@ function rollOffer(){
   if(S.offer){news(`${S.teams[S.offer.club].name} 的报价已过期。`);S.offer=null}
   if(rng()>=OFFER_CHANCE)return;
   const p=pick(my().players.filter(x=>!unavail(x)));
-  const clubs=p&&S.teams.filter(t=>t.id!==S.my&&t.str+10>=p.ovr);
+  const clubs=p&&domestic().filter(t=>t.id!==S.my&&t.str+10>=p.ovr);
   if(!clubs||!clubs.length)return;
   const club=pick(clubs);
   S.offer={pid:p.id,club:club.id,amount:Math.max(5,Math.round(marketValue(p)*rnd(1.05,1.6)))};
@@ -129,7 +129,8 @@ function recordSeason(div,rank){
   const champ=d=>{const t=table(d)[0];return t&&t.name};
   const awards=DIVS.map((_,d)=>seasonAwards(d));
   const xi=DIVS.map((_,d)=>seasonXI(d));
-  S.records.push({season:S.season,champs:DIVS.map((_,d)=>champ(d)),cup:S.cup.winner!=null?S.teams[S.cup.winner].name:null,div,rank,awards,xi,my:S.my});  // my: our club that season
+  S.records.push({season:S.season,champs:DIVS.map((_,d)=>champ(d)),cup:S.cup.winner!=null?S.teams[S.cup.winner].name:null,
+    intl:S.intl&&S.intl.winner!=null?S.teams[S.intl.winner].name:null,div,rank,awards,xi,my:S.my});  // my: our club that season
   awards.forEach((a,d)=>Object.entries(a).forEach(([k,w])=>{if(w&&w.tid===S.my)news(`${w.name} 获得${DIVS[d]}${AWARDS[k]}（${w.stat}）！`)}));
   xi.forEach((l,d)=>{const m=l.filter(w=>w.tid===S.my);if(m.length)news(`${m.map(w=>w.name).join('、')} 入选${DIVS[d]}年度最佳阵容！`)});
   // trophies won this season; a player shares in one if he made TITLE_APPS appearances
@@ -239,6 +240,7 @@ function askPrice(p,t){
 }
 // why a club won't sell (or we can't buy) right now; '' when the deal can go ahead
 function buyBlock(p,t){
+  if(t.foreign)return '海外俱乐部不出售球员';
   if(!windowOpen())return windowShut();
   if(t.players.length<=15)return '对方阵容人数不足，不愿出售';
   if(p.pos==='GK'&&t.players.filter(x=>x.pos==='GK').length<=2)return '对方门将不够，不愿出售';
@@ -364,7 +366,7 @@ function updatePrestige(tables){
   tables.forEach((T,d)=>T.forEach((r,i)=>{
     const t=S.teams[r.id],before=tierOf(t.rep);
     // gains shrink as a club gets grander, so a perennial champion settles in the high 80s rather than at the cap
-    let delta=prestigeDelta(d,i+1,T.length)+(S.cup.winner===t.id?4:0);
+    let delta=prestigeDelta(d,i+1,T.length)+(S.cup.winner===t.id?4:0)+(S.intl&&S.intl.winner===t.id?6:0);
     if(delta>0)delta*=1-t.rep/120;
     t.rep=clamp(Math.round(t.rep+delta+(REP_ANCHOR[d]-t.rep)*.06),5,98);
     t.str=strFromRep(t.rep);
@@ -374,7 +376,7 @@ function updatePrestige(tables){
   // the league always keeps at least MIN_GIANTS AI giants: if it runs short (say we keep winning everything),
   // the grandest 甲级 clubs below the line get backing and are raised to 82; their squads then catch up through
   // the usual below-target shopping and faster development
-  const giants=S.teams.filter(t=>t.id!==S.my&&t.rep>=80).length;
+  const giants=S.teams.filter(t=>t.id!==S.my&&!t.foreign&&t.rep>=80).length;
   S.teams.filter(t=>t.id!==S.my&&t.div===0&&t.rep<80).sort((a,b)=>b.rep-a.rep).slice(0,Math.max(0,MIN_GIANTS-giants))
     .forEach(t=>{t.rep=82;t.str=strFromRep(82);notes.push(`${t.name} 获得财团注资，跻身豪门`)});
   return notes;
@@ -387,9 +389,9 @@ const aiCeiling=t=>t.str+4+Math.round(t.rep/10);
 // player, to a grander AI club that is below its own level if there is one, otherwise abroad. talent flows upward
 function aiPoach(){
   const lines=[];
-  S.teams.filter(t=>t.id!==S.my&&aiGap(t)<-3&&t.players.length>16).forEach(seller=>{
+  domestic().filter(t=>t.id!==S.my&&aiGap(t)<-3&&t.players.length>16).forEach(seller=>{
     const star=[...seller.players].sort((a,b)=>b.ovr-a.ovr)[0];
-    const buyer=S.teams.filter(t=>t.id!==S.my&&t!==seller&&t.rep>seller.rep&&aiGap(t)>0&&t.players.length<22).sort((a,b)=>b.rep-a.rep)[0];
+    const buyer=domestic().filter(t=>t.id!==S.my&&t!==seller&&t.rep>seller.rep&&aiGap(t)>0&&t.players.length<22).sort((a,b)=>b.rep-a.rep)[0];
     seller.players=seller.players.filter(p=>p!==star);
     if(buyer){buyer.players.push(star);lines.push(`${buyer.name} 从 ${seller.name} 挖走 ${star.name}（${star.ovr}）`)}
     else lines.push(`${star.name}（${star.ovr}）离开 ${seller.name}，远走海外`);
@@ -425,7 +427,7 @@ const windowName=()=>S.day<S.pre?'季前转会窗口':'冬季转会窗口';
 const windowShut=()=>S.pre!=null&&S.day<winterStart()?`转会窗口已关闭，冬窗${dayLabel(winterStart())}开放`:'转会窗口已关闭，下赛季季前再开放';
 // two friendlies against clubs from the other division: Wednesday at home, Saturday away
 function planFriendlies(){
-  const others=shuffle(S.teams.filter(t=>t.div!==my().div).map(t=>t.id));
+  const others=shuffle(S.teams.filter(t=>t.div!==my().div&&!t.foreign).map(t=>t.id));
   S.friendlies=[{day:2,opp:others[0],home:true},{day:5,opp:others[1],home:false}];
   S.teams.forEach(t=>t.winBuys=0);  // AI signings this window (capped per club)
 }
@@ -469,6 +471,7 @@ function careerSeasonEnd(){
   if(div>0&&rank<=SWAP)d+=5;
   if(div<DIVS.length-1&&rank>size-SWAP)d-=div===0?10:6;
   if(S.cup.winner===S.my)d+=6;else if(!S.cup.skipped&&cupReached()>=cupFmt().names.length-1)d+=3;
+  if(S.intl){const ko=S.intl.ko.filter(rs=>rs.some(r=>r.h===S.my||r.a===S.my)).length;d+=S.intl.winner===S.my?8:ko>=2?4:ko?2:0}
   if(g&&g.league)d+=2;
   const before=S.mgr.rep;
   if(d>0)d*=1-before/130;
@@ -476,7 +479,7 @@ function careerSeasonEnd(){
   // offers only from clubs bigger than ours (a higher division, or the same division and clearly grander) that think we are good enough
   // compared by the division each club will play in next season (promotion and relegation are already decided)
   const nextDiv=t=>{const r=table(t.div).findIndex(x=>x.id===t.id)+1,z=zone(t.div,r);return t.div+(z==='up'?-1:z==='down'?1:0)};
-  const mine=my(),md=nextDiv(mine),pool=S.teams.filter(t=>t.id!==S.my&&nextDiv(t)<=md&&jobReq(t)<=S.mgr.rep&&(nextDiv(t)<md||t.rep>mine.rep+5))
+  const mine=my(),md=nextDiv(mine),pool=domestic().filter(t=>t.id!==S.my&&nextDiv(t)<=md&&jobReq(t)<=S.mgr.rep&&(nextDiv(t)<md||t.rep>mine.rep+5))
     .sort((a,b)=>b.rep-a.rep);
   S.jobOffers=pool.filter(()=>rng()<.6).slice(0,3).map(t=>({club:t.id,budget:jobBudget(t)}));
   news(`教练声望 ${S.mgr.last>=0?'+':''}${S.mgr.last}，现在 ${S.mgr.rep}（${mgrTitle(S.mgr.rep)}）。${S.jobOffers.length?`收到 ${S.jobOffers.length} 份执教邀请！`:''}`);

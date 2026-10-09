@@ -8,8 +8,8 @@ function startMatch(){
   // S.live only marks that a match is under way (the save holds the state from before kickoff)
   S.live={seed:Math.floor(Math.random()*2**31)};save();
   rng=seeded(S.live.seed);indexNames();
-  const f=nextFix(),opp=S.teams[f.opp];aiRecover(opp);
-  M={h:f.h,a:f.a,cup:f.cup,derby:f.derby,friendly:!!f.friendly,fIdx:f.idx,stage:f.cup?S.cup.stage:null,hg:0,ag:0,min:0,feed:[],paused:false,ht:false,done:false,
+  const f=nextFix(),opp=S.teams[f.opp];aiRecover(opp);abroadForm(opp);
+  M={h:f.h,a:f.a,cup:f.cup,intl:!!f.intl,derby:f.derby,friendly:!!f.friendly,fIdx:f.idx,stage:f.cup?S.cup.stage:f.intl?S.intl.stage:null,hg:0,ag:0,min:0,feed:[],paused:false,ht:false,done:false,
     flash:null,injuries:[],yc:{},goals:{},on:{},off:{},subs:0,oppSubs:0,sel:null,aiTac:'bal',tac:S.tactic,subMode:false,lastAuto:{h:-9,a:-9},talk:null,trailed:false,despair:false};  // tac: our tactic for this match only
   // the opponent picks its best formation, and a tactic from how it rates against our XI
   const os=bestForm(opp,!f.home),mr=rating(strength(my(),S.lineup,S.tactic,f.home,S.boost>0?BOOST:0,S.formation));
@@ -25,7 +25,7 @@ function startMatch(){
   M.role={...roleMap(M.hXI,M.hForm),...roleMap(M.aXI,M.aForm)};M.line={...lineMap(M.hXI,M.hForm),...lineMap(M.aXI,M.aForm)};M.ev={};M.st={h:{sh:0,on:0},a:{sh:0,on:0}};
   M.poss=possession(S.teams[M.h],M.hIds,M.hForm,M.h===S.my?M.tac:M.aiTac,S.teams[M.a],M.aIds,M.aForm,M.a===S.my?M.tac:M.aiTac);
   const hn=S.teams[M.h].name,an=S.teams[M.a].name;
-  M.feed.unshift({min:0,cls:'sys',t:f.friendly?LINE.friendlyKick(hn,an):f.cup?LINE.cupKick(hn,an,stageName(M.stage)):f.derby?LINE.derbyKick(hn,an):LINE.kickoff(hn,an)});
+  M.feed.unshift({min:0,cls:'sys',t:f.friendly?LINE.friendlyKick(hn,an):f.cup?LINE.cupKick(hn,an,stageName(M.stage)):f.intl?LINE.intlKick(hn,an,INTL_STAGES[M.stage],M.stage>=6):f.derby?LINE.derbyKick(hn,an):LINE.kickoff(hn,an)});
   M.feed.unshift({min:0,cls:'sys',t:`${opp.short}开场打法：${TACT[M.aiTac]}。`});
   UI.view='match';render();M.timer=setTimeout(loop,600);
 }
@@ -88,7 +88,7 @@ function tick(skipping){
   }
   if(M.min>=90){
     M.feed.unshift({min:90,cls:'sys',t:LINE.full(M.hg,M.ag)});announce(LINE.full(M.hg,M.ag));
-    if(M.cup&&M.hg===M.ag){
+    if(knockout()&&M.hg===M.ag){
       // a shootout: decided now, then revealed one kick at a time (all at once when skipping)
       M.feed.unshift({min:'PK',cls:'sys',t:LINE.pensStart});announce(LINE.pensStart);
       M.pk={kicks:shootout(S.teams[M.h],M.hIds,S.teams[M.a],M.aIds,null).kicks,i:0,hp:0,ap:0};M.hp=0;M.ap=0;
@@ -239,12 +239,15 @@ function matchActs(){
   M.act={...matchActions(H,M.hXI,M.line,mins,M.poss/100,edge,M.st.h.sh),...matchActions(A,M.aXI,M.line,mins,1-M.poss/100,-edge,M.st.a.sh)};
   for(const id in M.live||{}){const a=M.act[id];if(a)for(const k in M.live[id])a[k]=Math.max(a[k],M.live[id][k])}
 }
+// a match that can't end level: a 天穹杯 tie or a 天际冠军杯 knockout tie
+const knockout=()=>M.cup||M.intl&&M.stage>=6;
 function finish(){
   M.done=true;M.paused=false;clearTimeout(M.timer);
   if(M.friendly)return finishFriendly();
   if(M.cup)NEWS_TAG=`${CUP_NAME}${stageName(M.stage)}`;
+  if(M.intl)NEWS_TAG=`${INTL_NAME}${INTL_STAGES[M.stage]}`;
   const res={h:M.h,a:M.a,hg:M.hg,ag:M.ag},home=M.h===S.my,myXI=home?M.hXI:M.aXI,oppId=home?M.a:M.h,oppXI=home?M.aXI:M.hXI;
-  if(M.cup){if(M.hp!==undefined){res.hp=M.hp;res.ap=M.ap}}
+  if(M.cup||M.intl){if(M.hp!==undefined){res.hp=M.hp;res.ap=M.ap}}
   else{const d=my().div;S.results[d].push(S.fixtures[d][S.round].map(([h,a])=>(h===S.my||a===S.my)?res:quickSim(h,a)))}
   afterMatch(S.teams[oppId],oppXI,false);
   const {grown,awoken}=afterMatch(my(),myXI,true);
@@ -253,8 +256,8 @@ function finish(){
   const hurt=M.injuries.filter(p=>findP(p.id));M.myInjuries=hurt;
   const banned=my().players.filter(p=>p.ban>0&&myXI.includes(p.id));
   const mg=home?M.hg:M.ag,og=home?M.ag:M.hg,mp=home?M.hp:M.ap,op=home?M.ap:M.hp;
-  const pens=M.cup&&mg===og,w=mg>og||(pens&&mp>op)?'胜':mg<og||pens?'负':'平';
-  const income=Math.round((4+(home?18*stadiumMult():0)+(w==='胜'?10:w==='平'?4:0))*DIV_INCOME[my().div]*(M.derby?2:1));
+  const pens=knockout()&&mg===og,w=mg>og||(pens&&mp>op)?'胜':mg<og||pens?'负':'平';
+  const income=Math.round((4+(home?18*stadiumMult():0)+(w==='胜'?10:w==='平'?4:0))*(M.intl?1.5:DIV_INCOME[my().div])*(M.derby?2:1));
   S.budget+=income;
   if(S.boost>0)S.boost--;
   if(M.derby&&w==='胜'){S.boost=2;unlock('derby')}
@@ -276,9 +279,9 @@ function finish(){
   if(mg-og>=5)unlock('rout');
   if(pens&&w==='胜')unlock('pens');
   if(w==='胜'&&M.trailed){unlock('comeback');news('逆转！落后的情况下拿下了比赛。')}
-  if(M.cup)playCupStage(res);else{loanRound();S.round++;if(S.round>=rounds())careerSeasonEnd()}
+  if(M.cup)playCupStage(res);else if(M.intl)playIntl(res);else{loanRound();S.round++;if(S.round>=rounds())careerSeasonEnd()}
   // a title or promotion settled by this match: confetti
-  const party=M.cup&&S.cup.winner===S.my?`${CUP_NAME}冠军！`:S.round>=rounds()&&!M.cup?(myRank()===1?`${DIVS[my().div]}冠军！`:zone(my().div,myRank())==='up'?'升级成功！':''):'';
+  const party=M.cup&&S.cup.winner===S.my?`${CUP_NAME}冠军！`:M.intl&&S.intl.winner===S.my?`${INTL_NAME}冠军！`:S.round>=rounds()&&!M.cup&&!M.intl?(myRank()===1?`${DIVS[my().div]}冠军！`:zone(my().div,myRank())==='up'?'升级成功！':''):'';
   if(party)celebrate(party,my().name,'party');
   NEWS_TAG=null;
   rollEvent();

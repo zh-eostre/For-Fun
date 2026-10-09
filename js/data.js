@@ -1,6 +1,6 @@
 /* ---------- constants, shared state, small helpers ---------- */
 const KEY='lvyin-fm-v1';  // localStorage key; kept as-is so old saves are still found
-const SAVE_V=18;         // bump when the save format changes, and add a step to MIGRATE in engine.js
+const SAVE_V=19;         // bump when the save format changes, and add a step to MIGRATE in engine.js
 // a club's base strength (its typical best-XI level) from its 底蕴: 98 → 84, 86 → 80, 50 → 68, 14 → 55
 function strFromRep(rep){return Math.round(50+rep*.35)}
 const TIERS=[[80,'豪门'],[65,'强队'],[45,'中游'],[0,'弱旅']];
@@ -68,6 +68,18 @@ const YOUTH_PROVEN=5;   // academy players need this many first-team matches bef
 
 // knockout cup for all 16 clubs, slotted between league rounds
 const CUP_NAME='天穹杯';
+// the international cup: 甲级's top two and the 天穹杯 winner (甲级 3rd if the winner is already in) against 13 clubs
+// from abroad. four groups of four (home and away), the top two of each to the quarter-finals, then semis and a final,
+// all on the Wednesdays of weeks without a 天穹杯 tie
+const INTL_NAME='天际冠军杯';
+const INTL_WEEKS=[2,3,5,6,8,9,11,12,15];   // six group rounds, quarter-finals, semi-finals, final
+const INTL_STAGES=['小组赛第 1 轮','小组赛第 2 轮','小组赛第 3 轮','小组赛第 4 轮','小组赛第 5 轮','小组赛第 6 轮','八强','半决赛','决赛'];
+const INTL_PRIZE={win:15,draw:5,ko:[30,60,100],champion:250};  // per group result; for reaching the quarters / semis / final; winning
+// clubs from abroad (they only play in the international cup): name, short name, colour, 底蕴
+const FOREIGN=[['霜岭皇家','皇家','#2B3A67',84],['赤道星辰','星辰','#C9A227',80],['苍原白狼','白狼','#8D99AE',78],['冰原极光','极光','#3FA7D6',76],
+  ['暮色湾联合','暮色','#6D597A',74],['碧波海岸','碧波','#2A9D8F',72],['东瀛蓝武士','武士','#1D3557',71],['月港联合','月港','#B56576',69],
+  ['北岭钢铁','钢铁','#495057',68],['沙海猎鹰','猎鹰','#E09F3E',67],['白岩竞技','白岩','#ADB5BD',65],['珊瑚海盗','海盗','#E76F51',64],
+  ['烈阳城','烈阳','#F4A261',62],['雾都皇冠','皇冠','#5C677D',61],['极北之星','北星','#4361EE',60],['银河体育会','银河','#7209B7',58]];
 // a cup's format is stored with the cup (S.cup.fmt), so a save made under the 16-club format finishes its cup as it began
 const CUP_FORMAT={
   names:['资格赛','十六强','八强','半决赛','决赛'],
@@ -115,7 +127,8 @@ const ACH={
   deal:['黄金交易人','以 200 万以上卖出球员'],
   vet:['老兵不死','执教满 5 个赛季'],
   academy:['青训之光','青训出身的球员能力达到 75'],
-  comeback:['逆转之王','落后的情况下逆转取胜']
+  comeback:['逆转之王','落后的情况下逆转取胜'],
+  intl:['大陆之王','夺得天际冠军杯']
 };
 // halftime team talk (once a match): [name, what the manager says, what it does]
 const TALK={
@@ -213,6 +226,7 @@ const LINE={
   friendlyKick:(h,a)=>`季前友谊赛：${h} 对阵 ${a}。不计成绩，正好磨合阵容。`,
   tiredSub:(o,i)=>`${o} 体力透支，${i} 替补登场，注入新的力量！`,
   derbyKick:(h,a)=>`宿敌之战！${h} 与 ${a} 之间，今日必须做个了断！`,
+  intlKick:(h,a,st,ko)=>`${INTL_NAME}${st}，${h} 对阵 ${a}。${ko?'各国豪门云集，输了就回家。':'大陆舞台，每一分都很珍贵。'}`,
   cupKick:(h,a,st)=>`${CUP_NAME}${st}，${h} 对阵 ${a}。败者，将就此退场。`,
   sigGoal:(n,s)=>`${n} 咆哮：「${s}！」——必杀技炸裂，球进了！`,
   sigSave:(k,s,n)=>`${k} 发动「${s}」！${n} 的射门被完全封印！`,

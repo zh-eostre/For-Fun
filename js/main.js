@@ -149,6 +149,7 @@ const ACT={
   seDiv:a=>{UI.seDiv=+a;render()},
   lb:a=>{const [d,k]=a.split(':');UI.lb={...(UI.lb&&typeof UI.lb==='object'?UI.lb:{}),[d]:k};render()},
   hlb:a=>{UI.hlb=a;render()},
+  cupv:a=>{UI.cupv=a;render()},
   mf:a=>{const [k,v]=a.split(':');UI.mf[k]=v;UI.mpage=0;render()},
   closeReveal:()=>{UI.reveal=null;render()},
   scout:()=>{const c=scoutCost();if(S.budget<c){toast('资金不够');return}S.budget-=c;addToMarket(4);save();toast('球探带回了 4 名新球员');render()},
