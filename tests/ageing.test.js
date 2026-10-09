@@ -12,4 +12,7 @@ while(S.round<rounds()){if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ACT.f
 const vets=my().players.filter(p=>p.age>=33);vets.forEach(p=>{p.age=34;p.pot=p.ovr+10});const ids=vets.map(p=>p.id);
 ACT.newSeason();const after=my().players.filter(p=>ids.includes(p.id));
 ok(after.length===0||after.every(p=>p.pot===p.ovr),'after the summer every 33+ player has potential = ability ('+after.length+' checked)');
+// a star above 92 keeps his level into the new season (the cap is 95, the same as potential)
+{newGame(TEAMS.findIndex(t=>t.div===2),teamNames());const st=my().players.find(p=>p.pos!=='GK');st.age=26;st.pot=95;st.ovr=94;
+  S.round=rounds();newSeason();ok(st.ovr>=93,'a 94 at 26 is still 93-95 next season ('+st.ovr+')')}
 `);
