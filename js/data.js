@@ -56,9 +56,15 @@ const CARD=.02;   // chance per team per minute of a booking (about 1.8 per team
 const RETIRE_AGE={33:.08,34:.2,35:.4,36:.6,37:.75,38:.85,39:.95};
 const YC_BAN=3;   // yellow cards that add up to a one-match ban
 // player name parts; genName in engine.js combines them
-// calendar: a season has one week per 甲级 round; league matches on Saturdays (the bigger divisions add some on
-// Tuesdays, see seasonDays in engine.js), cup ties on the Wednesday of week at[k] of the cup format.
-// the day after any of our matches is a rest day, every other day is a training day
+// calendar: a season has one week per round of the biggest division (丙级, 26); league matches only on Saturdays, the
+// smaller divisions sit some weekends out (甲级 on its 冠军杯 weeks, see seasonDays in engine.js). cup ties on the
+// Wednesday of week at[k] of the cup format, 冠军杯 matches on Wednesdays too.
+// the day after any of our matches is a rest day, every other day is a training day.
+// seasons begun before calendar 2 keep the old one: a week per 甲级 round, extra rounds on Tuesdays
+const CAL_V=2;
+// calendar 2 has about 125 training days a season instead of 75: per-day chances (training growth, surprises) are
+// scaled so a season adds up to about what it did
+const dayScale=()=>S.cal>=2?.6:1;
 const WEEKDAYS=['周一','周二','周三','周四','周五','周六','周日'];
 const DAY_REST=10;   // stamina everyone gets back on a rest day
 // per training day, depending on the training setting: stamina change, and chance to improve by 1
@@ -72,14 +78,15 @@ const CUP_NAME='天穹杯';
 // from abroad. four groups of four (home and away), the top two of each to the quarter-finals, then semis and a final,
 // all on the Wednesdays of weeks without a 天穹杯 tie
 const INTL_NAME='天际冠军杯';
-const INTL_WEEKS=[2,3,5,6,8,9,11,12,15];   // six group rounds, quarter-finals, semi-finals, final
+const INTL_WEEKS=[3,4,7,8,11,12,16,19,23];   // six group rounds, quarter-finals, semi-finals, final
+const INTL_WEEKS_V1=[2,3,5,6,8,9,11,12,15];  // on the old, shorter calendar
 const INTL_STAGES=['小组赛第 1 轮','小组赛第 2 轮','小组赛第 3 轮','小组赛第 4 轮','小组赛第 5 轮','小组赛第 6 轮','八强','半决赛','决赛'];
 const INTL_PRIZE={win:15,draw:5,ko:[30,60,100],champion:250};  // per group result; for reaching the quarters / semis / final; winning
 // clubs from abroad (they only play in the international cup): name, short name, colour, 底蕴
-const FOREIGN=[['霜岭皇家','皇家','#2B3A67',84],['赤道星辰','星辰','#C9A227',80],['苍原白狼','白狼','#8D99AE',78],['冰原极光','极光','#3FA7D6',76],
-  ['暮色湾联合','暮色','#6D597A',74],['碧波海岸','碧波','#2A9D8F',72],['东瀛蓝武士','武士','#1D3557',71],['月港联合','月港','#B56576',69],
-  ['北岭钢铁','钢铁','#495057',68],['沙海猎鹰','猎鹰','#E09F3E',67],['白岩竞技','白岩','#ADB5BD',65],['珊瑚海盗','海盗','#E76F51',64],
-  ['烈阳城','烈阳','#F4A261',62],['雾都皇冠','皇冠','#5C677D',61],['极北之星','北星','#4361EE',60],['银河体育会','银河','#7209B7',58]];
+const FOREIGN=[['霜岭皇家','皇家','#2B3A67',86],['赤道星辰','星辰','#C9A227',82],['苍原白狼','白狼','#8D99AE',80],['冰原极光','极光','#3FA7D6',78],
+  ['暮色湾联合','暮色','#6D597A',76],['碧波海岸','碧波','#2A9D8F',74],['东瀛蓝武士','武士','#1D3557',73],['月港联合','月港','#B56576',71],
+  ['北岭钢铁','钢铁','#495057',70],['沙海猎鹰','猎鹰','#E09F3E',69],['白岩竞技','白岩','#ADB5BD',67],['珊瑚海盗','海盗','#E76F51',66],
+  ['烈阳城','烈阳','#F4A261',64],['雾都皇冠','皇冠','#5C677D',63],['极北之星','北星','#4361EE',62],['银河体育会','银河','#7209B7',60]];
 // a cup's format is stored with the cup (S.cup.fmt), so a save made under the 16-club format finishes its cup as it began
 const CUP_FORMAT={
   names:['资格赛','十六强','八强','半决赛','决赛'],
@@ -90,7 +97,7 @@ const CUP_LEGACY={names:['十六强','八强','半决赛','决赛'],at:[3,6,9,12
 // the 36-club pyramid: the 8 lowest clubs (by 底蕴) play a qualifying round, the other 28 join them in the last 32
 const CUP_FORMAT32={
   names:['资格赛','三十二强','十六强','八强','半决赛','决赛'],
-  at:[1,4,7,10,13,16],
+  at:[2,6,10,14,18,22],
   prize:[0,0,10,30,60,120,250]
 };
 

@@ -20,6 +20,7 @@ const iDays=INTL_WEEKS.map((_,k)=>intlDay(k)),cDays=cupFmt().names.map((_,k)=>cu
 ok(iDays.every(d=>d%7===2&&!cDays.includes(d)&&d<leagueDay(rounds()-1)),'every stage on a Wednesday, apart from 天穹杯 ties, before the last round');
 // screens
 UI.tab='home';render();ok(!bad(els.app.innerHTML)&&els.app.innerHTML.includes(INTL_NAME),'home: the season list shows our 冠军杯 matches');
+{const d0=S.day;S.day=S.pre+7*3;render();ok(/联赛轮空/.test(els.app.innerHTML),'甲级 off weekends are labelled on the strip');S.day=d0;render()}
 UI.tab='cup';UI.cupv='intl';render();ok(!bad(els.app.innerHTML)&&/A 组/.test(els.app.innerHTML)&&/D 组/.test(els.app.innerHTML),'cup tab: four group tables');
 UI.cupv='dom';render();ok(!bad(els.app.innerHTML)&&els.app.innerHTML.includes(CUP_NAME),'and the 天穹杯 behind the switch');
 ACT.team(String(away[0].id));render();ok(!bad(els.app.innerHTML)&&/海外俱乐部/.test(els.app.innerHTML),'a club from abroad has a team page');UI.pages=[];UI.tab='home';

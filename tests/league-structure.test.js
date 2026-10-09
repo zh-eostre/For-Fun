@@ -5,8 +5,11 @@ const play=()=>{while(S.round<rounds()){ACT.ff();S.event=null;S.offer=null;S.lin
 newGame(TEAMS.findIndex(t=>t.div===2),teamNames());
 ok(DIVS.every((_,d)=>divSize(d)===DIV_SIZES[d])&&[0,1,2].map(rounds).join()==='18,22,26','new game: 10 / 12 / 14 clubs, 18 / 22 / 26 rounds');
 ok(new Set(DIVS.map((_,d)=>leagueDay(rounds(d)-1,d))).size===1,'every division ends on the same day');
-const cupDs=cupFmt().names.map((_,k)=>cupDay(k)),mid=seasonDays(2).filter(d=>d%7===1);
-ok(mid.length===8&&mid.every(d=>cupDs.every(c=>Math.abs(c-d)>1)),'丙级 plays 8 rounds on Tuesdays, never next to a cup tie');
+const wk=d=>Math.floor((d-S.pre)/7),cupWs=cupFmt().at,intlWs=INTL_WEEKS;
+ok(weeks()===26&&DIVS.every((_,d)=>seasonDays(d).every(x=>x%7===5)),'a 26-week season, every league round on a Saturday');
+ok(intlWs.filter(w=>!seasonDays(0).map(wk).includes(w)).length===8,'甲级 sits out 8 weekends, all on 冠军杯 weeks');
+ok(seasonDays(1).map(wk).filter(w=>cupWs.includes(w)).length===2,'乙级 sits out 4 weekends, all on 天穹杯 weeks');
+ok(seasonDays(2).length===26,'丙级 plays every weekend');
 ok(S.cup.fmt.names[0]==='资格赛'&&S.cup.fmt.names[1]==='三十二强'&&S.cup.ties.length===4&&S.cup.byes.length===28,'cup: 8 clubs in the qualifying round, 28 byes');
 const weakest=domestic().sort((a,b)=>a.rep-b.rep).slice(0,8).map(t=>t.id).sort().join();
 ok(S.cup.ties.flat().sort().join()===weakest,'the qualifying round is the 8 lowest-底蕴 clubs');

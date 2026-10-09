@@ -1,11 +1,11 @@
-// The winter transfer window: opens the day after the halfway league round, for us and the AI, then shuts again.
+// The winter transfer window: opens the Sunday after the halfway week, for us and the AI, then shuts again.
 require('./harness').run(`
 newGame(9,teamNames());
 const w=winterStart();
-ok(w===leagueDay(8)+1,'winter window opens the day after round 9 (day '+w+')');
+ok(w%7===6&&w===S.pre+7*(weeks()/2-1)+6,'winter window opens the Sunday after the halfway week (day '+w+')');
 const log=()=>({cond:0,days:0,trained:[]});
 const play=()=>{if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ACT.ff();S.lineup=autoPick(my(),S.formation);startMatch();skipMatch();M=null;UI.view='main'};
-while(S.round<9)play();
+while(nextMatchDay()<w)play();
 ok(!windowOpen()&&/冬窗第 \\d+ 周/.test(windowShut()),'shut before winter, and says when it opens: '+windowShut());
 UI.tab='market';render();ok(/冬窗/.test(els.app.innerHTML),'market page says when the winter window opens');
 const before=S.market.length;

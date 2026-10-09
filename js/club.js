@@ -342,7 +342,7 @@ const SURPRISES=[
     return `一位天赋异禀的少年 ${p.name} 敲开了青训营的大门，去「设施」页看看吧！`}},
 ];
 function rollSurprise(log){
-  if(rng()>=SURPRISE_CHANCE)return;
+  if(rng()>=SURPRISE_CHANCE*dayScale())return;
   const pool=SURPRISES.filter(s=>!s.ok||s.ok());
   let r=rng()*pool.reduce((t,s)=>t+s.w,0);
   const s=pool.find(x=>(r-=x.w)<0)||pool[0],t=s.run(log);

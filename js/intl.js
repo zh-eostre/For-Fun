@@ -32,7 +32,7 @@ function abroadForm(t){
   const avg=top.reduce((s,u)=>s+xiCond(u),0)/top.length;
   t.players.forEach(p=>p.cond=Math.min(p.cond,Math.round(clamp(avg+ri(-5,5),40,100))));
 }
-const intlDay=k=>(S.pre||0)+7*INTL_WEEKS[k]+2;
+const intlDay=k=>(S.pre||0)+7*(S.intl.weeks||INTL_WEEKS_V1)[k]+2;
 // our entrants from a final 甲级 table (ids, best first) and the cup winner
 function intlEntrants(top,cupWinner){
   const ids=top.slice(0,2);
@@ -46,7 +46,7 @@ function newIntl(home){
   const groups=[[],[],[],[]];home.forEach((id,i)=>groups[i].push(id));
   away.forEach(id=>{const g=groups.map((x,i)=>[x.length,i]).sort((a,b)=>a[0]-b[0]||a[1]-b[1])[0][1];groups[g].push(id)});
   news(`${INTL_NAME}抽签：${home.map(id=>S.teams[id].name).join('、')}代表本国出战。`);
-  return {season:S.season,home,groups,fix:groups.map(g=>genFixtures(g)),res:groups.map(()=>[]),stage:0,ties:[],ko:[],winner:null};
+  return {season:S.season,weeks:INTL_WEEKS,home,groups,fix:groups.map(g=>genFixtures(g)),res:groups.map(()=>[]),stage:0,ties:[],ko:[],winner:null};
 }
 const intlStages=()=>INTL_STAGES.length;
 // a group's table from its results so far: points, then goal difference, then goals

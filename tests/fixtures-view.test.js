@@ -8,4 +8,7 @@ ok(/全赛季赛程/.test(h)&&new RegExp('还剩 '+(rounds()-S.round)+' 轮联�
 const rows=(h.match(/class="fx-row/g)||[]).length;ok(rows>=rounds()+2,'every league round is listed, plus friendlies and markers ('+rows+' rows)');
 ok((h.match(/class="wdl /g)||[]).length>=5&&(h.match(/下一场/g)||[]).length>=1,'played matches show results; the next one is marked');
 ok(/冬季转会窗开启/.test(h)&&/赛季结束/.test(h)&&!bad(h),'winter window and season end are on the list');
+// right after a match: today's cell says it's over, and the day can still be moved on
+ACT.ff();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();skipMatch();ACT.matchDone();UI.tab='home';render();
+const h2=els.app.innerHTML;ok(/比赛已结束/.test(h2)&&/已结束/.test(h2)&&/data-act="nextDay"/.test(h2),'after a match: marked as played, next-day button there');
 `);

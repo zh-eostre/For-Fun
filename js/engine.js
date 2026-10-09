@@ -511,12 +511,27 @@ function aiWindow(chance){
 let NEWS_TAG=null;  // set while a cup match is being wrapped up, so its news is labelled with the cup stage
 function news(t){S.news.unshift({r:`S${S.season} ${NEWS_TAG||`第${Math.min(S.round+1,rounds())}轮`}`,t});S.news=S.news.slice(0,30)}
 
-// rounds in the current season for a division (ours by default); 甲级's count is the number of weeks
+// rounds in the current season for a division (ours by default); the biggest division's count is the number of weeks
 const rounds=d=>S.fixtures[d??my().div].length;
-const weeks=()=>S.fixtures[0].length;
-// a division's league match days this season: the top flight plays every Saturday; a bigger division fits its extra
-// rounds into Tuesdays of weeks without a cup tie, spread through the season, so every division ends the same day
+const weeks=()=>S.cal>=2?Math.max(...S.fixtures.map(f=>f.length)):S.fixtures[0].length;
+// spreads n picks evenly over a list
+const spread=(a,n)=>n<=0?[]:n>=a.length?[...a]:Array.from({length:n},(_,i)=>a[Math.round(i*(a.length-1)/Math.max(1,n-1))]);
+// a division's league match days this season, all on Saturdays. a division with fewer rounds than weeks sits some
+// weekends out: 甲级 on its 冠军杯 weeks first, then any division on 天穹杯 weeks, then spread through the season.
+// the first and last weeks are always played, so every division ends the same day
 function seasonDays(d=my().div){
+  if(!(S.cal>=2))return seasonDaysV1(d);
+  const W=weeks(),R=S.fixtures[d].length,pre=S.pre||0;
+  let off=W-R;const out=new Set(),mid=w=>w>0&&w<W-1&&!out.has(w);
+  const intlW=d===0?(S.intl&&S.intl.weeks)||INTL_WEEKS:[],cupW=S.cup&&!S.cup.skipped?cupFmt().at:[];
+  for(const pool of [intlW,cupW,Array.from({length:W},(_,w)=>w)]){
+    const take=spread(pool.filter(mid),off);take.forEach(w=>out.add(w));off-=take.length;
+  }
+  const days=[];for(let w=0;w<W;w++)if(!out.has(w))days.push(pre+7*w+5);
+  return days;
+}
+// the calendar before version 2: the top flight every Saturday, a bigger division's extra rounds on Tuesdays
+function seasonDaysV1(d){
   const W=weeks(),R=S.fixtures[d].length,pre=S.pre||0,days=[];
   for(let w=0;w<Math.min(W,R);w++)days.push(pre+7*w+5);
   const extra=R-W;
@@ -538,7 +553,7 @@ function playOtherDivisions(){
 const divIds=div=>S.teams.filter(t=>t.div===div).map(t=>t.id);
 const newFixtures=()=>DIVS.map((_,div)=>genFixtures(divIds(div)));
 function newGame(id,names){
-  S={v:SAVE_V,pid:1,season:1,round:0,my:id,formation:'4-4-2',tactic:'bal',training:'normal',news:[],history:[],
+  S={v:SAVE_V,cal:CAL_V,pid:1,season:1,round:0,my:id,formation:'4-4-2',tactic:'bal',training:'normal',news:[],history:[],
     mgr:{rep:15,last:0},ach:{},streak:0,boost:0,records:[],club:{},legends:[],offer:null,event:null,academy:{lv:1,intake:[]},day:0,lastMatchDay:-9,fac:{scout:1,physio:1,ground:1}};
   usedNames=new Set();
   S.teams=TEAMS.map((t,i)=>({...t,...names[i],id:i,players:makeSquad(t.str)}));
@@ -668,7 +683,7 @@ function newSeason(moveTo){
       if(t.id===S.my)news(`青训球员 ${y.name}（${POS[pos]}，${y.age} 岁）升入一线队。`);
     }
   });
-  S.season++;S.round=0;S.results=DIVS.map(()=>[]);S.fixtures=newFixtures();S.cheatUsed=false;S.cup=newCup();S.day=0;S.lastMatchDay=-9;
+  S.season++;S.cal=CAL_V;S.round=0;S.results=DIVS.map(()=>[]);S.fixtures=newFixtures();S.cheatUsed=false;S.cup=newCup();S.day=0;S.lastMatchDay=-9;
   if(move)switchClub(move);
   S.jobOffers=null;
   if(S.teams[S.rival].div!==my().div){S.rival=pickRival();news(`新的宿敌出现了：${S.teams[S.rival].name}。`)}
@@ -725,7 +740,7 @@ function advanceDay(log){
     p.cond=clamp(p.cond+(wasHurt?restAmt():mode.cond),30,100);
     if(wasHurt&&--p.inj===0)(log.healed||(log.healed=[])).push(p);
     log.cond+=p.cond-before;
-    if(mode.grow&&!p.inj&&!p.away&&p.ovr<p.pot&&rng()<mode.grow*growF(p)*groundMult()){p.ovr++;p.gain=(p.gain||0)+1;learnSig(p);log.trained.push(p)}
+    if(mode.grow&&!p.inj&&!p.away&&p.ovr<p.pot&&rng()<mode.grow*dayScale()*growF(p)*groundMult()){p.ovr++;p.gain=(p.gain||0)+1;learnSig(p);log.trained.push(p)}
   });
   log.days++;
   windowDay();

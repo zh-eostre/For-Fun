@@ -123,17 +123,18 @@ function intlRows(res){
   return rows;
 }
 function vCalendar(){
-  const days=matchDays(),T=TRAIN[S.training][0],today=dayType(S.day,days);
+  const days=matchDays(),T=TRAIN[S.training][0],played=S.lastMatchDay===S.day,today=played?'match':dayType(S.day,days);
   const cell=d=>{
-    const t=dayType(d,days),m=days.find(x=>x.day===d);
+    const t=d===S.lastMatchDay?'match':dayType(d,days),m=days.find(x=>x.day===d);
     let what='',sub='';
-    if(t==='match'&&m.friendly){what='友谊赛';sub=`${m.home?'主':'客'} ${S.teams[m.opp].short}`}
+    if(d===S.lastMatchDay){what='比赛';sub='已结束'}
+    else if(t==='match'&&m.friendly){what='友谊赛';sub=`${m.home?'主':'客'} ${S.teams[m.opp].short}`}
     else if(t==='match'){
       const fx=m.cup?S.cup.ties.find(x=>x.includes(S.my)):m.intl?intlMatches().find(x=>x.includes(S.my)):S.fixtures[my().div][m.r].find(x=>x.includes(S.my));
       const opp=S.teams[fx[0]===S.my?fx[1]:fx[0]];
       what=m.cup?CUP_NAME:m.intl?'冠军杯':'联赛';sub=`${fx[0]===S.my?'主':'客'} ${opp.short}`;
     }else if(t==='rest'){what='休息';sub=`体能 +${restAmt()}`}
-    else{what='训练';sub=T}
+    else{what='训练';sub=S.cal>=2&&d%7===5&&d>=(S.pre||0)?'联赛轮空':T}
     // marks for the transfer windows and the last round
     const mark=d===winterStart()?'冬窗开启':S.pre!=null&&d===winterStart()+WINTER?'冬窗关闭':S.pre!=null&&d===S.pre?'转会窗关闭':m&&m.r!=null&&m.r===rounds()-1?'最后一轮':'';
     return `<div class="day ${t} ${m&&m.intl?'intl':''} ${d===S.day?'today':''}"><span class="wd">${d%7===0||d===S.day?`<i>第${Math.floor(d/7)+1}周</i>`:''}${WEEKDAYS[d%7]}</span><b>${what}</b><small>${sub}</small>${mark?`<em>${mark}</em>`:''}</div>`;
@@ -143,7 +144,7 @@ function vCalendar(){
   const xi=S.lineup.map(id=>id!=null&&findP(id)).filter(Boolean),avg=xi.length?Math.round(xi.reduce((s,p)=>s+p.cond,0)/xi.length):0;
   const tired=xi.filter(p=>p.cond<80).sort((a,b)=>a.cond-b.cond).slice(0,3);
   const L=UI.dayLog,left=nextMatchDay()-S.day;
-  return `<section class="panel"><h2>日程 <span class="muted" style="font-weight:400;font-size:14px">${dayLabel(S.day)}，今天${today==='match'?'是比赛日':today==='rest'?'休息（进入下一天时恢复）':`训练（${T}，进入下一天时生效）`}</span></h2>
+  return `<section class="panel"><h2>日程 <span class="muted" style="font-weight:400;font-size:14px">${dayLabel(S.day)}，今天${played?'的比赛已结束（进入下一天开始休息）':today==='match'?'是比赛日':today==='rest'?'休息（进入下一天时恢复）':`训练（${T}，进入下一天时生效）`}</span></h2>
   <div class="days" tabindex="0" aria-label="接下来四周的日程，可以左右滑动">${strip}</div>
   ${vFixtures()}
   ${L?`<p class="daylog">过了 ${L.days} 天：全队体能共 ${L.cond>=0?'+':''}${L.cond}${L.trained.length?`；训练中进步：${[...new Set(L.trained)].map(p=>{const n=L.trained.filter(x=>x===p).length;return `${p.name}（${p.ovr}${n>1?`，+${n}`:''}）`}).join('、')}`:'；训练中没有人进步'}${L.healed.length?`；伤愈复出：${L.healed.map(p=>p.name).join('、')}`:''}。</p>`:''}
@@ -151,7 +152,7 @@ function vCalendar(){
   <p class="muted" style="margin:8px 0 0;font-size:14px">首发平均体能 <b>${avg}</b>${tired.length?`，偏低：${tired.map(p=>`${p.name} ${p.cond}`).join('、')}`:'，全员状态良好'}。</p>
   ${windowOpen()&&S.pre!=null?`<p class="window open" style="margin:8px 0 0">${windowName()}开放中，还剩 ${windowLeft()} 天</p>`:''}
   <div class="cal-train"><span class="muted">训练</span><div class="seg sm">${Object.entries(TRAIN).map(([k,v])=>`<button data-act="train" data-arg="${k}" aria-pressed="${S.training===k}" title="${v[1]}">${v[0]}</button>`).join('')}</div><span class="muted cal-hint">${TRAIN[S.training][1]}</span></div>
-  ${today==='match'?'':`<div class="go" style="justify-content:flex-start;margin-top:10px"><button class="btn" data-act="nextDay">进入下一天</button><button class="btn primary" data-act="ff">快进到比赛日（${left} 天）</button></div>`}</section>`;
+  ${today==='match'&&!played?'':`<div class="go" style="justify-content:flex-start;margin-top:10px"><button class="btn" data-act="nextDay">进入下一天</button><button class="btn primary" data-act="ff">快进到比赛日（${left} 天）</button></div>`}</section>`;
 }
 function vHome(){
   const f=nextFix(),opp=S.teams[f.opp],ob=bestForm(opp,!f.home);
@@ -212,7 +213,7 @@ function vRules(){
   return `<section class="panel"><div class="mhead"><h2 id="mtitle">规则说明</h2><button class="btn small mclose" data-act="closeModal" aria-label="关闭">✕</button></div>
   <div class="rules">
   ${sec('赛季与日程',[`联赛是金字塔：${DIVS.map((dn,d)=>`${dn} ${DIV_SIZES[d]} 队`).join('、')}，各自主客场双循环（${DIVS.map((dn,d)=>`${dn} ${2*(DIV_SIZES[d]-1)} 轮`).join('、')}）。每级前 ${SWAP} 名升级、后 ${SWAP} 名降级。`,
-    `甲级每周六一轮；乙级、丙级场次多，有些周的周二会加踢一轮（避开杯赛周），三个级别在同一天结束。`,
+    `联赛只在周六进行，一个赛季 ${weeks()} 周（按丙级的轮数）。甲级、乙级轮数少，有些周末轮空：甲级轮空在${INTL_NAME}周，乙级轮空在${CUP_NAME}周，三个级别在同一天结束。`,
     `季前一周：转会窗口开放，还有两场友谊赛（不计成绩、不吃牌）。赛季过半后开 ${WINTER} 天冬窗，其余时间不能买卖球员。`,
     `${CUP_NAME}是单场淘汰，平局直接点球大战。杯赛在周中，3 天后就是下一轮联赛。`,
     `${INTL_NAME}：16 队参加，本国派出甲级前两名和${CUP_NAME}冠军（冠军已在前两名时由甲级第三名替补），其余 13 队来自海外。4 个小组主客场双循环，前两名进八强，之后单场淘汰。比赛在周三，收入 1.5 倍；小组赛胜 ${money(INTL_PRIZE.win)}、平 ${money(INTL_PRIZE.draw)}，进八强 ${money(INTL_PRIZE.ko[0])}、四强 ${money(INTL_PRIZE.ko[1])}、决赛 ${money(INTL_PRIZE.ko[2])}，冠军 ${money(INTL_PRIZE.champion)}。海外球队不参加联赛和${CUP_NAME}，也不买卖球员。`])}
