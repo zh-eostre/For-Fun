@@ -8,7 +8,7 @@ const v0=vet.ovr,k0=kid.ovr;let g=0;while(S.round<6&&g++<400){if(isMatchDay()){S
 ok(vet.ovr===v0,'a 34-year-old with room below his old potential stays at '+vet.ovr+' through training and matches');
 ok(kid.ovr>k0,'a 24-year-old improves meanwhile: '+k0+' → '+kid.ovr);
 // season end: decline past 33 lowers the potential with it
-while(S.round<rounds()){if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ACT.ff();S.event=null;S.offer=null;startMatch();skipMatch();ACT.matchDone()}
+while(!seasonDone()){if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ACT.ff();S.event=null;S.offer=null;startMatch();skipMatch();ACT.matchDone()}
 const vets=my().players.filter(p=>p.age>=33);vets.forEach(p=>{p.age=34;p.pot=p.ovr+10});const ids=vets.map(p=>p.id);
 ACT.newSeason();const after=my().players.filter(p=>ids.includes(p.id));
 ok(after.length===0||after.every(p=>p.pot===p.ovr),'after the summer every 33+ player has potential = ability ('+after.length+' checked)');

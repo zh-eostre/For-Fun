@@ -15,7 +15,7 @@ ok(unproven(k)&&k.joined===S.season,'signed this season: unproven, sells for '+s
 k.apps=3;ok(unproven(k),'3 apps: still unproven');
 k.apps=5;ok(!unproven(k),'5 apps (subs count): debuted, sells for '+sellPrice(k));
 k.apps=0;
-while(S.round<rounds()){ACT.ff();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();skipMatch();M=null;UI.view='main'}
+while(!seasonDone()){ACT.ff();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();skipMatch();M=null;UI.view='main'}
 const appsBefore=careerApps(k);newSeason();
 ok(!unproven(k),'next season he has debuted even with '+appsBefore+' apps; sells for '+sellPrice(k));
 const auto=my().players.find(p=>p.youth&&p.joined===S.season);

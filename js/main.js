@@ -4,11 +4,19 @@ function announce(t){const el=document.getElementById('sr');if(el)el.textContent
 // the toast is a popover so it shows above an open <dialog> (both live in the browser's top layer)
 // a big moment over the page (goal, brace, title). it lives outside #app, so the per-minute redraw doesn't restart it
 // a signature move's cut-in: a slanted banner with the move and the player, in the club's colour; then (optional) next()
-function cutIn(name,sig,color,next){
+// learn: the longer, golden version for a move just learned (see playSigQueue)
+function cutIn(name,sig,color,next,learn){
   const el=document.getElementById('fx');if(!el||!el.classList){if(next)next();return}
-  el.className='';el.innerHTML=`<div class="cut" style="--c:${color}"><small>必杀技发动</small><b class="disp">「${sig}」</b><span>${name}</span></div>`;
-  void el.offsetWidth;el.className='show sig';
-  clearTimeout(celebrate.t);celebrate.t=setTimeout(()=>{if(next)next();else{el.className='';el.innerHTML=''}},1300);
+  el.className='';el.innerHTML=`<div class="cut" style="--c:${color}"><small>${learn?'必杀技觉醒':'必杀技发动'}</small><b class="disp">「${sig}」</b><span>${name}</span></div>`;
+  void el.offsetWidth;el.className='show sig'+(learn?' learn':'');
+  clearTimeout(celebrate.t);celebrate.t=setTimeout(()=>{if(next)next();else{el.className='';el.innerHTML=''}},learn?2600:1300);
+}
+// moves our players have learned since the last look: one cut-in each, in turn, once the match screen is closed
+function playSigQueue(){
+  const q=UI.sigQueue;if(!q||!q.length||playSigQueue.on||(UI.view==='match'&&M))return;
+  const s=q.shift();playSigQueue.on=true;
+  cutIn(s.name,s.sig,my().color,()=>{playSigQueue.on=false;
+    if(q.length)playSigQueue();else{const el=document.getElementById('fx');if(el&&el.classList){el.className='';el.innerHTML=''}}},true);
 }
 function celebrate(big,small,kind){
   const el=document.getElementById('fx');if(!el||!el.classList)return;

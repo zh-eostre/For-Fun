@@ -3,7 +3,7 @@ require('./harness').run(`
 newGame(6,teamNames());
 const tally={};
 for(let s=0;s<4;s++){
-  while(S.round<rounds()){if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ACT.ff();S.lineup=autoPick(my(),S.formation);startMatch();skipMatch();M=null;UI.view='main'}
+  while(!seasonDone()){if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ACT.ff();S.lineup=autoPick(my(),S.formation);startMatch();skipMatch();M=null;UI.view='main'}
   if(s===0){
     const xi=seasonXI(my().div);
     ok(xi.length===11&&PO.every(pos=>xi.filter(w=>w.pos===pos).length===XI_SHAPE[pos]),'team of the season is a 1-4-3-3: '+xi.map(w=>w.name).join('、'));

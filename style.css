@@ -805,3 +805,9 @@ button.xi-tok{cursor:pointer}
   .ith,.itr{grid-template-columns:18px minmax(0,1fr) 24px 32px 28px;gap:5px}
   .ith span:nth-child(4),.itr span:nth-child(4){display:none}
 }
+/* a signature move just learned: longer, with a golden sweep */
+#fx.learn{background:rgba(10,15,12,.55)}
+#fx.learn .cut{background:linear-gradient(90deg,transparent,#F5B841 15%,var(--c) 35%,#18201B 50%,var(--c) 65%,#F5B841 85%,transparent)}
+#fx.learn .cut small{font-size:15px;color:#FFE08A}
+@media (prefers-reduced-motion:no-preference){#fx.learn .cut{animation-duration:2.6s}#fx.learn .cut b{animation:sigglow 2.6s ease-in-out}
+  @keyframes sigglow{0%,20%{text-shadow:0 3px 0 rgba(0,0,0,.5),0 0 0 rgba(245,184,65,0)}45%{text-shadow:0 3px 0 rgba(0,0,0,.5),0 0 40px rgba(255,224,138,1)}100%{text-shadow:0 3px 0 rgba(0,0,0,.5),0 0 24px rgba(245,184,65,.6)}}}

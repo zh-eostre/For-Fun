@@ -271,7 +271,7 @@ function finish(){
   hurt.forEach(p=>news(`${p.name} 受伤，预计伤停 ${p.inj} 天。`));
   if(banned.length)news(`${banned.map(p=>p.name).join('、')} 下一轮停赛。`);
   if(grown.length)news(`在比赛中成长：${grown.map(p=>`${p.name}（${p.ovr}）`).join('、')}。`);
-  awoken.forEach(p=>news(`${LINE.awaken(p.name)}能力升至 ${p.ovr}，潜力 ${p.pot}${p.sig?`，领悟必杀技「${p.sig}」`:''}。`));
+  awoken.forEach(p=>news(`${LINE.awaken(p.name)}能力升至 ${p.ovr}，潜力 ${p.pot}。`));
   if(awoken.length)unlock('awaken');
   if(Object.entries(M.goals).some(([id,n])=>n>=3&&findP(+id)))unlock('hat');
   if(my().players.some(p=>p.youth&&p.ovr>=75))unlock('academy');

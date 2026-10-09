@@ -2,6 +2,7 @@
 // the day we played adds nothing, and the day after is a rest day.
 require('./harness').run(`
 newGame(TEAMS.findIndex(t=>t.div===2),teamNames());
+rollSurprise=()=>{};  // no random visitor (a yoga master restores everyone's stamina)
 while(S.day+1<nextMatchDay())ACT.nextDay();  // the eve of the first match
 const p=my().players[0];p.cond=60;p.inj=0;S.training='rest';ACT.nextDay();
 ok(S.day===nextMatchDay()&&p.cond===60+TRAIN_DAY.rest.cond,'recovery training chosen on the eve counts: 60 → '+p.cond);

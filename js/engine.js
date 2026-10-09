@@ -129,9 +129,18 @@ function makePlayer(pos,base,age){
 }
 const sigCount=t=>t.players.filter(p=>p.sig).length;
 // a player learns a signature move once his ability reaches SIG_OVR (and he's younger than SIG_FADE); returns true when he does
-function learnSig(p){
+// quiet: no news or cut-in (the squads drawn up for a new game)
+function learnSig(p,quiet){
   if(p.sig||p.ovr<SIG_OVR||p.age>=SIG_FADE)return false;
-  p.sig=pick(SIG_A)+'·'+pick(SIG_B);return true;
+  p.sig=pick(SIG_A)+'·'+pick(SIG_B);
+  if(!quiet&&findP(p.id)===p)sigLearned(p);
+  return true;
+}
+// one of ours has learned a move, however it happened (training, a match, an event, the new season): it's in the
+// news, and its cut-in plays once we're off the match screen (see playSigQueue in main.js)
+function sigLearned(p){
+  news(`✨ ${p.name}（${POS[p.pos]}，能力 ${p.ovr}）觉醒了必杀技「${p.sig}」！`);
+  (UI.sigQueue||(UI.sigQueue=[])).push({name:p.name,sig:p.sig});
 }
 function awaken(p){
   const a=ri(2,4);p.pot=Math.min(95,p.pot+ri(4,8));p.ovr=Math.min(p.pot,p.ovr+a);p.gain=(p.gain||0)+a;learnSig(p);
@@ -564,7 +573,7 @@ function newGame(id,names){
   usedNames=new Set();
   S.teams=TEAMS.map((t,i)=>({...t,...names[i],id:i,players:makeSquad(t.str)}));
   S.fixtures=newFixtures();S.results=DIVS.map(()=>[]);S.cup=newCup();S.rival=pickRival();
-  S.teams.forEach(t=>t.players.forEach(learnSig));
+  S.teams.forEach(t=>t.players.forEach(p=>learnSig(p,true)));
   S.intl=newIntl(S.teams.filter(t=>t.div===0).sort((a,b)=>b.rep-a.rep).slice(0,3).map(t=>t.id));
   S.budget=startBudget(TEAMS[id]);
   S.lineup=autoPick(my(),S.formation);S.autoXI=true;
@@ -678,7 +687,7 @@ function newSeason(moveTo){
       p.ovr=clamp(p.ovr,35,95);p.pot=p.age>=33?p.ovr:Math.max(p.pot,p.ovr);  // 95 is potential's ceiling too; past 33 the decline is for good
       t.condDay=0;t.lastDay=-9;p.cond=100;p.inj=0;p.ban=0;p.away=0;p.yc=0;p.ycs=0;p.rcs=0;p.goals=0;p.ast=0;p.ss=null;p.apps=0;p.lapps=0;p.rs=0;p.rn=0;p.gain=p.ovr-old;
       if(p.sig&&p.age>=SIG_FADE){if(t.id===S.my)news(`${p.name} 年满 ${p.age} 岁，必杀技「${p.sig}」渐渐生疏了。`);delete p.sig}
-      else if(learnSig(p)&&t.id===S.my)news(`${p.name} 能力升至 ${p.ovr}，领悟了必杀技「${p.sig}」！`);
+      else learnSig(p);
     });
     const out=t.players.filter(p=>rng()<retireChance(p));
     if(t.id===S.my)out.forEach(p=>{retired.push(p.name);retireLegend(p)});

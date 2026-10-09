@@ -2,7 +2,7 @@
 // the full league data for any division; and each division's leaderboard switch on its own.
 require('./harness').run(`
 newGame(TEAMS.findIndex(t=>t.div===2),teamNames());
-while(S.round<rounds()){if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ACT.ff();S.event=null;S.offer=null;startMatch();skipMatch();ACT.matchDone()}
+while(!seasonDone()){if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ACT.ff();S.event=null;S.offer=null;startMatch();skipMatch();ACT.matchDone()}
 render();const h=els.app.innerHTML;
 ok(/class="panel se-hero/.test(h)&&/胜-平-负/.test(h)&&(h.match(/data-act="newSeason"/g)||[]).length===2,'summary card with the record, and the next-season button top and bottom');
 ok(/本队之星/.test(h)&&/个人奖项与最佳阵容/.test(h)&&/丙级年度最佳阵容/.test(h)&&(h.match(/class="tok xi-tok/g)||[]).length===11,'our standouts, our division\\'s awards and the team of the season on a pitch');

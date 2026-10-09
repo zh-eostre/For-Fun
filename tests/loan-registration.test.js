@@ -20,7 +20,7 @@ ok(!(h.slice(h.indexOf('替补席'),h.indexOf('一线队 <span')).includes('data
 const spare=my().players.find(p=>!p.loan&&!S.lineup.includes(p.id));twice('sell',String(spare.id));ACT.recall(String(kids[0].id));
 ok(!kids[0].loan&&squadSize()===25,'after selling one, recall works');
 // season end: the other one returns even though that makes 23
-while(S.round<rounds()){ACT.ff();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();skipMatch();M=null;UI.view='main'}
+while(!seasonDone()){ACT.ff();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();skipMatch();M=null;UI.view='main'}
 my().players.forEach(p=>p.age=Math.min(p.age,28));  // nobody retires, so the count is exact
 newSeason();ok(!kids[1].loan&&squadSize()===26&&S.news.some(n=>/超过 25 人上限/.test(n.t)),'season end: loan returns, squad 26 with a warning');
 refreshMarket();const n=my().players.length;ACT.buy(String(S.market[0].id));ok(my().players.length===n,'cannot sign while over 25');

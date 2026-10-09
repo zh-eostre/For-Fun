@@ -24,7 +24,7 @@ console.log('  schedule:',matchDays().slice(0,4).map(m=>dayLabel(m.day)+(m.cup?'
 // full season, hard training vs normal: count training vs match growth
 function season(mode){
   newGame(2,teamNames());S.training=mode;let trainUps=0,matchUps=0;
-  while(S.round<rounds()){
+  while(!seasonDone()){
     const log={days:0,cond:0,trained:[]};while(advanceDay(log));trainUps+=log.trained.length;
     S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();skipMatch();matchUps+=M.summary.grown.length;M=null;
     UI.view='main';for(const t of ['home','squad','cup','academy']){UI.tab=t;render();if(bad(els.app.innerHTML))console.log('BAD VIEW',t)}

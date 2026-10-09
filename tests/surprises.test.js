@@ -15,7 +15,7 @@ t=SURPRISES[6].run();ok(S.market.some(p=>p.pot>=88&&p.scout.conf==='low'),'scout
 const n=S.academy.intake.length;t=SURPRISES[7].run();ok(S.academy.intake.length===n+1&&S.academy.intake[n].pot>=85,'gifted kid: '+t);
 // how often over a full season of calendar days
 newGame(2,teamNames());let count=0,days=0;
-while(S.round<rounds()){const log={days:0,cond:0,trained:[],healed:[]};while(advanceDay(log));days+=log.days;count+=(log.surprises||[]).length;
+while(!seasonDone()){const log={days:0,cond:0,trained:[],healed:[]};while(advanceDay(log));days+=log.days;count+=(log.surprises||[]).length;
   S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();skipMatch();M=null;UI.view='main'}
 console.log('  surprises this season: '+count+' over '+days+' days');
 ok(count<=12,'they stay rare (≤12 a season)');

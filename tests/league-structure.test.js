@@ -1,7 +1,7 @@
 // The 10 / 12 / 14 pyramid, its rounds and match days, the 36-club cup with a qualifying round, 底蕴 (prestige),
 // and older saves (8-club, 2 x 10) expanding.
 require('./harness').run(`
-const play=()=>{while(S.round<rounds()){ACT.ff();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();if(!M)throw 'stuck: '+lineupIssues();skipMatch();M=null;UI.view='main'}};
+const play=()=>{while(!seasonDone()){ACT.ff();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();if(!M)throw 'stuck: '+lineupIssues();skipMatch();M=null;UI.view='main'}};
 newGame(TEAMS.findIndex(t=>t.div===2),teamNames());
 ok(DIVS.every((_,d)=>divSize(d)===DIV_SIZES[d])&&[0,1,2].map(rounds).join()==='18,22,26','new game: 10 / 12 / 14 clubs, 18 / 22 / 26 rounds');
 ok(new Set(DIVS.map((_,d)=>leagueDay(rounds(d)-1,d))).size===1,'every division ends on the same day');

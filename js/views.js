@@ -11,6 +11,7 @@ function render(){
   // elements with data-flip glide from their old spot to the new one (players moving on the pitch)
   const before={};app.querySelectorAll('[data-flip]').forEach(el=>before[el.dataset.flip]=el.getBoundingClientRect());
   app.innerHTML=view();
+  if(S)playSigQueue();
   // folding panels keep whatever open/closed state the player last chose
   app.querySelectorAll('details[data-fold]').forEach(d=>{const k=d.dataset.fold;if(UI.folds&&k in UI.folds)d.open=UI.folds[k]});
   scrollFixtures(app);

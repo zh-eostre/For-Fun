@@ -36,7 +36,7 @@ function playOne(){
 const injCount={};let injTotal=0;const seen=new Set();
 const tally=()=>S.teams.forEach(t=>t.players.forEach(p=>{if(p.inj>0&&!p._hurt){p._hurt=1;injCount[t.id]=(injCount[t.id]||0)+1}if(!p.inj)p._hurt=0}));
 for(let s=0;s<4;s++){
-  while(S.round<rounds()){playOne();tally()}
+  while(!seasonDone()){playOne();tally()}
   allTabs();render();if(bad(els.app.innerHTML))badViews.push('seasonEnd');
   st.lv.push(S.academy.lv);
   newSeason();
