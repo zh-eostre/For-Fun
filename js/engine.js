@@ -301,13 +301,15 @@ function possession(H,hi,hf,ht,A,ai,af,at){
 // injury chance for one player this minute: tired legs break more easily
 const injRisk=p=>INJ_RATE*(p.cond>=75?.45:p.cond>=60?.7:p.cond>=45?1.4:2.2);
 // books a random player on the pitch; yc tracks yellows within this match.
-// a second yellow sends him off (his slot becomes null) and YC_BAN yellows over the season earn a ban
+// a second yellow sends him off (his slot becomes null) and YC_BAN yellows over the season earn a ban. either ban
+// starts once the match is over (p.banNext, applied in afterMatch): a man on his third yellow plays on, and nobody
+// counts as suspended while the match is still being played
 function booking(team,ids,yc){
   const p=team.players.find(x=>x.id===pickOn(ids));if(!p)return null;
   // season totals: ycs yellows, rcs reds (a second yellow counts as both); p.yc counts toward the next ban
-  if(yc[p.id]){ids[ids.indexOf(p.id)]=null;p.ban=Math.max(p.ban,1);p.ycs=(p.ycs||0)+1;p.rcs=(p.rcs||0)+1;return {p,red:true}}
+  if(yc[p.id]){ids[ids.indexOf(p.id)]=null;p.banNext=1;p.ycs=(p.ycs||0)+1;p.rcs=(p.rcs||0)+1;return {p,red:true}}
   yc[p.id]=1;p.yc++;p.ycs=(p.ycs||0)+1;
-  if(p.yc>=YC_BAN){p.yc=0;p.ban=Math.max(p.ban,1);return {p,banned:true}}
+  if(p.yc>=YC_BAN){p.yc=0;p.banNext=1;return {p,banned:true}}
   return {p};
 }
 // growth multiplier: young players and those far below their potential improve faster
@@ -331,6 +333,7 @@ function afterMatch(team,xi,isMy,friendly){
     p.cond=clamp(Math.round(p.cond),30,100);  // stamina was spent minute by minute during the match
     if(!isMy&&p.inj>0)p.inj=Math.max(0,p.inj-7);  // our injuries heal day by day in advanceDay
     if(!friendly&&p.ban>0&&!played)p.ban--;  // a friendly doesn't serve a ban
+    if(p.banNext){p.ban=Math.max(p.ban,p.banNext);delete p.banNext}  // a ban earned in this match: the next one
     if(!friendly&&p.away>0&&!played)p.away--;
     if(p.ovr<p.pot){
       const ch=isMy?(played?MATCH_GROW:0):aiGrow;
