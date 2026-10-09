@@ -31,4 +31,11 @@ skipMatch();ok(my().players.every(p=>Number.isInteger(p.cond)),'stamina is whole
 // auto-subs off: none of ours (except injuries)
 ACT.ff();S.event=null;S.offer=null;S.autoSub=false;my().players.forEach(p=>{p.cond=55;p.inj=0;p.ban=0});ACT.auto();
 startMatch();skipMatch();ok(!M.feed.some(e=>/体力透支/.test(e.t)&&S.teams[M.h===S.my?M.h:M.a].players.some(p=>e.t.startsWith(p.name))),'with auto-subs off, ours are not swapped for tiredness');
+// a spent star (under SPENT) comes off even when the bench is much weaker; at 55 he stays if the sub is no match
+{newGame(TEAMS.findIndex(t=>t.div===2),teamNames());const T=my(),f=S.formation,ids=autoPick(T,f,true),xi=[...ids],roles=slotRoles(f);
+  const i=roles.indexOf('MF'),star=T.players.find(p=>p.id===ids[i]);star.ovr=92;
+  T.players.filter(p=>!ids.includes(p.id)).forEach(p=>{p.ovr=Math.min(p.ovr,55);p.cond=100});T.players.filter(p=>ids.includes(p.id)).forEach(p=>p.cond=90);
+  star.cond=55;ok(!tiredSwap(T,ids,xi,f,0,70),'92 at 55 stamina against a 55 bench: he plays on');
+  star.cond=SPENT-1;const sw=tiredSwap(T,ids,xi,f,0,70);ok(sw&&sw[0]===star&&sw[1].pos==='MF','92 at '+(SPENT-1)+' stamina: off he comes, for a midfielder');
+  ok(!tiredSwap(T,ids,xi,f,SUBS-1,70),'but not with the last change held back before 80 minutes');}
 `);

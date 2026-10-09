@@ -364,16 +364,17 @@ function drain(p,tac,role){
 }
 // tired legs: from the hour a side swaps its most exhausted outfield player (below TIRED stamina) for a fresh one of
 // the same role (one change every 5 minutes, keeping the last substitution for injuries until the 80th). [out, in] or null
-const TIRED=72;
+const TIRED=72,SPENT=50;  // SPENT: below this a man comes off whoever is on the bench
 function tiredSwap(team,ids,xi,form,used,min){
   if(min<60||min>88||used>=SUBS-(min<80?1:0))return null;
   const roles=slotRoles(form),bench=team.players.filter(x=>!xi.includes(x.id)&&!unavail(x)).sort((a,b)=>eff(b)-eff(a));
   const tired=ids.map((id,i)=>({p:id!=null&&team.players.find(x=>x.id===id),i})).filter(x=>x.p&&roles[x.i]!=='GK'&&x.p.cond<TIRED).sort((a,b)=>a.p.cond-b.p.cond);
   // only when the sub would do better than the tired man (if not, try the next most tired). a man under 60 is
-  // spent and injury-prone, so he goes off for anyone nearly as good (up to 3 points worse on the day)
+  // flagging and injury-prone, so he goes off for anyone nearly as good (up to 3 points worse on the day); under
+  // SPENT he is finished, star or not, and goes off for the best man there is for his place
   for(const t of tired){
     const role=roles[t.i],fresh=bench.find(x=>x.pos===role)||standIn(bench,role);
-    if(fresh&&eff(fresh)*fit(fresh,role)>eff(t.p)*fit(t.p,role)-(t.p.cond<60?3:0))return [t.p,fresh];
+    if(fresh&&(t.p.cond<SPENT||eff(fresh)*fit(fresh,role)>eff(t.p)*fit(t.p,role)-(t.p.cond<60?3:0)))return [t.p,fresh];
   }
   return null;
 }

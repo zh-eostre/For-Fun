@@ -486,10 +486,12 @@ function careerSeasonEnd(){
 }
 // moving to a new club at the start of a season: its money, facilities and academy, not the ones we leave behind
 // the club we left goes back to an AI-sized squad: the weakest (older first among equals) go on the transfer list,
-// keeping at least 2 keepers, 5 defenders, 5 midfielders and 3 forwards. run after the summer market is drawn
+// keeping at least 2 keepers, 5 defenders, 5 midfielders and 3 forwards (a line short of that first signs a
+// player at the club's level). run after the summer market is drawn
 const AI_SQUAD_MAX=22,POS_MIN={GK:2,DF:5,MF:5,FW:3};
 function releaseSurplus(t){
   const n={GK:0,DF:0,MF:0,FW:0};t.players.forEach(p=>n[p.pos]++);
+  for(const pos in POS_MIN)while(n[pos]<POS_MIN[pos]){t.players.push(makePlayer(pos,t.str-5,ri(22,29)));n[pos]++}
   const out=[];
   for(const p of [...t.players].sort((a,b)=>a.ovr-b.ovr||b.age-a.age)){
     if(t.players.length-out.length<=AI_SQUAD_MAX)break;

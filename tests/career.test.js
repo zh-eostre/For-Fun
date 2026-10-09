@@ -15,6 +15,7 @@ ok(offersSeen&&offersSeen.every(o=>{const t=S.teams[o.club];return t.id!==S.my&&
 render();ok(/执教邀请|想请你执教/.test(els.app.innerHTML)&&/data-act="takeJob"/.test(els.app.innerHTML)&&!bad(els.app.innerHTML),'season end shows the offers');
 // accept the first offer
 const old=my(),o=offersSeen[0],target=S.teams[o.club];old.players[0].loan={club:'x',league:'y',ovr0:50};
+old.players.filter(p=>p.pos==='GK').slice(1).forEach(p=>old.players.splice(old.players.indexOf(p),1));  // down to one keeper: the trim must sign another
 while(squadSize()<SQUAD_MAX){const p=makePlayer(pick(['DF','MF','FW']),60,ri(20,30));my().players.push(p)}  // a full 25 plus one on loan
 const b={dataset:{},textContent:'',isConnected:true};ACT.takeJob(String(o.club),b);ACT.takeJob(String(o.club),b);
 ok(S.my===target.id&&S.budget===o.budget,'moved to '+target.name+' with budget '+money(o.budget));
