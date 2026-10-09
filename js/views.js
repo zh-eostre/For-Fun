@@ -210,6 +210,7 @@ function vRules(){
     '后腰偏防守、多抢断；前腰偏进攻、更容易进球和助攻。阵型改变的是打法，不改变总实力。'])}
   ${sec('只属于你的加成',['中场可以训话一次：鼓舞（下半场进攻 +3）、冷静（防守 +3），或者怒吼赌一把（成功进攻 +5、防守 +2，失败攻防各 −2；教练声望越高越容易成功）。',
     `比赛第 75 分钟后落后，会触发「绝境爆发」：进攻提升（主场 +${DESPAIR.home}、客场 +${DESPAIR.away}）。`,
+    `球探部 3 级以上，赛前情报会指出对方最薄弱的一线；你的阵型或战术针对它时（后防弱：三前锋或全力进攻；锋线弱：全力进攻或三后卫；中场弱：五中场），进攻 +${TARGET_BONUS}。`,
     '第 75 分钟后还有「名帅光环」：教练声望越高，进攻加成越大，必杀技也越容易打出来。落后逆转取胜可以解锁「逆转之王」。'])}
   ${sec('体能与换人',['比赛中会消耗体能：中场跑得最多，前锋、后卫其次，门将几乎不累。体能 80 以上基本不影响发挥，越低越弱（70 约九折，60 约八折）。',
     `中场休息时，我方球员会恢复一点体能。每场最多换 ${SUBS} 人；自动换人从第 60 分钟起，把体能低于 ${TIRED}、而且替补更强的人换下，可以关掉自己来换。`,
@@ -476,11 +477,12 @@ function vOppReport(opp,ob,tac){
   const xi=onPitch(opp,ob.ids),roles=slotRoles(ob.form),line={};
   xi.forEach((p,i)=>{if(p)(line[roles[i]]=line[roles[i]]||[]).push(p.ovr)});
   const avg=PO.map(pos=>({pos,v:line[pos]?Math.round(line[pos].reduce((a,b)=>a+b,0)/line[pos].length):0}));
-  const weak=avg.filter(a=>a.pos!=='GK').sort((a,b)=>a.v-b.v)[0],star=xi.filter(Boolean).sort((a,b)=>b.ovr-a.ovr)[0];
-  const hurt=opp.players.filter(unavail).length;
+  const wl=weakLine(opp,ob.ids,ob.form),weak=avg.find(a=>a.pos===wl),star=xi.filter(Boolean).sort((a,b)=>b.ovr-a.ovr)[0];
+  const hurt=opp.players.filter(unavail).length,on=targets(wl,S.formation,S.tactic);
   return `<div class="oppr"><b>球探情报：${opp.name}</b>（预计 ${ob.form}，${TACT[tac]}）
   <div class="lines">${avg.map(a=>`<span class="${a===weak?'weak':''}">${POS[a.pos]} <b class="num">${a.v}</b></span>`).join('')}</div>
-  <span>最薄弱：${POS[weak.pos]}线。王牌：${star.name}（${POS[star.pos]}，${star.ovr}${star.sig?`，必杀「${star.sig}」`:''}）。${hurt?`对方 ${hurt} 人伤停。`:''}</span></div>`;
+  ${wl?`<div class="target ${on?'on':''}"><b>${TARGET[wl][0]}</b>（平均 ${weak.v}）：${TARGET[wl][1]}，进攻 +${TARGET_BONUS}。<span>${on?'✓ 你目前的安排已针对':'· 你目前的安排未针对'}</span></div>`:''}
+  <span>王牌：${star.name}（${POS[star.pos]}，${star.ovr}${star.sig?`，必杀「${star.sig}」`:''}）。${hurt?`对方 ${hurt} 人伤停。`:''}</span></div>`;
 }
 function vAcademy(){
   const A=S.academy,lv=A.lv,max=lv>=ACADEMY_COST.length,cost=ACADEMY_COST[lv];
@@ -606,6 +608,7 @@ function boostChips(){
   if(M.talk&&M.min>45)c.push(`<span class="bchip ${M.talk==='roar'&&!M.talkOK?'bad':''}">训话·${TALK[M.talk][0]}</span>`);
   if(M.min>=75&&behind)c.push('<span class="bchip hot">绝境爆发</span>');
   if(M.min>=75&&aura()>=1)c.push(`<span class="bchip">名帅光环 +${aura()}</span>`);
+  if(targets(M.weak,M[mySide()+'Form'],M.tac))c.push(`<span class="bchip">针对弱点 +${TARGET_BONUS}</span>`);
   return c.length?`<div class="bchips">${c.join('')}</div>`:'';
 }
 function vMatch(){

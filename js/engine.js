@@ -373,6 +373,17 @@ function tiredSwap(team,ids,xi,form,used,min){
 }
 // a side sitting deep against a side attacking all out gets a counter-attack bonus
 const counter=(mine,theirs)=>mine==='def'&&theirs==='att'?2:0;
+// a side's weakest outfield line by its starters' average ability (GK left out)
+function weakLine(team,ids,form){
+  const roles=slotRoles(form),sum={},n={};
+  onPitch(team,ids).forEach((p,i)=>{const r=roles[i];if(p&&r!=='GK'){sum[r]=(sum[r]||0)+p.ovr;n[r]=(n[r]||0)+1}});
+  return ['DF','MF','FW'].filter(r=>n[r]).sort((a,b)=>sum[a]/n[a]-sum[b]/n[b])[0]||null;
+}
+// does our shape / tactic go at that line?
+function targets(weak,form,tac){
+  const f=FORMS[form];if(!weak||!f)return false;
+  return weak==='DF'?f.FW>=3||tac==='att':weak==='FW'?tac==='att'||f.DF<=3:f.MF>=5;
+}
 // AI clubs line up in a formation that rates best with the players they have. any within half a point of the best
 // will do, and each club has its own order of favourites among those, so the league isn't all 4-4-2.
 // deterministic, so the opponent preview shows the formation the match will use

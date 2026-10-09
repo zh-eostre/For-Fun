@@ -772,3 +772,9 @@ button.xi-tok{cursor:pointer}
 #fx .cut span{font-size:clamp(14px,3.5vw,20px);font-weight:700}
 @media (prefers-reduced-motion:no-preference){#fx.sig .cut{animation:cutin 1.3s cubic-bezier(.2,.8,.2,1) forwards}
   @keyframes cutin{0%{transform:translateX(-60%) rotate(-6deg);opacity:0}18%{transform:translateX(0) rotate(-6deg);opacity:1}80%{transform:translateX(0) rotate(-6deg);opacity:1}100%{transform:translateX(30%) rotate(-6deg);opacity:0}}}
+
+/* scout report: the weak line and whether we go at it */
+.oppr .target{font-size:13px;margin:6px 0;padding:6px 8px;border-radius:8px;border:1px dashed var(--line)}
+.oppr .target.on{border:1px solid var(--pitch);background:var(--pitch-soft)}
+.oppr .target span{display:block;font-size:12px;color:var(--muted)}
+.oppr .target.on span{color:var(--pitch);font-weight:700}

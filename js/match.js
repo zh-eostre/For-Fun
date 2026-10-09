@@ -14,6 +14,7 @@ function startMatch(){
   // the opponent picks its best formation, and a tactic from how it rates against our XI
   const os=bestForm(opp,!f.home),mr=rating(strength(my(),S.lineup,S.tactic,f.home,S.boost>0?BOOST:0,S.formation));
   M.aiTac=tacFor(os.r,mr);
+  M.weak=facLv('scout')>=3?weakLine(opp,os.ids,os.form):null;  // known only with a scout report (department 3+)
   M.hXI=f.h===S.my?[...S.lineup]:[...os.ids];
   M.aXI=f.a===S.my?[...S.lineup]:[...os.ids];
   // players on the pitch; a red card removes one, a substitution swaps one. the XI lists grow with subs
@@ -32,7 +33,7 @@ const mySide=()=>M.h===S.my?'h':'a';
 // an important moment in live play: a card at the top and a short hold (nothing while skipping to the result)
 function flag(kind,title,sub,ms){if(M.skip)return;M.hold=Math.max(M.hold||0,Date.now()+ms);notice(kind,title,sub);announce(`${title}，${sub}`)}
 // our side's extras this minute: the halftime talk (second half), 绝境爆发 when behind from the 75th minute,
-// and the manager's aura from the 75th (more with reputation). AI sides get none of these
+// the manager's aura from the 75th (more with reputation), and going at the opponent's weakest line. AI sides get none
 function myBoost(){
   const b={atk:0,def:0},add=f=>{b.atk+=f.atk;b.def+=f.def};
   if(M.min>45&&M.talk)add(TALK_FX[M.talk==='roar'?(M.talkOK?'roarOk':'roarBad'):M.talk]);
@@ -40,6 +41,7 @@ function myBoost(){
   if(M.min>=75&&myG<opG){b.atk+=home?DESPAIR.home:DESPAIR.away;
     if(!M.despair){M.despair=true;M.feed.unshift({min:M.min,cls:'sys',t:`绝境之中，${my().short}的血液沸腾了——全员压上，誓要扳回！`});flag('hot','🔥 绝境爆发',`落后之下全员压上，进攻 +${home?DESPAIR.home:DESPAIR.away}`,600)}}
   if(M.min>=75)b.atk+=aura();
+  if(targets(M.weak,M[mySide()+'Form'],M.tac))b.atk+=TARGET_BONUS;
   return b;
 }
 const aura=()=>Math.round(((S.mgr&&S.mgr.rep)||0)*AURA_PER_REP*10)/10;

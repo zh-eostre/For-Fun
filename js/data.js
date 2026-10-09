@@ -126,6 +126,9 @@ const TALK={
 const TALK_FX={inspire:{atk:3,def:0},calm:{atk:0,def:3},roarOk:{atk:5,def:2},roarBad:{atk:-2,def:-2}};
 // late-match boosts for our side: trailing from the 75th minute (绝境爆发), and the manager's aura (by reputation)
 const DESPAIR={home:4,away:3},AURA_PER_REP=1/30;
+// playing at the opponent's weakest line (seen in the scout report, scout department 3+): attack bonus, and what counts
+const TARGET_BONUS=1.5;
+const TARGET={DF:['对方后防薄弱','用三前锋以上的阵型，或全力进攻'],FW:['对方锋线没威胁','放心全力进攻，或用三后卫阵型压上'],MF:['对方中场薄弱','用五中场以上的阵型（含后腰、前腰）抢控球']};
 
 // the once-per-season cheat card: display name, and [name, description] per effect
 const CHEAT_CASH=150;
