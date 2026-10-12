@@ -14,6 +14,7 @@ ok(tues.length===4&&tues.every(w=>!cupWs.includes(w)),'丙级 plays its 4 extra 
 ok(S.cup.fmt.names[0]==='资格赛'&&S.cup.fmt.names[1]==='三十二强'&&S.cup.ties.length===4&&S.cup.byes.length===28,'cup: 8 clubs in the qualifying round, 28 byes');
 const weakest=domestic().sort((a,b)=>a.rep-b.rep).slice(0,8).map(t=>t.id).sort().join();
 ok(S.cup.ties.flat().sort().join()===weakest,'the qualifying round is the 8 lowest-底蕴 clubs');
+UI.tab='cup';UI.cupv='dom';render();ok(/底蕴最低的 8 队先打资格赛，其余 28 队直接进入三十二强/.test(els.app.innerHTML),'the cup page says so');UI.tab='home';
 const tiers={};domestic().forEach(t=>tiers[DIVS[t.div]+tierOf(t.rep)]=(tiers[DIVS[t.div]+tierOf(t.rep)]||0)+1);console.log('  tiers at start: '+JSON.stringify(tiers));
 play();
 ok(S.cup.winner!=null&&S.cup.rounds.length===6&&S.cup.rounds[1].length===16,'cup completes: 6 stages, last 32 = 16 ties');

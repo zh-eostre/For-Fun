@@ -880,7 +880,7 @@ function vDomCup(){
     ${C.ties.map(([h,a])=>`<div class="res cupres ${h===S.my||a===S.my?'me':''}"><span>${nm(h)}</span><span class="muted">VS</span><span>${nm(a)}</span></div>`).join('')}${(C.byes||[]).length?`<p class="muted" style="font-size:13px;margin:8px 0 0">轮空，直接进入${stageName(C.stage+1)}：${C.byes.map(id=>id===S.my?`<b>${nm(id)}</b>`:nm(id)).join('、')}</p>`:''}</section>`:'';
   return `<section class="panel"><h2>${CUP_NAME}</h2>
   <p class="muted" style="margin:-4px 0 0;font-size:14px">${(()=>{const F=cupFmt(C),at=n=>F.prize[F.names.indexOf(n)];
-    return `全国 ${domestic().length} 队参加，单场淘汰，平局直接点球大战。${F.names[0]==='资格赛'?`底蕴最低的 ${domestic().length*2-32} 队先打资格赛，其余直接进入十六强。`:''}奖金：八强 ${at('八强')} 万，四强 ${at('半决赛')} 万，亚军 ${at('决赛')} 万，冠军 ${F.prize[F.names.length]} 万。`})()}</p>
+    return `全国 ${domestic().length} 队参加，单场淘汰，平局直接点球大战。${F.names[0]==='资格赛'?(()=>{const n=domestic().length,q=2*(n-(F.names[1]==='三十二强'?32:16));return `底蕴最低的 ${q} 队先打资格赛，其余 ${n-q} 队直接进入${F.names[1]}。`})():''}奖金：八强 ${at('八强')} 万，四强 ${at('半决赛')} 万，亚军 ${at('决赛')} 万，冠军 ${F.prize[F.names.length]} 万。`})()}</p>
   <p style="margin:10px 0 0"><b>本队：</b>${cupStatus()}</p>
   ${C.winner!=null?`<p class="disp" style="font-size:24px;margin:10px 0 0;color:var(--amber)">🏆 ${nm(C.winner)}</p>`:''}</section>
   ${pending}

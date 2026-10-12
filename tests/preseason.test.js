@@ -34,6 +34,7 @@ const aiNews=S.news.filter(n=>/其他球队转会动态/.test(n.t)&&n.r.includes
 // scouts add four
 const m1=S.market.length;ACT.scout();ok(S.market.length===m1+4,'scouting adds 4 players to the list');
 // pages
+while(S.market.length<=12)addToMarket(4);  // AI clubs can buy most of the list in the preseason: make sure there are two pages
 UI.tab="market";UI.mpage=0;render();let h=els.app.innerHTML;
 ok(/第 1\\/\\d+ 页/.test(h)&&(h.match(/data-act="buy"/g)||[]).length===12&&/转会窗口已关闭/.test(h)&&!bad(h),'market shows 12 per page, page count, closed-window banner ('+S.market.length+' on the list, '+(h.match(/data-act="buy"/g)||[]).length+' shown'+(bad(h)?', odd text: '+(h.match(/.{40}(undefined|NaN|\\[object).{20}/)||[''])[0]:'')+')');
 ACT.mpage('1');h=els.app.innerHTML;ok(/第 2\\/\\d+ 页/.test(h),'page 2');ACT.mf('pos:GK');ok(UI.mpage===0,'changing a filter goes back to page 1');
