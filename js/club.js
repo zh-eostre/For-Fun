@@ -30,7 +30,7 @@ function rollOffer(){
     if(!club)o.minor=pick(LOAN_LEAGUES.abroad[1]);
     if(listed)o.listed=true;S.offers.push(o);
     const by=offerClub(o).name,from=club&&!club.foreign?'':'海外俱乐部 ';
-    news(listed?`${from}${by} 看中了挂牌出售的 ${p.name}，报价 ${money(o.amount)}。`:`${by} 带着 ${money(o.amount)} 的契约书前来，想要带走 ${p.name}。`);
+    news(listed?`${from?'来自远方的使者！':''}${from}${by} 看中了挂牌出售的 ${p.name}，报价 ${money(o.amount)}。`:`${by} 带着 ${money(o.amount)} 的契约书前来，想要带走 ${p.name}。`);
   };
   my().players.filter(p=>p.listed&&!p.loan).forEach(p=>{if(rng()<LIST_CHANCE)bid(p,true,LIST_RANGE)});
   const day=S.day<S.pre?S.day-1:S.day-winterStart(),ch=day<OFFER_EARLY_DAYS?OFFER_CHANCE.early:OFFER_CHANCE.late;  // day of the window, from 0
@@ -69,7 +69,7 @@ function acceptOffer(pid){
     if(drop)club.players=club.players.filter(x=>x!==drop);
   }
   S.budget+=o.amount;S.offers=S.offers.filter(x=>x!==o);
-  news(`契约成立：${p.name} 以 ${money(o.amount)} 转投${club.minor?'海外联赛的 ':' '}${club.name}。`);
+  news(`契约成立：${p.name} 以 ${money(o.amount)} 转投${club.minor?'海外联赛的 ':' '}${club.name}${club.foreign?'，从此在异国他乡书写自己的传说':''}。`);
   if(o.amount>=200)unlock('deal');
   toast(`${p.name} 已转会，进账 ${money(o.amount)}`);
 }
@@ -416,17 +416,26 @@ const aiGap=t=>t.str+(t.id===S.my?0:diff().ai)-Math.round(onPitch(t,bestForm(t,t
 // the best player an AI club will go for: richer, grander clubs reach higher
 const aiCeiling=t=>t.str+4+Math.round(t.rep/10);
 // summer: an AI club playing clearly above its 底蕴 (best XI more than 3 over its base strength) loses its best
-// player, to a grander AI club that is below its own level if there is one, otherwise abroad. talent flows upward
+// player: to a grander AI club at home that would start him, or else to a club abroad of his level. talent flows
+// upward, and some of it out of the country
 function aiPoach(){
   const lines=[];
   domestic().filter(t=>t.id!==S.my&&aiGap(t)<-3&&t.players.length>16).forEach(seller=>{
     const star=[...seller.players].sort((a,b)=>b.ovr-a.ovr)[0];
-    const buyer=domestic().filter(t=>t.id!==S.my&&t!==seller&&t.rep>seller.rep&&aiGap(t)>0&&t.players.length<22).sort((a,b)=>b.rep-a.rep)[0];
+    // a bigger club at home that isn't well above its own level, has room, and would start him; the biggest gets him
+    const buyer=domestic().filter(t=>t.id!==S.my&&t!==seller&&t.rep>seller.rep&&aiGap(t)>-3&&t.players.length<22&&star.ovr>=xiLevel(t)-4)
+      .sort((a,b)=>b.rep-a.rep)[0];
     seller.players=seller.players.filter(p=>p!==star);
-    if(buyer){buyer.players.push(star);lines.push(`${buyer.name} 从 ${seller.name} 挖走 ${star.name}（${star.ovr}）`)}
-    else lines.push(`${star.name}（${star.ovr}）离开 ${seller.name}，远走海外`);
+    if(buyer){buyer.players.push(star);lines.push(pick([`豪门的召唤！${buyer.name} 从 ${seller.name} 手中夺走了王牌 ${star.name}（${star.ovr}）`,`${buyer.name} 挥舞着支票簿闯进 ${seller.name} 的更衣室，把 ${star.name}（${star.ovr}）带回了自己的城堡`,`${seller.name} 的球迷含泪送别 ${star.name}（${star.ovr}）——他被 ${buyer.name} 挖走了`]));return}
+    // nobody at home: a club abroad of his level takes him (the strongest one for a star beyond them all)
+    const abroad=S.teams.filter(t=>t.foreign),fit=abroad.filter(t=>star.ovr>=t.str-FIT_BELOW_INTL&&star.ovr<=t.str+FIT_ABOVE);
+    if(!abroad.length){lines.push(`${star.name}（${star.ovr}）留下一句「这片天空已经装不下我了」，离开 ${seller.name} 远走海外`);return}  // an old save, before the clubs abroad
+    const club=fit.length?pick(fit):abroad.reduce((a,b)=>a.str>b.str?a:b);
+    club.players.push(star);
+    if(club.players.length>24){const drop=club.players.filter(p=>p.pos===star.pos&&p!==star).sort((a,b)=>a.ovr-b.ovr)[0];if(drop)club.players=club.players.filter(p=>p!==drop)}
+    lines.push(pick([`${star.name}（${star.ovr}）留下一句「这片天空已经装不下我了」，远渡重洋加盟 ${club.name}`,`${seller.name} 的 ${star.name}（${star.ovr}）背起行囊，远走海外投奔 ${club.name}——冠军杯赛场上见！`]));
   });
-  if(lines.length)news(`夏季转会：${lines.join('；')}。`);
+  if(lines.length)news(`夏季转会风暴席卷全国：${lines.join('；')}。`);
 }
 
 /* ---------- league expansion ---------- */
@@ -472,7 +481,7 @@ function planWarmups(){
   if(matchDays().some(m=>inWeek(m.day))||(S.friendlies||[]).some(f=>inWeek(f.day)))return;
   const abroad=S.teams.filter(t=>t.foreign),opp=pick(abroad.length?abroad:S.teams.filter(t=>t.div!==my().div)).id;
   (S.friendlies=S.friendlies||[]).push({day:sat,opp,home:rng()<.5,warm:true});
-  news(`本周没有正式比赛，${dayLabel(sat)}安排了一场热身赛，对手是${S.teams[opp].name}。`);
+  news(`联赛的硝烟暂歇，但战士的剑不能生锈——${dayLabel(sat)}安排了一场热身赛，对手是远道而来的${S.teams[opp].name}。`);
 }
 // one window day for the AI and the market: clubs shop (harder near the deadline), bids for our players arrive,
 // and when the window shuts, any bid still open lapses. the winter window brings a few new names to the list
@@ -543,7 +552,7 @@ function releaseSurplus(t){
   }
   t.players=t.players.filter(p=>!out.includes(p));
   out.forEach(p=>{['youth','joined','loan','lapps','hist','chosen'].forEach(k=>delete p[k]);scoutReport(p);p.ex=t.name;S.market.push(p)});
-  if(out.length)news(`${t.name}清理阵容，${out.length} 名球员挂牌出售：${out.map(p=>p.name).join('、')}。`);
+  if(out.length)news(`新帅已去，旧部何依？${t.name}清理阵容，${out.length} 名球员被摆上货架：${out.map(p=>p.name).join('、')}。`);
   return out;
 }
 function switchClub(o){

@@ -46,7 +46,7 @@ const tieWinner=r=>r.hg>r.ag||(r.hg===r.ag&&r.hp>r.ap)?r.h:r.a;
 function cupHeadline(cup,r){
   const w=S.teams[r.w],l=S.teams[r.w===r.h?r.a:r.h],sc=`${r.hg}:${r.ag}${r.hp!=null?`（点球 ${r.hp}:${r.ap}）`:''}`;
   S.headline={season:S.season,day:S.day,cup,h:r.h,a:r.a,score:sc,winner:r.w};
-  if(r.w!==S.my&&r.h!==S.my&&r.a!==S.my)news(`🏆 ${w.name} 夺得${cup}冠军（决赛 ${S.teams[r.h].short} ${sc} ${S.teams[r.a].short}）。`);
+  if(r.w!==S.my&&r.h!==S.my&&r.a!==S.my)news(`🏆 加冕时刻！${w.name} 夺得${cup}冠军，在决赛中以 ${S.teams[r.h].short} ${sc} ${S.teams[r.a].short} 让 ${l.name} 饮恨。`);
 }
 function playCupStage(myRes){
   const C=S.cup,k=C.stage;
