@@ -89,9 +89,9 @@ function playIntl(myRes){
     const w=res.map(r=>r.w);
     if(I.stage<intlStages()){I.ties=I.stage===7?[[w[0],w[2]],[w[1],w[3]]]:[[w[0],w[1]]];
       if(mine&&mine.w===S.my){const p=INTL_PRIZE.ko[I.stage-6];S.budget+=p;news(`${INTL_NAME}晋级${INTL_STAGES[I.stage]}！奖金 ${money(p)}。`)}}
-    else{I.ties=[];I.winner=w[0];
+    else{I.ties=[];I.winner=w[0];cupHeadline(INTL_NAME,res[0]);
       if(I.winner===S.my){S.budget+=INTL_PRIZE.champion;news(`捧起${INTL_NAME}！大陆之巅，奖金 ${money(INTL_PRIZE.champion)}。`);unlock('intl')}
-      else news(`${INTL_NAME}冠军：${S.teams[I.winner].name}。`)}
+}
     if(mine&&mine.w!==S.my)news(`${INTL_NAME}止步${INTL_STAGES[k]}，被 ${S.teams[mine.h===S.my?mine.a:mine.h].name} 淘汰。`);
   }
 }

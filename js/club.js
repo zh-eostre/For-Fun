@@ -476,7 +476,7 @@ function windowDay(){
     news(`冬季转会窗口开启，持续 ${WINTER} 天。转会市场新到 ${S.market.length-n} 名球员。`);
   }
   if(S.day<S.pre||inWinter()){
-    aiWindow(S.day===S.pre-1||S.day===w+WINTER-1?.35:.06);
+    aiWindow(S.day===S.pre-1||S.day===w+WINTER-1?AI_BUY.last:AI_BUY.day);
     rollOffer();
   }else if(S.day===S.pre||S.day===w+WINTER){
     if((S.offers||[]).length){news(`转会窗口关闭，${S.offers.length} 份报价作废。`);S.offers=[]}

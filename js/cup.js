@@ -42,6 +42,12 @@ function shootout(H,hi,A,ai,log){
 const tieWinner=r=>r.hg>r.ag||(r.hg===r.ag&&r.hp>r.ap)?r.h:r.a;
 
 // plays out the current stage; myRes is our live result (null when we're already out)
+// a cup final: the result on the club page for a week, and in the news when it wasn't ours
+function cupHeadline(cup,r){
+  const w=S.teams[r.w],l=S.teams[r.w===r.h?r.a:r.h],sc=`${r.hg}:${r.ag}${r.hp!=null?`（点球 ${r.hp}:${r.ap}）`:''}`;
+  S.headline={season:S.season,day:S.day,cup,h:r.h,a:r.a,score:sc,winner:r.w};
+  if(r.w!==S.my&&r.h!==S.my&&r.a!==S.my)news(`🏆 ${w.name} 夺得${cup}冠军（决赛 ${S.teams[r.h].short} ${sc} ${S.teams[r.a].short}）。`);
+}
 function playCupStage(myRes){
   const C=S.cup,k=C.stage;
   const res=C.ties.map(([h,a])=>{
@@ -56,7 +62,7 @@ function playCupStage(myRes){
     // qualifiers join the clubs that had a bye, and the last 16 is drawn afresh
     const pool=C.byes&&C.byes.length?shuffle(C.byes.concat(win)):win;C.byes=[];
     C.ties=pairUp(pool);
-  }else C.winner=win[0];
+  }else{C.winner=win[0];cupHeadline(CUP_NAME,res[0])}
   const mine=res.find(r=>r.h===S.my||r.a===S.my);
   if(mine){
     const opp=S.teams[mine.h===S.my?mine.a:mine.h];

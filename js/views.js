@@ -117,6 +117,7 @@ function vFixtures(){
   if(cupAlive()&&C.stage<cupFmt().names.length)for(let k=C.stage;k<cupFmt().names.length;k++){const t=k===C.stage&&C.ties.find(x=>x.includes(S.my));
     if(k===C.stage&&!t)continue;rows.push({day:cupDay(k),kind:`${CUP_NAME}·${stageName(k)}`,opp:t?(t[0]===S.my?t[1]:t[0]):null,home:t?t[0]===S.my:null})}
   if(intlIn())rows.push(...intlRows(res));
+  rows.push(...cupAfterExit().map(x=>({day:x.day,kind:x.kind,note:x.note})));
   if(S.pre!=null)rows.push({day:winterStart(),kind:'冬季转会窗开启',note:`${WINTER} 天`});
   rows.push({day:end+1,kind:'赛季结束',note:'颁奖、升降级'});
   rows.sort((a,b)=>a.day-b.day);const next=rows.find(x=>x.opp!=null&&!x.r&&x.day>=S.day);
@@ -125,7 +126,7 @@ function vFixtures(){
   return `<details class="fold fixtures" data-fold="fixtures"><summary><span><b>全赛季赛程</b> <span class="muted">${sum}</span></span></summary>
   <div class="fx-prog" aria-hidden="true"><i style="width:${Math.round(played/rounds()*100)}%"></i></div>
   <div class="fx-list">${rows.map(x=>`<div class="fx-row ${x===next?'next':''} ${x.r?'done':''} ${x.opp==null?'evt':''}"><span class="fx-d">${dayLabel(x.day)}</span><span class="fx-k">${x.kind}</span>
-    <span class="fx-o">${x.opp!=null?`${x.home?'主':'客'} ${S.teams[x.opp].name}`:x.kind.startsWith(CUP_NAME)||x.kind.startsWith(INTL_NAME)?'对手待定':x.note||''}</span>
+    <span class="fx-o">${x.opp!=null?`${x.home?'主':'客'} ${S.teams[x.opp].name}`:x.note?x.note:x.kind.startsWith(CUP_NAME)||x.kind.startsWith(INTL_NAME)?'对手待定':''}</span>
     <span class="fx-r">${x.r?`<b class="wdl ${x.r.w==='胜'?'w':x.r.w==='负'?'l':'d'}">${x.r.w}</b> ${x.r.f}:${x.r.o}${x.r.pens?` <small>${x.r.pens}</small>`:''}`:x===next?'<b class="nexttag">下一场</b>':''}</span></div>`).join('')}</div></details>`;
 }
 // our 天际冠军杯 matches for the season list: group games played and to come, knockout ties played, the next tie,
@@ -143,6 +144,7 @@ function intlRows(res){
 }
 function vCalendar(){
   const days=matchDays(),T=TRAIN[S.training][0],played=S.lastMatchDay===S.day,today=played?'match':dayType(S.day,days);
+  const after=Object.fromEntries(cupAfterExit().map(x=>[x.day,x.mark]));
   const cell=d=>{
     const t=d===S.lastMatchDay?'match':dayType(d,days),m=days.find(x=>x.day===d);
     let what='',sub='';
@@ -155,7 +157,7 @@ function vCalendar(){
     }else if(t==='rest'){what='休息';sub=`体能 +${restAmt()}`}
     else{what='训练';sub=S.cal>=2&&d%7===5&&d>=(S.pre||0)?'联赛轮空':T}
     // marks for the transfer windows and the last round
-    const mark=d===winterStart()?'冬窗开启':S.pre!=null&&d===winterStart()+WINTER?'冬窗关闭':S.pre!=null&&d===S.pre?'转会窗关闭':m&&m.r!=null&&m.r===rounds()-1?'最后一轮':'';
+    const mark=d===winterStart()?'冬窗开启':S.pre!=null&&d===winterStart()+WINTER?'冬窗关闭':S.pre!=null&&d===S.pre?'转会窗关闭':m&&m.r!=null&&m.r===rounds()-1?'最后一轮':after[d]||'';
     return `<div class="day ${t} ${m&&m.intl?'intl':''} ${d===S.day?'today':''}"><span class="wd">${d%7===0||d===S.day?`<i>第${Math.floor(d/7)+1}周</i>`:''}${WEEKDAYS[d%7]}</span><b>${what}</b><small>${sub}</small>${mark?`<em>${mark}</em>`:''}</div>`;
   };
   // four weeks ahead (swipe sideways), up to the last round
@@ -173,6 +175,30 @@ function vCalendar(){
   <div class="cal-train"><span class="muted">训练</span><div class="seg sm">${Object.entries(TRAIN).map(([k,v])=>`<button data-act="train" data-arg="${k}" aria-pressed="${S.training===k}" title="${v[1]}">${v[0]}</button>`).join('')}</div><span class="muted cal-hint">${TRAIN[S.training][1]}</span></div>
   ${today==='match'&&!played?'':`<div class="go" style="justify-content:flex-start;margin-top:10px"><button class="btn" data-act="nextDay">进入下一天</button><button class="btn primary" data-act="ff">快进到比赛日（${left} 天）</button></div>`}</section>`;
 }
+// a cup final in the last week: who won, at the top of the club page
+function vHeadline(){
+  const H=S.headline;if(!H||H.season!==S.season||S.day-H.day>7)return '';
+  const mine=H.winner===S.my;
+  return `<section class="headline ${mine?'mine':''}"><span class="hl-cup">🏆 ${H.cup}决赛</span>
+  <b>${S.teams[H.h].name} ${H.score} ${S.teams[H.a].name}</b><span class="hl-win">${mine?'我们夺冠了！':`${S.teams[H.winner].name} 夺冠`}</span></section>`;
+}
+// the rounds of a cup still to come (or played) after we went out: kind, day and a note (the final names its winner)
+function cupAfterExit(){
+  const rows=[],C=S.cup,F=cupFmt(C);
+  const outK=(C.rounds||[]).findIndex(rd=>rd.some(r=>(r.h===S.my||r.a===S.my)&&r.w!==S.my));
+  if(!C.skipped&&outK>=0)for(let k=outK+1;k<F.names.length;k++)
+    rows.push({day:cupDay(k),kind:`${CUP_NAME}·${stageName(k)}`,mark:`${CUP_NAME}${stageName(k)}`,note:k===F.names.length-1&&C.winner!=null?`冠军：${S.teams[C.winner].name}`:k<C.stage?'已赛':'本队已出局'});
+  const I=S.intl;
+  if(I&&intlIn()){
+    // out in a knockout round: the rounds after it; out in the groups: the whole knockout
+    const outJ=I.ko.findIndex(rd=>rd.some(r=>(r.h===S.my||r.a===S.my)&&r.w!==S.my));
+    const qf=I.ko.length?I.ko[0].flatMap(r=>[r.h,r.a]):I.stage>=6?I.ties.flat():null,groupOut=!!qf&&!qf.includes(S.my);
+    const from=outJ>=0?6+outJ+1:groupOut?6:null;
+    if(from!=null)for(let k=from;k<intlStages();k++)
+      rows.push({day:intlDay(k),kind:`${INTL_NAME}·${INTL_STAGES[k]}`,mark:`冠军杯${INTL_STAGES[k]}`,note:k===intlStages()-1&&I.winner!=null?`冠军：${S.teams[I.winner].name}`:k<I.stage?'已赛':'本队已出局'});
+  }
+  return rows;
+}
 function vHome(){
   const f=nextFix(),opp=S.teams[f.opp],ob=bestForm(opp,!f.home);
   const ms=strength(my(),S.lineup,S.tactic,f.home,S.boost>0?BOOST:0,S.formation);
@@ -181,7 +207,7 @@ function vHome(){
   const hs=f.home?rating(ms):rating(os),as=f.home?rating(os):rating(ms);
   // events and bids need an answer: first thing on a phone, top of the right column on a wide screen
   const ask=vEvent()+vOffer(),wide=isWide();
-  return `${ask&&!wide?ask:''}<div class="cols"><div class="col">${vCalendar()}<section class="panel ${f.cup?'cupmatch':f.intl?'cupmatch intlmatch':''}"><h2>下一场：${fixLabel(f)}，${f.home?'主场':'客场'}${f.derby?' <span class="tag2 derby">宿敌之战</span>':''}</h2>
+  return `${vHeadline()}${ask&&!wide?ask:''}<div class="cols"><div class="col">${vCalendar()}<section class="panel ${f.cup?'cupmatch':f.intl?'cupmatch intlmatch':''}"><h2>下一场：${fixLabel(f)}，${f.home?'主场':'客场'}${f.derby?' <span class="tag2 derby">宿敌之战</span>':''}</h2>
   ${f.derby?`<p class="muted" style="margin:-6px 0 8px;font-size:13px">收入翻倍，赢了全队士气高涨 2 场。</p>`:''}${f.cup||f.intl&&S.intl.stage>=6?`<p class="muted" style="margin:-6px 0 8px;font-size:13px">一场定胜负，平局直接点球大战。</p>`:f.intl?`<p class="muted" style="margin:-6px 0 8px;font-size:13px">小组赛：胜 ${money(INTL_PRIZE.win)}，平 ${money(INTL_PRIZE.draw)}，小组前两名进八强。比赛收入 1.5 倍。</p>`:''}
   <div class="fixture"><div><div class="t disp" style="--tc:${H.color}">${H.name}</div><div class="str">综合实力 <span class="num">${hs}</span></div></div>
   <div class="vs num">VS</div>
