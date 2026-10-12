@@ -24,4 +24,12 @@ ok(S.my===dest.id&&!Object.keys(S.club).length,'at the new club the all-time rec
 UI.tab='honours';ACT.hlb('goals');const h=els.app.innerHTML;
 ok(h.includes('最佳球员：旧将'),'the old club\\'s award is still in the honours room');
 ok(!clubCareer().some(c=>!dest.players.some(p=>p.id===c.id)),'the all-time boards only hold players of the new club');
+// sold mid-season and bought back: the goals before the sale are counted once, not twice
+{newGame(TEAMS.findIndex(t=>t.div===2),teamNames());S.club={};const p=my().players.find(x=>x.pos==='FW');
+  p.goals=5;p.apps=8;bankPlayer(p);  // sold: his season so far goes on record
+  ok(S.club[p.id].goals===5,'sold with 5 goals: 5 on record');
+  p.goals=7;p.apps=11;  // bought back, two more
+  ok(clubCareer().find(c=>c.id===p.id).goals===7&&careerApps(p)===11,'back with us: the all-time board shows 7, not 12');
+  recordSeason(my().div,1);ok(S.club[p.id].goals===7&&S.club[p.id].apps===11,'the season banked at its end: 7 goals, 11 matches');
+  S.round=rounds();newSeason();ok(!p.bk&&p.goals===0&&clubCareer().find(c=>c.id===p.id).goals===7,'a new season starts clean');}
 `);

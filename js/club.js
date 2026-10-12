@@ -23,11 +23,14 @@ function rollOffer(){
   news(`${club.name} 带着 ${money(S.offer.amount)} 的契约书前来，想要带走 ${p.name}。`);
 }
 // moving a player to an AI club keeps his career at our club on record
+// p.bk: what of this season's figures is already banked (sold mid-season, and maybe bought back since), so only the
+// rest is added later. rs/rn are ratings, for the all-time rating board
+const SEASON_KEYS=['goals','ast','apps','lapps','rs','rn','ycs','rcs'];
+const unbanked=(p,k)=>(p[k]||0)-((p.bk&&p.bk[k])||0);
 function bankPlayer(p){
   const c=S.club[p.id]||(S.club[p.id]={name:p.name,pos:p.pos,goals:0,apps:0});
-  c.goals+=p.goals;c.ast=(c.ast||0)+(p.ast||0);c.apps+=p.apps;c.lapps=(c.lapps||0)+(p.lapps||0);
-  c.rs=(c.rs||0)+(p.rs||0);c.rn=(c.rn||0)+(p.rn||0);  // ratings, for the all-time rating board
-  c.ycs=(c.ycs||0)+(p.ycs||0);c.rcs=(c.rcs||0)+(p.rcs||0);
+  SEASON_KEYS.forEach(k=>c[k]=(c[k]||0)+unbanked(p,k));
+  p.bk=Object.fromEntries(SEASON_KEYS.map(k=>[k,p[k]||0]));
 }
 function acceptOffer(){
   if(!windowOpen()){toast(windowShut());return}
@@ -155,7 +158,7 @@ function clubCareer(){
   const m={};
   Object.entries(S.club).forEach(([id,c])=>m[id]={...c,id:+id});
   my().players.forEach(p=>{const c=m[p.id]||(m[p.id]={name:p.name,pos:p.pos,goals:0,apps:0,id:p.id});
-    c.goals+=p.goals;c.ast=(c.ast||0)+(p.ast||0);c.apps+=p.apps;c.rs=(c.rs||0)+(p.rs||0);c.rn=(c.rn||0)+(p.rn||0);c.now=true});
+    ['goals','ast','apps','rs','rn'].forEach(k=>c[k]=(c[k]||0)+unbanked(p,k));c.now=true});
   return Object.values(m);
 }
 const CAREER_RATED=10;  // rated matches for the all-time rating board

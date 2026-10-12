@@ -150,7 +150,7 @@ function awaken(p){
 function value(p){const f=p.age<=23?1.3:p.age<=30?1:p.age<=32?.7:.45,r=p.age<=23?p.ovr*.6+p.pot*.4:p.ovr;return Math.max(5,Math.round(((r-35)**2)/6*f))}
 // what buyers pay: academy kids who haven't proven themselves in the first team are valued on ability alone
 // first-team matches for us plus loan matches elsewhere, this season and banked from earlier ones
-const careerApps=p=>{const c=S.club&&S.club[p.id]||{};return p.apps+(p.lapps||0)+(c.apps||0)+(c.lapps||0)};
+const careerApps=p=>{const c=S.club&&S.club[p.id]||{};return unbanked(p,'apps')+unbanked(p,'lapps')+(c.apps||0)+(c.lapps||0)};
 // joined = the season he entered the first team; saves from before this field count from the current season
 const unproven=p=>p.youth&&careerApps(p)<YOUTH_PROVEN&&(p.joined??S.season)>=S.season;
 const marketValue=p=>unproven(p)?clamp(Math.round((p.ovr-35)*1.2),5,40):value(p);
@@ -708,7 +708,7 @@ function newSeason(moveTo){
       else if(p.age<=34)p.ovr-=ri(1,3);
       else p.ovr-=ri(2,5);
       p.ovr=clamp(p.ovr,35,95);p.pot=p.age>=33?p.ovr:Math.max(p.pot,p.ovr);  // 95 is potential's ceiling too; past 33 the decline is for good
-      t.condDay=0;t.lastDay=-9;p.cond=100;p.inj=0;p.bans={};p.away=0;p.ycc={};p.ycs=0;p.rcs=0;p.goals=0;p.ast=0;p.ss=null;p.apps=0;p.lapps=0;p.rs=0;p.rn=0;p.gain=p.ovr-old;
+      t.condDay=0;t.lastDay=-9;p.cond=100;p.inj=0;p.bans={};p.away=0;p.ycc={};p.ycs=0;p.rcs=0;p.goals=0;p.ast=0;p.ss=null;p.apps=0;p.lapps=0;p.rs=0;p.rn=0;delete p.bk;p.gain=p.ovr-old;
       if(p.sig&&p.age>=SIG_FADE){if(t.id===S.my)news(`${p.name} 年满 ${p.age} 岁，必杀技「${p.sig}」渐渐生疏了。`);delete p.sig}
       else learnSig(p);
     });
