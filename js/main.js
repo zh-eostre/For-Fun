@@ -134,7 +134,8 @@ function canStart(p){
 }
 const ACT={
   cheat:(a,b)=>useCheat(a,b),
-  start:a=>{if(TEAMS[+a]&&TEAMS[+a].div===DIVS.length-1)newGame(+a,UI.draft)},  // new managers start in the bottom division
+  start:a=>{if(TEAMS[+a]&&TEAMS[+a].div===DIVS.length-1)newGame(+a,UI.draft,UI.diff)},
+  diff:a=>{if(DIFF[a]){UI.diff=a;render()}},  // new managers start in the bottom division
   reroll:()=>{UI.draft=teamNames();render()},
   continue:()=>{S=load();if(S)enterGame()},
   exportSave:()=>exportSave(false),

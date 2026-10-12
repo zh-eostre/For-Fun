@@ -385,7 +385,8 @@ function updatePrestige(tables){
   return notes;
 }
 // how far an AI club's current best XI is below what its 底蕴 says it should be
-const aiGap=t=>t.str-Math.round(onPitch(t,bestForm(t,true).ids).filter(Boolean).reduce((s,p)=>s+p.ovr,0)/11);
+// (the difficulty moves the level AI clubs keep to)
+const aiGap=t=>t.str+(t.id===S.my?0:diff().ai)-Math.round(onPitch(t,bestForm(t,true).ids).filter(Boolean).reduce((s,p)=>s+p.ovr,0)/11);
 // the best player an AI club will go for: richer, grander clubs reach higher
 const aiCeiling=t=>t.str+4+Math.round(t.rep/10);
 // summer: an AI club playing clearly above its 底蕴 (best XI more than 3 over its base strength) loses its best

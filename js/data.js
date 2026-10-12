@@ -60,6 +60,13 @@ const ROTATE_AT=70,ROTATE_GAP=5,ROTATE_FRESH=15;
 // set pieces: the share of goal chances that are a foul in the box (a penalty, scored by the taker about three times
 // in four) and of near misses that win a free kick in range (struck at goal, in about one in eight)
 const PEN_SHARE=.11,FK_SHARE=.08;
+// difficulty, chosen when a game starts: our starting budget and match income, the AI clubs' level (in ability points,
+// for their squads at the start and the level they keep to) and our injury risk
+const DIFF={
+  easy:{name:'轻松',budget:1.5,income:1.25,ai:-2,inj:.7,note:'预算多、收入高，对手稍弱，伤病少'},
+  normal:{name:'普通',budget:1,income:1,ai:0,inj:1,note:'标准体验'},
+  hard:{name:'困难',budget:.75,income:.85,ai:2,inj:1.25,note:'预算少、收入低，对手更强，伤病多'}};
+const diff=()=>DIFF[S&&S.diff]||DIFF.normal;
 const LATE_MIN=85;  // from this minute a goal that wins or levels the match can be a 绝杀 / 绝平
 const YC_BAN=3;   // yellow cards in one competition that add up to a one-match ban in it
 // player name parts; genName in engine.js combines them

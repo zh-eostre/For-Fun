@@ -4,7 +4,7 @@ newGame(TEAMS.findIndex(t=>t.div===2),teamNames());
 ok([20,25,29,32,33,36].map(a=>AGE_GROW(a)).join()==='1.3,1,0.6,0.3,0,0','growth by age: 21- fast, 22-27 normal, 28-30 slower, 31-32 slow, 33+ none');
 const vet=my().players[5],kid=my().players[6];
 vet.age=34;vet.ovr=70;vet.pot=82;kid.age=24;kid.ovr=60;kid.pot=85;S.training='hard';
-const v0=vet.ovr,k0=kid.ovr;let g=0;while(S.round<6&&g++<400){if(isMatchDay()){S.event=null;S.offer=null;startMatch();skipMatch();ACT.matchDone()}else ACT.nextDay()}
+const v0=vet.ovr,k0=kid.ovr;let g=0;while(S.round<10&&g++<600){if(isMatchDay()){S.event=null;S.offer=null;startMatch();skipMatch();ACT.matchDone()}else ACT.nextDay()}
 ok(vet.ovr===v0,'a 34-year-old with room below his old potential stays at '+vet.ovr+' through training and matches');
 ok(kid.ovr>k0,'a 24-year-old improves meanwhile: '+k0+' → '+kid.ovr);
 // season end: decline past 33 lowers the potential with it

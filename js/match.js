@@ -182,7 +182,7 @@ function side(s,p){
   // each minute one random player on the pitch is at risk; the risk grows as his stamina drops
   // and our physio room lowers it. from physio level 4 some of our knocks can be played through
   const at=pickOn(ids),pl=team.players.find(x=>x.id===at);
-  if(pl&&rng()<injRisk(pl)*(mine?physioRisk():1)*(M.friendly?.5:1)){
+  if(pl&&rng()<injRisk(pl)*(mine?physioRisk()*diff().inj:1)*(M.friendly?.5:1)){
     if(mine&&rng()<knockChance()){pl.cond=Math.max(30,pl.cond-10);M.feed.unshift({min:M.min,cls:'',t:LINE.knock(pl.name)});flag('inj',`🩹 碰撞 ${M.min}'`,`${pl.name} 受了点小伤，坚持比赛`,700)}
     else if(!M.injuries.includes(pl)){
       M.injuries.push(pl);pl.cond=Math.max(30,pl.cond-30);
@@ -295,7 +295,7 @@ function finish(){
   const susp=my().players.filter(p=>banned(p,M.comp)&&myXI.includes(p.id)),bn=p=>p.bans[M.comp];
   const mg=home?M.hg:M.ag,og=home?M.ag:M.hg,mp=home?M.hp:M.ap,op=home?M.ap:M.hp;
   const pens=knockout()&&mg===og,w=mg>og||(pens&&mp>op)?'胜':mg<og||pens?'负':'平';
-  const income=Math.round((4+(home?18*stadiumMult():0)+(w==='胜'?10:w==='平'?4:0))*(M.intl?1.5:DIV_INCOME[my().div])*(M.derby?2:1));
+  const income=Math.round((4+(home?18*stadiumMult():0)+(w==='胜'?10:w==='平'?4:0))*(M.intl?1.5:DIV_INCOME[my().div])*(M.derby?2:1)*diff().income);
   S.budget+=income;
   if(S.boost>0)S.boost--;
   if(M.derby&&w==='胜'){S.boost=2;unlock('derby')}

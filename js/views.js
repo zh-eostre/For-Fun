@@ -70,8 +70,10 @@ function vStart(){
         if(div!==low)return `<div class="team-pick locked" style="--c:${t.color}" aria-disabled="true"><b class="disp">${UI.draft[i].name}</b><span>${tier} · 实力 ${t.str}</span></div>`;
         const k=reps.indexOf(t.rep)/reps.length,goal=k<1/3?'冲击升级':k<2/3?'站稳脚跟':'艰难起步';
         return `<button class="team-pick" style="--c:${t.color}" data-act="start" data-arg="${i}"><b class="disp">${UI.draft[i].name}</b>
-        <span>${tier} · 实力 ${t.str}，目标${goal}，预算 ${money(startBudget(t))}</span></button>`}).join('')}</div>`};
-    return `<h3>${DIVS[low]}联赛<span class="muted" style="font-weight:400;font-size:14px">，新教练从这里起步，前 ${SWAP} 名升级</span></h3>${pick(low)}
+        <span>${tier} · 实力 ${t.str}，目标${goal}，预算 ${money(Math.round(startBudget(t)*(DIFF[UI.diff]||DIFF.normal).budget))}</span></button>`}).join('')}</div>`};
+    const d=DIFF[UI.diff]?UI.diff:'normal';
+    return `<div class="diff-pick"><h3 style="margin:0">难度</h3><div class="seg">${Object.entries(DIFF).map(([k,v])=>`<button data-act="diff" data-arg="${k}" aria-pressed="${k===d}">${v.name}</button>`).join('')}</div><span class="muted">${DIFF[d].note}（开局后不能更改）</span></div>
+    <h3>${DIVS[low]}联赛<span class="muted" style="font-weight:400;font-size:14px">，新教练从这里起步，前 ${SWAP} 名升级</span></h3>${pick(low)}
     <details class="fold" style="margin-top:14px"><summary><h3 style="margin:0">更高级别 <span class="muted" style="font-weight:400;font-size:14px">需要执教履历，暂不可选</span></h3></summary>
     ${DIVS.map((dn,d)=>d===low?'':`<h3>${dn}联赛</h3>${pick(d)}`).reverse().join('')}</details>`})()}
   <p class="muted" style="font-size:13px;margin-top:20px">联赛分三级：${DIVS.map((dn,d)=>`${dn} ${DIV_SIZES[d]} 队（每季 ${2*(DIV_SIZES[d]-1)} 轮）`).join('、')}，越往上球队越少。每级前 ${SWAP} 名升级、后 ${SWAP} 名降级。球队都是虚构的。</p></div>`;
@@ -213,6 +215,7 @@ function vRules(){
   const sec=(h,items)=>`<section class="rule"><h3>${h}</h3><ul>${items.map(i=>`<li>${i}</li>`).join('')}</ul></section>`;
   return `<section class="panel"><div class="mhead"><h2 id="mtitle">规则说明</h2><button class="btn small mclose" data-act="closeModal" aria-label="关闭">✕</button></div>
   <div class="rules">
+  <p class="rule-diff">本档难度：<b>${diff().name}</b>（${diff().note}）。开局预算 ×${diff().budget}，比赛收入 ×${diff().income}，AI 球队水平 ${diff().ai>0?'+':''}${diff().ai}，我方伤病几率 ×${diff().inj}。</p>
   ${sec('赛季与日程',[`联赛是金字塔：${DIVS.map((dn,d)=>`${dn} ${DIV_SIZES[d]} 队`).join('、')}，各自主客场双循环（${DIVS.map((dn,d)=>`${dn} ${2*(DIV_SIZES[d]-1)} 轮`).join('、')}）。每级前 ${SWAP} 名升级、后 ${SWAP} 名降级。`,
     `一个赛季 ${weeks()} 周，联赛在周六进行，三个级别在同一天结束。甲级只有 18 轮，有 4 个周末轮空（在${INTL_NAME}周）；乙级每周六一轮；丙级 26 轮，有 4 轮放在周二（避开杯赛周）。`,
     `${CUP_NAME}决赛在联赛最后一轮的前一周，${INTL_NAME}决赛在联赛最后一轮的后一周（进了决赛，赛季就踢到决赛为止）。`,

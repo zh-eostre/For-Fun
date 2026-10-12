@@ -610,15 +610,15 @@ function playOtherDivisions(){
 }
 const divIds=div=>S.teams.filter(t=>t.div===div).map(t=>t.id);
 const newFixtures=()=>DIVS.map((_,div)=>genFixtures(divIds(div)));
-function newGame(id,names){
-  S={v:SAVE_V,cal:CAL_V,pid:1,season:1,round:0,my:id,formation:'4-4-2',tactic:'bal',training:'normal',news:[],history:[],
+function newGame(id,names,difficulty='normal'){
+  S={v:SAVE_V,diff:DIFF[difficulty]?difficulty:'normal',cal:CAL_V,pid:1,season:1,round:0,my:id,formation:'4-4-2',tactic:'bal',training:'normal',news:[],history:[],
     mgr:{rep:15,last:0},ach:{},streak:0,boost:0,records:[],club:{},legends:[],offer:null,event:null,academy:{lv:1,intake:[]},day:0,lastMatchDay:-9,fac:{scout:1,physio:1,ground:1}};
   usedNames=new Set();
-  S.teams=TEAMS.map((t,i)=>({...t,...names[i],id:i,players:makeSquad(t.str)}));
+  S.teams=TEAMS.map((t,i)=>({...t,...names[i],id:i,players:makeSquad(t.str+(i===id?0:diff().ai))}));
   S.fixtures=newFixtures();S.results=DIVS.map(()=>[]);S.cup=newCup();S.rival=pickRival();
   S.teams.forEach(t=>t.players.forEach(p=>learnSig(p,true)));
   S.intl=newIntl(S.teams.filter(t=>t.div===0).sort((a,b)=>b.rep-a.rep).slice(0,3).map(t=>t.id));
-  S.budget=startBudget(TEAMS[id]);
+  S.budget=Math.round(startBudget(TEAMS[id])*diff().budget);
   S.lineup=autoPick(my(),S.formation);S.autoXI=true;
   S.pre=PRESEASON;refreshMarket();planFriendlies();
   news(`你正式成为${my().name}的主教练。董事会给了你 ${money(S.budget)} 的预算。季前一周转会窗口开放，还有两场友谊赛。`);

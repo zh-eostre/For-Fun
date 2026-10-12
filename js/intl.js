@@ -8,7 +8,7 @@ function ensureForeign(){
   if(S.teams.some(t=>t.foreign))return;
   FOREIGN.forEach(([name,short,color,rep])=>{
     const t={id:S.teams.length,name,short,color,rep,str:strFromRep(rep),div:-1,foreign:true,players:[]};
-    S.teams.push(t);t.players=makeSquad(t.str);t.players.forEach(p=>learnSig(p,true));
+    S.teams.push(t);t.players=makeSquad(t.str+diff().ai);t.players.forEach(p=>learnSig(p,true));
   });
 }
 // clubs from abroad only play a handful of matches here, so they don't develop like ours. each summer they renew
