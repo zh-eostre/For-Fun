@@ -848,3 +848,4 @@ tr.intl-maybe td:first-child{box-shadow:inset 4px 0 color-mix(in srgb,var(--ambe
 .hchart .hdot:hover,.hchart .hdot:focus,.hchart .hbar:hover,.hchart .hbar:focus{fill:var(--amber);outline:none}
 .hchart .hlab{font-size:12px;font-weight:700;fill:var(--ink)}
 #chart-tip{position:fixed;z-index:60;pointer-events:none;background:var(--board);color:#fff;font-size:12px;padding:5px 8px;border-radius:6px;max-width:260px;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.tag2.listed{background:color-mix(in srgb,var(--amber) 25%,transparent);color:var(--ink)}

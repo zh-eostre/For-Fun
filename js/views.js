@@ -248,6 +248,7 @@ function vRules(){
     '第 75 分钟后还有「名帅光环」：教练声望越高，进攻加成越大，必杀技也越容易打出来。落后逆转取胜可以解锁「逆转之王」。'])}
   ${sec('体能与换人',['比赛中会消耗体能：中场跑得最多，前锋、后卫其次，门将几乎不累。体能 80 以上基本不影响发挥，越低越弱（70 约九折，60 约八折）。',
     `比赛中会有点球和禁区前的直接任意球。在球员详情里可以指定点球手和任意球手；指定的人不在场上时，由场上最合适的人主罚（点球优先前锋，任意球优先中场，有必杀技的更优先）。`,
+    `转会：直接出售只拿到身价的 85%；AI 球队主动报价通常是身价的 1.05–1.6 倍，但看中谁是随机的，报价只保留到第二天。在球员详情里「挂牌出售」，窗口期间就会常有球队专门为他报价（约身价的 ${LIST_RANGE[0]}–${LIST_RANGE[1]} 倍）。`,
     `首发设为自动时，阵容每天按体能更新；打开「自动轮换」，体能低于 ${ROTATE_AT} 的首发会让给同位置、能力最多低 ${ROTATE_GAP}、体能好得多的替补。`,
     `中场休息时，我方球员会恢复一点体能。每场最多换 ${SUBS} 人；自动换人从第 60 分钟起，把体能低于 ${TIRED}、而且替补更强的人换下；体能跌破 ${SPENT} 的球员不管能力多高都会被换下（受伤风险太大）。可以关掉自己来换。`,
     '同一次暂停里的换人在继续比赛前都可以改或撤销。',
@@ -291,7 +292,8 @@ function vPlayer(id){
   const actions=mine
     ?`${Object.entries(TK).map(([k,l])=>`<button class="btn small" data-act="taker" data-arg="${k}:${p.id}" aria-pressed="${tk(k)}">${tk(k)?`✓ ${l}（点击取消）`:`设为${l}`}</button>`).join('')}
       ${p.loan?`<button class="btn small" data-act="recall" data-arg="${p.id}">召回</button>`:p.age<=LOAN_AGE?`<button class="btn small" data-act="loan" data-arg="${p.id}">外租（赛季结束回归）</button>`:''}
-      <button class="btn small danger" data-act="sell" data-arg="${p.id}" ${windowOpen()?'':`disabled title="${windowShut()}"`}>出售 ${money(sellPrice(p))}</button>`
+      <button class="btn small" data-act="list" data-arg="${p.id}" aria-pressed="${!!p.listed}" title="挂牌后，转会窗口期间球队会专门为他报价（约身价的 ${LIST_RANGE[0]}–${LIST_RANGE[1]} 倍）">${p.listed?'✓ 挂牌中（点击撤下）':'挂牌出售'}</button>
+      <button class="btn small danger" data-act="sell" data-arg="${p.id}" ${windowOpen()?'':`disabled title="${windowShut()}"`}>直接出售 ${money(sellPrice(p))}</button>`
     :(()=>{const why=buyBlock(p,t);return `<button class="btn small primary" data-act="bid" data-arg="${p.id}" ${why?'disabled':''}>以 ${money(askPrice(p,t))} 签下</button>${why?`<span class="muted" style="font-size:13px">${why}</span>`:''}`})();
   return `<section class="panel"><div class="mhead"><h2 id="mtitle">${p.name}${p.youth?' <span class="tag2 youth">青训</span>':''}</h2><button class="btn small mclose" data-act="closeModal" aria-label="关闭">✕</button></div>
   <p class="muted" style="margin:-4px 0 10px;font-size:14px">${POS[p.pos]}，${p.age} 岁，${t.name}${status?`。${status}`:''}</p>
@@ -335,7 +337,7 @@ function vOffer(){
   if(!p)return '';
   return `<section class="panel offer"><h2>转会报价</h2>
   <p style="margin:-4px 0 10px">${S.teams[o.club].name}（${DIVS[S.teams[o.club].div]}）带着 <b>${money(o.amount)}</b> 的契约书前来，想要带走 <b>${p.name}</b>（${POS[p.pos]}，能力 ${p.ovr}，${p.age} 岁）。
-  <span class="muted">他的身价约 ${money(marketValue(p))}。报价下一场比赛后失效。</span></p>
+  <span class="muted">他的身价约 ${money(marketValue(p))}${o.listed?'（挂牌出售中）':''}。报价只保留到明天。</span></p>
   <div class="go" style="justify-content:flex-start;margin-top:0"><button class="btn primary" data-act="offerYes">接受</button><button class="btn" data-act="offerNo">拒绝</button></div></section>`;
 }
 const cheatBtn=k=>`<button class="btn small" data-act="cheat" data-arg="${k}">「${CHEAT_INFO[k][0]}」</button>`;
@@ -375,7 +377,7 @@ function vSquad(){
     <div class="prow ${on.has(p.id)?'on':''} ${unavail(p)?'inj':''}" data-act="toggle" data-arg="${p.id}">
       <button class="tick" data-act="toggle" data-arg="${p.id}" aria-pressed="${on.has(p.id)}" aria-label="${on.has(p.id)?'移出首发':'加入首发'}：${p.name}">${on.has(p.id)?'✓':''}</button>
       <div style="min-width:0"><div class="pname"><button class="link" data-act="player" data-arg="${p.id}">${p.name}</button>${gem(p)}${p.youth?' <span class="tag2 youth">青训</span>':''}${unproven(p)?` <span class="muted" style="font-size:11px;font-weight:400" title="出场满 ${YOUTH_PROVEN} 场或下赛季开始时出道，之前买家只按当前能力出价">未出道 ${careerApps(p)}/${YOUTH_PROVEN}</span>`:''}</div>
-      <div class="pmeta">${p.sig?`<span class="sig" style="display:inline">★</span> `:''}${p.age} 岁，${p.apps} 场 ${p.goals} 球 ${p.ast||0} 助${p.rn?`，评分 ${avgRating(p).toFixed(1)}`:''}${(()=>{const [c,n]=Object.entries(p.ycc||{}).sort((a,b)=>b[1]-a[1])[0]||[];return n?`，<span class="${n>=YC_BAN-1?'ycwarn':''}" title="${COMPS[c]}再吃 ${YC_BAN-n} 张黄牌停赛一场">${COMPS[c]}黄牌 ${n}/${YC_BAN}</span>`:''})()}${p.inj?` <span class="injtag">伤停 ${p.inj} 天</span>`:''}${banned(p)?` <span class="injtag">停赛 ${p.bans[ourComp()]} 场</span>`:''}${p.away?` <span class="injtag">探亲 ${p.away} 轮</span>`:''}${p.loan?` <span class="loantag">租借至${p.loan.club} · ${p.lapps||0} 场</span>`:''}${!unavail(p)&&p.cond<60?' <span class="risktag">伤病风险高</span>':''}${retireChance({...p,age:p.age+1})>=.3?` <span class="muted" style="font-size:11px" title="赛季结束时有 ${Math.round(retireChance({...p,age:p.age+1})*100)}% 机会退役">可能退役</span>`:''}</div>
+      <div class="pmeta">${p.sig?`<span class="sig" style="display:inline">★</span> `:''}${p.age} 岁，${p.apps} 场 ${p.goals} 球 ${p.ast||0} 助${p.rn?`，评分 ${avgRating(p).toFixed(1)}`:''}${(()=>{const [c,n]=Object.entries(p.ycc||{}).sort((a,b)=>b[1]-a[1])[0]||[];return n?`，<span class="${n>=YC_BAN-1?'ycwarn':''}" title="${COMPS[c]}再吃 ${YC_BAN-n} 张黄牌停赛一场">${COMPS[c]}黄牌 ${n}/${YC_BAN}</span>`:''})()}${p.listed?' <span class="tag2 listed">挂牌</span>':''}${p.inj?` <span class="injtag">伤停 ${p.inj} 天</span>`:''}${banned(p)?` <span class="injtag">停赛 ${p.bans[ourComp()]} 场</span>`:''}${p.away?` <span class="injtag">探亲 ${p.away} 轮</span>`:''}${p.loan?` <span class="loantag">租借至${p.loan.club} · ${p.lapps||0} 场</span>`:''}${!unavail(p)&&p.cond<60?' <span class="risktag">伤病风险高</span>':''}${retireChance({...p,age:p.age+1})>=.3?` <span class="muted" style="font-size:11px" title="赛季结束时有 ${Math.round(retireChance({...p,age:p.age+1})*100)}% 机会退役">可能退役</span>`:''}</div>
 </div>
       <div><div class="ovr num">${p.ovr}${gainTag(p)}</div><div class="potl">潜力 ${p.pot}</div></div>
       <div><div class="bar ${p.cond<TIRED?'low':''}"><i style="width:${p.cond}%"></i></div><div class="barlbl">体能 ${p.cond}</div></div>

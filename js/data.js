@@ -147,7 +147,9 @@ const SIG_A=['苍雷','黑炎','绝影','天狼','冥王','流星','修罗','月
 const SIG_B=['贯穿','断罪','葬送','乱舞','一闪','崩坏','螺旋','终焉','天翔','灭杀','裂空','轮回'];
 const AWAKEN=.004;       // chance per match that a player aged 23 or under awakens (rare: once in a career for a few)
 const BOOST=2;           // strength bonus while morale is high (after a derby win or some events)
-const OFFER_CHANCE=.2;   // chance after each match that an AI club bids for one of your players
+const OFFER_CHANCE=.2;   // chance on each transfer-window day that an AI club bids for one of your players
+// a player on our transfer list draws bids of his own: on this share of window days, at this range of his value
+const LIST_CHANCE=.45,LIST_RANGE=[.95,1.3];
 const EVENT_CHANCE=.2;   // chance after each match of a random event
 
 const ACH={

@@ -14,6 +14,17 @@ function unlock(k){
 function rollOffer(){
   if(!windowOpen())return;
   if(S.offer){news(`${S.teams[S.offer.club].name} 的报价已过期。`);S.offer=null}
+  // someone we've put on the transfer list: bids for him come often, a little under what a club pays for a man it
+  // goes after itself
+  const listed=my().players.filter(x=>x.listed&&!x.loan);
+  if(listed.length&&rng()<LIST_CHANCE){
+    const p=pick(listed),clubs=domestic().filter(t=>t.id!==S.my&&t.str+10>=p.ovr);
+    if(clubs.length){
+      const club=pick(clubs);
+      S.offer={pid:p.id,club:club.id,listed:true,amount:Math.max(5,Math.round(marketValue(p)*rnd(...LIST_RANGE)))};
+      news(`${club.name} 看中了挂牌出售的 ${p.name}，报价 ${money(S.offer.amount)}。`);return;
+    }
+  }
   if(rng()>=OFFER_CHANCE)return;
   const p=pick(my().players.filter(x=>!unavail(x)));
   const clubs=p&&domestic().filter(t=>t.id!==S.my&&t.str+10>=p.ovr);
@@ -38,6 +49,7 @@ function acceptOffer(){
   if(!p){S.offer=null;return}
   if(squadSize()<=14){toast('一线队至少要保留 14 人');return}
   bankPlayer(p);  // his season goals stay with him so the golden boot race is unaffected
+  delete p.listed;
   my().players=my().players.filter(x=>x!==p);dropFromLineup(p.id);
   club.players.push(p);
   if(club.players.length>20){

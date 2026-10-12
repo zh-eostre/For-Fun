@@ -179,6 +179,8 @@ const ACT={
     render();window.scrollTo(0,0);
   },
   sound:()=>{setSound(!soundOn());if(soundOn())sfx('card');render()},
+  list:a=>{const p=findP(+a);if(!p)return;p.listed=!p.listed;
+    toast(p.listed?`${p.name} 已挂牌出售${windowOpen()?'，接下来几天留意报价':'，转会窗口开放后会有球队报价'}`:`${p.name} 已撤下挂牌`);save();render()},
   rotate:()=>{S.rotate=S.rotate===false;if(S.autoXI!==false)fixLineup();save();render()},
   // player list rows: add to / remove from the XI
   toggle:a=>{
