@@ -83,5 +83,5 @@ ok(nextFix()&&!nextFix().intl,'and plays its league');
 // clubs abroad are held to their level too: one far above it loses its best players over the summer
 {newGame(TEAMS.findIndex(t=>t.div===2),teamNames());UI.guide=null;const t=S.teams.find(x=>x.foreign);
   [...t.players].sort((a,b)=>b.ovr-a.ovr).slice(0,6).forEach(p=>p.ovr=Math.min(95,p.ovr+25));const before=aiGap(t),top=Math.max(...t.players.map(p=>p.ovr));
-  const n0=t.players.length;freshenForeign();ok(before<-4&&aiGap(t)>before&&Math.max(...t.players.map(p=>p.ovr))<=top&&t.players.length===n0,'a club abroad well over its level (six stars arrived): two move on ('+before+' → '+aiGap(t)+')');}
+  const n0=t.players.length;freshenForeign();ok(before<-6&&aiGap(t)>before&&Math.max(...t.players.map(p=>p.ovr))<=top&&t.players.length===n0,'a club abroad far over its level (six stars arrived): one moves on each summer ('+before+' → '+aiGap(t)+')');}
 `);

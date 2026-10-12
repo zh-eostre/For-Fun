@@ -38,15 +38,15 @@ function drawAbroad(n){
 }
 // clubs from abroad only play a handful of matches here, so they don't develop like ours. each summer they renew
 // instead: veterans who have slipped below the club's level make way for signings at it. and like our AI clubs they
-// are held to their level: one well above it (more than 4 over) sees its best players leave for leagues beyond our
-// world (up to two a summer), otherwise stars arriving from our league would pile up abroad year after year
+// are held to their level, though more loosely (the 冠军杯 is the top stage): one far above it (more than 6 over)
+// sees its best player leave for leagues beyond our world (one a summer), otherwise stars arriving from our league would pile up abroad year after year
 function freshenForeign(){
   S.teams.filter(t=>t.foreign).forEach(t=>{
     for(let n=0;n<8&&aiGap(t)>1;n++){
       const old=t.players.filter(p=>p.ovr<t.str-4).sort((a,b)=>b.age-a.age||a.ovr-b.ovr)[0];if(!old)break;
       t.players[t.players.indexOf(old)]=makePlayer(old.pos,t.str,ri(23,28));
     }
-    for(let n=0;n<2&&aiGap(t)<-4;n++){
+    for(let n=0;n<1&&aiGap(t)<-6;n++){
       const star=[...t.players].sort((a,b)=>b.ovr-a.ovr)[0];
       t.players[t.players.indexOf(star)]=makePlayer(star.pos,t.str,ri(23,28));
     }
