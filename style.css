@@ -819,8 +819,6 @@ tr.intl-maybe td:first-child{box-shadow:inset 4px 0 color-mix(in srgb,var(--ambe
 .zl.intl::before{background:var(--amber)}
 .zl.maybe::before{background:color-mix(in srgb,var(--amber) 45%,transparent)}
 .tag2.intlq{background:color-mix(in srgb,var(--amber) 25%,transparent);color:var(--ink)}
-.takers{font-size:13px;color:var(--muted)}
-.takers .link{font-size:13px}
 .diff-pick{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:18px 0 6px}
 .diff-pick .muted{font-size:13px}
 .rule-diff{font-size:14px;margin:0 0 10px;padding:8px 10px;border-radius:8px;background:var(--pitch-soft)}

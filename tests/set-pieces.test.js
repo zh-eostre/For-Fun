@@ -29,7 +29,7 @@ skipMatch();ACT.matchDone();
 const fw=my().players.find(p=>p.pos==='FW');S.takers={};
 ACT.player(String(fw.id));ok(/data-act="taker" data-arg="pen:/.test(els.app.innerHTML)&&/加入点球人选/.test(els.app.innerHTML),'the player dialog offers 加入点球人选');
 ACT.taker('pen:'+fw.id);ok(takerList('pen').join()===String(fw.id),'first in the penalty order');
-UI.modal=null;UI.pages=[];UI.tab='squad';render();ok(/点球 <button class="link"/.test(els.app.innerHTML)&&/任意球 <span class="muted">自动/.test(els.app.innerHTML),'the squad page names him (free kicks: 自动)');
+UI.modal=null;UI.pages=[];
 ACT.taker('pen:'+fw.id);ok(takerList('pen').length===0,'pressed again: out, back to automatic');
 // an order: the first of them on the pitch takes it
 {const ids=autoPick(my(),S.formation),xi=onPitch(my(),ids).filter(p=>p&&p.pos!=='GK'),bench=my().players.find(p=>p.pos!=='GK'&&!ids.includes(p.id));
@@ -40,7 +40,8 @@ ACT.taker('pen:'+fw.id);ok(takerList('pen').length===0,'pressed again: out, back
   // an older save (one id) still works
   S.takers={pen:xi[1].id};ok(takerList('pen').join()===String(xi[1].id)&&taker(my(),ids,'pen')===xi[1],'an older save with a single taker');
   // the dialog
-  UI.tab='squad';render();ok(/data-act="takers"/.test(els.app.innerHTML),'the squad page has 设置');
+  UI.tab='squad';render();ok(!/data-act="takers"/.test(els.app.innerHTML)&&!/点球 .*任意球/.test(els.app.innerHTML),'the squad page stays uncluttered');
+  ACT.player(String(xi[0].id));ok(/data-act="takers"/.test(els.app.innerHTML),'the player dialog has 定位球设置');
   ACT.takers();const h=els.app.innerHTML;ok(/定位球主罚/.test(h)&&(h.match(/class="tk-col"/g)||[]).length===2&&/对上普通门将的命中率/.test(h)&&!bad(h),'the dialog: penalties and free kicks, with each player\u2019s chances');
   ACT.taker('fk:'+xi[2].id);ok(/class="tk-row on"/.test(els.app.innerHTML)&&takerList('fk').join()===String(xi[2].id),'picking in the dialog');
   ACT.takerClear('fk');ok(takerList('fk').length===0,'清空: back to automatic');closeModal();}
