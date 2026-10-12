@@ -79,7 +79,11 @@ const MIGRATE={
   // v20: yellow-card counts and bans by competition (what there was counts for the league)
   19:d=>d.teams.forEach(t=>t.players.forEach(p=>{p.ycc=p.yc?{lg:p.yc}:{};p.bans=p.ban?{lg:p.ban}:{};delete p.yc;delete p.ban;delete p.banNext})),
   // v21: offers for several players at once
-  20:d=>{d.offers=d.offer?[d.offer]:[];delete d.offer}
+  20:d=>{d.offers=d.offer?[d.offer]:[];delete d.offer},
+  // v22: where each player came from and since when (our record says how long ours have been with us; academy
+  // players are ours from the start; at other clubs the young ones are theirs, and the count starts now)
+  21:d=>d.teams.forEach(t=>t.players.forEach(p=>{if(p.since!=null)return;const c=t.id===d.my&&d.club&&d.club[p.id];
+    p.since=c?d.season-(c.seasons||0):d.season;if(t.id===d.my?p.youth:p.age<=21)p.home=t.id}))
 };
 // a save can come from anywhere (a shared file, an edited one), and its text ends up in the page's HTML, so
 // every string in it loses the characters that could form markup before the game touches it
@@ -157,6 +161,11 @@ const careerApps=p=>{const c=S.club&&S.club[p.id]||{};return unbanked(p,'apps')+
 const unproven=p=>p.youth&&careerApps(p)<YOUTH_PROVEN&&(p.joined??S.season)>=S.season;
 const marketValue=p=>unproven(p)?clamp(Math.round((p.ovr-35)*1.2),5,40):value(p);
 const sellPrice=p=>Math.round(marketValue(p)*.85);
+// where a player is and since when: since, the season he joined his club; home, the club he came up at (or joined at
+// 20 or under), which he loses for good once he leaves it
+function joinClub(p,t,home,season=S.season){p.since=season;if(home)p.home=t.id;else delete p.home}
+const seasonsAt=p=>p.since==null?0:S.season-p.since+1;
+const oneClub=(p,t)=>!!t&&p.home===t.id&&seasonsAt(p)>=ONE_CLUB;
 function makeSquad(str){
   const arr=[],starters={GK:1,DF:4,MF:4,FW:2},n={GK:2,DF:5,MF:5,FW:4};
   PO.forEach(pos=>{for(let i=0;i<n[pos];i++)arr.push(makePlayer(pos,str+(i<starters[pos]?2:-5)))});
@@ -554,7 +563,7 @@ function aiSign(t){
     const c=S.market.filter(p=>p.pos===w.pos&&p.ovr>=w.ovr+3&&p.ovr<=aiCeiling(t)).sort((x,y)=>y.ovr-x.ovr)[0];
     if(!c)continue;
     S.market=S.market.filter(x=>x!==c);delete c.price;delete c.scout;delete c.sale;delete c.ex;delete c.eyed;
-    t.players.push(c);
+    t.players.push(c);joinClub(c,t,c.age<=20);
     if(t.players.length>20){
       const drop=t.players.filter(p=>p.pos===c.pos&&p!==c).sort((x,y)=>x.ovr-y.ovr||y.age-x.age)[0];
       if(drop)t.players=t.players.filter(p=>p!==drop);
@@ -620,6 +629,7 @@ function newGame(id,names,difficulty='normal'){
     mgr:{rep:15,last:0},ach:{},streak:0,boost:0,records:[],club:{},legends:[],offers:[],event:null,academy:{lv:1,intake:[]},day:0,lastMatchDay:-9,fac:{scout:1,physio:1,ground:1}};
   usedNames=new Set();
   S.teams=TEAMS.map((t,i)=>({...t,...names[i],id:i,players:makeSquad(t.str+(i===id?0:diff().ai))}));
+  S.teams.forEach(t=>t.players.forEach(p=>joinClub(p,t,p.age<=21,1)));  // the young ones count as the club's own
   S.fixtures=newFixtures();S.results=DIVS.map(()=>[]);S.cup=newCup();S.rival=pickRival();
   S.teams.forEach(t=>t.players.forEach(p=>learnSig(p,true)));
   S.intl=newIntl(S.teams.filter(t=>t.div===0).sort((a,b)=>b.rep-a.rep).slice(0,3).map(t=>t.id));
@@ -769,7 +779,7 @@ function newSeason(moveTo){
     while(t.players.length<minN){
       const counts={GK:0,DF:0,MF:0,FW:0};t.players.forEach(p=>counts[p.pos]++);
       const pos=counts.GK<2?'GK':counts.DF<5?'DF':counts.MF<5?'MF':'FW';
-      const y=makePlayer(pos,t.str-10,ri(17,19));y.pot=clamp(y.ovr+ri(10,22),y.ovr,90);if(t.id===S.my){y.youth=true;y.joined=S.season+1}t.players.push(y);
+      const y=makePlayer(pos,t.str-10,ri(17,19));y.pot=clamp(y.ovr+ri(10,22),y.ovr,90);if(t.id===S.my){y.youth=true;y.joined=S.season+1}joinClub(y,t,true,S.season+1);t.players.push(y);
       if(t.id===S.my)news(`青训球员 ${y.name}（${POS[pos]}，${y.age} 岁）升入一线队。`);
     }
   });
@@ -786,6 +796,7 @@ function newSeason(moveTo){
   S.lineup=autoPick(my(),S.formation);S.autoXI=true;
   news(`升级：${names('up')}。降级：${names('down')}。`);
   prestigeNotes.forEach(t=>news(t+'。'));
+  oneClubNews('season');
   const mz=moves.find(m=>m.t.id===S.my);
   news(`新赛季开始！上赛季${DIVS[div]}第 ${rank}，获得奖金 ${money(prize)}。${mz?mz.z==='up'?`球队升入${DIVS[my().div]}！`:`球队降入${DIVS[my().div]}。`:''}`);
   if(retired.length)news(`退役：${retired.join('、')}。`);

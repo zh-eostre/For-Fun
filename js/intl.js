@@ -11,7 +11,7 @@ function ensureForeign(){
   FOREIGN.forEach(([name,short,color,rep])=>{
     const old=have.get(name);if(old){if(old.base==null)old.base=rep;return}
     const t={id:S.teams.length,name,short,color,rep,base:rep,str:strFromRep(rep),div:-1,foreign:true,players:[]};
-    S.teams.push(t);t.players=makeSquad(t.str+diff().ai);t.players.forEach(p=>learnSig(p,true));
+    S.teams.push(t);t.players=makeSquad(t.str+diff().ai);t.players.forEach(p=>{learnSig(p,true);joinClub(p,t,p.age<=21)});
   });
 }
 // after a 冠军杯 (I): each club abroad's standing moves by how far it went (FOREIGN_FORM); those not in it drift back
@@ -44,11 +44,11 @@ function freshenForeign(){
   S.teams.filter(t=>t.foreign).forEach(t=>{
     for(let n=0;n<8&&aiGap(t)>1;n++){
       const old=t.players.filter(p=>p.ovr<t.str-4).sort((a,b)=>b.age-a.age||a.ovr-b.ovr)[0];if(!old)break;
-      t.players[t.players.indexOf(old)]=makePlayer(old.pos,t.str,ri(23,28));
+      const np=makePlayer(old.pos,t.str,ri(23,28));joinClub(np,t,false);t.players[t.players.indexOf(old)]=np;
     }
     for(let n=0;n<1&&aiGap(t)<-6;n++){
       const star=[...t.players].sort((a,b)=>b.ovr-a.ovr)[0];
-      t.players[t.players.indexOf(star)]=makePlayer(star.pos,t.str,ri(23,28));
+      const np=makePlayer(star.pos,t.str,ri(23,28));joinClub(np,t,false);t.players[t.players.indexOf(star)]=np;
     }
   });
 }

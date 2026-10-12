@@ -905,3 +905,5 @@ tr.intl-maybe td:first-child{box-shadow:inset 4px 0 color-mix(in srgb,var(--ambe
 .hrow .hr-count{white-space:nowrap;color:var(--muted)}
 .hrow .hr-count b{font-size:18px;color:var(--ink)}
 .tag2.eyed{background:color-mix(in srgb,var(--red) 18%,transparent);color:var(--ink)}
+.tag2.oneclub{background:color-mix(in srgb,var(--pitch) 22%,transparent);color:var(--ink);font-weight:700}
+.tag2.loyal{background:color-mix(in srgb,var(--muted) 20%,transparent);color:var(--ink)}

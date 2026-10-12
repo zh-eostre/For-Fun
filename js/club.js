@@ -26,6 +26,8 @@ function rollOffer(){
     const clubs=domestic().filter(t=>t.id!==S.my&&fits(t,FIT_BELOW)),abroad=listed?S.teams.filter(t=>t.foreign&&fits(t,FIT_BELOW_INTL)):[];
     if(!listed&&!clubs.length)return;
     const away=listed&&(!clubs.length||rng()<LIST_ABROAD),club=away?(abroad.length?pick(abroad):null):pick(clubs);
+    // one of our 一人一城 turns half the clubs that come for him away before it comes to a bid
+    if(!listed&&club&&oneClub(p,my())&&rng()<ONE_CLUB_REFUSE){news(`${club.name} 想挖走 ${p.name}，却被他一口回绝：「我的心，永远属于${my().short}。」`);return}
     const o={pid:p.id,club:club?club.id:-1,amount:Math.max(5,Math.round(marketValue(p)*rnd(...(club?range:MINOR_RANGE))))};
     if(!club)o.minor=pick(LOAN_LEAGUES.abroad[1]);
     if(listed)o.listed=true;S.offers.push(o);
@@ -60,10 +62,11 @@ function acceptOffer(pid){
   if(!o)return;
   if(!p){S.offers=S.offers.filter(x=>x!==o);return}
   if(squadSize()<=14){toast('一线队至少要保留 14 人');return}
+  if(oneClub(p,my()))soldOneClub(p);
   bankPlayer(p);  // his season goals stay with him so the golden boot race is unaffected
   delete p.listed;
   my().players=my().players.filter(x=>x!==p);dropFromLineup(p.id);
-  if(club.players)club.players.push(p);  // to a small club abroad, he leaves our world
+  if(club.players){club.players.push(p);joinClub(p,club,p.age<=20)}  // to a small club abroad, he leaves our world
   if(club.players&&club.players.length>20){
     const drop=club.players.filter(x=>x.pos===p.pos&&x!==p).sort((x,y)=>x.ovr-y.ovr||y.age-x.age)[0];
     if(drop)club.players=club.players.filter(x=>x!==drop);
@@ -176,8 +179,24 @@ function recordSeason(div,rank){
 const TITLE_APPS=5,LEGEND_TITLE_SEASONS=3,LEGEND_SEASONS=8;
 const isLegend=c=>!!c&&((c.seasons||0)>=LEGEND_SEASONS||((c.seasons||0)>=LEGEND_TITLE_SEASONS&&(c.titles||[]).length>0));
 function retireLegend(p){
-  const c=S.club[p.id];
-  if(isLegend(c))S.legends.push({name:p.name,pos:p.pos,goals:c.goals,apps:c.apps,seasons:c.seasons,titles:c.titles||[],season:S.season,club:my().name});
+  const c=S.club[p.id],one=oneClub(p,my());
+  if(isLegend(c)||one)S.legends.push({name:p.name,pos:p.pos,goals:c.goals,apps:c.apps,seasons:c.seasons,titles:c.titles||[],season:S.season,club:my().name,oneClub:one||undefined});
+  if(one){news(`🏟 告别赛：${p.name} 挂靴了。${seasonsAt(p)} 个赛季，一人一城——今天全场起立，为他送上最后的掌声。`);(UI.sigQueue||(UI.sigQueue=[])).push({farewell:true,name:p.name,seasons:seasonsAt(p)})}
+}
+// we sold one of our 一人一城: the fans don't forgive it easily
+function soldOneClub(p){
+  S.mgr.rep=Math.max(0,S.mgr.rep-ONE_CLUB_SALE_REP);
+  news(`球迷愤怒了！一人一城的 ${p.name} 被卖走，看台上拉起了横幅：「卖掉灵魂的人，不配站在这里。」教练声望 -${ONE_CLUB_SALE_REP}。`);
+}
+// milestones of the players who came up with us: the title after ONE_CLUB seasons, the tenth season, and
+// appearances (100, 200, 300). season: at a new season's start; apps: after a match
+function oneClubNews(when){
+  my().players.filter(p=>p.home===S.my).forEach(p=>{
+    const n=seasonsAt(p);
+    if(when==='season'&&n===ONE_CLUB){news(`✨ 一人一城：${p.name} 迎来在${my().short}的第 ${n} 个赛季，从此他的名字与这座城连在一起。`);unlock('oneclub')}
+    if(when==='season'&&n===10)news(`✨ 十年如一日：${p.name} 把整整十个赛季献给了${my().short}。`);
+    if(when==='apps'&&[100,200,300].includes(careerApps(p)))news(`✨ ${p.name} 迎来在${my().short}的第 ${careerApps(p)} 场比赛，看台上响起了他的名字。`);
+  });
 }
 // everyone's record at our club: banked seasons plus the current one (goals, assists, appearances, ratings)
 function clubCareer(){
@@ -212,7 +231,7 @@ function signYouth(id){
   const p=S.academy.intake.find(x=>x.id===id);if(!p)return;
   if(squadFull()){toast(`一线队已满 ${SQUAD_MAX} 人`);return}
   const est=p.scout.est;delete p.scout;delete p.chosen;
-  S.academy.intake=S.academy.intake.filter(x=>x!==p);p.joined=S.season;my().players.push(p);
+  S.academy.intake=S.academy.intake.filter(x=>x!==p);p.joined=S.season;joinClub(p,my(),true);my().players.push(p);
   UI.reveal={name:p.name,pot:p.pot,est,diff:p.pot-est};
   news(`青训少年 ${p.name}（${POS[p.pos]}，${p.age} 岁，能力 ${p.ovr}，真实潜力 ${p.pot}）升入一线队。`);
 }
@@ -270,6 +289,7 @@ function askPrice(p,t){
 // why a club won't sell (or we can't buy) right now; '' when the deal can go ahead
 function buyBlock(p,t){
   if(t.foreign)return '海外俱乐部不出售球员';
+  if(oneClub(p,t))return `他誓言终老于${t.short}，不会离开`;  // a loyal one at an AI club
   if(!windowOpen())return windowShut();
   if(t.players.length<=15)return '对方阵容人数不足，不愿出售';
   if(p.pos==='GK'&&t.players.filter(x=>x.pos==='GK').length<=2)return '对方门将不够，不愿出售';
@@ -282,7 +302,7 @@ function buyFrom(id){
   const f=findAny(id);if(!f||f.t.id===S.my)return;
   const {p,t}=f,why=buyBlock(p,t);if(why){toast(why);return}
   const price=askPrice(p,t);S.budget-=price;
-  t.players=t.players.filter(x=>x!==p);my().players.push(p);
+  t.players=t.players.filter(x=>x!==p);my().players.push(p);joinClub(p,my(),p.age<=20);
   news(`以 ${money(price)} 从 ${t.name} 签下 ${p.name}（${POS[p.pos]}，能力 ${p.ovr}）。`);
   toast(`签下 ${p.name}，记得去阵容页安排他`);
 }
@@ -432,7 +452,7 @@ function talentRace(left){
     S.market.filter(p=>p.eyed!=null).forEach(p=>{
       const club=S.teams[p.eyed];delete p.eyed;
       if(!club||rng()>=diff().grab){news(`${club?club.name:'豪门'} 与天才 ${p.name} 的谈判破裂，他仍在转会市场上。`);return}
-      S.market=S.market.filter(x=>x!==p);delete p.price;delete p.scout;delete p.sale;delete p.ex;club.players.push(p);
+      S.market=S.market.filter(x=>x!==p);delete p.price;delete p.scout;delete p.sale;delete p.ex;club.players.push(p);joinClub(p,club,p.age<=20);
       news(`慢了一步！${club.name} 抢先签下了天才少年 ${p.name}。`);
     });
   }
@@ -441,16 +461,17 @@ function aiPoach(){
   const lines=[];
   domestic().filter(t=>t.id!==S.my&&aiGap(t)<-3&&t.players.length>16).forEach(seller=>{
     const star=[...seller.players].sort((a,b)=>b.ovr-a.ovr)[0];
+    if(oneClub(star,seller)){lines.push(`${seller.name} 的 ${star.name}（${star.ovr}）拒绝了所有邀约，誓言终老于此。`);return}  // a loyal one stays
     // a bigger club at home that isn't well above its own level, has room, and would start him; the biggest gets him
     const buyer=domestic().filter(t=>t.id!==S.my&&t!==seller&&t.rep>seller.rep&&aiGap(t)>-3&&t.players.length<22&&star.ovr>=xiLevel(t)-4)
       .sort((a,b)=>b.rep-a.rep)[0];
     seller.players=seller.players.filter(p=>p!==star);
-    if(buyer){buyer.players.push(star);lines.push(pick([`豪门的召唤！${buyer.name} 从 ${seller.name} 手中夺走了王牌 ${star.name}（${star.ovr}）`,`${buyer.name} 挥舞着支票簿闯进 ${seller.name} 的更衣室，把 ${star.name}（${star.ovr}）带回了自己的城堡`,`${seller.name} 的球迷含泪送别 ${star.name}（${star.ovr}）——他被 ${buyer.name} 挖走了`]));return}
+    if(buyer){buyer.players.push(star);joinClub(star,buyer,star.age<=20);lines.push(pick([`豪门的召唤！${buyer.name} 从 ${seller.name} 手中夺走了王牌 ${star.name}（${star.ovr}）`,`${buyer.name} 挥舞着支票簿闯进 ${seller.name} 的更衣室，把 ${star.name}（${star.ovr}）带回了自己的城堡`,`${seller.name} 的球迷含泪送别 ${star.name}（${star.ovr}）——他被 ${buyer.name} 挖走了`]));return}
     // nobody at home: a club abroad of his level takes him (the strongest one for a star beyond them all)
     const abroad=S.teams.filter(t=>t.foreign),fit=abroad.filter(t=>star.ovr>=t.str-FIT_BELOW_INTL&&star.ovr<=t.str+FIT_ABOVE);
     if(!abroad.length){lines.push(`${star.name}（${star.ovr}）留下一句「这片天空已经装不下我了」，离开 ${seller.name} 远走海外`);return}  // an old save, before the clubs abroad
     const club=fit.length?pick(fit):abroad.reduce((a,b)=>a.str>b.str?a:b);
-    club.players.push(star);
+    club.players.push(star);joinClub(star,club,false);
     if(club.players.length>24){const drop=club.players.filter(p=>p.pos===star.pos&&p!==star).sort((a,b)=>a.ovr-b.ovr)[0];if(drop)club.players=club.players.filter(p=>p!==drop)}
     lines.push(pick([`${star.name}（${star.ovr}）留下一句「这片天空已经装不下我了」，远渡重洋加盟 ${club.name}`,`${seller.name} 的 ${star.name}（${star.ovr}）背起行囊，远走海外投奔 ${club.name}——冠军杯赛场上见！`]));
   });
@@ -465,7 +486,7 @@ function growLeague(){
   DIVS.forEach((dn,d)=>{
     const short=DIV_SIZES[d]-divSize(d);if(short<=0)return;
     const slots=TEAMS.filter(t=>t.div===d).slice(-short),names=teamNames(slots,S.teams);
-    slots.forEach((sl,i)=>{const t={...sl,...names[i],id:S.teams.length,div:d,rep:sl.rep,str:strFromRep(sl.rep),players:[]};S.teams.push(t);t.players=makeSquad(t.str)});
+    slots.forEach((sl,i)=>{const t={...sl,...names[i],id:S.teams.length,div:d,rep:sl.rep,str:strFromRep(sl.rep),players:[]};S.teams.push(t);t.players=makeSquad(t.str);t.players.forEach(p=>joinClub(p,t,p.age<=21))});
     added.push(`${dn}新增 ${short} 队`);
   });
   if(added.length)news(`联赛扩军，金字塔成形：甲级 ${DIV_SIZES[0]} 队、乙级 ${DIV_SIZES[1]} 队、丙级 ${DIV_SIZES[2]} 队（${added.join('，')}）！`);
@@ -564,7 +585,7 @@ function careerSeasonEnd(){
 const AI_SQUAD_MAX=22,POS_MIN={GK:2,DF:5,MF:5,FW:3};
 function releaseSurplus(t){
   const n={GK:0,DF:0,MF:0,FW:0};t.players.forEach(p=>n[p.pos]++);
-  for(const pos in POS_MIN)while(n[pos]<POS_MIN[pos]){t.players.push(makePlayer(pos,t.str-5,ri(22,29)));n[pos]++}
+  for(const pos in POS_MIN)while(n[pos]<POS_MIN[pos]){const np=makePlayer(pos,t.str-5,ri(22,29));joinClub(np,t,false);t.players.push(np);n[pos]++}
   const out=[];
   for(const p of [...t.players].sort((a,b)=>a.ovr-b.ovr||b.age-a.age)){
     if(t.players.length-out.length<=AI_SQUAD_MAX)break;

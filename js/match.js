@@ -43,8 +43,11 @@ function myBoost(){
     if(!M.despair){M.despair=true;M.feed.unshift({min:M.min,cls:'sys',t:`绝境之中，${my().short}的血液沸腾了——全员压上，誓要扳回！`});flag('hot','🔥 绝境爆发',`落后之下全员压上，进攻 +${home?DESPAIR.home:DESPAIR.away}`,600)}}
   if(M.min>=75)b.atk+=aura();
   if(targets(M.weak,M[mySide()+'Form'],M.tac))b.atk+=TARGET_BONUS;
+  const tot=totem();b.atk+=tot;b.def+=tot;
   return b;
 }
+// 主场图腾: our 一人一城 on the pitch at home lift everyone a little
+const totem=()=>!M||M.h!==S.my?0:Math.min(ONE_CLUB_AURA_MAX,onPitch(my(),M.hIds).filter(p=>p&&oneClub(p,my())).length*ONE_CLUB_AURA);
 const aura=()=>Math.round(((S.mgr&&S.mgr.rep)||0)*AURA_PER_REP*10)/10;
 // the page is redrawn every tick; while a finger or mouse button is down the match waits, so the button under it
 // isn't replaced between press and release (which would swallow the click)
@@ -292,6 +295,7 @@ function finish(){
   else{const d=my().div;S.results[d].push(S.fixtures[d][S.round].map(([h,a])=>(h===S.my||a===S.my)?res:quickSim(h,a)))}
   afterMatch(S.teams[oppId],oppXI,false);
   const {grown,awoken}=afterMatch(my(),myXI,true);
+  oneClubNews('apps');
   S.lastMatchDay=S.day;
   M.injuries.forEach(p=>{p.inj=pick(INJ_DAYS);if(findP(p.id)&&rng()<quickHeal())p.inj=Math.max(1,Math.round(p.inj/2))});
   const hurt=M.injuries.filter(p=>findP(p.id));M.myInjuries=hurt;

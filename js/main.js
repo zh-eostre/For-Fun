@@ -15,8 +15,11 @@ function cutIn(name,sig,color,next,learn){
 function playSigQueue(){
   const q=UI.sigQueue;if(!q||!q.length||playSigQueue.on||(UI.view==='match'&&M))return;
   const s=q.shift();playSigQueue.on=true;
-  cutIn(s.name,s.sig,my().color,()=>{playSigQueue.on=false;
-    if(q.length)playSigQueue();else{const el=document.getElementById('fx');if(el&&el.classList){el.className='';el.innerHTML=''}}},true);
+  const next=()=>{playSigQueue.on=false;if(q.length)playSigQueue();else{const el=document.getElementById('fx');if(el&&el.classList){el.className='';el.innerHTML=''}}};
+  const fx=document.getElementById('fx');
+  if(s.farewell&&(!fx||!fx.classList)){next();return}
+  if(s.farewell){celebrate(`再见，${s.name}`,`一人一城 · ${s.seasons} 个赛季`,'party');setTimeout(next,4600);return}
+  cutIn(s.name,s.sig,my().color,next,true);
 }
 function celebrate(big,small,kind){
   const el=document.getElementById('fx');if(!el||!el.classList)return;
@@ -222,6 +225,7 @@ const ACT={
     const p=findP(+a);if(!p)return;
     if(!p.loan&&squadSize()<=14){toast('一线队至少要保留 14 人');return}
     if(!arm(b,'再点一次确认'))return;
+    if(oneClub(p,my()))soldOneClub(p);
     const price=sellPrice(p);S.budget+=price;bankPlayer(p);
     my().players=my().players.filter(x=>x.id!==p.id);dropFromLineup(p.id);
     news(`以 ${money(price)} 出售了 ${p.name}。`);if(UI.modal&&UI.modal.id===p.id)UI.modal=null;save();toast(`${p.name} 已出售`);render();
@@ -232,7 +236,7 @@ const ACT={
     if(S.budget<p.price){toast('资金不够');return}
     if(squadFull()){toast(`一线队已满 ${SQUAD_MAX} 人`);return}
     S.budget-=p.price;S.market=S.market.filter(x=>x!==p);const price=p.price,est=shownPot(p);
-    delete p.price;delete p.scout;delete p.sale;delete p.ex;delete p.eyed;my().players.push(p);
+    delete p.price;delete p.scout;delete p.sale;delete p.ex;delete p.eyed;my().players.push(p);joinClub(p,my(),p.age<=20);
     const diff=p.pot-est;
     news(`以 ${money(price)} 签下 ${p.name}（${POS[p.pos]}，能力 ${p.ovr}，真实潜力 ${p.pot}）。${diff>=6?'球探严重低估了他！':''}`);
     if(p.age<=23)UI.reveal={name:p.name,pot:p.pot,est,diff};else toast(`签下 ${p.name}，记得去阵容页安排他`);

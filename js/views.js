@@ -237,7 +237,7 @@ function vTeamPage(tid){
   const t=S.teams[tid],rk=t.foreign?0:table(t.div).findIndex(r=>r.id===tid)+1,b=bestForm(t,true);
   const rows=PO.map(pos=>`<div class="group-h">${POS[pos]}</div><div class="mlist">`+t.players.filter(p=>p.pos===pos).sort((a,b)=>b.ovr-a.ovr).map(p=>{
     const why=buyBlock(p,t);
-    return `<div class="mrow"><div style="min-width:0"><div class="pname"><button class="link" data-act="player" data-arg="${p.id}">${p.name}</button>${p.sig?` <span class="sig" style="display:inline">「${p.sig}」</span>`:''}</div>
+    return `<div class="mrow"><div style="min-width:0"><div class="pname"><button class="link" data-act="player" data-arg="${p.id}">${p.name}</button>${oneClub(p,t)?' <span class="tag2 loyal" title="在这支球队从年轻时踢到现在，不会转会">忠诚</span>':''}${p.sig?` <span class="sig" style="display:inline">「${p.sig}」</span>`:''}</div>
       <div class="price">${p.age} 岁，${p.apps} 场 ${p.goals} 球 ${p.ast||0} 助${p.rn?`，评分 ${avgRating(p).toFixed(1)}`:''}${unavail(p)?'，伤停中':''}</div></div>
       <div><div class="ovr num">${p.ovr}</div><div class="potl">${p.age>23?`潜力 ${p.pot}`:'潜力 ?'}</div></div>
       <button class="btn small primary" data-act="bid" data-arg="${p.id}" ${why?`disabled title="${why}"`:''}>${money(askPrice(p,t))}</button></div>`}).join('')+'</div>').join('');
@@ -280,6 +280,7 @@ function vRules(){
     '第 75 分钟后还有「名帅光环」：教练声望越高，进攻加成越大，必杀技也越容易打出来。落后逆转取胜可以解锁「逆转之王」。'])}
   ${sec('体能与换人',['比赛中会消耗体能：中场跑得最多，前锋、后卫其次，门将几乎不累。体能 80 以上基本不影响发挥，越低越弱（70 约九折，60 约八折）。',
     `比赛中会有点球和禁区前的直接任意球。在阵容页或球员详情的「定位球设置」里，点球和任意球各可以排 ${TAKER_MAX} 个人选：由排在前面、而且在场上的人主罚；都不在场时，由场上最合适的人主罚（点球优先前锋，任意球优先中场，有必杀技的更优先）。`,
+    `一人一城：从青训营或 20 岁前加盟、一直留在队里满 ${ONE_CLUB} 季的球员获得这个称号。他们在主场上场时全队士气小幅提升（每人 +${ONE_CLUB_AURA}，最多 +${ONE_CLUB_AURA_MAX}），一半的球队挖角会被他们回绝；卖掉他们会让教练声望 -${ONE_CLUB_SALE_REP}。AI 球队里同样从年轻时就效力满 ${ONE_CLUB} 季的球员是「忠诚」球员：夏天不会被挖走，你也买不到。`,
     `转会：直接出售只拿到身价的 85%；AI 球队主动报价通常是身价的 1.05–1.6 倍，但看中谁是随机的，大多在窗口的头几天，报价只保留到第二天（快进时收到报价会停下来）。在球员详情里「挂牌出售」，窗口期间就会常有球队专门为他报价（约身价的 ${LIST_RANGE[0]}–${LIST_RANGE[1]} 倍）。`,
     `首发设为自动时，阵容每天按体能更新；打开「自动轮换」，体能低于 ${ROTATE_AT} 的首发会让给同位置、能力最多低 ${ROTATE_GAP}、体能好得多的替补。`,
     `中场休息时，我方球员会恢复一点体能。每场最多换 ${SUBS} 人；自动换人从第 60 分钟起，把体能低于 ${TIRED}、而且替补更强的人换下；体能跌破 ${SPENT} 的球员不管能力多高都会被换下（受伤风险太大）。可以关掉自己来换。`,
@@ -319,7 +320,7 @@ function vPlayer(id){
   if(!f)return `<section class="panel"><div class="mhead"><h2 id="mtitle">球员详情</h2><button class="btn small mclose" data-act="closeModal" aria-label="关闭">✕</button></div><p class="muted" style="margin:0">这名球员已经不在联赛里了。</p></section>`;
   const {p,t}=f,mine=t.id===S.my,c=S.club[p.id]||{},hist=(p.hist||[]).concat([{s:S.season,o:p.ovr}]);
   const cell=(l,v)=>`<div class="pcell"><small>${l}</small><b>${v}</b></div>`;
-  const status=[p.inj?`伤停 ${p.inj} 天`:'',...Object.entries(p.bans||{}).filter(([,n])=>n>0).map(([c,n])=>`${COMPS[c]}停赛 ${n} 场`),p.away?'探亲中':'',p.loan?`租借至${loanLabel(p)}（${p.lapps||0} 场）`:'',unproven(p)?`未出道 ${careerApps(p)}/${YOUTH_PROVEN}`:''].filter(Boolean).join('，');
+  const status=[mine&&p.home===S.my?(oneClub(p,my())?`一人一城 · 效力第 ${seasonsAt(p)} 季`:`在队第 ${seasonsAt(p)} 季，再 ${ONE_CLUB-seasonsAt(p)} 季成为一人一城`):'',p.inj?`伤停 ${p.inj} 天`:'',...Object.entries(p.bans||{}).filter(([,n])=>n>0).map(([c,n])=>`${COMPS[c]}停赛 ${n} 场`),p.away?'探亲中':'',p.loan?`租借至${loanLabel(p)}（${p.lapps||0} 场）`:'',unproven(p)?`未出道 ${careerApps(p)}/${YOUTH_PROVEN}`:''].filter(Boolean).join('，');
   const tk=k=>takerList(k).indexOf(p.id),TK={pen:'点球',fk:'任意球'};
   const actions=mine
     ?`${Object.entries(TK).map(([k,l])=>`<button class="btn small" data-act="taker" data-arg="${k}:${p.id}" aria-pressed="${tk(k)>=0}">${tk(k)>=0?`✓ ${l}第 ${tk(k)+1} 顺位（点击移出）`:`加入${l}人选`}</button>`).join('')}<button class="btn small" data-act="takers">定位球设置</button>
@@ -418,7 +419,7 @@ function vSquad(){
     return `<div class="group-h">${POS[pos]}（${ps.length}）</div>`+ps.map(p=>`
     <div class="prow ${on.has(p.id)?'on':''} ${unavail(p)?'inj':''}" data-act="toggle" data-arg="${p.id}">
       <button class="tick" data-act="toggle" data-arg="${p.id}" aria-pressed="${on.has(p.id)}" aria-label="${on.has(p.id)?'移出首发':'加入首发'}：${p.name}">${on.has(p.id)?'✓':''}</button>
-      <div style="min-width:0"><div class="pname"><button class="link" data-act="player" data-arg="${p.id}">${p.name}</button>${gem(p)}${p.youth?' <span class="tag2 youth">青训</span>':''}${unproven(p)?` <span class="muted" style="font-size:11px;font-weight:400" title="出场满 ${YOUTH_PROVEN} 场或下赛季开始时出道，之前买家只按当前能力出价">未出道 ${careerApps(p)}/${YOUTH_PROVEN}</span>`:''}</div>
+      <div style="min-width:0"><div class="pname"><button class="link" data-act="player" data-arg="${p.id}">${p.name}</button>${gem(p)}${oneClub(p,my())?'<span class="tag2 oneclub" title="从青训或少年时代起只为本队效力'+'，满 '+ONE_CLUB+' 季">一人一城</span>':''}${p.youth?' <span class="tag2 youth">青训</span>':''}${unproven(p)?` <span class="muted" style="font-size:11px;font-weight:400" title="出场满 ${YOUTH_PROVEN} 场或下赛季开始时出道，之前买家只按当前能力出价">未出道 ${careerApps(p)}/${YOUTH_PROVEN}</span>`:''}</div>
       <div class="pmeta">${p.sig?`<span class="sig" style="display:inline">★</span> `:''}${p.age} 岁，${p.apps} 场 ${p.goals} 球 ${p.ast||0} 助${p.rn?`，评分 ${avgRating(p).toFixed(1)}`:''}${(()=>{const [c,n]=Object.entries(p.ycc||{}).sort((a,b)=>b[1]-a[1])[0]||[];return n?`，<span class="${n>=YC_BAN-1?'ycwarn':''}" title="${COMPS[c]}再吃 ${YC_BAN-n} 张黄牌停赛一场">${COMPS[c]}黄牌 ${n}/${YC_BAN}</span>`:''})()}${p.listed?' <span class="tag2 listed">挂牌</span>':''}${p.inj?` <span class="injtag">伤停 ${p.inj} 天</span>`:''}${banned(p)?` <span class="injtag">停赛 ${p.bans[ourComp()]} 场</span>`:''}${p.away?` <span class="injtag">探亲 ${p.away} 轮</span>`:''}${p.loan?` <span class="loantag">租借至${p.loan.club} · ${p.lapps||0} 场</span>`:''}${!unavail(p)&&p.cond<60?' <span class="risktag">伤病风险高</span>':''}${retireChance({...p,age:p.age+1},UI.xiLvl)>=.3?` <span class="muted" style="font-size:11px" title="赛季结束时有 ${Math.round(retireChance({...p,age:p.age+1},UI.xiLvl)*100)}% 机会退役">可能退役</span>`:''}</div>
 </div>
       <div><div class="ovr num">${p.ovr}${gainTag(p)}</div><div class="potl">潜力 ${p.pot}</div></div>
@@ -723,6 +724,7 @@ function boostChips(){
   const c=[],home=M.h===S.my,behind=(home?M.hg:M.ag)<(home?M.ag:M.hg);
   if(M.talk&&M.min>45)c.push(`<span class="bchip ${M.talk==='roar'&&!M.talkOK?'bad':''}">训话·${TALK[M.talk][0]}</span>`);
   if(M.min>=75&&behind)c.push('<span class="bchip hot">绝境爆发</span>');
+  if(totem()>0)c.push(`<span class="bchip">主场图腾 +${totem()}</span>`);
   if(M.min>=75&&aura()>=1)c.push(`<span class="bchip">名帅光环 +${aura()}</span>`);
   if(targets(M.weak,M[mySide()+'Form'],M.tac))c.push(`<span class="bchip">针对弱点 +${TARGET_BONUS}</span>`);
   return c.length?`<div class="bchips">${c.join('')}</div>`:'';
@@ -1015,6 +1017,12 @@ function vHistoryCharts(){
   <h3 class="hc-title">每场平均积分</h3>${chart2}
   <details class="fold"><summary>表格</summary><div class="tw"><table><thead><tr><th>赛季</th><th>球队</th><th>级别</th><th>名次</th><th>积分</th><th>场均</th><th>进/失</th></tr></thead><tbody>${rows}</tbody></table></div></details></section>`;
 }
+// 一人一城: our players who came up here and stayed (with how far they are from the name), and those who retired as one
+function vOneClub(){
+  const now=my().players.filter(p=>p.home===S.my&&seasonsAt(p)>=ONE_CLUB-2).sort((a,b)=>seasonsAt(b)-seasonsAt(a)),gone=S.legends.filter(l=>l.oneClub);
+  return `<section class="panel"><h2>一人一城</h2>${now.length||gone.length?`${now.map(p=>`<div class="hrow"><span class="hr-n">${oneClub(p,my())?'★':'·'}</span><span class="hr-club"><b>${p.name}</b><small>${POS[p.pos]}，${oneClub(p,my())?'现役':`再 ${ONE_CLUB-seasonsAt(p)} 季`}</small></span><span class="hr-count"><b>${seasonsAt(p)}</b> 季</span></div>`).join('')}${gone.map(l=>`<div class="hrow"><span class="hr-n">🏟</span><span class="hr-club"><b>${l.name}</b><small>${POS[l.pos]}，第 ${l.season} 季退役</small></span><span class="hr-count"><b>${l.seasons}</b> 季</span></div>`).join('')}`
+    :`<p class="muted" style="margin:0">从青训营或 20 岁前加盟、一直留在队里满 ${ONE_CLUB} 季的球员，会成为「一人一城」。</p>`}</section>`;
+}
 function vHonours(){
   const H=S.history,R=S.records;
   const count=(f)=>H.filter(f).length;
@@ -1031,7 +1039,8 @@ function vHonours(){
       .concat((r.xi||[]).flatMap((l,d)=>l.filter(w=>w.tid===(r.my??S.my)).map(w=>({r,d,k:'xi',w})))));
     return `<section class="panel"><h2>个人奖项${won.length?` <span class="muted" style="font-weight:400;font-size:13px">${won.length} 项</span>`:''}</h2>${won.length?'<div class="scrollbox">'+won.reverse().map(x=>`<div class="res" style="grid-template-columns:1fr auto"><span style="text-align:left">第 ${x.r.season} 季${DIVS[x.d]}${AWARDS[x.k]||'最佳阵容'}：${x.w.name}</span><span class="muted">${x.w.stat}</span></div>`).join('')+'</div>':'<p class="muted" style="margin:0">还没有球员拿过个人奖项。</p>'}</section>`})()}
   ${vClubBoards()}
-  <section class="panel"><h2>传奇退役${S.legends.length?` <span class="muted" style="font-weight:400;font-size:13px">${S.legends.length} 人</span>`:''}</h2>${S.legends.length?'<div class="scrollbox">'+[...S.legends].reverse().map(l=>`<div class="res" style="grid-template-columns:1fr auto"><span style="text-align:left">${l.name} <span class="muted">${POS[l.pos]}，第 ${l.season} 季${l.club&&l.club!==my().name?`于${l.club}`:''}退役${l.seasons?`，效力 ${l.seasons} 季`:''}${l.titles&&l.titles.length?`，${l.titles.length} 座冠军`:''}</span></span><span class="muted">${l.apps} 场 ${l.goals} 球</span></div>`).join('')+'</div>':`<p class="muted" style="margin:0">在队效力 ${LEGEND_TITLE_SEASONS} 季以上并帮球队夺冠，或效力 ${LEGEND_SEASONS} 季以上的球员，在队退役后会记在这里。</p>`}</section>
+  ${vOneClub()}
+  <section class="panel"><h2>传奇退役${S.legends.length?` <span class="muted" style="font-weight:400;font-size:13px">${S.legends.length} 人</span>`:''}</h2>${S.legends.length?'<div class="scrollbox">'+[...S.legends].reverse().map(l=>`<div class="res" style="grid-template-columns:1fr auto"><span style="text-align:left">${l.name}${l.oneClub?' <span class="tag2 oneclub">一人一城</span>':''} <span class="muted">${POS[l.pos]}，第 ${l.season} 季${l.club&&l.club!==my().name?`于${l.club}`:''}退役${l.seasons?`，效力 ${l.seasons} 季`:''}${l.titles&&l.titles.length?`，${l.titles.length} 座冠军`:''}</span></span><span class="muted">${l.apps} 场 ${l.goals} 球</span></div>`).join('')+'</div>':`<p class="muted" style="margin:0">在队效力 ${LEGEND_TITLE_SEASONS} 季以上并帮球队夺冠，或效力 ${LEGEND_SEASONS} 季以上的球员，在队退役后会记在这里。</p>`}</section>
   ${vCareer()}
   <section class="panel"><h2>历届冠军</h2>${R.length?`<div class="tw scrollbox"><table class="sticky-head"><thead><tr><th>季</th>${DIVS.map(dn=>`<th>${dn}</th>`).join('')}<th>${CUP_NAME}</th><th>本队</th></tr></thead>
   <tbody>${R.slice().reverse().map(r=>`<tr><td>${r.season}</td>${DIVS.map((_,d)=>`<td>${r.champs[d]||'—'}</td>`).join('')}<td>${r.cup||'—'}</td><td>${DIVS[r.div]}第 ${r.rank}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted" style="margin:0">打完第一个赛季后，这里会记录每季的冠军。</p>'}</section></div></div>`;

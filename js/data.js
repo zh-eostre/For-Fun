@@ -1,6 +1,6 @@
 /* ---------- constants, shared state, small helpers ---------- */
 const KEY='lvyin-fm-v1';  // localStorage key; kept as-is so old saves are still found
-const SAVE_V=21;         // bump when the save format changes, and add a step to MIGRATE in engine.js
+const SAVE_V=22;         // bump when the save format changes, and add a step to MIGRATE in engine.js
 // a club's base strength (its typical best-XI level) from its 底蕴: 98 → 84, 86 → 80, 50 → 68, 14 → 55
 function strFromRep(rep){return Math.round(50+rep*.35)}
 const TIERS=[[80,'豪门'],[65,'强队'],[45,'中游'],[0,'弱旅']];
@@ -79,6 +79,11 @@ const GUIDE=[
   ['market','转会市场','季前一周和赛季中段的冬窗才能买卖球员。年轻球员的潜力是球探估计的范围，签下来才知道真实潜力，偶尔能淘到被低估的明珠。'],
   ['fac','设施与青训','用资金升级球探、理疗室、训练场和球场。青训营每个赛季会送来几个少年，好好培养可能出大器。'],
   ['table','升级之路','每个级别前 2 名升级、后 2 名降级。还有全国的天穹杯，甲级前列还能去打天际冠军杯。右上角的「规则」随时可以查看全部规则。祝你好运！']];
+// 一人一城 (ours only): a player who came up with us (the academy, our young players of old) or joined at 20 or under,
+// and has never left, takes the name after ONE_CLUB seasons. they lift the team at home (ONE_CLUB_AURA each, at most
+// ONE_CLUB_AURA_MAX), turn down clubs' approaches half the time, and selling one costs the manager reputation.
+// at AI clubs the same kind of player is simply loyal: he doesn't move, in the summer or to us
+const ONE_CLUB=6,ONE_CLUB_AURA=.5,ONE_CLUB_AURA_MAX=1,ONE_CLUB_REFUSE=.5,ONE_CLUB_SALE_REP=3;
 const LATE_MIN=85;  // from this minute a goal that wins or levels the match can be a 绝杀 / 绝平
 const YC_BAN=3;   // yellow cards in one competition that add up to a one-match ban in it
 // player name parts; genName in engine.js combines them
@@ -189,6 +194,7 @@ const ACH={
   academy:['青训之光','青训出身的球员能力达到 75'],
   comeback:['逆转之王','落后的情况下逆转取胜'],
   late:['读秒杀手','在第 85 分钟以后打进绝杀球'],
+  oneclub:['城之守望者','培养出第一位「一人一城」的球员'],
   intl:['大陆之王','夺得天际冠军杯']
 };
 // halftime team talk (once a match): [name, what the manager says, what it does]
