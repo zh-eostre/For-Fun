@@ -147,8 +147,9 @@ const SIG_A=['苍雷','黑炎','绝影','天狼','冥王','流星','修罗','月
 const SIG_B=['贯穿','断罪','葬送','乱舞','一闪','崩坏','螺旋','终焉','天翔','灭杀','裂空','轮回'];
 const AWAKEN=.004;       // chance per match that a player aged 23 or under awakens (rare: once in a career for a few)
 const BOOST=2;           // strength bonus while morale is high (after a derby win or some events)
-// AI clubs shopping in a window: each one's chance a day, and on the window's last day (at most 2 signings each)
-const AI_BUY={day:.03,last:.15};
+// AI clubs shopping in a window (at most 2 signings each): hardly at all at first, so we get first pick, then in a
+// rush over the last three days. each club's chance a day: early, then the third-last, second-last and last day
+const AI_BUY={early:.015,rush:[.11,.19,.31]};
 const OFFER_TRIES=3,OFFER_CHANCE=.12;   // each transfer-window day, this many chances that an AI club bids for one of your players
 // a player on our transfer list draws bids of his own: on this share of window days, at this range of his value
 const LIST_CHANCE=.45,LIST_RANGE=[.95,1.3];
