@@ -82,7 +82,9 @@ const GUIDE=[
 // a club's own (its academy, its young players at the start) who never left are loyal after ONE_CLUB seasons; a loyal
 // one of ONE_CLUB_OVR or more becomes a 一人一城, and keeps the name. ours: a loyal one turns down clubs' approaches
 // half the time; a 一人一城 also lifts the team at home (ONE_CLUB_AURA each, at most ONE_CLUB_AURA_MAX), gets a
-// farewell, and selling one costs the manager reputation. at AI clubs both kinds never move, in the summer or to us
+// farewell, and selling one costs the manager reputation. at AI clubs only about AI_LOYAL of their own have it in
+// them, and those never move, in the summer or to us
+const AI_LOYAL=1/3;
 const ONE_CLUB_OVR=80,ONE_CLUB=6,ONE_CLUB_AURA=.5,ONE_CLUB_AURA_MAX=1,ONE_CLUB_REFUSE=.5,ONE_CLUB_SALE_REP=3;
 const LATE_MIN=85;  // from this minute a goal that wins or levels the match can be a 绝杀 / 绝平
 const YC_BAN=3;   // yellow cards in one competition that add up to a one-match ban in it

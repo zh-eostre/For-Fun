@@ -44,7 +44,8 @@ w.ovr=ONE_CLUB_OVR;oneClubNews('apps');ok(oneClub(w,my())&&w.ocs&&S.news[0].t.in
 w.ovr=75;ok(oneClub(w,my()),'and keeps the name when he falls back');
 // AI clubs: their loyal players and 一人一城 don't move, to us or anyone
 const t=S.teams.find(x=>x.id!==S.my&&!x.foreign);S.season=Math.max(S.season,ONE_CLUB);
-t.players.forEach(x=>{delete x.home;delete x.ocs});const a=t.players[0],b=t.players[1];[a,b].forEach(x=>{x.home=t.id;x.since=1});a.ovr=70;b.ovr=85;
+t.players.forEach(x=>{delete x.home;delete x.ocs});const [a,b]=t.players.filter(loyalKind),c=t.players.find(x=>!loyalKind(x));c.home=t.id;c.since=1;
+ok(!loyal(c,t)&&!buyBlock(c,t).includes('终老'),'an AI academy player without it in him: not loyal, can be bought');[a,b].forEach(x=>{x.home=t.id;x.since=1});a.ovr=70;b.ovr=85;
 ok(/终老/.test(buyBlock(a,t)||'')&&/终老/.test(buyBlock(b,t)||''),'an AI club\u2019s loyal player and 一人一城 are not for sale: '+buyBlock(a,t));
 ACT.team(String(t.id));ok(/tag2 loyal/.test(els.app.innerHTML)&&/tag2 oneclub/.test(els.app.innerHTML),'tagged 忠诚 and 一人一城 on its team page');UI.pages=[];
 S.teams.forEach(x=>{if(x.id!==S.my)x.players.forEach(z=>{if(z!==b)z.ocs=true})});  // only b is new this summer

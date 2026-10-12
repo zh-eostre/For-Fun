@@ -167,7 +167,9 @@ const sellPrice=p=>Math.round(marketValue(p)*.85);
 // 20 or under), which he loses for good once he leaves it
 function joinClub(p,t,home,season=S.season){p.since=season;if(home)p.home=t.id;else delete p.home}
 const seasonsAt=p=>p.since==null?0:S.season-p.since+1;
-const loyal=(p,t)=>!!t&&p.home===t.id&&seasonsAt(p)>=ONE_CLUB;
+// at an AI club, whether a player has it in him to stay is fixed by who he is (his id), so a save needs nothing new
+const loyalKind=p=>(Math.imul(p.id,2654435761)>>>0)%1000<AI_LOYAL*1000;
+const loyal=(p,t)=>!!t&&p.home===t.id&&seasonsAt(p)>=ONE_CLUB&&(t.id===S.my||loyalKind(p));
 const oneClub=(p,t)=>loyal(p,t)&&(!!p.ocs||p.ovr>=ONE_CLUB_OVR);
 // the first time a player is a 一人一城 the name is his for good (true then, for the news)
 function crownOneClub(p,t){if(p.ocs||!oneClub(p,t))return false;p.ocs=true;return true}
