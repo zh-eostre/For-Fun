@@ -15,7 +15,7 @@ newGame(low,teamNames(),'hard');ok(S.diff==='hard'&&diff().inj>1&&diff().income<
 ACT.rules();ok(/本档难度：<b>困难/.test(els.app.innerHTML),'the rules say which');UI.modal=null;
 const old=JSON.parse(JSON.stringify(S));delete old.diff;S=old;ok(diff()===DIFF.normal,'a save from before difficulty plays as 普通');
 // income: the same match pays more on 轻松
-newGame(low,teamNames(),'easy');S.friendlies.forEach(f=>f.res={hg:0,ag:0});ACT.ff();S.event=null;S.offer=null;startMatch();skipMatch();
+newGame(low,teamNames(),'easy');S.friendlies.forEach(f=>f.res={hg:0,ag:0});ffToMatch();S.event=null;S.offer=null;startMatch();skipMatch();
 const inc=M.summary.income,w=M.summary.w,home=M.h===S.my;
 const base=(4+(home?18*stadiumMult():0)+(w==='胜'?10:w==='平'?4:0))*DIV_INCOME[my().div]*(M.derby?2:1);
 ok(inc===Math.round(base*1.25),'match income ×1.25 on 轻松 ('+inc+' vs '+Math.round(base)+' on 普通)');

@@ -11,7 +11,7 @@ my().players.slice(0,11).forEach(x=>{x.sig=null;x.age=27;x.ovr=SIG_OVR+1;learnSi
 const q=my().players[12];q.sig=null;q.age=22;q.ovr=SIG_OVR-1;q.pot=95;S.training='hard';let g=0;while(q.ovr<SIG_OVR&&g++<300){if(isMatchDay()){S.event=null;S.offer=null;startMatch();skipMatch();ACT.matchDone()}else ACT.nextDay()}
 ok(q.ovr<SIG_OVR||q.sig,'improving to '+q.ovr+' through training and matches: '+(q.sig||'—'));
 // the summer he turns 34 it fades
-while(!seasonDone()){if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ACT.ff();S.event=null;S.offer=null;startMatch();skipMatch();ACT.matchDone()}
+while(!seasonDone()){if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ffToMatch();S.event=null;S.offer=null;startMatch();skipMatch();ACT.matchDone()}
 const v=my().players.find(x=>x.sig);v.age=SIG_FADE-1;const vid=v.id;ACT.newSeason();const v2=my().players.find(x=>x.id===vid);
 ok(!v2||(v2.age===SIG_FADE&&!v2.sig),'turning 34: the move fades');
 // an old save is brought in line

@@ -1,8 +1,8 @@
 // A reload starts the match afresh; during a stop players can swap places, fill a red card's gap, and the shape can change.
 require('./harness').run(`
 newGame(TEAMS.findIndex(t=>t.div===2),teamNames());
-while(nextFix().friendly){ACT.ff();S.event=null;S.offer=null;startMatch();skipMatch();ACT.matchDone()}
-ACT.ff();S.event=null;S.offer=null;
+while(nextFix().friendly){ffToMatch();S.event=null;S.offer=null;startMatch();skipMatch();ACT.matchDone()}
+ffToMatch();S.event=null;S.offer=null;
 const story=()=>M.feed.filter(e=>/进球|红牌|罚下/.test(e.t)).map(e=>e.min+e.t).join('|')+' '+M.hg+':'+M.ag;
 startMatch();clearTimeout(M.timer);const saved=store[KEY];skipMatch();const first=story();
 // "refresh": back to the save made at kickoff. fresh dice each time, so the match can go differently

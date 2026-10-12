@@ -9,8 +9,8 @@ for(let k=0;k<300;k++){const r=shootout(T[0],ids(T[0]),T[1],ids(T[1]),null);
   if(h.filter(x=>x.ok).length!==r.hp||a.filter(x=>x.ok).length!==r.ap||r.hp===r.ap||h.length-a.length>1||a.length>h.length)ok5=false}
 ok(ok5,'300 shootouts: the kicks add up to the score, no draw, home always kicks first');
 // a live cup tie that ends level goes to a shootout that is revealed one kick at a time
-while(!(S.cup.ties.some(t=>t.includes(S.my))&&cupDue())&&S.round<rounds()){if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ACT.ff();S.event=null;S.offer=null;startMatch();skipMatch();ACT.matchDone()}
-if(cupDue()&&inCup()){ACT.ff();S.event=null;S.offer=null;startMatch();clearTimeout(M.timer);while(M.min<89)tick(true);M.skip=false;M.hg=M.ag=1;
+while(!(S.cup.ties.some(t=>t.includes(S.my))&&cupDue())&&S.round<rounds()){if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ffToMatch();S.event=null;S.offer=null;startMatch();skipMatch();ACT.matchDone()}
+if(cupDue()&&inCup()){ffToMatch();S.event=null;S.offer=null;startMatch();clearTimeout(M.timer);while(M.min<89)tick(true);M.skip=false;M.hg=M.ag=1;
   {const keep=rng;let n=0;rng=()=>n++<40?.999:keep();tick(false);rng=keep}  // no goal in the last minute: it stays 1:1
   ok(M.pk&&!M.done&&M.pk.i===0,'level at 90: a shootout begins, nothing revealed yet');
   render();ok(/点球大战/.test(els.app.innerHTML)&&(els.app.innerHTML.match(/class="todo"/g)||[]).length===10,'the shootout panel shows 5 + 5 kicks to come');
@@ -25,8 +25,8 @@ UI.modal={type:'player',id:p.id};render();ok(/黄牌/.test(els.app.innerHTML)&&/
 S.round=0;UI.tab='table';render();ok(/data-arg="\\d+:cards"/.test(els.app.innerHTML),'the table page has a 红黄牌 board');
 // a third yellow of the season: he plays on, and the ban starts after the match
 {newGame(TEAMS.findIndex(t=>t.div===2),teamNames());S.lineup=autoPick(my(),S.formation);
-  while(nextFix().friendly){ACT.ff();S.event=null;S.offer=null;startMatch();skipMatch();ACT.matchDone()}
-  ACT.ff();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();clearTimeout(M.timer);
+  while(nextFix().friendly){ffToMatch();S.event=null;S.offer=null;startMatch();skipMatch();ACT.matchDone()}
+  ffToMatch();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();clearTimeout(M.timer);
   const s=mySide(),pid=M[s+'Ids'][5],pl=findP(pid);pl.ycc={lg:YC_BAN-1};
   let tries=0;while(!M.yc[pid]&&tries++<500)booking(my(),M[s+'Ids'],M.yc);
   ok(M.yc[pid]&&pl.ycc.lg===0&&!banned(pl)&&pl.banNext===1&&M[s+'Ids'].includes(pid)&&!unavail(pl),'third yellow mid-match: still on the pitch and not suspended yet');
@@ -38,8 +38,8 @@ S.round=0;UI.tab='table';render();ok(/data-arg="\\d+:cards"/.test(els.app.innerH
   ACT.matchDone();{const nc=ourComp();ok(nc==='lg'?!S.lineup.includes(pid):!unavail(pl),'next match ('+nc+'): '+(nc==='lg'?'left out of the lineup':'free to play, the ban is for the league'))}}
 // a red card: he leaves the pitch, the live stamina list and every later goal or assist
 {newGame(TEAMS.findIndex(t=>t.div===2),teamNames());
-  while(nextFix().friendly){ACT.ff();S.event=null;S.offer=null;startMatch();skipMatch();ACT.matchDone()}
-  ACT.ff();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();clearTimeout(M.timer);
+  while(nextFix().friendly){ffToMatch();S.event=null;S.offer=null;startMatch();skipMatch();ACT.matchDone()}
+  ffToMatch();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();clearTimeout(M.timer);
   const s=mySide(),pid=M[s+'Ids'][9],pl=findP(pid);
   // he is already on a yellow; nobody else is, so he is the only one a booking can send off
   let tries=0;while(M[s+'Ids'].includes(pid)&&tries++<500){M.yc={[pid]:1};booking(my(),M[s+'Ids'],M.yc)}

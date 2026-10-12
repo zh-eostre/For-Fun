@@ -26,7 +26,7 @@ const s=my().players.find(x=>!S.lineup.includes(x.id)),b=btn();ACT.sell(String(s
 const other=S.teams.find(t=>t.id!==S.my);ok(/关闭/.test(buyBlock(other.players[0],other)),'buying from other clubs is refused');
 // market list stays put through league matches; AI clubs stop signing
 const list=JSON.stringify(S.market.map(x=>x.id)),squads=JSON.stringify(S.teams.filter(t=>t.id!==S.my).map(t=>t.players.map(x=>x.id).sort()));
-for(let k=0;k<3;k++){ACT.ff();S.event=null;startMatch();skipMatch();M=null;UI.view='main'}
+for(let k=0;k<3;k++){ffToMatch();S.event=null;startMatch();skipMatch();M=null;UI.view='main'}
 // nobody leaves the list (a surprise scout tip may add a hidden gem)
 ok(JSON.parse(list).every(id=>S.market.some(x=>x.id===id)),'the season list does not change after matches');
 ok(!(S.offers||[]).length,'no bids for our players outside the window');
@@ -39,7 +39,7 @@ UI.tab="market";UI.mpage=0;render();let h=els.app.innerHTML;
 ok(/第 1\\/\\d+ 页/.test(h)&&(h.match(/data-act="buy"/g)||[]).length===12&&/转会窗口已关闭/.test(h)&&!bad(h),'market shows 12 per page, page count, closed-window banner ('+S.market.length+' on the list, '+(h.match(/data-act="buy"/g)||[]).length+' shown'+(bad(h)?', odd text: '+(h.match(/.{40}(undefined|NaN|\\[object).{20}/)||[''])[0]:'')+')');
 ACT.mpage('1');h=els.app.innerHTML;ok(/第 2\\/\\d+ 页/.test(h),'page 2');ACT.mf('pos:GK');ok(UI.mpage===0,'changing a filter goes back to page 1');
 // next season: window and list reopen
-while(!seasonDone()){ACT.ff();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();skipMatch();M=null;UI.view='main'}
+while(!seasonDone()){ffToMatch();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();skipMatch();M=null;UI.view='main'}
 newSeason();ok(windowOpen()&&S.day===0&&S.friendlies.every(f=>!f.res)&&JSON.stringify(S.market.map(x=>x.id))!==list,'next season: window open again, new friendlies, new list');
 UI.tab='home';render();ok(/季前转会窗口开放中/.test(els.app.innerHTML)&&/友谊赛/.test(els.app.innerHTML)&&!bad(els.app.innerHTML),'home shows the window and the friendly');
 `);

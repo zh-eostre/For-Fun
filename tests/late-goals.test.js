@@ -2,7 +2,7 @@
 // final whistle, if it was the last goal, it's called a 绝杀 or 绝平 (feed, celebration, summary, news, title).
 require('./harness').run(`
 const setup=()=>{newGame(TEAMS.findIndex(t=>t.div===2),teamNames());S.friendlies.forEach(f=>f.res={hg:0,ag:0});
-  ACT.ff();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();clearTimeout(M.timer);M.skip=false};
+  ffToMatch();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();clearTimeout(M.timer);M.skip=false};
 // a goal for side s this minute (side() can still be stopped by a keeper's or defender's move: try again)
 const score=s=>{const k=s==='h'?'hg':'ag',n=M[k];for(let i=0;i<50&&M[k]===n;i++)side(s,1)};
 // play out to the final whistle with no more goals

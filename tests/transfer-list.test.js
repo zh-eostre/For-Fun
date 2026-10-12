@@ -30,4 +30,13 @@ let listedBids=0;for(let k=0;k<200;k++){rollOffer();listedBids+=S.offers.filter(
 // a save from before (one offer at most) keeps its offer
 {const old=JSON.parse(JSON.stringify(S));const p0=my().players[0];old.v=20;old.offer={pid:p0.id,club:S.rival,amount:50};delete old.offers;
   store[KEY]=JSON.stringify(old);const up=load();ok(up.v===SAVE_V&&up.offers.length===1&&up.offers[0].pid===p0.id&&!('offer' in up),'an older save: its one offer carries over');}
+// random bids come mostly in a window's first days
+{newGame(TEAMS.findIndex(t=>t.div===2),teamNames());UI.guide=null;const count=day=>{let n=0;S.day=day;for(let k=0;k<300;k++){rollOffer();n+=S.offers.length}return n};
+  const early=count(1)+count(2)+count(3),late=count(4)+count(5)+count(6);S.day=0;S.offers=[];
+  ok(early>late*3,'preseason bids: '+early+' over days 1-3, '+late+' over days 4-6');}
+// fast-forward stops on a day that brings bids, before they lapse
+{let stopped=false;for(let k=0;k<30&&!stopped;k++){newGame(TEAMS.findIndex(t=>t.div===2),teamNames());UI.guide=null;
+    ACT.ff();if(S.offers.length){stopped=true;ok(!isMatchDay()||S.day===nextMatchDay(),'stopped on '+dayLabel(S.day)+' with '+S.offers.length+' bid(s), next match '+dayLabel(nextMatchDay()));
+      ok(/转会报价/.test(els.toast.textContent),'and says so: '+els.toast.textContent)}}
+  ok(stopped,'a fast-forward through the window stopped for bids');}
 `);

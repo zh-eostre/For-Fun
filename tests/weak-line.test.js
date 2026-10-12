@@ -4,7 +4,7 @@ ok(targets('DF','4-3-3','bal')&&targets('DF','4-4-2','att')&&!targets('DF','4-4-
 ok(targets('FW','3-5-2','bal')&&targets('FW','4-4-2','att')&&!targets('FW','4-4-2','def'),'weak attack: all out or a back three');
 ok(targets('MF','4-5-1','bal')&&targets('MF','4-2-3-1','bal')&&!targets('MF','4-4-2','att'),'weak midfield: five in midfield');
 newGame(TEAMS.findIndex(t=>t.div===2),teamNames());
-S.fac.scout=1;ACT.ff();S.event=null;S.offer=null;startMatch();clearTimeout(M.timer);ok(M.weak===null,'without a scout report there is no target');
+S.fac.scout=1;ffToMatch();S.event=null;S.offer=null;startMatch();clearTimeout(M.timer);ok(M.weak===null,'without a scout report there is no target');
 M=null;UI.view='main';S.live=null;
 S.fac.scout=3;startMatch();clearTimeout(M.timer);ok(['DF','MF','FW'].includes(M.weak),'with the report the weak line is known: '+M.weak);
 const plan={DF:['4-3-3','bal'],FW:['4-4-2','att'],MF:['4-5-1','bal']}[M.weak];M[mySide()+'Form']=plan[0];M.tac=plan[1];

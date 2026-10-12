@@ -1,7 +1,7 @@
 // Opponent lineup dialog before a match, and the redesigned scorers / ratings leaderboards.
 require('./harness').run(`
 newGame(4,teamNames());
-for(let i=0;i<6;i++){ACT.ff();S.event=null;S.offer=null;startMatch();skipMatch();M=null;UI.view='main'}
+for(let i=0;i<6;i++){ffToMatch();S.event=null;S.offer=null;startMatch();skipMatch();M=null;UI.view='main'}
 S.event=null;S.offer=null;UI.tab='home';render();
 ok(/data-act="oppXI"/.test(els.app.innerHTML),'next-match panel has 查看对手阵容');
 const opp=S.teams[nextFix().opp];ACT.oppXI();let h=els.app.innerHTML;

@@ -2,7 +2,7 @@
 // often they come and go in, no assist on them, and the controls for choosing the takers.
 require('./harness').run(`
 newGame(TEAMS.findIndex(t=>t.div===2),teamNames());S.friendlies.forEach(f=>f.res={hg:0,ag:0});
-ACT.ff();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();clearTimeout(M.timer);M.skip=true;
+ffToMatch();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();clearTimeout(M.timer);M.skip=true;
 const s=mySide(),o=s==='h'?'a':'h',on=onPitch(my(),M[s+'Ids']).filter(Boolean);
 // automatic takers, with everyone equally good: penalties a forward, free kicks a midfielder
 const keepOvr=on.map(p=>p.ovr);on.forEach(p=>{p.ovr=70;delete p.sig});

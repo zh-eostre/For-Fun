@@ -1,7 +1,7 @@
 // All-time club boards (scorers, assists, rating) and what happens to club records when we change clubs.
 require('./harness').run(`
 newGame(12,teamNames());
-const play=()=>{if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ACT.ff();S.lineup=autoPick(my(),S.formation);startMatch();skipMatch();M=null;UI.view='main'};
+const play=()=>{if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ffToMatch();S.lineup=autoPick(my(),S.formation);startMatch();skipMatch();M=null;UI.view='main'};
 while(S.round<rounds()-1)play();  // before the season-end screen takes over
 UI.tab='honours';
 for(const k of ['goals','ast','rating']){ACT.hlb(k);const h=els.app.innerHTML;

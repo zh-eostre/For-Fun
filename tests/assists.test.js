@@ -2,10 +2,10 @@
 require('./harness').run(`
 newGame(12,teamNames());
 // friendlies: goals and assists show in the match but not in season tallies
-let fg=0;while(nextFriendly()){ACT.ff();S.event=null;S.offer=null;startMatch();skipMatch();fg+=M.hg+M.ag;M=null;UI.view='main'}
+let fg=0;while(nextFriendly()){ffToMatch();S.event=null;S.offer=null;startMatch();skipMatch();fg+=M.hg+M.ag;M=null;UI.view='main'}
 const all=()=>S.teams.flatMap(t=>t.players);
 ok(all().every(p=>!p.goals&&!p.ast),'friendlies ('+fg+' goals) add no season goals or assists');
-while(!seasonDone()){ACT.ff();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();skipMatch();
+while(!seasonDone()){ffToMatch();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();skipMatch();
   if(S.round===3)console.log('  a goal line: '+(M.feed.find(e=>/助攻/.test(e.t))||{t:'(no assisted goal this match)'}).t);
   M=null;UI.view='main'}
 const goals=all().reduce((s,p)=>s+p.goals,0),ast=all().reduce((s,p)=>s+(p.ast||0),0),ratio=ast/goals;

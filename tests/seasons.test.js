@@ -17,7 +17,7 @@ function playOne(){
   if(S.offer)ACT.offerNo();
   if(S.academy.intake.length){const p=S.academy.intake[0];const n=my().players.length;ACT.ysign(String(p.id));if(my().players.length>n)st.youthSigned++;UI.reveal=null}
   if(S.budget>600)twice('aup');
-  ACT.ff();S.lineup=autoPick(my(),S.formation);
+  ffToMatch();S.lineup=autoPick(my(),S.formation);
   startMatch();
   while(!M.done&&M.min<45)tick(false);
   if(M.ht){
@@ -49,7 +49,7 @@ console.log('latest intake (lv '+S.academy.lv+'):',S.academy.intake.map(p=>POS[p
 console.log('achievements:',Object.keys(S.ach).map(k=>ACH[k][0]).join(' '));
 const names=S.teams.flatMap(t=>t.players).map(p=>p.name).concat(S.academy.intake.map(p=>p.name));ok(names.length===new Set(names).size,'no duplicate player names');
 ok(!badViews.length,'all views render cleanly'+(badViews.length?': '+[...new Set(badViews)]:''));
-S.event=null;S.offer=null;ACT.ff();startMatch();ok(M&&!M.done,'a match is under way');
+S.event=null;S.offer=null;ffToMatch();startMatch();ok(M&&!M.done,'a match is under way');
 const snap=localStorage.getItem(KEY);while(M.min<30)tick(true);
 localStorage.setItem(KEY,snap);M=null;ACT.continue();
 ok(M&&M.min===0&&M.hg===0&&M.ag===0&&JSON.stringify(S.results)===JSON.stringify(JSON.parse(snap).results),'a reload restarts the interrupted match from kickoff');skipMatch();

@@ -88,7 +88,7 @@ while(seasons<${SEASONS}&&guard++<20000){
     else if(r<.36)views();
     else if(r<.37)ACT.auto();
     else if(isMatchDay()){if(S.round===rounds()-1&&R()<.6&&S.mgr)S.mgr.rep=85;if(lineupIssues().length)ACT.auto();if(lineupIssues().length){fails.push(where+' cannot field a lineup: '+lineupIssues()[0]);ACT.auto()}liveMatch()}
-    else if(r<.9)ACT.nextDay();else ACT.ff();
+    else if(r<.9)ACT.nextDay();else ffToMatch();
     UI.reveal=null;check();
   }catch(e){fails.push(where+' EXCEPTION '+e.message+' '+(e.stack||'').split('\\n').slice(1,3).join(' '));break}
 }

@@ -22,7 +22,7 @@ const kid=my().players.filter(p=>p.age<=LOAN_AGE&&!unavail(p)).sort((a,b)=>a.ovr
 ACT.player(String(kid.id));ok(/外租/.test(els.app.innerHTML),'young player page offers a loan');
 twice('loan',String(kid.id));ok(kid.loan&&unavail(kid)&&!S.lineup.includes(kid.id)&&typeof kid.loan.club==="string","loaned to "+loanLabel(kid));
 UI.pages=[];
-let played=0;while(S.round<6){ACT.ff();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);if(!nextFix().cup&&!nextFix().intl&&!nextFix().friendly)played++;startMatch();if(!M){console.log("STUCK: "+els.toast.textContent+" | day "+S.day+" next "+nextMatchDay()+" round "+S.round+" | issues "+lineupIssues().join(";")+" | squad "+squadSize()+" | GKs: "+my().players.filter(p=>p.pos==="GK").map(p=>p.name+"(inj "+p.inj+" ban "+p.ban+" away "+p.away+" loan "+!!p.loan+")").join(",")+" | available "+my().players.filter(p=>!unavail(p)).length);throw "stuck"}skipMatch();M=null;UI.view="main"}
+let played=0;while(S.round<6){ffToMatch();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);if(!nextFix().cup&&!nextFix().intl&&!nextFix().friendly)played++;startMatch();if(!M){console.log("STUCK: "+els.toast.textContent+" | day "+S.day+" next "+nextMatchDay()+" round "+S.round+" | issues "+lineupIssues().join(";")+" | squad "+squadSize()+" | GKs: "+my().players.filter(p=>p.pos==="GK").map(p=>p.name+"(inj "+p.inj+" ban "+p.ban+" away "+p.away+" loan "+!!p.loan+")").join(",")+" | available "+my().players.filter(p=>!unavail(p)).length);throw "stuck"}skipMatch();M=null;UI.view="main"}
 ok(kid.lapps===played&&careerApps(kid)>=played,"loan matches counted: "+kid.lapps+" (league rounds played: "+played+")");
 UI.tab='squad';render();ok(/租借至/.test(els.app.innerHTML)&&!bad(els.app.innerHTML),'squad list shows the loan');
 ACT.recall(String(kid.id));ok(!kid.loan&&!unavail(kid),'recall brings him back');
@@ -31,7 +31,7 @@ twice('loan',String(kid.id));
 UI.tab='fac';render();ok(/球场/.test(els.app.innerHTML)&&!bad(els.app.innerHTML),'facilities page has the stadium');
 const bb=S.budget;twice('fup','stadium');ok(facLv('stadium')===2&&S.budget===bb-100&&stadiumMult()===1.25,'stadium level 2 costs 100, gate x1.25');
 // finish the season: loans end, goals paid, player history
-while(!seasonDone()){ACT.ff();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();if(!M){console.log("STUCK: "+els.toast.textContent+" | day "+S.day+" next "+nextMatchDay()+" round "+S.round+" | issues "+lineupIssues().join(";")+" | squad "+squadSize()+" | GKs: "+my().players.filter(p=>p.pos==="GK").map(p=>p.name+"(inj "+p.inj+" ban "+p.ban+" away "+p.away+" loan "+!!p.loan+")").join(",")+" | available "+my().players.filter(p=>!unavail(p)).length);throw "stuck"}skipMatch();M=null;UI.view="main"}
+while(!seasonDone()){ffToMatch();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();if(!M){console.log("STUCK: "+els.toast.textContent+" | day "+S.day+" next "+nextMatchDay()+" round "+S.round+" | issues "+lineupIssues().join(";")+" | squad "+squadSize()+" | GKs: "+my().players.filter(p=>p.pos==="GK").map(p=>p.name+"(inj "+p.inj+" ban "+p.ban+" away "+p.away+" loan "+!!p.loan+")").join(",")+" | available "+my().players.filter(p=>!unavail(p)).length);throw "stuck"}skipMatch();M=null;UI.view="main"}
 render();ok(/class="se-goal (ok|no)"/.test(els.app.innerHTML)&&!bad(els.app.innerHTML),'season end shows the board result');
 const st=goalStatus(),bud=S.budget;newSeason();
 ok(!kid.loan&&kid.lapps===0,'loan ended at season end');

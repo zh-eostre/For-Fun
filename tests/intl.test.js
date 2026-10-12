@@ -1,7 +1,7 @@
 // 天际冠军杯: 16 clubs (甲级's top two, the 天穹杯 winner and 13 from abroad), four groups home and away, then
 // quarter-finals, semi-finals and a final. clubs from abroad stay out of the league, the 天穹杯 and transfers.
 require('./harness').run(`
-const play=()=>{let n=0;while(!seasonDone()){if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ACT.ff();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);
+const play=()=>{let n=0;while(!seasonDone()){if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ffToMatch();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);
   if(nextFix().intl)n++;startMatch();if(!M)throw 'stuck: '+lineupIssues();skipMatch();ACT.matchDone()}return n};
 const top=TEAMS.map((t,i)=>[t,i]).filter(([t])=>t.div===0).sort((a,b)=>b[0].rep-a[0].rep)[0][1];
 newGame(top,teamNames());

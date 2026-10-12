@@ -28,7 +28,7 @@ const base=strength(my(),S.lineup,'bal',true,0,'4-4-2');const swapped=[...S.line
 const sw=strength(my(),swapped,'bal',true,0,'4-4-2');ok(sw.atk<base.atk&&sw.def<base.def,'swapping a DF and FW lowers attack '+base.atk.toFixed(1)+'→'+sw.atk.toFixed(1)+' and defence '+base.def.toFixed(1)+'→'+sw.def.toFixed(1));
 // 4. render squad + match views, sub at HT, red card leaves empty slot
 render();ok(!/undefined|NaN/.test(els.app.innerHTML)&&(els.app.innerHTML.match(/data-act="slot"/g)||[]).length===11,'squad page renders 11 slot buttons');
-S.event=null;ACT.ff();startMatch();while(M.min<45)tick(false);
+S.event=null;ffToMatch();startMatch();while(M.min<45)tick(false);
 const s=mySide(),outP=findP(M[s+'Ids'][2]),inP=my().players.find(p=>!M[s+'XI'].includes(p.id)&&!unavail(p));
 ACT.subOut(String(outP.id));ACT.subIn(String(inP.id));ok(M[s+'Ids'][2]===inP.id,'HT sub keeps the slot (slot 2 now '+inP.name+')');
 M[s+'Ids'][4]=null;render();ok(/罚下/.test(els.app.innerHTML)&&!/undefined|NaN/.test(els.app.innerHTML),'HT pitch shows a sent-off gap');

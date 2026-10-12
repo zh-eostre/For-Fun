@@ -2,7 +2,7 @@
 // winner); a cup final puts its result at the top of the club page for a week, and in the news.
 require('./harness').run(`
 newGame(TEAMS.findIndex(t=>t.div===2),teamNames());UI.guide=null;
-const step=()=>{if(S.event)ACT.event('0');ACT.ff();S.event=null;S.lineup=autoPick(my(),S.formation);startMatch();skipMatch();ACT.matchDone()};
+const step=()=>{if(S.event)ACT.event('0');ffToMatch();S.event=null;S.lineup=autoPick(my(),S.formation);startMatch();skipMatch();ACT.matchDone()};
 // play until we're out of the 天穹杯 (our squad made weak so it happens)
 my().players.forEach(p=>p.ovr=Math.min(p.ovr,45));
 let g=0;while(cupAlive()&&!seasonDone()&&g++<80)step();

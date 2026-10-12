@@ -23,5 +23,5 @@ const used=new Set(S.teams.filter(x=>x.id!==S.my).map(x=>bestForm(x,true).form))
 ok(used.size>=4,'AI clubs use '+used.size+' different formations');
 // the squad page and a live match in a new formation
 UI.tab='squad';ACT.form('4-2-3-1');ACT.auto();render();ok(/后腰/.test(els.app.innerHTML)&&!bad(els.app.innerHTML),'squad page explains the midfield lines');
-ACT.ff();S.event=null;S.offer=null;startMatch();skipMatch();render();ok(M.done&&!bad(els.app.innerHTML),'a match in 4-2-3-1 plays out');
+ffToMatch();S.event=null;S.offer=null;startMatch();skipMatch();render();ok(M.done&&!bad(els.app.innerHTML),'a match in 4-2-3-1 plays out');
 `);

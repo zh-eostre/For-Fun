@@ -23,7 +23,7 @@ ACT.sound();ok(!soundOn()&&store[SOUND_KEY]==='off'&&els.app.innerHTML.includes(
 n=made.osc;const na=made.audio.length;sfx('goal');ok(made.osc===n&&made.audio.length===na,'and silent');
 ACT.sound();ok(soundOn(),'and back on');
 // a live match: a whistle at kickoff; nothing while it is skipped
-S.friendlies.forEach(f=>f.res={hg:0,ag:0});ACT.ff();S.event=null;S.offer=null;n=made.osc;startMatch();clearTimeout(M.timer);
+S.friendlies.forEach(f=>f.res={hg:0,ag:0});ffToMatch();S.event=null;S.offer=null;n=made.osc;startMatch();clearTimeout(M.timer);
 ok(made.osc>n,'kickoff whistle');render();ok(/class="mctl"><button class="btn small" data-act="sound"/.test(els.app.innerHTML),'the match controls have the switch too');
 n=made.osc;skipMatch();ok(made.osc===n,'a skipped match is silent');
 `,{window:{scrollTo(){},AudioContext:FakeAudio},Audio:FakeAudioEl,extra:{made}});

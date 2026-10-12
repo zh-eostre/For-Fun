@@ -13,7 +13,7 @@ function unlock(k){
 // a pending bid lasts until the next match; then it lapses and a new one may arrive
 // bids for our players, in the transfer windows. several can stand at once (one per player); each lasts until the
 // next day. a player we've put on the transfer list draws bids of his own, often, a little under what a club pays
-// for a man it goes after itself; otherwise clubs come for players of their choosing now and then
+// for a man it goes after itself; otherwise clubs come for players of their choosing, mostly early in the window
 function rollOffer(){
   if(!windowOpen())return;
   const old=S.offers||[];
@@ -26,8 +26,9 @@ function rollOffer(){
     news(listed?`${club.name} 看中了挂牌出售的 ${p.name}，报价 ${money(o.amount)}。`:`${club.name} 带着 ${money(o.amount)} 的契约书前来，想要带走 ${p.name}。`);
   };
   my().players.filter(p=>p.listed&&!p.loan).forEach(p=>{if(rng()<LIST_CHANCE)bid(p,true,LIST_RANGE)});
+  const day=S.day<S.pre?S.day-1:S.day-winterStart(),ch=day<OFFER_EARLY_DAYS?OFFER_CHANCE.early:OFFER_CHANCE.late;  // day of the window, from 0
   for(let k=0;k<OFFER_TRIES;k++){
-    if(rng()>=OFFER_CHANCE)continue;
+    if(rng()>=ch)continue;
     const free=my().players.filter(p=>!unavail(p)&&!S.offers.some(o=>o.pid===p.id));
     if(free.length)bid(pick(free),false,[1.05,1.6]);
   }

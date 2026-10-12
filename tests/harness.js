@@ -12,6 +12,8 @@ exports.run=(code,extra={})=>{
     document:{getElementById:i=>els[i],addEventListener(){},activeElement:null,body:{style:{}}},...extra};
   vm.createContext(ctx);
   const files=fs.readFileSync(path.join(root,'football-manager.html'),'utf8').match(/js\/\w+\.js/g);
-  const prelude='const ok=(c,m)=>console.log((c?"PASS ":"FAIL ")+m);const bad=h=>/undefined|NaN|\\[object/.test(h);';
+  const prelude='const ok=(c,m)=>console.log((c?"PASS ":"FAIL ")+m);const bad=h=>/undefined|NaN|\\[object/.test(h);'+
+    // fast-forward stops on a day that brings transfer bids; most tests just want the next match day
+    'const ffToMatch=()=>{let g=0;do{if(S.offers&&S.offers.length)ACT.offerNo();ACT.ff()}while(!seasonDone()&&!isMatchDay()&&g++<60)};';
   vm.runInContext(files.map(f=>fs.readFileSync(path.join(root,f),'utf8')).join('\n;\n')+'\n;\n'+prelude+'\n'+code,ctx);
 };

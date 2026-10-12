@@ -10,7 +10,7 @@ ok(UI.dayLog.days===days,'clicking 下一天 '+days+' times: the log covers '+UI
 const gains=UI.dayLog.trained.length;
 ok(gains===0||S.news.some(n=>n.t.startsWith('训练成果')),'training gains reach the news ('+gains+')');
 render();ok(new RegExp('过了 '+days+' 天').test(els.app.innerHTML)&&!bad(els.app.innerHTML),'calendar shows the running total');
-ACT.ff();ok(UI.dayLog.days===days+1,'skipping to match day keeps adding to the same log');
+ffToMatch();ok(UI.dayLog.days===days+1,'skipping to match day keeps adding to the same log');
 // halftime perk: our players on the pitch win back a little stamina, the opponents don't
 S.event=null;S.offer=null;startMatch();
 while(M.min<44)tick(false);
@@ -38,7 +38,7 @@ ok(M.subLog.some(x=>x.out===outP.id&&x.in===inP.id&&x.min===60&&!x.why),'our cha
 ok(new RegExp('换人 '+M.subs+'/'+SUBS).test(fh)&&/↑60'/.test(fh)&&/↓60'/.test(fh)&&!bad(fh),'full time shows the changes and marks who came on and off');
 // a full week between league rounds, one click at a time
 ACT.matchDone();
-while(S.round<1){if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ACT.ff();startMatch();skipMatch();ACT.matchDone()}
+while(S.round<1){if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ffToMatch();startMatch();skipMatch();ACT.matchDone()}
 S.training='hard';let k=0;const before=S.news.filter(n=>n.t.startsWith('训练成果')).length;
 while(S.day+1<nextMatchDay()){ACT.nextDay();k++}
 const L=UI.dayLog,nl=S.news.filter(n=>n.t.startsWith('训练成果')).length-before;

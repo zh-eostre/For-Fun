@@ -3,7 +3,7 @@ require('./harness').run(`
 newGame(6,teamNames());
 const tally={};
 for(let s=0;s<4;s++){
-  while(!seasonDone()){if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ACT.ff();S.lineup=autoPick(my(),S.formation);startMatch();skipMatch();M=null;UI.view='main'}
+  while(!seasonDone()){if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ffToMatch();S.lineup=autoPick(my(),S.formation);startMatch();skipMatch();M=null;UI.view='main'}
   if(s===0){
     const xi=seasonXI(my().div);
     ok(xi.length===11&&PO.every(pos=>xi.filter(w=>w.pos===pos).length===XI_SHAPE[pos]),'team of the season is a 1-4-3-3: '+xi.map(w=>w.name).join('、'));
@@ -21,6 +21,6 @@ ok(Object.keys(tally).length>=2,'best player is not always the same position');
 S.records.push({season:99,champs:[],cup:null,div:1,rank:5,awards:[{},{}],xi:[[],[{name:'测试球员',pos:'DF',team:my().short,tid:S.my,stat:'7.90'}]]});
 UI.tab='honours';render();ok(/最佳阵容：测试球员/.test(els.app.innerHTML),'honours room lists team-of-the-season picks');
 // full-time table: saves for keepers only
-S.records.pop();ACT.ff();S.event=null;S.offer=null;startMatch();skipMatch();render();
+S.records.pop();ffToMatch();S.event=null;S.offer=null;startMatch();skipMatch();render();
 ok(/<th>扑救<\\/th>/.test(els.app.innerHTML),'stats table has a saves column');
 `);

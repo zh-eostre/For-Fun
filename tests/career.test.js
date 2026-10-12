@@ -1,6 +1,6 @@
 // Manager career: reputation from results, offers from bigger clubs, moving clubs cleanly, old-save migration.
 require('./harness').run(`
-const season=()=>{while(!seasonDone()){ACT.ff();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();if(!M)throw 'stuck '+lineupIssues();skipMatch();M=null;UI.view='main'}};
+const season=()=>{while(!seasonDone()){ffToMatch();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();if(!M)throw 'stuck '+lineupIssues();skipMatch();M=null;UI.view='main'}};
 newGame(15,teamNames());ok(S.mgr.rep===15&&mgrTitle(15)==='无名之辈','new manager: reputation 15, 无名之辈');
 const log=[];let offersSeen=null;
 for(let s=0;s<4&&!offersSeen;s++){

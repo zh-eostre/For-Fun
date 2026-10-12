@@ -1,7 +1,7 @@
 // Per-player match numbers (passes, key passes, tackles, interceptions, dribbles) and their place in ratings.
 require('./harness').run(`
 newGame(12,teamNames());
-ACT.ff();S.event=null;startMatch();skipMatch();
+ffToMatch();S.event=null;startMatch();skipMatch();
 const mine=mySide()==='h'?M.rh:M.ra;
 ok(mine.every(x=>x.a&&x.a.pas>=0&&x.a.ok<=x.a.pas),'every player of ours has match numbers');
 const df=mine.filter(x=>x.role==='DF'),fw=mine.filter(x=>x.role==='FW');

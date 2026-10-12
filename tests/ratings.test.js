@@ -2,7 +2,7 @@
 require('./harness').run(`
 
 newGame(2,teamNames());const all=[],shots=[],poss=[];let badV=0;
-while(!seasonDone()){ACT.ff();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();skipMatch();
+while(!seasonDone()){ffToMatch();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();skipMatch();
   all.push(...M.rh.map(x=>x.r),...M.ra.map(x=>x.r));shots.push(M.st.h.sh+M.st.a.sh);poss.push(M.poss);render();if(bad(els.app.innerHTML))badV++;
   if(S.round===3)console.log('  sample full-time:',M.hg+':'+M.ag,'shots',M.st.h.sh+'/'+M.st.h.on,'vs',M.st.a.sh+'/'+M.st.a.on,'poss',M.poss+'%','MVP',M.mvp.p.name,M.mvp.r);
   M=null;UI.view='main';for(const t of ['home','squad','table','honours']){UI.tab=t;render();if(bad(els.app.innerHTML))badV++}}

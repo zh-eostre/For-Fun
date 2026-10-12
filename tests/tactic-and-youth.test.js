@@ -2,7 +2,7 @@
 require('./harness').run(`
 
 // halftime tactic stays in the match
-newGame(2,teamNames());S.tactic='def';ACT.ff();S.event=null;startMatch();
+newGame(2,teamNames());S.tactic='def';ffToMatch();S.event=null;startMatch();
 ok(M.tac==='def','match starts with the club tactic (防守反击)');
 while(M.min<45)tick(false);ACT.tac('att');render();
 ok(M.tac==='att'&&S.tactic==='def'&&/只影响本场/.test(els.app.innerHTML),'halftime switch to 全力进攻 changes only this match');
@@ -15,7 +15,7 @@ ok(unproven(k)&&k.joined===S.season,'signed this season: unproven, sells for '+s
 k.apps=3;ok(unproven(k),'3 apps: still unproven');
 k.apps=5;ok(!unproven(k),'5 apps (subs count): debuted, sells for '+sellPrice(k));
 k.apps=0;
-while(!seasonDone()){ACT.ff();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();skipMatch();M=null;UI.view='main'}
+while(!seasonDone()){ffToMatch();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();skipMatch();M=null;UI.view='main'}
 const appsBefore=careerApps(k);newSeason();
 ok(!unproven(k),'next season he has debuted even with '+appsBefore+' apps; sells for '+sellPrice(k));
 const auto=my().players.find(p=>p.youth&&p.joined===S.season);

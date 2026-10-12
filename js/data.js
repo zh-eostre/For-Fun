@@ -151,7 +151,9 @@ const BOOST=2;           // strength bonus while morale is high (after a derby w
 // days. each club's chance a day: early, then the third-last, second-last and last day. the summer window is the
 // main one (up to 2 signings a club); in winter clubs only patch things up (1 at most, and few of them bother)
 const AI_BUY={summer:{early:.02,rush:[.14,.24,.38]},winter:{early:.004,rush:[.03,.05,.08]}};
-const OFFER_TRIES=3,OFFER_CHANCE=.12;   // each transfer-window day, this many chances that an AI club bids for one of your players
+// each transfer-window day, OFFER_TRIES chances that an AI club bids for one of our players: most of them in the
+// window's first OFFER_EARLY_DAYS days, few later
+const OFFER_TRIES=3,OFFER_CHANCE={early:.25,late:.04},OFFER_EARLY_DAYS=3;
 // a player on our transfer list draws bids of his own: on this share of window days, at this range of his value
 const LIST_CHANCE=.45,LIST_RANGE=[.95,1.3];
 const EVENT_CHANCE=.2;   // chance after each match of a random event

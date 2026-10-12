@@ -1,6 +1,6 @@
 // The live stamina list shows only the men on the pitch; the pause panel lists those taken off under 已下场.
 require('./harness').run(`
-newGame(5,teamNames());ACT.ff();S.event=null;S.offer=null;S.autoSub=false;startMatch();clearTimeout(M.timer);
+newGame(5,teamNames());ffToMatch();S.event=null;S.offer=null;S.autoSub=false;startMatch();clearTimeout(M.timer);
 while(M.min<50)tick(false);if(M.ht)ACT.resume();clearTimeout(M.timer);
 ACT.pauseSub();const s=mySide(),A=M[s+'Ids'].map(findP).find(p=>p&&M.role[p.id]==='MF'),B=my().players.find(p=>!M[s+'XI'].includes(p.id)&&!unavail(p));
 ACT.subOut(String(A.id));ACT.subIn(String(B.id));render();

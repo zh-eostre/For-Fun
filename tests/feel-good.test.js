@@ -2,8 +2,8 @@
 // win-streak flame and the season-end celebration.
 require('./harness').run(`
 newGame(5,teamNames());
-while(nextFix().friendly){ACT.ff();S.event=null;S.offer=null;startMatch();skipMatch();M=null;UI.view='main'}  // a league match: friendlies don't count
-ACT.ff();S.event=null;S.offer=null;startMatch();clearTimeout(M.timer);
+while(nextFix().friendly){ffToMatch();S.event=null;S.offer=null;startMatch();skipMatch();M=null;UI.view='main'}  // a league match: friendlies don't count
+ffToMatch();S.event=null;S.offer=null;startMatch();clearTimeout(M.timer);
 while(!M.ht)tick(false);render();
 ok(/更衣室训话/.test(els.app.innerHTML)&&(els.app.innerHTML.match(/data-act="talk"/g)||[]).length===3,'halftime offers three team talks');
 ACT.talk('inspire');ok(M.talk==='inspire'&&/鼓舞/.test(els.toast.textContent),'鼓舞 chosen');

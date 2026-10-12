@@ -243,9 +243,11 @@ const ACT={
   // the log under the calendar adds up every day since our last match; each day's training gains also go to the news
   nextDay:()=>{const log=dayLog(),t=log.trained.length,su=(log.surprises||[]).length;
     if(advanceDay(log)){UI.dayLog=log;trainNews(log.trained.slice(t));save()}render();if((log.surprises||[]).length>su)toast('✨ '+log.surprises[su])},
-  ff:()=>{const log=dayLog(),t=log.trained.length,su=(log.surprises||[]).length;while(advanceDay(log));UI.dayLog=log;
+  // on to the next match day; it stops on a day that brings transfer bids, so they can be answered before they lapse
+  ff:()=>{const log=dayLog(),t=log.trained.length,su=(log.surprises||[]).length;let bids=false;
+    while(advanceDay(log)){if((S.offers||[]).length){bids=true;break}}UI.dayLog=log;
     trainNews(log.trained.slice(t));save();render();
-    if((log.surprises||[]).length>su)toast('✨ '+log.surprises[log.surprises.length-1])},
+    if(bids)toast(`收到 ${S.offers.length} 份转会报价，处理后再继续`);else if((log.surprises||[]).length>su)toast('✨ '+log.surprises[log.surprises.length-1])},
   // match pace, kept for later matches (a setting, so it can be saved even mid-match)
   pace:a=>{if(!PACE[a])return;S.pace=a;try{const d=JSON.parse(localStorage.getItem(KEY));if(d){d.pace=a;localStorage.setItem(KEY,JSON.stringify(d))}}catch(e){}render()},
   // halftime team talk, once a match; a roar works more often for a manager with a name

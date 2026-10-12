@@ -6,7 +6,7 @@ const forms={};S.teams.forEach(t=>{if(t.id!==S.my){const b=bestForm(t,true);form
 console.log('  AI formations at kickoff:',JSON.stringify(forms));
 const tacs={};for(let i=0;i<16;i++)for(let j=0;j<16;j++)if(i!==j&&i!==S.my&&j!==S.my){const a=bestForm(S.teams[i],true),b=bestForm(S.teams[j],false);const t=tacFor(a.r,b.r);tacs[t]=(tacs[t]||0)+1}
 console.log('  AI tactics over all pairings:',JSON.stringify(tacs));
-ACT.ff();S.event=null;startMatch();const opp=S.teams[nextFix().opp];
+ffToMatch();S.event=null;startMatch();const opp=S.teams[nextFix().opp];
 ok(['att','def','bal'].includes(M.aiTac)&&Object.keys(FORMS).includes(M.h===S.my?M.aForm:M.hForm),'live opponent uses '+(M.h===S.my?M.aForm:M.hForm)+' / '+TACT[M.aiTac]);
 const srBefore=els.sr.textContent;skipMatch();ok(els.sr.textContent!==''&&/终焉|进球/.test(els.sr.textContent),'screen reader region announced: "'+els.sr.textContent+'"');
 M=null;UI.view='main';

@@ -22,14 +22,14 @@ ok(tired>fresh+10,'甲级 bottom side avoids defeat vs a giant: '+fresh+'% when 
 ok(counter('def','att')===2&&counter('att','def')===0&&counter('def','def')===0,'防守反击 gets +2 attack against 全力进攻');
 S.day=day0;  // the recovery checks above moved the date by hand; put it back before playing
 // live match: our tired players come off automatically; pausing opens the substitution panel
-ACT.ff();S.event=null;S.offer=null;S.autoSub=true;my().players.forEach(p=>p.cond=60);
+ffToMatch();S.event=null;S.offer=null;S.autoSub=true;my().players.forEach(p=>p.cond=60);
 startMatch();while(M.min<45)tick(false);ACT.resume();clearTimeout(M.timer);while(M.min<85)tick(true);  // halftime gives some stamina back, so later than before
 ok(M.subs>=1&&M.feed.some(e=>/体力透支/.test(e.t)),'auto-sub took off '+M.subs+' tired player(s)');
 ACT.pauseSub();render();ok(M.paused&&M.subMode&&/暂停·调整/.test(els.app.innerHTML)&&!bad(els.app.innerHTML),'pause opens the adjust panel');
 ACT.resume();ok(!M.paused&&!M.subMode,'resume continues the match');render();ok(/场上体能/.test(els.app.innerHTML),'live stamina panel shows during play');
 skipMatch();ok(my().players.every(p=>Number.isInteger(p.cond)),'stamina is whole numbers again after the match');M=null;UI.view='main';
 // auto-subs off: none of ours (except injuries)
-ACT.ff();S.event=null;S.offer=null;S.autoSub=false;my().players.forEach(p=>{p.cond=55;p.inj=0;p.ban=0});ACT.auto();
+ffToMatch();S.event=null;S.offer=null;S.autoSub=false;my().players.forEach(p=>{p.cond=55;p.inj=0;p.ban=0});ACT.auto();
 startMatch();skipMatch();ok(!M.feed.some(e=>/体力透支/.test(e.t)&&S.teams[M.h===S.my?M.h:M.a].players.some(p=>e.t.startsWith(p.name))),'with auto-subs off, ours are not swapped for tiredness');
 // a spent star (under SPENT) comes off even when the bench is much weaker; at 55 he stays if the sub is no match
 {newGame(TEAMS.findIndex(t=>t.div===2),teamNames());const T=my(),f=S.formation,ids=autoPick(T,f,true),xi=[...ids],roles=slotRoles(f);

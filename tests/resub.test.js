@@ -1,6 +1,6 @@
 // Changes made at halftime (or in a pause) can be redone or undone until play resumes, without using extra subs.
 require('./harness').run(`
-newGame(5,teamNames());ACT.ff();S.event=null;S.offer=null;S.autoSub=false;startMatch();clearTimeout(M.timer);
+newGame(5,teamNames());ffToMatch();S.event=null;S.offer=null;S.autoSub=false;startMatch();clearTimeout(M.timer);
 while(!M.ht)tick(false);
 const s=mySide(),onP=()=>M[s+'Ids'].map(findP).filter(Boolean),benchP=()=>my().players.filter(p=>!M[s+'XI'].includes(p.id)&&!unavail(p));
 // an injury in the first half may already have used a substitution: count from where halftime starts

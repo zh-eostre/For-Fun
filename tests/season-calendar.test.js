@@ -1,7 +1,7 @@
 // Calendar 3: 22 weeks, a match for us every week (a warm-up friendly when the league sits a weekend out and we
 // have no cup tie), the 天穹杯 final the week before the last round and the 冠军杯 final the week after it.
 require('./harness').run(`
-const step=()=>{if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ACT.ff();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);
+const step=()=>{if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ffToMatch();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);
   startMatch();if(!M)throw 'stuck: '+lineupIssues();skipMatch();ACT.matchDone()};
 // a 甲级 club outside the 冠军杯
 const ids=TEAMS.map((t,i)=>[t,i]).filter(([t])=>t.div===0).sort((a,b)=>b[0].rep-a[0].rep).map(x=>x[1]);

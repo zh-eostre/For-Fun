@@ -1,7 +1,7 @@
 // Signature moves for midfielders (a pass that makes a sure goal) and defenders (a block of a sure goal).
 // Driven directly: 800 attacks each way with signature moves on our midfield and defence.
 require('./harness').run(`
-newGame(TEAMS.findIndex(t=>t.div===2),teamNames());ACT.ff();S.event=null;S.offer=null;startMatch();clearTimeout(M.timer);M.skip=true;
+newGame(TEAMS.findIndex(t=>t.div===2),teamNames());ffToMatch();S.event=null;S.offer=null;startMatch();clearTimeout(M.timer);M.skip=true;
 const s=mySide(),o=s==='h'?'a':'h';
 onPitch(my(),M[s+'Ids']).forEach(p=>{if(p&&(M.role[p.id]==='MF'||M.role[p.id]==='DF'))p.sig='测试·奥义'});
 for(let k=0;k<800;k++){side(s,.45);side(o,.45)}
