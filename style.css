@@ -428,7 +428,7 @@ dialog.modal::backdrop{background:rgba(10,15,12,.55)}
 .mhead h2{flex:1;margin-bottom:4px}
 .mclose{flex:none}
 @media (max-width:560px){dialog.modal{width:calc(100% - 20px);margin-top:12px;max-height:calc(100% - 24px)}}
-@media (prefers-reduced-motion:no-preference){dialog.modal[open]{animation:mpop .18s ease-out}@keyframes mpop{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}}
+@media (prefers-reduced-motion:no-preference){dialog.modal[open]:not(.again){animation:mpop .18s ease-out}@keyframes mpop{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}}
 .toast{z-index:40}
 .modal .pgrid{grid-template-columns:repeat(4,minmax(0,1fr))}
 @media (max-width:560px){.modal .pcell{padding:5px 7px}.modal .pcell b{font-size:15px}.modal .pcell small{font-size:10px}.modal h3{margin:12px 0 6px}}

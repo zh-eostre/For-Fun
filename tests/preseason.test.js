@@ -29,13 +29,13 @@ const list=JSON.stringify(S.market.map(x=>x.id)),squads=JSON.stringify(S.teams.f
 for(let k=0;k<3;k++){ACT.ff();S.event=null;startMatch();skipMatch();M=null;UI.view='main'}
 // nobody leaves the list (a surprise scout tip may add a hidden gem)
 ok(JSON.parse(list).every(id=>S.market.some(x=>x.id===id)),'the season list does not change after matches');
-ok(!S.offer,'no bids for our players outside the window');
+ok(!(S.offers||[]).length,'no bids for our players outside the window');
 const aiNews=S.news.filter(n=>/其他球队转会动态/.test(n.t)&&n.r.includes('第'+(S.round)+'轮'));ok(aiNews.length===0,'AI clubs do not sign players during the season');
 // scouts add four
 const m1=S.market.length;ACT.scout();ok(S.market.length===m1+4,'scouting adds 4 players to the list');
 // pages
 UI.tab="market";UI.mpage=0;render();let h=els.app.innerHTML;
-ok(/第 1\\/\\d+ 页/.test(h)&&(h.match(/data-act="buy"/g)||[]).length===12&&/转会窗口已关闭/.test(h)&&!bad(h),'market shows 12 per page, page count, closed-window banner');
+ok(/第 1\\/\\d+ 页/.test(h)&&(h.match(/data-act="buy"/g)||[]).length===12&&/转会窗口已关闭/.test(h)&&!bad(h),'market shows 12 per page, page count, closed-window banner ('+S.market.length+' on the list, '+(h.match(/data-act="buy"/g)||[]).length+' shown'+(bad(h)?', odd text: '+(h.match(/.{40}(undefined|NaN|\\[object).{20}/)||[''])[0]:'')+')');
 ACT.mpage('1');h=els.app.innerHTML;ok(/第 2\\/\\d+ 页/.test(h),'page 2');ACT.mf('pos:GK');ok(UI.mpage===0,'changing a filter goes back to page 1');
 // next season: window and list reopen
 while(!seasonDone()){ACT.ff();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();skipMatch();M=null;UI.view='main'}

@@ -10,6 +10,9 @@ function render(){
   const keep=a&&app.contains(a)&&a.dataset.act?[a.dataset.act,a.dataset.arg,a.classList[0]]:null;
   // elements with data-flip glide from their old spot to the new one (players moving on the pitch)
   const before={};app.querySelectorAll('[data-flip]').forEach(el=>before[el.dataset.flip]=el.getBoundingClientRect());
+  // a dialog that stays open through the redraw (a click inside it) keeps its scroll positions and doesn't pop in again
+  const open=app.querySelector('dialog.modal[open]'),modalKey=UI.modal?UI.modal.type+':'+(UI.modal.id??''):null,same=open&&open.dataset.key===modalKey;
+  const scrolls={};if(same){scrolls['']=open.scrollTop;open.querySelectorAll('[data-scroll]').forEach(el=>scrolls[el.dataset.scroll]=el.scrollTop)}
   app.innerHTML=view();
   if(S)playSigQueue();
   // folding panels keep whatever open/closed state the player last chose
@@ -17,8 +20,11 @@ function render(){
   scrollFixtures(app);
   // with the dialog open, focus is restored inside it (the page behind can hold a twin of the same button)
   const dlg=app.querySelector('dialog.modal'),scope=dlg||app;
+  if(dlg)dlg.dataset.key=modalKey;
+  if(dlg&&same)dlg.classList.add('again');
   if(dlg&&dlg.showModal&&!dlg.open){
     dlg.showModal();
+    if(same){dlg.scrollTop=scrolls[''];dlg.querySelectorAll('[data-scroll]').forEach(el=>{if(el.dataset.scroll in scrolls)el.scrollTop=scrolls[el.dataset.scroll]})}
     // a toast raised just before this render must come back above the freshly opened dialog
     const t=document.getElementById('toast');if(t&&t.matches&&t.matches(':popover-open')){t.hidePopover();t.showPopover()}
   }
@@ -382,7 +388,7 @@ function vTakersModal(){
   <div class="tk-cols">${kinds.map(([k,l,note,odds])=>{const L=takerList(k),list=[...squad].sort((a,b)=>odds(b)-odds(a));
     return `<div class="tk-col"><div class="tk-head"><h3>${l}</h3>${L.length?`<button class="btn small" data-act="takerClear" data-arg="${k}">清空（改回自动）</button>`:'<span class="muted" style="font-size:13px">现在：自动</span>'}</div>
     <ol class="tk-order">${Array.from({length:TAKER_MAX},(_,i)=>{const p=L[i]!=null&&findP(L[i]);return `<li>${p?`<b>${p.name}</b> <span class="muted">${POS[p.pos]} ${p.ovr}</span>`:'<span class="muted">—</span>'}</li>`}).join('')}</ol>
-    <div class="tk-list"><div class="tk-row tk-th"><span>球员</span><span>${note}</span></div>${list.map(p=>{const i=L.indexOf(p.id);
+    <div class="tk-list" data-scroll="tk-${k}"><div class="tk-row tk-th"><span>球员</span><span>${note}</span></div>${list.map(p=>{const i=L.indexOf(p.id);
       return `<button class="tk-row ${i>=0?'on':''}" data-act="taker" data-arg="${k}:${p.id}" aria-pressed="${i>=0}"><span>${i>=0?`<b class="tk-n">${i+1}</b>`:''}${p.name} <span class="muted">${POS[p.pos]} ${p.ovr}${p.sig?' ★':''}${unavail(p)?' · 缺阵':''}</span></span><span class="num">${pct(odds(p))}</span></button>`}).join('')}</div></div>`}).join('')}</div></section>`;
 }
 function vSquad(){
