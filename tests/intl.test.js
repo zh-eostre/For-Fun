@@ -80,4 +80,8 @@ ok(nextFix()&&!nextFix().intl,'and plays its league');
   const old=JSON.parse(JSON.stringify(S));const keep=new Set(FOREIGN.slice(0,16).map(f=>f[0]));
   old.teams=old.teams.filter(t=>!t.foreign||keep.has(t.name));old.teams.forEach((t,i)=>t.id=i);S=old;S.intl=null;
   ensureForeign();ok(S.teams.filter(t=>t.foreign).length===28&&S.teams.every((t,i)=>t.id===i),'an older save gets the 12 new clubs, ids in order');}
+// clubs abroad are held to their level too: one far above it loses its best players over the summer
+{newGame(TEAMS.findIndex(t=>t.div===2),teamNames());UI.guide=null;const t=S.teams.find(x=>x.foreign);
+  [...t.players].sort((a,b)=>b.ovr-a.ovr).slice(0,6).forEach(p=>p.ovr=Math.min(95,p.ovr+25));const before=aiGap(t),top=Math.max(...t.players.map(p=>p.ovr));
+  const n0=t.players.length;freshenForeign();ok(before<-4&&aiGap(t)>before&&Math.max(...t.players.map(p=>p.ovr))<=top&&t.players.length===n0,'a club abroad well over its level (six stars arrived): two move on ('+before+' → '+aiGap(t)+')');}
 `);

@@ -28,7 +28,7 @@ S.round=0;UI.tab='table';render();ok(/data-arg="\\d+:cards"/.test(els.app.innerH
   while(nextFix().friendly){ffToMatch();S.event=null;S.offer=null;startMatch();skipMatch();ACT.matchDone()}
   ffToMatch();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();clearTimeout(M.timer);
   const s=mySide(),pid=M[s+'Ids'][5],pl=findP(pid);pl.ycc={lg:YC_BAN-1};
-  let tries=0;while(!M.yc[pid]&&tries++<500)booking(my(),M[s+'Ids'],M.yc);
+  let tries=0;while(!M.yc[pid]&&tries++<500){M.yc={};booking(my(),M[s+'Ids'],M.yc)}  // nobody else collects a second yellow on the way
   ok(M.yc[pid]&&pl.ycc.lg===0&&!banned(pl)&&pl.banNext===1&&M[s+'Ids'].includes(pid)&&!unavail(pl),'third yellow mid-match: still on the pitch and not suspended yet');
   M.paused=true;M.subMode=true;M.stop=(M.stop||0)+1;const bench=my().players.find(p=>!M[s+'XI'].includes(p.id)&&!unavail(p));
   ok(substitute(pid,bench.id),'he can be taken off');render();ok(els.app.innerHTML.includes('data-arg="'+pid+'"'),'and is still on the list during the stop, so the change can be undone');
