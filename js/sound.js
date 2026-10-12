@@ -1,5 +1,5 @@
 /* ---------- sound effects ----------
-   the crowd is recorded (sounds/, see sounds/CREDITS.md): a cheer for our goals, a disappointed "oh" for theirs, a
+   the crowd is recorded (sounds/, see sounds/CREDITS.md): a cheer for our goals, a stadium's "oh" for theirs, a
    long roar for a title or a 绝杀. the rest is made on the spot with the Web Audio API: whistles, card beeps, a whoosh
    for a signature move, a fanfare. on unless switched off (the setting is kept on this device). nothing plays while
    a match is skipped, or where the browser has no audio */
