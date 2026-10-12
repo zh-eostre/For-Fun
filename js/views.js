@@ -864,12 +864,6 @@ function cupStatus(){
   if((C.byes||[]).includes(S.my))return `首轮轮空，直接进入${stageName(C.stage+1)}（${dayLabel(cupDay(C.stage+1))}）。`;
   return `仍在争夺，下一场是${stageName(C.stage)}（${dayLabel(cupDay(C.stage))}）。`;
 }
-// the cup tab: 天穹杯 and, when there is one, 天际冠军杯 (a switch between them)
-function vCup(){
-  if(!S.intl)return vDomCup();
-  const k=UI.cupv==='intl'?'intl':'dom';
-  return `<div class="seg cup-switch" role="group" aria-label="杯赛">${[['dom',CUP_NAME],['intl',INTL_NAME]].map(([v,l])=>`<button data-act="cupv" data-arg="${v}" aria-pressed="${k===v}">${l}</button>`).join('')}</div>${k==='intl'?vIntl():vDomCup()}`;
-}
 // one line on our 天际冠军杯
 function intlStatus(){
   const I=S.intl;
@@ -891,41 +885,84 @@ function cupHonours(key,title){
     <span class="muted num">${i+1}</span><span style="text-align:left"><b>${c.name}</b> <span class="muted">${c.seasons.map(x=>'S'+x).join('、')}</span></span><span class="num">${c.seasons.length} 冠</span></div>`).join('')}</div>`
     :'<p class="muted" style="margin:0">还没有决出过冠军。</p>'}</section>`;
 }
-function vIntl(){
-  const I=S.intl,nm=id=>S.teams[id].name,me=id=>id===S.my?'me':'';
-  const tbl=gi=>{const rows=intlTable(gi);
-    return `<section class="panel"><h2>${'ABCD'[gi]} 组</h2><div class="itable"><div class="ith"><span></span><span>球队</span><span>赛</span><span>胜平负</span><span>净</span><span>分</span></div>
-    ${rows.map((r,i)=>`<div class="itr ${me(r.id)} ${i<2&&I.stage>=6?'thru':''}"><span class="num">${i+1}</span><span class="itn"><i style="background:${S.teams[r.id].color}"></i>${S.teams[r.id].foreign?'':'<b class="home-flag" title="本国俱乐部">本国</b>'}<button class="link" data-act="team" data-arg="${r.id}">${nm(r.id)}</button></span><span class="num">${r.p}</span><span class="num">${r.w}-${r.d}-${r.l}</span><span class="num">${r.gf-r.ga>0?'+':''}${r.gf-r.ga}</span><span class="num"><b>${r.pts}</b></span></div>`).join('')}</div></section>`};
-  const row=r=>{const cls=id=>id===r.w?'w':'l';
-    return `<div class="res cupres ${r.h===S.my||r.a===S.my?'me':''}"><span class="${cls(r.h)}">${nm(r.h)}</span><span class="num">${r.hg} : ${r.ag}${r.hp!==undefined?`<small>点球 ${r.hp}:${r.ap}</small>`:''}</span><span class="${cls(r.a)}">${nm(r.a)}</span></div>`};
-  const pending=I.stage<intlStages()?(I.stage<6
-      ?`<section class="panel"><h2>${INTL_STAGES[I.stage]}<span class="muted" style="font-weight:400;font-size:14px">，${dayLabel(intlDay(I.stage))}进行</span></h2>${intlMatches().map(([h,a])=>`<div class="res cupres ${h===S.my||a===S.my?'me':''}"><span>${nm(h)}</span><span class="muted">VS</span><span>${nm(a)}</span></div>`).join('')}</section>`
-      :`<section class="panel"><h2>${INTL_STAGES[I.stage]}<span class="muted" style="font-weight:400;font-size:14px">，${dayLabel(intlDay(I.stage))}进行</span></h2>${I.ties.map(([h,a])=>`<div class="res cupres ${h===S.my||a===S.my?'me':''}"><span>${nm(h)}</span><span class="muted">VS</span><span>${nm(a)}</span></div>`).join('')}</section>`):'';
-  return `<section class="panel intl-head"><h2>${INTL_NAME} <span class="muted" style="font-weight:400;font-size:14px">第 ${I.season} 赛季</span></h2>
-  <p class="muted" style="margin:-4px 0 0;font-size:14px">16 队，4 个小组主客场双循环，前两名进八强，之后单场淘汰。本国代表：${I.home.map(id=>id===S.my?`<b>${nm(id)}</b>`:nm(id)).join('、')}。</p>
-  <p style="margin:10px 0 0"><b>本队：</b>${intlStatus()}</p>
-  ${I.winner!=null?`<p class="disp" style="font-size:24px;margin:10px 0 0;color:var(--amber)">🏆 ${nm(I.winner)}</p>`:''}</section>
-  ${pending}
-  ${I.ko.length?`<div class="grid2">${I.ko.map((rd,j)=>`<section class="panel"><h2>${INTL_STAGES[6+j]}</h2>${rd.map(row).join('')}</section>`).reverse().join('')}</div>`:''}
-  <div class="grid2">${[0,1,2,3].map(tbl).join('')}</div>
-  ${cupHonours('intl',INTL_NAME)}`;
+// the cup pages share their pieces: a result row, a fixture row, a folding round, our road through the rounds
+const cupNm=id=>S.teams[id].name;
+function cupRow(r){
+  const me=r.h===S.my||r.a===S.my,cls=id=>r.w==null?'':id===r.w?'w':'l';
+  return `<div class="res cupres ${me?'me':''}"><span class="${cls(r.h)}">${cupNm(r.h)}</span><span class="num">${r.hg} : ${r.ag}${r.hp!=null?`<small>点球 ${r.hp}:${r.ap}</small>`:''}</span><span class="${cls(r.a)}">${cupNm(r.a)}</span></div>`;
+}
+const cupTie=([h,a])=>`<div class="res cupres ${h===S.my||a===S.my?'me':''}"><span>${cupNm(h)}</span><span class="muted">VS</span><span>${cupNm(a)}</span></div>`;
+// a round already played, folded (the latest one open); its summary says how we did in it
+function cupRound(name,res,open,key){
+  const ours=res.find(r=>r.h===S.my||r.a===S.my);
+  return `<details class="fold cup-round" data-fold="${key}" ${open?'open':''}><summary><span><b>${name}</b> <span class="muted">${res.length} 场</span>${ours?` ${ourTag(ours)}`:''}</span></summary>${res.map(cupRow).join('')}</details>`;
+}
+// our result in a tie, from our side: ✓ 2:0 / ✗ 1:2 (with penalties) / a group game's score
+function ourTag(r){
+  const home=r.h===S.my,f=home?r.hg:r.ag,o=home?r.ag:r.hg,pens=r.hp!=null?`（点球 ${home?r.hp:r.ap}:${home?r.ap:r.hp}）`:'';
+  const won=r.w!=null?r.w===S.my:f>o;
+  return `<span class="cp-res ${won?'won':r.w!=null||f<o?'lost':'drew'}">${won?'✓':r.w!=null||f<o?'✗':'＝'} ${f}:${o}${pens}</span>`;
+}
+// our road: one step per round, each with how it went, the round to come lit up with its date
+function cupPath(steps){
+  return `<ol class="cup-path">${steps.map(s=>`<li class="cp-step ${s.cls}"><b>${s.name}</b><span>${s.text}</span></li>`).join('')}</ol>`;
+}
+// the cup tab: 天穹杯 and, when there is one, 天际冠军杯 (a switch between them). on a wide screen the roll of
+// honour and the prize money sit in a column on the right; on a phone the roll follows the summary and the prize
+// money comes last
+function vCup(){
+  const k=S.intl&&UI.cupv==='intl'?'intl':'dom',page=k==='intl'?vIntl():vDomCup();
+  const sw=S.intl?`<div class="seg cup-switch" role="group" aria-label="杯赛">${[['dom',CUP_NAME],['intl',INTL_NAME]].map(([v,l])=>`<button data-act="cupv" data-arg="${v}" aria-pressed="${k===v}">${l}</button>`).join('')}</div>`:'';
+  return sw+(isWide()?`<div class="cols"><div class="col">${page.head}${page.main}</div><div class="col">${page.honours}${page.prize}</div></div>`:page.head+page.honours+page.main+page.prize);
 }
 function vDomCup(){
-  const C=S.cup,nm=id=>S.teams[id].name;
-  const row=r=>{
-    const me=r.h===S.my||r.a===S.my,cls=id=>id===r.w?'w':'l';
-    return `<div class="res cupres ${me?'me':''}"><span class="${cls(r.h)}">${nm(r.h)}</span><span class="num">${r.hg} : ${r.ag}${r.hp!==undefined?`<small>点球 ${r.hp}:${r.ap}</small>`:''}</span><span class="${cls(r.a)}">${nm(r.a)}</span></div>`;
-  };
-  const pending=C.ties.length?`<section class="panel"><h2>${stageName(C.stage)}<span class="muted" style="font-weight:400;font-size:14px">，${dayLabel(cupDay(C.stage))}进行</span></h2>
-    ${C.ties.map(([h,a])=>`<div class="res cupres ${h===S.my||a===S.my?'me':''}"><span>${nm(h)}</span><span class="muted">VS</span><span>${nm(a)}</span></div>`).join('')}${(C.byes||[]).length?`<p class="muted" style="font-size:13px;margin:8px 0 0">轮空，直接进入${stageName(C.stage+1)}：${C.byes.map(id=>id===S.my?`<b>${nm(id)}</b>`:nm(id)).join('、')}</p>`:''}</section>`:'';
-  return `<section class="panel"><h2>${CUP_NAME}</h2>
-  <p class="muted" style="margin:-4px 0 0;font-size:14px">${(()=>{const F=cupFmt(C),at=n=>F.prize[F.names.indexOf(n)];
-    return `全国 ${domestic().length} 队参加，单场淘汰，平局直接点球大战。${F.names[0]==='资格赛'?(()=>{const n=domestic().length,q=2*(n-(F.names[1]==='三十二强'?32:16));return `底蕴最低的 ${q} 队先打资格赛，其余 ${n-q} 队直接进入${F.names[1]}。`})():''}奖金：八强 ${at('八强')} 万，四强 ${at('半决赛')} 万，亚军 ${at('决赛')} 万，冠军 ${F.prize[F.names.length]} 万。`})()}</p>
-  <p style="margin:10px 0 0"><b>本队：</b>${cupStatus()}</p>
-  ${C.winner!=null?`<p class="disp" style="font-size:24px;margin:10px 0 0;color:var(--amber)">🏆 ${nm(C.winner)}</p>`:''}</section>
-  ${pending}
-  <div class="grid2">${C.rounds.map((rd,k)=>`<section class="panel"><h2>${stageName(k)}</h2>${rd.map(row).join('')}</section>`).reverse().join('')}</div>
-  ${cupHonours('cup',CUP_NAME)}`;
+  const C=S.cup,F=cupFmt(C),n=domestic().length,last=F.names.length-1;
+  const q=F.names[0]==='资格赛'?2*(n-(F.names[1]==='三十二强'?32:16)):0;
+  const outK=C.rounds.findIndex(rd=>rd.some(r=>(r.h===S.my||r.a===S.my)&&r.w!==S.my));
+  const steps=F.names.map((name,k)=>{
+    const r=C.rounds[k]&&C.rounds[k].find(x=>x.h===S.my||x.a===S.my);
+    if(r)return {name:stageName(k),cls:r.w===S.my?(k===last?'champ':'won'):'lost',text:ourTag(r)+(r.w===S.my&&k===last?' 🏆':'')};
+    if(k<C.stage)return {name:stageName(k),cls:outK>=0&&k>outK?'gone':'bye',text:outK>=0&&k>outK?'':'轮空'};
+    if(outK>=0||C.skipped)return {name:stageName(k),cls:'gone',text:''};
+    return {name:stageName(k),cls:k===C.stage?'now':'next',text:dayLabel(cupDay(k)).replace(/^第 (\d+) 周/,'第$1周')};
+  });
+  const head=`<section class="panel cup-head"><div class="cup-title"><h2>${CUP_NAME}</h2><span class="muted">第 ${S.season} 赛季</span></div>
+  <p class="muted cup-meta">全国 ${n} 队 · 单场淘汰，平局点球决胜${q?` · 底蕴最低的 ${q} 队先打资格赛`:''}</p>
+  ${C.skipped?'':cupPath(steps)}<p class="cup-status"><b>本队：</b>${cupStatus()}</p>
+  ${C.winner!=null?`<p class="cup-champ disp">🏆 ${cupNm(C.winner)}</p>`:''}</section>`;
+  const byes=(C.byes||[]).length?`<details class="fold byes"><summary><span class="muted">${C.byes.length} 队轮空，直接进入${stageName(C.stage+1)}${C.byes.includes(S.my)?'（包括本队）':''}</span></summary><p style="margin:6px 0 0;font-size:13px">${C.byes.map(id=>id===S.my?`<b>${cupNm(id)}</b>`:cupNm(id)).join('、')}</p></details>`:'';
+  const pending=C.ties.length?`<section class="panel"><h2>${stageName(C.stage)} <span class="muted" style="font-weight:400;font-size:14px">${dayLabel(cupDay(C.stage))}</span></h2>${C.ties.map(cupTie).join('')}${byes}</section>`:'';
+  const rounds=C.rounds.length?`<section class="panel"><h2>已赛轮次</h2>${C.rounds.map((rd,k)=>cupRound(stageName(k),rd,k===C.rounds.length-1,'cupr'+k)).reverse().join('')}</section>`:'';
+  const P=F.prize,prize=`<section class="panel"><h2>奖金</h2><div class="prize-list">${F.names.map((name,k)=>P[k]?`<div><span>止步${stageName(k)}</span><b>${money(P[k])}</b></div>`:'').join('')}<div><span>夺冠</span><b>${money(P[F.names.length])}</b></div></div></section>`;
+  return {head,main:pending+rounds,honours:cupHonours('cup',CUP_NAME),prize};
+}
+function vIntl(){
+  const I=S.intl,gi=I.groups.findIndex(g=>g.includes(S.my)),me=id=>id===S.my?'me':'';
+  const tbl=g=>{const rows=intlTable(g);
+    return `<div class="itable"><div class="ith"><span></span><span>球队</span><span>赛</span><span>胜平负</span><span>净</span><span>分</span></div>
+    ${rows.map((r,i)=>`<div class="itr ${me(r.id)} ${i<2&&I.stage>=6?'thru':''}"><span class="num">${i+1}</span><span class="itn"><i style="background:${S.teams[r.id].color}"></i>${S.teams[r.id].foreign?'':'<b class="home-flag" title="本国俱乐部">本国</b>'}<button class="link" data-act="team" data-arg="${r.id}">${cupNm(r.id)}</button></span><span class="num">${r.p}</span><span class="num">${r.w}-${r.d}-${r.l}</span><span class="num">${r.gf-r.ga>0?'+':''}${r.gf-r.ga}</span><span class="num"><b>${r.pts}</b></span></div>`).join('')}</div>`};
+  // our road: the group stage as one step (where we stand), then the knockout rounds
+  const steps=[];
+  if(gi>=0){
+    const pos=intlTable(gi).findIndex(r=>r.id===S.my)+1,done=I.stage>=6;
+    steps.push({name:'小组赛',cls:done?(pos<=2?'won':'lost'):'now',text:done?`小组第 ${pos}${pos<=2?'，出线':'，出局'}`:`第 ${Math.min(I.stage+1,6)}/6 轮 · 暂列第 ${pos}`});
+    const outJ=I.ko.findIndex(rd=>rd.some(r=>(r.h===S.my||r.a===S.my)&&r.w!==S.my)),groupOut=done&&pos>2;
+    for(let j=0;j<3;j++){const k=6+j,r=I.ko[j]&&I.ko[j].find(x=>x.h===S.my||x.a===S.my);
+      if(r)steps.push({name:INTL_STAGES[k],cls:r.w===S.my?(j===2?'champ':'won'):'lost',text:ourTag(r)+(r.w===S.my&&j===2?' 🏆':'')});
+      else if(groupOut||outJ>=0)steps.push({name:INTL_STAGES[k],cls:'gone',text:''});
+      else steps.push({name:INTL_STAGES[k],cls:I.stage===k?'now':'next',text:dayLabel(intlDay(k)).replace(/^第 (\d+) 周/,'第$1周')});}
+  }
+  const head=`<section class="panel cup-head"><div class="cup-title"><h2>${INTL_NAME}</h2><span class="muted">第 ${I.season} 赛季</span></div>
+  <p class="muted cup-meta">16 队 · 4 个小组主客场双循环，前两名进八强，之后单场淘汰 · 本国代表：${I.home.map(id=>id===S.my?`<b>${cupNm(id)}</b>`:cupNm(id)).join('、')}</p>
+  ${gi>=0?cupPath(steps):''}<p class="cup-status"><b>本队：</b>${intlStatus()}</p>
+  ${I.winner!=null?`<p class="cup-champ disp">🏆 ${cupNm(I.winner)}</p>`:''}</section>`;
+  const pending=I.stage<intlStages()?`<section class="panel"><h2>${INTL_STAGES[I.stage]} <span class="muted" style="font-weight:400;font-size:14px">${dayLabel(intlDay(I.stage))}</span></h2>${(I.stage<6?intlMatches():I.ties).map(cupTie).join('')}</section>`:'';
+  const ko=I.ko.length?`<section class="panel"><h2>淘汰赛</h2>${I.ko.map((rd,j)=>cupRound(INTL_STAGES[6+j],rd,j===I.ko.length-1,'intlko'+j)).reverse().join('')}</section>`:'';
+  const order=gi>=0?[gi,...[0,1,2,3].filter(x=>x!==gi)]:[0,1,2,3];
+  const groups=`<section class="panel"><h2>${gi>=0?`本队小组：${'ABCD'[gi]} 组`:'小组'}</h2>${tbl(order[0])}
+  <details class="fold" data-fold="intl-groups" ${gi<0?'open':''}><summary><span><b>其他小组</b></span></summary>${order.slice(1).map(g=>`<h3 class="grp-h">${'ABCD'[g]} 组</h3>${tbl(g)}`).join('')}</details></section>`;
+  const prize=`<section class="panel"><h2>奖金</h2><div class="prize-list"><div><span>小组赛每胜 / 平</span><b>${money(INTL_PRIZE.win)} / ${money(INTL_PRIZE.draw)}</b></div><div><span>进八强</span><b>${money(INTL_PRIZE.ko[0])}</b></div><div><span>进四强</span><b>${money(INTL_PRIZE.ko[1])}</b></div><div><span>进决赛</span><b>${money(INTL_PRIZE.ko[2])}</b></div><div><span>夺冠</span><b>${money(INTL_PRIZE.champion)}</b></div></div></section>`;
+  return {head,main:pending+ko+groups,honours:cupHonours('intl',INTL_NAME),prize};
 }
 // our club's all-time boards: scorers, assists, average rating (players still here are marked)
 function vClubBoards(){

@@ -870,3 +870,30 @@ tr.intl-maybe td:first-child{box-shadow:inset 4px 0 color-mix(in srgb,var(--ambe
 .headline .hl-win{margin-left:auto;font-weight:700}
 .headline.mine{background:linear-gradient(90deg,color-mix(in srgb,var(--amber) 55%,var(--card)),var(--card))}
 .hrow.me{background:var(--pitch-soft);border-radius:6px}
+/* cup pages: the header with our road through the rounds, folding rounds, prize list */
+.cup-title{display:flex;align-items:baseline;gap:8px}
+.cup-title h2{margin:0}
+.cup-meta{margin:4px 0 10px;font-size:13px}
+.cup-path{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.cp-step{display:flex;flex-direction:column;gap:2px;min-width:74px;padding:6px 9px;border-radius:9px;border:1px solid var(--line);font-size:12px;background:var(--card)}
+.cp-step b{font-size:13px}
+.cp-step span{color:var(--muted)}
+.cp-step.won,.cp-step.bye{border-color:color-mix(in srgb,var(--pitch) 50%,transparent);background:color-mix(in srgb,var(--pitch) 10%,var(--card))}
+.cp-step.lost{border-color:color-mix(in srgb,var(--red) 55%,transparent);background:color-mix(in srgb,var(--red) 9%,var(--card))}
+.cp-step.now{border:2px solid var(--amber);background:color-mix(in srgb,var(--amber) 14%,var(--card))}
+.cp-step.now span{color:var(--ink);font-weight:700}
+.cp-step.champ{border:2px solid var(--amber);background:color-mix(in srgb,var(--amber) 28%,var(--card))}
+.cp-step.next{opacity:.75}
+.cp-step.gone{opacity:.35}
+.cp-res{font-weight:700;color:var(--ink)}
+.cp-res.won{color:var(--pitch)}.cp-res.lost{color:var(--red-text,var(--red))}
+.cup-status{margin:0;font-size:14px}
+.cup-champ{font-size:24px;margin:10px 0 0;color:var(--amber)}
+.cup-round{border-top:1px solid var(--line);padding:4px 0}
+.cup-round:first-of-type{border-top:0}
+.cup-round summary{padding:6px 0}
+.byes{margin-top:8px}
+.grp-h{font-size:14px;margin:12px 0 4px}
+.prize-list{display:grid;gap:4px;font-size:14px}
+.prize-list div{display:flex;justify-content:space-between;gap:10px}
+.prize-list span{color:var(--muted)}

@@ -5,7 +5,7 @@ newGame(TEAMS.findIndex(t=>t.div===2),teamNames());UI.guide=null;
 UI.tab='cup';UI.cupv='dom';render();ok(/天穹杯历届冠军/.test(els.app.innerHTML)&&/还没有决出过冠军/.test(els.app.innerHTML),'no winner yet: the list says so');
 const T=S.teams.filter(t=>!t.foreign),A=T[0].name,B=T[1].name;
 S.records=[{season:1,cup:A,intl:B},{season:2,cup:B,intl:B},{season:3,cup:A,intl:null},{season:4,cup:A}];S.season=5;S.cup.winner=T[1].id;
-render();let h=els.app.innerHTML;const rows=(h.split('天穹杯历届冠军')[1]||'').match(/<b>[^<]+<\\/b>/g)||[];
+render();let h=els.app.innerHTML;const rows=((h.split('天穹杯历届冠军')[1]||'').split('</section>')[0]).match(/<b>[^<]+<\\/b>/g)||[];
 ok(rows[0]==='<b>'+A+'</b>'&&rows[1]==='<b>'+B+'</b>'&&rows.length===2,'most titles first: '+A+', then '+B);
 ok(h.includes('3 冠')&&h.includes('S1、S3、S4')&&h.includes('S2、S5'),'counts and seasons, this season\\u2019s final included');
 UI.cupv='intl';render();h=els.app.innerHTML;ok(/天际冠军杯历届冠军/.test(h)&&h.includes(B)&&h.includes('2 冠'),'the 冠军杯 has its own');

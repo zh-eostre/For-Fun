@@ -15,8 +15,8 @@ ok(inRange,'each between '+LIST_RANGE.join(' and ')+' of his value ('+MINOR_RANG
 ok(other>20,'other players still draw the usual bids now and then ('+other+')');
 for(let k=0;k<200&&!(offerFor(p.id)&&offerFor(p.id).listed);k++)rollOffer();
 UI.tab='home';render();ok(/挂牌出售中/.test(els.app.innerHTML),'the offer card (club page) says he was listed');
-const club=S.teams[offerFor(p.id).club],b=S.budget,amt=offerFor(p.id).amount;acceptOffer(p.id);
-ok(!findP(p.id)&&club.players.includes(p)&&!p.listed&&S.budget===b+amt,'accepted: he is gone, paid for, and off the list');
+const club=offerClub(offerFor(p.id)),b=S.budget,amt=offerFor(p.id).amount;acceptOffer(p.id);
+ok(!findP(p.id)&&(club.minor||club.players.includes(p))&&!p.listed&&S.budget===b+amt,'accepted: he is gone, paid for, and off the list');
 const q=my().players.find(x=>x.pos!=='GK');ACT.list(String(q.id));ACT.list(String(q.id));ok(!q.listed,'pressed again: off the list');
 let listedBids=0;for(let k=0;k<200;k++){rollOffer();listedBids+=S.offers.filter(o=>o.listed).length}ok(listedBids===0,'nobody listed: no listed bids');
 // several bids can stand at once, one per player; each answered on its own
