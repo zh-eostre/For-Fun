@@ -296,3 +296,17 @@ if(window.matchMedia){const mq=window.matchMedia(WIDE);(mq.addEventListener?mq.a
 
 // always open on the start screen, so the player can continue or restart
 render();
+
+// chart tooltips: any mark with data-tip shows it on hover or keyboard focus, just above the mark
+(()=>{
+  let tip=null;
+  const show=el=>{if(!el||!el.dataset||!el.dataset.tip)return;
+    if(!tip){tip=document.createElement('div');tip.id='chart-tip';tip.setAttribute('role','tooltip');document.body.appendChild(tip)}
+    tip.textContent=el.dataset.tip;tip.hidden=false;
+    const r=el.getBoundingClientRect(),w=tip.offsetWidth;
+    tip.style.left=Math.max(8,Math.min(innerWidth-w-8,r.left+r.width/2-w/2))+'px';tip.style.top=Math.max(8,r.top-tip.offsetHeight-8)+'px'};
+  const hide=()=>{if(tip)tip.hidden=true};
+  document.addEventListener('pointerover',e=>{const el=e.target.closest&&e.target.closest('[data-tip]');if(el)show(el);else hide()});
+  document.addEventListener('focusin',e=>{const el=e.target.closest&&e.target.closest('[data-tip]');if(el)show(el);else hide()});
+  document.addEventListener('scroll',hide,true);
+})();

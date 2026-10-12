@@ -726,7 +726,7 @@ function newSeason(moveTo){
   finishIntl();
   const move=moveTo!=null&&(S.jobOffers||[]).find(o=>o.club===moveTo);
   const div=my().div,rank=myRank(),prize=prizeFor(div,rank);
-  S.history.push({season:S.season,div,rank,pts:table()[rank-1].pts,club:my().name});
+  {const r=table()[rank-1];S.history.push({season:S.season,div,rank,pts:r.pts,p:r.p,gf:r.gf,ga:r.ga,club:my().name})}
   S.budget+=prize;
   recordSeason(div,rank);
   payGoals(div);

@@ -832,3 +832,19 @@ tr.intl-maybe td:first-child{box-shadow:inset 4px 0 color-mix(in srgb,var(--ambe
 .guide-head b{font-size:17px}
 .guide p{margin:6px 0 10px;font-size:14px;line-height:1.6}
 @media (prefers-reduced-motion:no-preference){.guide-in{animation:guidein .3s ease-out}@keyframes guidein{from{transform:translateY(20px);opacity:0}to{transform:none;opacity:1}}}
+/* club history charts (honours): one series each, in the pitch green; recessive bands, grid and axes */
+.hchart{width:100%;height:auto;display:block;margin:4px 0 10px;overflow:visible}
+.hc-title{font-size:14px;margin:10px 0 0}
+.hc-title .muted{font-weight:400;font-size:12px}
+.hchart .ax{font-size:11px;fill:var(--muted)}
+.hchart .band0{fill:var(--pitch-soft);opacity:.55}
+.hchart .band1{fill:transparent}
+.hchart .grid{stroke:var(--line);stroke-width:1}
+.hchart .axis{stroke:var(--muted);stroke-width:1}
+.hchart .hline{fill:none;stroke:var(--pitch);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.hchart .hdot{fill:var(--pitch);stroke:var(--card);stroke-width:2}
+.hchart .hhit{fill:transparent}
+.hchart .hbar{fill:var(--pitch)}
+.hchart .hdot:hover,.hchart .hdot:focus,.hchart .hbar:hover,.hchart .hbar:focus{fill:var(--amber);outline:none}
+.hchart .hlab{font-size:12px;font-weight:700;fill:var(--ink)}
+#chart-tip{position:fixed;z-index:60;pointer-events:none;background:var(--board);color:#fff;font-size:12px;padding:5px 8px;border-radius:6px;max-width:260px;box-shadow:0 4px 12px rgba(0,0,0,.25)}

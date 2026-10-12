@@ -878,13 +878,47 @@ function vClubBoards(){
   return `<section class="panel"><h2>队史${B[k][0]}榜</h2>${sw}${list.length?list.map((c,i)=>`<div class="res" style="grid-template-columns:24px 1fr auto"><span class="muted">${i+1}</span><span style="text-align:left">${c.name}${c.now?' <span class="tag2 now">现役</span>':''} <span class="muted">${POS[c.pos]}，${sub(c)}</span></span><span class="num" style="min-width:0">${label(c)}</span></div>`).join('')
     :`<p class="muted" style="margin:0">${k==='rating'?`在队有评分的比赛满 ${CAREER_RATED} 场的球员会列在这里（从这个版本起开始累计）。`:k==='ast'?'还没有人为球队助攻。':'还没有人为球队进球。'}</p>`}</section>`;
 }
+// our seasons as two charts: where we finished in the whole pyramid (1 = top of 甲级; bands mark the divisions) and
+// points per match (divisions play different numbers of rounds). hover or focus a mark for its season; a table below
+function vHistoryCharts(){
+  const H=S.history;
+  if(H.length<2)return `<section class="panel"><h2>队史走势</h2><p class="muted" style="margin:0">踢满两个赛季后，这里会画出历年的联赛位置和成绩。</p></section>`;
+  const above=d=>DIV_SIZES.slice(0,d).reduce((a,b)=>a+b,0),total=above(DIVS.length),pos=h=>above(h.div||0)+h.rank;
+  const played=h=>h.p||2*(DIV_SIZES[h.div||0]-1),  // records from before matches were kept: the division's rounds
+   ppm=h=>h.pts/played(h);
+  // drawn at about the width it's shown at, so the labels keep their size on a phone
+  const W=Math.round(clamp(((typeof window!=='undefined'&&window.innerWidth)||600)-72,300,600)),L=46,R=14,T=12,B=26,n=H.length,step=(W-L-R)/n,x=i=>L+step*(i+.5);
+  // season labels: every one while they fit, else every k-th and the last
+  const xl=(h,i)=>{const k=Math.ceil(n/Math.max(4,Math.floor(W/50)));return i%k===0||i===n-1?`<text x="${x(i)}" y="${CH-6}" class="ax" text-anchor="middle">S${h.season}</text>`:''};
+  const tip=h=>`第 ${h.season} 季 · ${h.club||my().name} · ${DIVS[h.div||0]}第 ${h.rank} 名 · ${h.pts} 分（场均 ${ppm(h).toFixed(2)}）`;
+  // 1. position
+  const CH=230,y=v=>T+(v-.5)/total*(CH-T-B);
+  const bands=DIVS.map((dn,d)=>`<rect x="${L}" y="${y(above(d)+.5)}" width="${W-L-R}" height="${y(above(d+1)+.5)-y(above(d)+.5)}" class="band${d%2}"/><text x="${L-6}" y="${(y(above(d)+.5)+y(above(d+1)+.5))/2+4}" class="ax" text-anchor="end">${dn}</text>`).join('');
+  const pts=H.map((h,i)=>[x(i),y(pos(h))]),last=H[n-1];
+  const chart1=`<svg viewBox="0 0 ${W} ${CH}" class="hchart" role="img" aria-label="历年联赛位置">${bands}
+    <path d="${pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join('')}" class="hline"/>
+    ${H.map((h,i)=>`<circle cx="${pts[i][0]}" cy="${pts[i][1]}" r="5" class="hdot" tabindex="0" data-tip="${tip(h)}"/><circle cx="${pts[i][0]}" cy="${pts[i][1]}" r="14" class="hhit" data-tip="${tip(h)}"/>`).join('')}
+    <text x="${Math.min(pts[n-1][0],W-R-4)}" y="${pts[n-1][1]-12}" class="hlab" text-anchor="${pts[n-1][0]>W-80?'end':'middle'}">${DIVS[last.div||0]}第 ${last.rank}</text>
+    ${H.map(xl).join('')}</svg>`;
+  // 2. points per match
+  const top=3,y2=v=>CH-B-v/top*(CH-T-B),bw=clamp(step-2,4,28),grid=[1,2,3].map(v=>`<line x1="${L}" x2="${W-R}" y1="${y2(v)}" y2="${y2(v)}" class="grid"/><text x="${L-6}" y="${y2(v)+4}" class="ax" text-anchor="end">${v}</text>`).join('');
+  const bar=(h,i)=>{const v=Math.min(top,ppm(h)),x0=x(i)-bw/2,y0=y2(v),hgt=CH-B-y0,r=Math.min(4,bw/2,hgt);
+    return `<path d="M${x0} ${CH-B}V${y0+r}Q${x0} ${y0} ${x0+r} ${y0}H${x0+bw-r}Q${x0+bw} ${y0} ${x0+bw} ${y0+r}V${CH-B}Z" class="hbar" tabindex="0" data-tip="${tip(h)}"/>`};
+  const chart2=`<svg viewBox="0 0 ${W} ${CH}" class="hchart" role="img" aria-label="历年每场平均积分">${grid}<line x1="${L}" x2="${W-R}" y1="${CH-B}" y2="${CH-B}" class="axis"/>
+    ${H.map(bar).join('')}<text x="${x(n-1)}" y="${y2(Math.min(top,ppm(last)))-6}" class="hlab" text-anchor="middle">${ppm(last).toFixed(2)}</text>${H.map(xl).join('')}</svg>`;
+  const rows=[...H].reverse().map(h=>`<tr><td>S${h.season}</td><td style="text-align:left">${h.club||my().name}</td><td>${DIVS[h.div||0]}</td><td>${h.rank}</td><td>${h.pts}</td><td>${ppm(h).toFixed(2)}</td><td>${h.gf!=null?`${h.gf}:${h.ga}`:'—'}</td></tr>`).join('');
+  return `<section class="panel"><h2>队史走势</h2>
+  <h3 class="hc-title">历年联赛位置 <span class="muted">（越高越好）</span></h3>${chart1}
+  <h3 class="hc-title">每场平均积分</h3>${chart2}
+  <details class="fold"><summary>表格</summary><div class="tw"><table><thead><tr><th>赛季</th><th>球队</th><th>级别</th><th>名次</th><th>积分</th><th>场均</th><th>进/失</th></tr></thead><tbody>${rows}</tbody></table></div></details></section>`;
+}
 function vHonours(){
   const H=S.history,R=S.records;
   const count=(f)=>H.filter(f).length;
   const cups=R.filter(r=>r.cup===my().name).length+(S.cup.winner===S.my?1:0);
   const intls=R.filter(r=>r.intl===my().name).length+(S.intl&&S.intl.winner===S.my&&!R.some(r=>r.season===S.season)?1:0);
   const trophies=[...DIVS.map((dn,d)=>[`${dn}冠军`,count(h=>(h.div||0)===d&&h.rank===1)]),[`${CUP_NAME}`,cups],[INTL_NAME,intls],['升级',count(h=>(h.div||0)>0&&h.rank<=SWAP)],['青训出身（现役）',my().players.filter(p=>p.youth).length]];
-  return `<div class="cols"><div class="col"><section class="panel"><h2>奖杯柜</h2><div class="trophies">${trophies.map(([l,n])=>`<div class="trophy ${n?'got':''}"><div class="num">${n}</div><div>${l}</div></div>`).join('')}</div></section>
+  return `<div class="cols"><div class="col">${vHistoryCharts()}<section class="panel"><h2>奖杯柜</h2><div class="trophies">${trophies.map(([l,n])=>`<div class="trophy ${n?'got':''}"><div class="num">${n}</div><div>${l}</div></div>`).join('')}</div></section>
   <section class="panel"><h2>称号 <span class="muted" style="font-weight:400;font-size:14px">${Object.keys(S.ach).length}/${Object.keys(ACH).length}</span></h2>
   <div class="achs">${Object.entries(ACH).map(([k,[n,d]])=>S.ach[k]
     ?`<div class="ach got"><b>「${n}」</b><span>${d}</span><small>第 ${S.ach[k]} 赛季解锁</small></div>`
