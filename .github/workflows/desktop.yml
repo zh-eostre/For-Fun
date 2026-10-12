@@ -1,0 +1,36 @@
+# Builds the Windows desktop app (an installer and a portable .exe) whenever the game or the desktop setup changes
+# on this branch. The files are attached to the run: Actions tab → the latest "桌面版打包" run → Artifacts.
+name: 桌面版打包
+on:
+  push:
+    branches: [football-manager]
+    paths:
+      - football-manager.html
+      - style.css
+      - js/**
+      - desktop/**
+      - .github/workflows/desktop.yml
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+      - run: npm ci
+      - run: npm run dist:win
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LvYinJingLi-windows
+          path: desktop/dist/*.exe
+          if-no-files-found: error

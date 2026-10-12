@@ -1,0 +1,46 @@
+{
+  "name": "lvyin-jingli",
+  "productName": "绿茵经理",
+  "version": "1.0.0",
+  "description": "绿茵经理：单机足球经理游戏",
+  "author": "ziheng",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "prepare-app": "node prepare.js",
+    "start": "npm run prepare-app && electron .",
+    "dist:win": "npm run prepare-app && electron-builder --win --publish never",
+    "dist:mac": "npm run prepare-app && electron-builder --mac --publish never"
+  },
+  "devDependencies": {
+    "electron": "^44.7.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "io.github.zh-eostre.lvyinjingli",
+    "productName": "绿茵经理",
+    "directories": { "output": "dist", "buildResources": "build" },
+    "files": ["main.js", "app/**/*", "build/icon.png"],
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "绿茵经理",
+      "artifactName": "LvYinJingLi-Setup-${version}.${ext}"
+    },
+    "portable": { "artifactName": "LvYinJingLi-${version}-portable.${ext}" },
+    "mac": {
+      "target": "dmg",
+      "icon": "build/icon.png",
+      "category": "public.app-category.sports-games",
+      "artifactName": "LvYinJingLi-${version}.${ext}"
+    }
+  }
+}
