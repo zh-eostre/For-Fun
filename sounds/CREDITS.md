@@ -1,6 +1,6 @@
 # 音效来源 / Sound credits
 
-The crowd sounds are short clips cut from these recordings: mixed to mono, resampled to 22.05 kHz, trimmed, faded in
+The crowd sounds are short clips cut from these recordings (`concede.wav` is 16.105–19.016 s of its source): mixed to mono, resampled to 22.05 kHz, trimmed, faded in
 and out, and set to an even volume.
 
 | File | Source | Author | License |
