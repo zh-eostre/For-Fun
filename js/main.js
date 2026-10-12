@@ -110,7 +110,7 @@ const cheatNews=k=>news(`发动了${CHEAT_CARD}「${CHEAT_INFO[k][0]}」。`);
 const CHEATS={
   // rewind to the pre-kickoff state with a fresh seed, so the match is played again with a new outcome
   redo:()=>{S=JSON.parse(M.pre);delete S.live;S.cheatUsed=true;cheatNews('redo');unlock('cheat');save();M=null;startMatch();toast('时间之河倒流……命运的齿轮重新转动！')},
-  heal:()=>{my().players.forEach(p=>{p.cond=100;p.inj=0;p.ban=0});toast('不死鸟于烈焰中重生，全员恢复巅峰！')},
+  heal:()=>{my().players.forEach(p=>{p.cond=100;p.inj=0;p.bans={}});toast('不死鸟于烈焰中重生，全员恢复巅峰！')},
   scout:()=>{
     S.market.forEach(p=>{const price=p.price;scoutReport(p,{conf:'high',est:p.pot});p.price=price});
     UI.tab='market';toast('真理之瞳已开启，一切潜力无所遁形！');
@@ -128,7 +128,7 @@ function useCheat(kind,b){
 
 function canStart(p){
   if(p.inj){toast(`${p.name} 还在伤停`);return false}
-  if(p.ban){toast(`${p.name} 停赛中`);return false}
+  if(banned(p)){toast(`${p.name} 在${COMPS[ourComp()]||'这项赛事'}停赛中`);return false}
   if(p.away){toast(`${p.name} 回家探亲了`);return false}
   return true;
 }

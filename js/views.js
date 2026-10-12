@@ -236,7 +236,7 @@ function vRules(){
     '同一次暂停里的换人在继续比赛前都可以改或撤销。',
     `赛后第一天是休息日（体能 +${DAY_REST}）；之后看训练安排：恢复训练 +${TRAIN_DAY.rest.cond}，常规训练 +${TRAIN_DAY.normal.cond}，高强度加练 +${TRAIN_DAY.hard.cond}（进步最快，但更容易受伤）。`])}
   ${sec('伤病与红黄牌',['越疲劳越容易受伤；理疗室能降低受伤风险、加快恢复。伤停按天计算，日程里会倒数。',
-    `本赛季累计 ${YC_BAN} 张黄牌停赛一场：吃到第 ${YC_BAN} 张的那场比赛照常踢完，从下一场开始停赛。一场比赛吃到两张黄牌会当场被罚下，下一场也停赛；同一场里既集满累计黄牌又被罚下，停赛两场。友谊赛不出牌。`])}
+    `联赛、${CUP_NAME}、${INTL_NAME}的黄牌分开累计：同一项赛事累计 ${YC_BAN} 张黄牌，停赛该赛事的下一场（吃到第 ${YC_BAN} 张的那场照常踢完）。红牌停赛也只停同一项赛事，友谊赛和热身赛不受停赛影响。一场比赛吃到两张黄牌会当场被罚下，下一场也停赛；同一场里既集满累计黄牌又被罚下，停赛两场。友谊赛不出牌。`])}
   ${sec('评分与奖项',['评分 3–10 分，平均约 6.7：看能力、比赛结果、个人数据（传球、关键传球、抢断、拦截、过人、扑救），加上进球和助攻。',
     '上场不到 60 分钟，基础表现按时间折算；进球、助攻、扑救、红黄牌不管上场多久都全额计入。',
     '赛季末颁发最佳球员、最佳新秀、最佳门将、金靴、助攻王，并选出年度最佳阵容。最佳球员按「比同位置的人好多少」来评，所以各个位置都有机会。'])}
@@ -259,15 +259,17 @@ function vOppXI(){
   <p class="muted" style="margin:0 0 10px;font-size:13px">${fixLabel(f)}，${f.home?'我们主场':'我们客场'} · ${tierOf(opp.rep)} · 首发平均能力 ${avg} · 平均体能 ${cond} · 预计战术：${TACT[tac]}</p>
   <div class="oppgrid">${pitchBox(field,'对手预计首发',ob.form,{color:opp.color,note:`${ob.form} · ${TACT[tac]}`})}
   <div><div class="subh" style="margin-bottom:6px">替补</div>${bench.map(p=>`<div class="oprow"><span class="spos">${POS[p.pos]}</span><span>${p.name}${p.sig?' <i class="sig" style="font-style:normal">★</i>':''}</span><b class="num">${p.ovr}</b></div>`).join('')||'<span class="muted">没有替补</span>'}
-  ${out.length?`<div class="subh" style="margin:10px 0 6px">缺阵</div>${out.map(p=>`<div class="oprow out"><span class="spos">${POS[p.pos]}</span><span>${p.name}</span><span class="muted">${p.inj?`伤停 ${p.inj} 天`:p.ban?'停赛':'请假'}</span></div>`).join('')}`:''}
+  ${out.length?`<div class="subh" style="margin:10px 0 6px">缺阵</div>${out.map(p=>`<div class="oprow out"><span class="spos">${POS[p.pos]}</span><span>${p.name}</span><span class="muted">${p.inj?`伤停 ${p.inj} 天`:banned(p)?'停赛':'请假'}</span></div>`).join('')}`:''}
   ${facLv('scout')>=3?'':'<p class="muted" style="font-size:12px;margin:10px 0 0">球探部升到 3 级，赛前还能看到对手最薄弱的一线和王牌球员（4、5 级说得更详细）。</p>'}</div></div></section>`;
 }
+// a player's yellow cards toward a ban, by competition: 联赛 2/3 · 天穹杯 1/3
+const ycNote=p=>Object.entries(p.ycc||{}).filter(([,n])=>n>0).map(([c,n])=>`${COMPS[c]} ${n}/${YC_BAN}`).join(' · ');
 function vPlayer(id){
   const f=findAny(id);
   if(!f)return `<section class="panel"><div class="mhead"><h2 id="mtitle">球员详情</h2><button class="btn small mclose" data-act="closeModal" aria-label="关闭">✕</button></div><p class="muted" style="margin:0">这名球员已经不在联赛里了。</p></section>`;
   const {p,t}=f,mine=t.id===S.my,c=S.club[p.id]||{},hist=(p.hist||[]).concat([{s:S.season,o:p.ovr}]);
   const cell=(l,v)=>`<div class="pcell"><small>${l}</small><b>${v}</b></div>`;
-  const status=[p.inj?`伤停 ${p.inj} 天`:'',p.ban?`停赛 ${p.ban} 轮`:'',p.away?'探亲中':'',p.loan?`租借至${loanLabel(p)}（${p.lapps||0} 场）`:'',unproven(p)?`未出道 ${careerApps(p)}/${YOUTH_PROVEN}`:''].filter(Boolean).join('，');
+  const status=[p.inj?`伤停 ${p.inj} 天`:'',...Object.entries(p.bans||{}).filter(([,n])=>n>0).map(([c,n])=>`${COMPS[c]}停赛 ${n} 场`),p.away?'探亲中':'',p.loan?`租借至${loanLabel(p)}（${p.lapps||0} 场）`:'',unproven(p)?`未出道 ${careerApps(p)}/${YOUTH_PROVEN}`:''].filter(Boolean).join('，');
   const actions=mine
     ?`${p.loan?`<button class="btn small" data-act="recall" data-arg="${p.id}">召回</button>`:p.age<=LOAN_AGE?`<button class="btn small" data-act="loan" data-arg="${p.id}">外租（赛季结束回归）</button>`:''}
       <button class="btn small danger" data-act="sell" data-arg="${p.id}" ${windowOpen()?'':`disabled title="${windowShut()}"`}>出售 ${money(sellPrice(p))}</button>`
@@ -276,7 +278,7 @@ function vPlayer(id){
   <p class="muted" style="margin:-4px 0 10px;font-size:14px">${POS[p.pos]}，${p.age} 岁，${t.name}${status?`。${status}`:''}</p>
   ${p.sig?`<p class="sig" style="margin:0 0 10px">必杀技「${p.sig}」</p>`:''}
   <div class="pgrid">${cell('能力',p.ovr)}${cell('潜力',mine||p.age>23?p.pot:'?')}${cell('体能',p.cond)}${cell('身价',money(mine?marketValue(p):value(p)))}</div>
-  <h3>本赛季</h3><div class="pgrid">${cell('出场',p.apps)}${cell('进球',p.goals)}${cell('助攻',p.ast||0)}${cell('平均评分',p.rn?avgRating(p).toFixed(2):'—')}${cell('黄牌',`${p.ycs||0}${p.yc?` <small class="muted">（停赛累计 ${p.yc}/${YC_BAN}）</small>`:''}`)}${cell('红牌',p.rcs||0)}</div>
+  <h3>本赛季</h3><div class="pgrid">${cell('出场',p.apps)}${cell('进球',p.goals)}${cell('助攻',p.ast||0)}${cell('平均评分',p.rn?avgRating(p).toFixed(2):'—')}${cell('黄牌',`${p.ycs||0}${ycNote(p)?` <small class="muted">（停赛累计：${ycNote(p)}）</small>`:''}`)}${cell('红牌',p.rcs||0)}</div>
   ${p.ss&&p.rn?`<div class="pgrid">${cell('传球成功率',p.ss.pas?Math.round(p.ss.ok/p.ss.pas*100)+'%':'—')}${p.pos==='GK'?cell('场均扑救',((p.ss.sv||0)/p.rn).toFixed(1)):cell('场均关键传球',(p.ss.kp/p.rn).toFixed(1))+cell('场均抢断+拦截',((p.ss.tkl+p.ss.int)/p.rn).toFixed(1))+cell('场均过人',(p.ss.drb/p.rn).toFixed(1))}</div>`:''}
   ${mine?`<h3>在队生涯</h3><div class="pgrid">${cell('效力赛季',(c.seasons||0)+1)}${cell('出场',(c.apps||0)+p.apps)}${cell('进球',(c.goals||0)+p.goals)}${cell('助攻',(c.ast||0)+(p.ast||0))}${cell('租借出场',(c.lapps||0)+(p.lapps||0))}${cell('红黄牌',`${(c.ycs||0)+(p.ycs||0)} 黄 ${(c.rcs||0)+(p.rcs||0)} 红`)}</div>
   ${(c.titles||[]).length?`<p style="margin:4px 0 0;font-size:13px">🏆 ${c.titles.join('、')}</p>`:''}${isLegend(c)?'<p class="sig" style="margin:4px 0 0">已达到传奇标准：在队退役就会载入史册</p>':''}
@@ -348,7 +350,7 @@ function vSquad(){
     <div class="prow ${on.has(p.id)?'on':''} ${unavail(p)?'inj':''}" data-act="toggle" data-arg="${p.id}">
       <button class="tick" data-act="toggle" data-arg="${p.id}" aria-pressed="${on.has(p.id)}" aria-label="${on.has(p.id)?'移出首发':'加入首发'}：${p.name}">${on.has(p.id)?'✓':''}</button>
       <div style="min-width:0"><div class="pname"><button class="link" data-act="player" data-arg="${p.id}">${p.name}</button>${gem(p)}${p.youth?' <span class="tag2 youth">青训</span>':''}${unproven(p)?` <span class="muted" style="font-size:11px;font-weight:400" title="出场满 ${YOUTH_PROVEN} 场或下赛季开始时出道，之前买家只按当前能力出价">未出道 ${careerApps(p)}/${YOUTH_PROVEN}</span>`:''}</div>
-      <div class="pmeta">${p.sig?`<span class="sig" style="display:inline">★</span> `:''}${p.age} 岁，${p.apps} 场 ${p.goals} 球 ${p.ast||0} 助${p.rn?`，评分 ${avgRating(p).toFixed(1)}`:''}${p.yc?`，<span class="${p.yc>=YC_BAN-1?'ycwarn':''}" title="再吃 ${YC_BAN-p.yc} 张黄牌停赛一场">黄牌 ${p.yc}/${YC_BAN}</span>`:''}${p.inj?` <span class="injtag">伤停 ${p.inj} 天</span>`:''}${p.ban?` <span class="injtag">停赛 ${p.ban} 轮</span>`:''}${p.away?` <span class="injtag">探亲 ${p.away} 轮</span>`:''}${p.loan?` <span class="loantag">租借至${p.loan.club} · ${p.lapps||0} 场</span>`:''}${!unavail(p)&&p.cond<60?' <span class="risktag">伤病风险高</span>':''}${retireChance({...p,age:p.age+1})>=.3?` <span class="muted" style="font-size:11px" title="赛季结束时有 ${Math.round(retireChance({...p,age:p.age+1})*100)}% 机会退役">可能退役</span>`:''}</div>
+      <div class="pmeta">${p.sig?`<span class="sig" style="display:inline">★</span> `:''}${p.age} 岁，${p.apps} 场 ${p.goals} 球 ${p.ast||0} 助${p.rn?`，评分 ${avgRating(p).toFixed(1)}`:''}${(()=>{const [c,n]=Object.entries(p.ycc||{}).sort((a,b)=>b[1]-a[1])[0]||[];return n?`，<span class="${n>=YC_BAN-1?'ycwarn':''}" title="${COMPS[c]}再吃 ${YC_BAN-n} 张黄牌停赛一场">${COMPS[c]}黄牌 ${n}/${YC_BAN}</span>`:''})()}${p.inj?` <span class="injtag">伤停 ${p.inj} 天</span>`:''}${banned(p)?` <span class="injtag">停赛 ${p.bans[ourComp()]} 场</span>`:''}${p.away?` <span class="injtag">探亲 ${p.away} 轮</span>`:''}${p.loan?` <span class="loantag">租借至${p.loan.club} · ${p.lapps||0} 场</span>`:''}${!unavail(p)&&p.cond<60?' <span class="risktag">伤病风险高</span>':''}${retireChance({...p,age:p.age+1})>=.3?` <span class="muted" style="font-size:11px" title="赛季结束时有 ${Math.round(retireChance({...p,age:p.age+1})*100)}% 机会退役">可能退役</span>`:''}</div>
 </div>
       <div><div class="ovr num">${p.ovr}${gainTag(p)}</div><div class="potl">潜力 ${p.pot}</div></div>
       <div><div class="bar ${p.cond<TIRED?'low':''}"><i style="width:${p.cond}%"></i></div><div class="barlbl">体能 ${p.cond}</div></div>
@@ -426,7 +428,7 @@ function vPitch(){
     return (emg?`<p class="oopnote">没有可用的门将，${emg.name} 临时客串门将，能力只有 50%。可以召回租借在外的门将，或从市场签一个。</p>`:'')
       +(rest.length?`<p class="oopnote">${rest.map(p=>p.name).join('、')} 打非本职位置，能力打 ${Math.round(OOP*100)}% 折扣。</p>`:'')})()}
   <h3 style="margin:14px 0 8px">替补席</h3>
-  <div class="bench">${bench.map(p=>`<div class="bslot"><small>${POS[p.pos]}${p.inj?' · 伤':p.ban?' · 停赛':p.away?' · 探亲':p.loan?' · 租借':''}</small>${tok(p,{act:'bench'})}</div>`).join('')||'<span class="muted">没有替补</span>'}</div></section>`;
+  <div class="bench">${bench.map(p=>`<div class="bslot"><small>${POS[p.pos]}${p.inj?' · 伤':banned(p)?' · 停赛':p.away?' · 探亲':p.loan?' · 租借':''}</small>${tok(p,{act:'bench'})}</div>`).join('')||'<span class="muted">没有替补</span>'}</div></section>`;
 }
 // switcher: show the division picker (the 积分榜 tab); without it the given division is shown as-is (season end)
 // a leaderboard: medals for the top three, the club's colour, and a bar against the leader (scale maps a value to
@@ -652,7 +654,7 @@ function vMatch(){
     <div class="ft-chips">${M.friendly?chip('','友谊赛不计成绩'):chip('money',`💰 收入 ${money(s.income)}${M.derby?'（宿敌之战翻倍）':''}`)}
       ${s.grown.map(p=>chip('grow',`↑ ${p.name} ${p.ovr}`)).join('')}
       ${M.myInjuries.map(p=>chip('hurt',`🚑 ${p.name} 伤停 ${p.inj} 天`)).join('')}
-      ${s.banned.map(p=>chip('ban',`⛔ ${p.name} ${p.ban>1?`停赛 ${p.ban} 场`:'下轮停赛'}`)).join('')}</div>
+      ${s.banned.map(p=>{const n=p.bans[s.banComp];return chip('ban',`⛔ ${p.name} ${COMPS[s.banComp]}停赛${n>1?` ${n} 场`:'一场'}`)}).join('')}</div>
     ${s.awoken.map(p=>`<p class="awake">${LINE.awaken(p.name)}能力 ${p.ovr}，潜力 ${p.pot}${p.sig?`，领悟必杀技「${p.sig}」`:''}</p>`).join('')}
     ${vMatchStats()}
     <div class="go" style="justify-content:flex-start;margin-top:0"><button class="btn primary" data-act="matchDone">回到俱乐部</button>

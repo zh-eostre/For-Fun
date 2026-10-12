@@ -45,7 +45,7 @@ const tieWinner=r=>r.hg>r.ag||(r.hg===r.ag&&r.hp>r.ap)?r.h:r.a;
 function playCupStage(myRes){
   const C=S.cup,k=C.stage;
   const res=C.ties.map(([h,a])=>{
-    const r=myRes&&(h===S.my||a===S.my)?myRes:quickSim(h,a);
+    const r=myRes&&(h===S.my||a===S.my)?myRes:quickSim(h,a,'cup');
     if(r.hg===r.ag&&r.hp===undefined)Object.assign(r,shootout(S.teams[h],autoPick(S.teams[h],'4-4-2'),S.teams[a],autoPick(S.teams[a],'4-4-2')));
     r.w=tieWinner(r);return r;
   });

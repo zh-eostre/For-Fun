@@ -75,7 +75,9 @@ const MIGRATE={
   // v17 -> v18: signature moves simply follow ability (88+) and age (gone at 34)
   17:d=>d.teams.forEach(t=>t.players.forEach(p=>{if(p.ovr<88||p.age>=34)delete p.sig;else if(!p.sig)p.sig=pick(SIG_A)+'·'+pick(SIG_B)})),
   // v18 -> v19: the international cup (天际冠军杯) starts with the next season; nothing to change now
-  18:d=>{}
+  18:d=>{},
+  // v20: yellow-card counts and bans by competition (what there was counts for the league)
+  19:d=>d.teams.forEach(t=>t.players.forEach(p=>{p.ycc=p.yc?{lg:p.yc}:{};p.bans=p.ban?{lg:p.ban}:{};delete p.yc;delete p.ban;delete p.banNext}))
 };
 // a save can come from anywhere (a shared file, an edited one), and its text ends up in the page's HTML, so
 // every string in it loses the characters that could form markup before the game touches it
@@ -125,7 +127,7 @@ function makePlayer(pos,base,age){
   age=age||ri(18,33);
   const ovr=clamp(Math.round(base+rnd(-6,6)),38,92);
   const pot=age<24?clamp(ovr+ri(3,14),ovr,92):ovr;
-  return {id:S.pid++,name:genName(),pos,ovr,age,pot,cond:100,inj:0,ban:0,away:0,yc:0,goals:0,apps:0};
+  return {id:S.pid++,name:genName(),pos,ovr,age,pot,cond:100,inj:0,bans:{},away:0,ycc:{},goals:0,apps:0};
 }
 const sigCount=t=>t.players.filter(p=>p.sig).length;
 // a player learns a signature move once his ability reaches SIG_OVR (and he's younger than SIG_FADE); returns true when he does
@@ -175,7 +177,19 @@ const findP=id=>my().players.find(p=>p.id===id);
 // stamina above 80 barely matters; below it a player fades fast (70: about 89%, 60: about 81% of his ability)
 const eff=p=>p.ovr*(p.cond>=80?.97+.03*(p.cond-80)/20:.97-(80-p.cond)*.008);
 // inj = days until fit again; ban / away = matches still to sit out
-const unavail=p=>p.inj>0||p.ban>0||p.away>0||!!p.loan;
+// the competition being played right now (set while a match is simulated or played live); outside a match, the
+// competition of our next match, so lineups and previews leave out the right suspended players
+let COMP=null;
+const compOf=f=>f.friendly?'fr':f.cup?'cup':f.intl?'intl':'lg';
+function ourComp(){
+  if(!S||!S.fixtures||!S.teams||seasonDone())return 'lg';
+  const k=[S.day,S.round,S.cup&&S.cup.stage,S.intl&&S.intl.stage,(S.friendlies||[]).filter(f=>f.res).length,S.my].join();
+  if(ourComp.k!==k){ourComp.k=k;ourComp.v=compOf(nextFix())}
+  return ourComp.v;
+}
+// suspended for this competition (a friendly takes nobody's suspension into account)
+const banned=(p,c=COMP||ourComp())=>c!=='fr'&&!!p.bans&&p.bans[c]>0;
+const unavail=p=>p.inj>0||p.away>0||!!p.loan||banned(p);
 /* ---------- lineups are 11 formation slots ----------
    a lineup is an array with one entry per slot of the formation (GK first, then DF, MF, FW); an entry is a
    player id, or null when the slot is empty or its player was sent off. the slot decides the role he plays */
@@ -316,10 +330,11 @@ const injRisk=p=>INJ_RATE*(p.cond>=75?.45:p.cond>=60?.7:p.cond>=45?1.4:2.2);
 // yellow of the game) add up to two matches out
 function booking(team,ids,yc){
   const id=pickOn(ids),p=team.players.find(x=>x.id===id);if(!p)return null;  // one man on the pitch, at random
-  // season totals: ycs yellows, rcs reds (a second yellow counts as both); p.yc counts toward the next ban
+  // season totals: ycs yellows, rcs reds (a second yellow counts as both); p.ycc[competition] counts toward the next ban
   if(yc[p.id]){ids[ids.indexOf(p.id)]=null;p.banNext=(p.banNext||0)+1;p.ycs=(p.ycs||0)+1;p.rcs=(p.rcs||0)+1;return {p,red:true}}
-  yc[p.id]=1;p.yc++;p.ycs=(p.ycs||0)+1;
-  if(p.yc>=YC_BAN){p.yc=0;p.banNext=(p.banNext||0)+1;return {p,banned:true}}
+  const c=COMP||'lg',n=p.ycc||(p.ycc={});
+  yc[p.id]=1;n[c]=(n[c]||0)+1;p.ycs=(p.ycs||0)+1;
+  if(n[c]>=YC_BAN){n[c]=0;p.banNext=(p.banNext||0)+1;return {p,banned:true}}
   return {p};
 }
 // growth multiplier: young players and those far below their potential improve faster
@@ -342,8 +357,10 @@ function afterMatch(team,xi,isMy,friendly){
     if(played&&!friendly)p.apps++;
     p.cond=clamp(Math.round(p.cond),30,100);  // stamina was spent minute by minute during the match
     if(!isMy&&p.inj>0)p.inj=Math.max(0,p.inj-7);  // our injuries heal day by day in advanceDay
-    if(!friendly&&p.ban>0&&!played)p.ban--;  // a friendly doesn't serve a ban
-    if(p.banNext){p.ban=Math.max(p.ban,p.banNext);delete p.banNext}  // a ban earned in this match: the next one
+    // bans are served (and earned) in the competition being played; a friendly does neither
+    const c=COMP||'lg',b=p.bans||(p.bans={});
+    if(!friendly&&b[c]>0&&!played)b[c]--;
+    if(p.banNext){b[c]=Math.max(b[c]||0,p.banNext);delete p.banNext}  // a ban earned in this match: the next one in it
     if(!friendly&&p.away>0&&!played)p.away--;
     if(p.ovr<p.pot){
       const ch=isMy?(played?MATCH_GROW:0):aiGrow;
@@ -412,7 +429,12 @@ function bestForm(team,home){
 }
 // and pick a tactic from how they compare: clearly stronger go for it, clearly weaker sit deep
 const tacFor=(mine,theirs)=>mine>theirs+3?'att':mine<theirs-3?'def':'bal';
-function quickSim(h,a){
+// comp: the competition ('lg', 'cup', 'intl'), for bookings and bans
+function quickSim(h,a,comp='lg'){
+  const prev=COMP;COMP=comp;
+  try{return simMatch(h,a)}finally{COMP=prev}
+}
+function simMatch(h,a){
   aiRecover(S.teams[h]);aiRecover(S.teams[a]);
   const H=S.teams[h],A=S.teams[a],bh=bestForm(H,true),ba=bestForm(A,false),th=tacFor(bh.r,ba.r),ta=tacFor(ba.r,bh.r);
   const hx=[...bh.ids],ax=[...ba.ids],hi=[...hx],ai=[...ax],yc={},ev={},used={h:0,a:0},on={},off={},shots={h:0,a:0};
@@ -686,7 +708,7 @@ function newSeason(moveTo){
       else if(p.age<=34)p.ovr-=ri(1,3);
       else p.ovr-=ri(2,5);
       p.ovr=clamp(p.ovr,35,95);p.pot=p.age>=33?p.ovr:Math.max(p.pot,p.ovr);  // 95 is potential's ceiling too; past 33 the decline is for good
-      t.condDay=0;t.lastDay=-9;p.cond=100;p.inj=0;p.ban=0;p.away=0;p.yc=0;p.ycs=0;p.rcs=0;p.goals=0;p.ast=0;p.ss=null;p.apps=0;p.lapps=0;p.rs=0;p.rn=0;p.gain=p.ovr-old;
+      t.condDay=0;t.lastDay=-9;p.cond=100;p.inj=0;p.bans={};p.away=0;p.ycc={};p.ycs=0;p.rcs=0;p.goals=0;p.ast=0;p.ss=null;p.apps=0;p.lapps=0;p.rs=0;p.rn=0;p.gain=p.ovr-old;
       if(p.sig&&p.age>=SIG_FADE){if(t.id===S.my)news(`${p.name} 年满 ${p.age} 岁，必杀技「${p.sig}」渐渐生疏了。`);delete p.sig}
       else learnSig(p);
     });

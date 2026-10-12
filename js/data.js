@@ -1,6 +1,6 @@
 /* ---------- constants, shared state, small helpers ---------- */
 const KEY='lvyin-fm-v1';  // localStorage key; kept as-is so old saves are still found
-const SAVE_V=19;         // bump when the save format changes, and add a step to MIGRATE in engine.js
+const SAVE_V=20;         // bump when the save format changes, and add a step to MIGRATE in engine.js
 // a club's base strength (its typical best-XI level) from its 底蕴: 98 → 84, 86 → 80, 50 → 68, 14 → 55
 function strFromRep(rep){return Math.round(50+rep*.35)}
 const TIERS=[[80,'豪门'],[65,'强队'],[45,'中游'],[0,'弱旅']];
@@ -54,7 +54,7 @@ const TRAIN={rest:['恢复训练','训练日体能 +10，不会通过训练进�
 const CARD=.013;   // chance per team per minute of a booking (about 1.2 per team per match)
 // chance to retire at the end of a season by age (33-39; 40+ always retires), scaled by ability below
 const RETIRE_AGE={33:.08,34:.2,35:.4,36:.6,37:.75,38:.85,39:.95};
-const YC_BAN=3;   // yellow cards that add up to a one-match ban
+const YC_BAN=3;   // yellow cards in one competition that add up to a one-match ban in it
 // player name parts; genName in engine.js combines them
 // calendar 3: a season of SEASON_WEEKS weeks, league rounds on Saturdays. 甲级 (18 rounds) sits 4 weekends out, on
 // 冠军杯 weeks; 乙级 (22) plays every Saturday; 丙级 (26) adds 4 rounds on Tuesdays of weeks without a cup tie
@@ -82,6 +82,8 @@ const CUP_NAME='天穹杯';
 // from abroad. four groups of four (home and away), the top two of each to the quarter-finals, then semis and a final,
 // all on the Wednesdays of weeks without a 天穹杯 tie
 const INTL_NAME='天际冠军杯';
+// each competition keeps its own bookings and bans: league, 天穹杯, 冠军杯 (friendlies have neither)
+const COMPS={lg:'联赛',cup:CUP_NAME,intl:INTL_NAME};
 const INTL_WEEKS=[3,4,7,8,10,11,14,18,22];   // six group rounds, quarter-finals, semi-finals, final (after the league)
 const INTL_WEEKS_V2=[3,4,7,8,11,12,16,19,23];  // on the 26-week calendar
 const INTL_WEEKS_V1=[2,3,5,6,8,9,11,12,15];  // on the first, shorter calendar

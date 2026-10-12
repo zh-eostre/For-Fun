@@ -8,8 +8,8 @@ function startMatch(){
   // S.live only marks that a match is under way (the save holds the state from before kickoff)
   S.live={seed:Math.floor(Math.random()*2**31)};save();
   rng=seeded(S.live.seed);indexNames();
-  const f=nextFix(),opp=S.teams[f.opp];aiRecover(opp);abroadForm(opp);
-  M={h:f.h,a:f.a,cup:f.cup,intl:!!f.intl,derby:f.derby,friendly:!!f.friendly,warm:!!f.warm,fIdx:f.idx,stage:f.cup?S.cup.stage:f.intl?S.intl.stage:null,hg:0,ag:0,min:0,feed:[],paused:false,ht:false,done:false,
+  const f=nextFix(),opp=S.teams[f.opp];COMP=compOf(f);aiRecover(opp);abroadForm(opp);
+  M={comp:COMP,h:f.h,a:f.a,cup:f.cup,intl:!!f.intl,derby:f.derby,friendly:!!f.friendly,warm:!!f.warm,fIdx:f.idx,stage:f.cup?S.cup.stage:f.intl?S.intl.stage:null,hg:0,ag:0,min:0,feed:[],paused:false,ht:false,done:false,
     flash:null,injuries:[],yc:{},goals:{},on:{},off:{},subs:0,oppSubs:0,sel:null,aiTac:'bal',tac:S.tactic,subMode:false,lastAuto:{h:-9,a:-9},talk:null,trailed:false,despair:false};  // tac: our tactic for this match only
   // the opponent picks its best formation, and a tactic from how it rates against our XI
   const os=bestForm(opp,!f.home),mr=rating(strength(my(),S.lineup,S.tactic,f.home,S.boost>0?BOOST:0,S.formation));
@@ -254,7 +254,8 @@ function finish(){
   S.lastMatchDay=S.day;
   M.injuries.forEach(p=>{p.inj=pick(INJ_DAYS);if(findP(p.id)&&rng()<quickHeal())p.inj=Math.max(1,Math.round(p.inj/2))});
   const hurt=M.injuries.filter(p=>findP(p.id));M.myInjuries=hurt;
-  const banned=my().players.filter(p=>p.ban>0&&myXI.includes(p.id));
+  // suspended by this match: in this competition only
+  const susp=my().players.filter(p=>banned(p,M.comp)&&myXI.includes(p.id)),bn=p=>p.bans[M.comp];
   const mg=home?M.hg:M.ag,og=home?M.ag:M.hg,mp=home?M.hp:M.ap,op=home?M.ap:M.hp;
   const pens=knockout()&&mg===og,w=mg>og||(pens&&mp>op)?'胜':mg<og||pens?'负':'平';
   const income=Math.round((4+(home?18*stadiumMult():0)+(w==='胜'?10:w==='平'?4:0))*(M.intl?1.5:DIV_INCOME[my().div])*(M.derby?2:1));
@@ -266,10 +267,10 @@ function finish(){
   matchActs();
   M.rh=rateSide(S.teams[M.h],M.hXI,M.role,M.ev,M.hg,M.ag,M.mins,false,M.act);M.ra=rateSide(S.teams[M.a],M.aXI,M.role,M.ev,M.ag,M.hg,M.mins,false,M.act);
   M.mvp=[...M.rh,...M.ra].sort((a,b)=>b.r-a.r)[0];
-  M.summary={w,mg,og,mp,op,pens,income,grown,awoken,banned};
+  M.summary={w,mg,og,mp,op,pens,income,grown,awoken,banned:susp,banComp:M.comp};
   news(`${w} ${mg}:${og}${pens?`（点球 ${mp}:${op}）`:''} 对阵${S.teams[oppId].name}${M.derby?'（宿敌之战）':''}。比赛收入 ${money(income)}。`);
   hurt.forEach(p=>news(`${p.name} 受伤，预计伤停 ${p.inj} 天。`));
-  if(banned.length)news(`${banned.map(p=>p.ban>1?`${p.name}（${p.ban} 场）`:p.name).join('、')} 停赛${banned.every(p=>p.ban===1)?'一场':''}。`);
+  if(susp.length)news(`${susp.map(p=>bn(p)>1?`${p.name}（${bn(p)} 场）`:p.name).join('、')} 在${COMPS[M.comp]}停赛${susp.every(p=>bn(p)===1)?'一场':''}。`);
   if(grown.length)news(`在比赛中成长：${grown.map(p=>`${p.name}（${p.ovr}）`).join('、')}。`);
   awoken.forEach(p=>news(`${LINE.awaken(p.name)}能力升至 ${p.ovr}，潜力 ${p.pot}。`));
   if(awoken.length)unlock('awaken');
@@ -286,7 +287,7 @@ function finish(){
   if(party)celebrate(party,my().name,'party');
   NEWS_TAG=null;
   rollEvent();
-  fixLineup();
+  COMP=null;fixLineup();  // the next lineup is picked for the next match's competition
   delete S.live;rng=Math.random;
   save();
 }
@@ -306,7 +307,7 @@ function finishFriendly(){
   S.friendlies[M.fIdx].res={hg:M.hg,ag:M.ag};
   news(`${M.warm?'热身赛':'季前友谊赛'}：${w} ${mg}:${og} 对阵${opp.name}。`);
   M.myInjuries.forEach(p=>news(`${p.name} 在友谊赛中受伤，预计伤停 ${p.inj} 天。`));
-  fixLineup();
+  COMP=null;fixLineup();  // the next lineup is picked for the next match's competition
   delete S.live;rng=Math.random;
   save();
 }

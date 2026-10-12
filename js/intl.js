@@ -68,7 +68,7 @@ function playIntl(myRes){
   const I=S.intl,k=I.stage,ko=k>=6;
   intlMatches().flat().forEach(id=>abroadForm(S.teams[id]));
   const res=intlMatches().map(([h,a])=>{
-    const r=myRes&&(h===S.my||a===S.my)?myRes:quickSim(h,a);
+    const r=myRes&&(h===S.my||a===S.my)?myRes:quickSim(h,a,'intl');
     if(ko&&r.hg===r.ag&&r.hp===undefined)Object.assign(r,shootout(S.teams[h],autoPick(S.teams[h],'4-4-2'),S.teams[a],autoPick(S.teams[a],'4-4-2')));
     if(ko)r.w=tieWinner(r);return r;
   });

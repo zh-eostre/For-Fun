@@ -1,9 +1,9 @@
 // Emergency keeper when none is available; playing short-handed; minimum of 7.
 require('./harness').run(`
 
-newGame(2,teamNames());
-// both keepers out: one suspended, one injured
-my().players.filter(p=>p.pos==='GK').forEach((p,i)=>i?p.inj=5:p.ban=1);
+newGame(2,teamNames());S.friendlies.forEach(f=>f.res={hg:0,ag:0});  // straight to the league (a friendly ignores bans)
+// both keepers out: one suspended for the league, one injured
+my().players.filter(p=>p.pos==='GK').forEach((p,i)=>i?p.inj=5:p.bans={lg:1});
 ACT.auto();const gk=findP(S.lineup[0]);
 ok(gk&&gk.pos!=='GK'&&lineupIssues().length===0,'no keeper available: '+gk.name+' ('+POS[gk.pos]+') goes in goal, match can start');
 UI.tab='squad';render();ok(/临时客串门将/.test(els.app.innerHTML)&&!bad(els.app.innerHTML),'squad page explains the emergency keeper');
