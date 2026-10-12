@@ -897,3 +897,10 @@ tr.intl-maybe td:first-child{box-shadow:inset 4px 0 color-mix(in srgb,var(--ambe
 .prize-list{display:grid;gap:4px;font-size:14px}
 .prize-list div{display:flex;justify-content:space-between;gap:10px}
 .prize-list span{color:var(--muted)}
+/* a cup's roll of honour */
+.hrow{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;align-items:center;padding:7px 6px;border-radius:6px;font-size:14px}
+.hrow .hr-n{color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.hrow .hr-club{display:flex;flex-direction:column;min-width:0}
+.hrow .hr-club small{color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hrow .hr-count{white-space:nowrap;color:var(--muted)}
+.hrow .hr-count b{font-size:18px;color:var(--ink)}

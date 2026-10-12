@@ -873,6 +873,13 @@ function intlStatus(){
   const out=I.ko.findIndex(rd=>rd.some(r=>(r.h===S.my||r.a===S.my)&&r.w!==S.my));
   return out===2?'获得亚军。':out>=0?`止步${INTL_STAGES[6+out]}。`:'小组赛出局。';
 }
+// seasons as short runs, latest first: S9、S6–S7、S2 (at most four runs, then 等; the full list is in the tooltip)
+function seasonRuns(seasons){
+  const xs=[...new Set(seasons)].sort((a,b)=>b-a),runs=[];
+  for(const x of xs){const r=runs[runs.length-1];if(r&&r[0]===x+1)r[0]=x;else runs.push([x,x])}
+  const txt=runs.map(([a,b])=>a===b?`S${a}`:`S${a}–S${b}`);
+  return txt.slice(0,4).join('、')+(txt.length>4?' 等':'');
+}
 // a cup's roll of honour: every club that has won it, most titles first (then the most recent), with the seasons.
 // key: 'cup' or 'intl' in the season records; this season's winner counts as soon as the final is played
 function cupHonours(key,title){
@@ -881,8 +888,8 @@ function cupHonours(key,title){
   const C=key==='cup'?S.cup:S.intl,recorded=(S.records||[]).some(r=>r.season===S.season);
   if(C&&C.winner!=null&&!recorded)add(S.teams[C.winner].name,S.season);
   const list=Object.values(won).sort((a,b)=>b.seasons.length-a.seasons.length||Math.max(...b.seasons)-Math.max(...a.seasons));
-  return `<section class="panel"><h2>${title}历届冠军</h2>${list.length?`<div class="honours-list">${list.map((c,i)=>`<div class="res hrow ${c.name===my().name?'me':''}" style="grid-template-columns:24px 1fr auto">
-    <span class="muted num">${i+1}</span><span style="text-align:left"><b>${c.name}</b> <span class="muted">${c.seasons.map(x=>'S'+x).join('、')}</span></span><span class="num">${c.seasons.length} 冠</span></div>`).join('')}</div>`
+  return `<section class="panel"><h2>${title}历届冠军</h2>${list.length?`<div class="honours-list">${list.map((c,i)=>`<div class="hrow ${c.name===my().name?'me':''}">
+    <span class="hr-n">${i+1}</span><span class="hr-club"><b>${c.name}</b><small title="${c.seasons.map(x=>'第 '+x+' 季').join('、')}">${seasonRuns(c.seasons)}</small></span><span class="hr-count"><b>${c.seasons.length}</b> 冠</span></div>`).join('')}</div>`
     :'<p class="muted" style="margin:0">还没有决出过冠军。</p>'}</section>`;
 }
 // the cup pages share their pieces: a result row, a fixture row, a folding round, our road through the rounds

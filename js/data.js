@@ -112,7 +112,7 @@ const INTL_WEEKS=[3,4,7,8,10,11,14,18,22];   // six group rounds, quarter-finals
 const INTL_WEEKS_V2=[3,4,7,8,11,12,16,19,23];  // on the 26-week calendar
 const INTL_WEEKS_V1=[2,3,5,6,8,9,11,12,15];  // on the first, shorter calendar
 const INTL_STAGES=['小组赛第 1 轮','小组赛第 2 轮','小组赛第 3 轮','小组赛第 4 轮','小组赛第 5 轮','小组赛第 6 轮','八强','半决赛','决赛'];
-const INTL_PRIZE={win:15,draw:5,ko:[30,60,100],champion:250};  // per group result; for reaching the quarters / semis / final; winning
+const INTL_PRIZE={win:30,draw:10,ko:[60,120,200],champion:450};  // per group result; for reaching the quarters / semis / final; winning
 // clubs from abroad (they only play in the international cup): name, short name, colour, 底蕴
 const FOREIGN=[['霜岭皇家','皇家','#2B3A67',86],['赤道星辰','星辰','#C9A227',82],['苍原白狼','白狼','#8D99AE',80],['冰原极光','极光','#3FA7D6',78],
   ['暮色湾联合','暮色','#6D597A',76],['碧波海岸','碧波','#2A9D8F',74],['东瀛蓝武士','武士','#1D3557',73],['月港联合','月港','#B56576',71],
