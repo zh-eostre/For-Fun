@@ -1,14 +1,21 @@
 /* ---------- sound effects ----------
-   the crowd is recorded (sounds/, see sounds/CREDITS.md): a cheer for our goals, a disappointed sigh for theirs, a
+   the crowd is recorded (sounds/, see sounds/CREDITS.md): a cheer for our goals, a disappointed "oh" for theirs, a
    long roar for a title or a 绝杀. the rest is made on the spot with the Web Audio API: whistles, card beeps, a whoosh
    for a signature move, a fanfare. on unless switched off (the setting is kept on this device). nothing plays while
    a match is skipped, or where the browser has no audio */
 const SAMPLES={goal:['sounds/goal.wav',.75],concede:['sounds/concede.wav',.8],roar:['sounds/roar.wav',.8]};
 // a recording through an <audio> element (works for a page opened from a file, and in the desktop app); false if
-// it can't be played, so the synthesised version stands in
+// it can't be played, so the synthesised version stands in. the crowd is one voice: a new cheer or groan cuts off the
+// one still playing (goals in quick succession restart it rather than piling up)
+const sampleEls={};let crowdNow=null;
 function playSample(k){
   if(typeof Audio==='undefined'||!SAMPLES[k])return false;
-  try{const a=new Audio(SAMPLES[k][0]);a.volume=SAMPLES[k][1];const p=a.play();if(p&&p.catch)p.catch(()=>{});return true}catch(e){return false}
+  try{
+    const a=sampleEls[k]||(sampleEls[k]=new Audio(SAMPLES[k][0]));
+    if(crowdNow&&crowdNow!==a)crowdNow.pause();
+    a.volume=SAMPLES[k][1];a.currentTime=0;crowdNow=a;
+    const p=a.play();if(p&&p.catch)p.catch(()=>{});return true;
+  }catch(e){return false}
 }
 const SOUND_KEY='lvyin-sound';
 let audioCtx=null;
