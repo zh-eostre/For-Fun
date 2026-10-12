@@ -1,7 +1,7 @@
 // A lineup we never arranged by hand is re-picked after every match (a star back from injury returns to his place);
 // one we arranged keeps our choices; the squad page says which.
 require('./harness').run(`
-newGame(TEAMS.findIndex(t=>t.div===2),teamNames());ACT.form('4-2-3-1');
+newGame(TEAMS.findIndex(t=>t.div===2),teamNames());S.rotate=false;ACT.form('4-2-3-1');  // rotation is tested below
 const fwSlot=slotRoles(S.formation).indexOf('FW'),star=findP(S.lineup[fwSlot]);
 ok(S.autoXI===true&&star.pos==='FW','auto mode, best forward up front: '+star.name);
 // he gets injured: someone else plays up front; he comes back: he is up front again
@@ -18,4 +18,18 @@ ACT.slot(String(fwSlot));ACT.slot('1');ok(S.autoXI===false&&S.lineup[1]===star.i
 fixLineup();ok(S.lineup[1]===star.id,'manual: our arrangement is kept');
 render();ok(/首发：手动/.test(els.app.innerHTML),'squad page says 首发：手动');
 star.cond=100;ACT.auto();ok(S.autoXI===true&&S.lineup[fwSlot]===star.id,'自动选人 goes back to auto (that pick does weigh stamina on the day)');
+// rotation: a worn starter makes way for a fitter man of his position who is nearly as good
+{newGame(TEAMS.findIndex(t=>t.div===2),teamNames());S.autoXI=true;const roles=slotRoles(S.formation);
+  my().players.forEach(p=>{p.cond=100;p.inj=0});fixLineup();
+  const i=roles.indexOf('MF'),star=findP(S.lineup[i]),others=my().players.filter(p=>p.pos==='MF'&&!S.lineup.includes(p.id));
+  others.forEach(p=>p.ovr=Math.min(p.ovr,star.ovr-3));const sub=others.sort((a,b)=>b.ovr-a.ovr)[0];sub.ovr=star.ovr-3;
+  S.lineup.forEach((id,j)=>{if(roles[j]==='MF'&&j!==i)findP(id).ovr=star.ovr+5});  // the other midfielders stay ahead of the sub
+  S.training='hard';star.cond=50;star.cond=ROTATE_AT-5-(kickoffCond(star)-50);fixLineup();  // under ROTATE_AT at kickoff
+  ok(!S.lineup.includes(star.id)&&S.lineup.some(id=>findP(id).pos==='MF'&&findP(id).ovr===star.ovr-3),'a starter on '+star.cond+' stamina is rested for a midfielder 3 points worse');
+  sub.ovr=star.ovr-ROTATE_GAP-2;fixLineup();ok(S.lineup.includes(star.id),'not for one '+(ROTATE_GAP+2)+' points worse');
+  sub.ovr=star.ovr-3;S.rotate=false;fixLineup();ok(S.lineup.includes(star.id),'and not with rotation switched off');
+  S.rotate=true;star.cond=ROTATE_AT+5;fixLineup();  // (already above it before the days' recovery)ok(S.lineup.includes(star.id),'above '+ROTATE_AT+' he plays');
+  UI.tab='squad';render();ok(/data-act="rotate"/.test(els.app.innerHTML)&&/自动轮换：开/.test(els.app.innerHTML),'the squad page has the switch');
+  star.cond=100;fixLineup();ok(S.lineup.includes(star.id),'fresh again: back in');
+  star.cond=40;ACT.nextDay();ok(kickoffCond(star)<ROTATE_AT===!S.lineup.includes(star.id),'the auto XI is brought up to date as the days go by');}
 `);

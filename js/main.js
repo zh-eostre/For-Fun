@@ -167,7 +167,8 @@ const ACT={
   form:a=>{S.formation=a;S.lineup=autoPick(my(),a);S.autoXI=true;UI.selSlot=null;save();toast(`已按 ${a} 重新选好首发`);render()},
   // in a match only that match's tactic changes; otherwise it's the club's default for coming matches
   tac:a=>{if(M&&!M.done)M.tac=a;else{S.tactic=a;save()}render()},
-  auto:()=>{S.lineup=autoPick(my(),S.formation);S.autoXI=true;UI.selSlot=null;save();render()},
+  auto:()=>{S.lineup=autoPick(my(),S.formation);S.autoXI=true;UI.selSlot=null;fixLineup();save();render()},
+  rotate:()=>{S.rotate=S.rotate===false;if(S.autoXI!==false)fixLineup();save();render()},
   // player list rows: add to / remove from the XI
   toggle:a=>{
     const id=+a,p=findP(id);if(!p)return;

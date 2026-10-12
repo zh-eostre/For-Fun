@@ -54,6 +54,9 @@ const TRAIN={rest:['恢复训练','训练日体能 +10，不会通过训练进�
 const CARD=.013;   // chance per team per minute of a booking (about 1.2 per team per match)
 // chance to retire at the end of a season by age (33-39; 40+ always retires), scaled by ability below
 const RETIRE_AGE={33:.08,34:.2,35:.4,36:.6,37:.75,38:.85,39:.95};
+// auto lineup rotation: a starter under ROTATE_AT stamina sits out for a fitter man in his position at most
+// ROTATE_GAP points worse (and ROTATE_FRESH stamina fresher)
+const ROTATE_AT=70,ROTATE_GAP=5,ROTATE_FRESH=15;
 const LATE_MIN=85;  // from this minute a goal that wins or levels the match can be a 绝杀 / 绝平
 const YC_BAN=3;   // yellow cards in one competition that add up to a one-match ban in it
 // player name parts; genName in engine.js combines them

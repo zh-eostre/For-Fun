@@ -647,8 +647,27 @@ const outOfPos=()=>{const roles=slotRoles(S.formation);return S.lineup.map((id,i
 // after a match: empty the slots of anyone now unavailable, and if the XI was full, refill those slots
 // after a match or an event: a lineup we haven't arranged by hand is simply picked afresh (so a star back from
 // injury walks straight back into his place); one we arranged keeps our choices and only has its gaps filled
+// a player's stamina at the next kickoff: today's and each following day's rest or training still to come
+function kickoffCond(p){
+  let c=p.cond;const days=matchDays(),end=nextMatchDay();
+  for(let d=S.day;d<end;d++){const t=S.lastMatchDay===d?'match':dayType(d,days);c+=t==='match'?0:t==='rest'?restAmt():TRAIN_DAY[S.training].cond}
+  return Math.min(100,c);
+}
+// the auto XI with rotation (on unless switched off): the most worn starters (by their stamina at kickoff) first,
+// each swapped for the best man of his position who qualifies
+function rotate(ids,form){
+  if(S.rotate===false||seasonDone())return ids;
+  const roles=slotRoles(form),out=[...ids],kc=new Map(my().players.map(p=>[p.id,kickoffCond(p)]));
+  const worn=out.map((id,i)=>({p:id!=null&&findP(id),i})).filter(x=>x.p&&kc.get(x.p.id)<ROTATE_AT).sort((a,b)=>kc.get(a.p.id)-kc.get(b.p.id));
+  for(const {p,i} of worn){
+    const sub=my().players.filter(q=>q.pos===roles[i]&&!unavail(q)&&!out.includes(q.id)&&kc.get(q.id)>=kc.get(p.id)+ROTATE_FRESH&&q.ovr>=p.ovr-ROTATE_GAP)
+      .sort((a,b)=>b.ovr-a.ovr)[0];
+    if(sub)out[i]=sub.id;
+  }
+  return out;
+}
 function fixLineup(){
-  if(S.autoXI!==false){S.lineup=autoPick(my(),S.formation,true);return}
+  if(S.autoXI!==false){S.lineup=rotate(autoPick(my(),S.formation,true),S.formation);return}
   const full=lineupCount()===11;
   S.lineup=S.lineup.map(id=>{const p=id!=null&&findP(id);return p&&!unavail(p)?id:null});
   if(full)fillSlots();
@@ -795,5 +814,6 @@ function advanceDay(log){
   while(cupDue()&&!inCup()&&S.day>=cupDay(S.cup.stage))playCupStage(null);
   intlCatchUp();
   planWarmups();
+  if(S.autoXI!==false)fixLineup();  // the auto XI follows the stamina day by day
   return true;
 }

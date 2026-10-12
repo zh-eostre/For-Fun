@@ -232,6 +232,7 @@ function vRules(){
     `球探部 3 级以上，赛前情报会指出对方最薄弱的一线。阵型或战术针对它的话，进攻会有加成（比分板会亮出「针对弱点」）；怎么针对要自己琢磨，球探部升到 4、5 级后情报会说得更清楚。`,
     '第 75 分钟后还有「名帅光环」：教练声望越高，进攻加成越大，必杀技也越容易打出来。落后逆转取胜可以解锁「逆转之王」。'])}
   ${sec('体能与换人',['比赛中会消耗体能：中场跑得最多，前锋、后卫其次，门将几乎不累。体能 80 以上基本不影响发挥，越低越弱（70 约九折，60 约八折）。',
+    `首发设为自动时，阵容每天按体能更新；打开「自动轮换」，体能低于 ${ROTATE_AT} 的首发会让给同位置、能力最多低 ${ROTATE_GAP}、体能好得多的替补。`,
     `中场休息时，我方球员会恢复一点体能。每场最多换 ${SUBS} 人；自动换人从第 60 分钟起，把体能低于 ${TIRED}、而且替补更强的人换下；体能跌破 ${SPENT} 的球员不管能力多高都会被换下（受伤风险太大）。可以关掉自己来换。`,
     '同一次暂停里的换人在继续比赛前都可以改或撤销。',
     `赛后第一天是休息日（体能 +${DAY_REST}）；之后看训练安排：恢复训练 +${TRAIN_DAY.rest.cond}，常规训练 +${TRAIN_DAY.normal.cond}，高强度加练 +${TRAIN_DAY.hard.cond}（进步最快，但更容易受伤）。`])}
@@ -365,6 +366,7 @@ function vSquad(){
   <div class="count">首发 <span class="num">${lineupCount()}</span>/11</div>
   <button class="btn" data-act="auto">按 ${S.formation} 自动选人</button>
   <span class="xi-mode ${S.autoXI!==false?'auto':''}" title="${S.autoXI!==false?'每场赛后都按最佳阵容重新安排，伤愈的主力会自动回到首发':'保留你的安排，只在有人缺阵时自动补位；点「自动选人」恢复自动'}">${S.autoXI!==false?'首发：自动':'首发：手动'}</span>
+  <button class="btn small" data-act="rotate" aria-pressed="${S.rotate!==false}" title="自动首发时：体能低于 ${ROTATE_AT} 的首发，换上同位置、能力最多低 ${ROTATE_GAP}、体能更好的替补">自动轮换：${S.rotate!==false?'开':'关'}</button>
   ${iss.length?`<span class="warn">${iss[0]}</span>`:`<span class="muted" style="font-size:14px">${formNote(S.formation)}</span>`}
   </div></section>
   <div class="cols squad"><div class="col">${vPitch()}</div>
