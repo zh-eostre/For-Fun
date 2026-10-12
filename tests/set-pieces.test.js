@@ -40,7 +40,7 @@ ACT.taker('pen:'+fw.id);ok(takerList('pen').length===0,'pressed again: out, back
   // an older save (one id) still works
   S.takers={pen:xi[1].id};ok(takerList('pen').join()===String(xi[1].id)&&taker(my(),ids,'pen')===xi[1],'an older save with a single taker');
   // the dialog
-  UI.tab='squad';render();ok(!/data-act="takers"/.test(els.app.innerHTML)&&!/点球 .*任意球/.test(els.app.innerHTML),'the squad page stays uncluttered');
+  UI.tab='squad';render();ok(/data-act="takers"/.test(els.app.innerHTML)&&!/点球 .*任意球/.test(els.app.innerHTML),'the squad page has the 定位球设置 button, without the names');
   ACT.player(String(xi[0].id));ok(/data-act="takers"/.test(els.app.innerHTML),'the player dialog has 定位球设置');
   ACT.takers();const h=els.app.innerHTML;ok(/定位球主罚/.test(h)&&(h.match(/class="tk-col"/g)||[]).length===2&&/对上普通门将的命中率/.test(h)&&!bad(h),'the dialog: penalties and free kicks, with each player\u2019s chances');
   ACT.taker('fk:'+xi[2].id);ok(/class="tk-row on"/.test(els.app.innerHTML)&&takerList('fk').join()===String(xi[2].id),'picking in the dialog');
