@@ -4,12 +4,37 @@
    goes to penalties). the clubs from abroad live in S.teams so the match engine can use them, marked foreign with
    div -1, and take no part in anything else (league, 天穹杯, transfers, job offers) */
 const domestic=()=>S.teams.filter(t=>!t.foreign);
+// the clubs from abroad: any of FOREIGN not yet in the game join it (a save from before the pool grew gets the new
+// ones); base: the standing a club started with, which it drifts back toward in the years it isn't in the cup
 function ensureForeign(){
-  if(S.teams.some(t=>t.foreign))return;
+  const have=new Map(S.teams.filter(t=>t.foreign).map(t=>[t.name,t]));
   FOREIGN.forEach(([name,short,color,rep])=>{
-    const t={id:S.teams.length,name,short,color,rep,str:strFromRep(rep),div:-1,foreign:true,players:[]};
+    const old=have.get(name);if(old){if(old.base==null)old.base=rep;return}
+    const t={id:S.teams.length,name,short,color,rep,base:rep,str:strFromRep(rep),div:-1,foreign:true,players:[]};
     S.teams.push(t);t.players=makeSquad(t.str+diff().ai);t.players.forEach(p=>learnSig(p,true));
   });
+}
+// after a 冠军杯 (I): each club abroad's standing moves by how far it went (FOREIGN_FORM); those not in it drift back
+function foreignForm(I){
+  if(!I||I.winner==null)return;
+  const went={};
+  I.groups.forEach((g,gi)=>intlTable(gi).forEach((r,i)=>went[r.id]=i===3?0:i===2?1:2));  // group 4th, 3rd, through
+  I.ko.forEach((rd,j)=>rd.forEach(r=>went[r.w]=j+3));  // won a quarter-final, a semi, the final
+  S.teams.filter(t=>t.foreign).forEach(t=>{
+    const off=t.rep-(t.base??t.rep),back=-Math.sign(off);
+    const d=went[t.id]!=null?FOREIGN_FORM[went[t.id]]+(Math.abs(off)>FOREIGN_PULL?back:0):back;
+    t.rep=clamp(t.rep+d,...FOREIGN_REP);t.str=strFromRep(t.rep);
+  });
+}
+// thirteen clubs from abroad for a 冠军杯, drawn by standing: the stronger a club, the likelier it's in
+function drawAbroad(n){
+  const pool=S.teams.filter(t=>t.foreign),out=[];
+  while(out.length<n&&pool.length){
+    const w=pool.map(t=>Math.max(1,t.rep-50)**1.5),sum=w.reduce((a,b)=>a+b,0);let r=rng()*sum,i=0;
+    while(i<pool.length-1&&(r-=w[i])>0)i++;
+    out.push(pool.splice(i,1)[0]);
+  }
+  return out;
 }
 // clubs from abroad only play a handful of matches here, so they don't develop like ours. each summer they renew
 // instead: veterans who have slipped below the club's level make way for signings at it
@@ -41,8 +66,9 @@ function intlEntrants(top,cupWinner){
 }
 // the draw: our clubs go to different groups; the 13 from abroad fill the smallest group first, strongest first
 function newIntl(home){
+  if(S.intl)foreignForm(S.intl);  // last season's cup moves the clubs abroad up or down
   ensureForeign();freshenForeign();
-  const away=shuffle(S.teams.filter(t=>t.foreign)).slice(0,13).sort((a,b)=>b.rep-a.rep).map(t=>t.id);
+  const away=drawAbroad(13).sort((a,b)=>b.rep-a.rep).map(t=>t.id);
   const groups=[[],[],[],[]];home.forEach((id,i)=>groups[i].push(id));
   away.forEach(id=>{const g=groups.map((x,i)=>[x.length,i]).sort((a,b)=>a[0]-b[0]||a[1]-b[1])[0][1];groups[g].push(id)});
   news(`${INTL_NAME}抽签：${home.map(id=>S.teams[id].name).join('、')}代表本国出战。`);

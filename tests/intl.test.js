@@ -62,4 +62,22 @@ ok(S.teams.filter(t=>t.foreign).every(t=>aiGap(t)<=3),'and they renew their squa
 // an old save without the cup: plays on, and gets one next season
 delete S.intl;UI.tab='home';render();ok(!bad(els.app.innerHTML),'a save without the 冠军杯 renders');
 ok(nextFix()&&!nextFix().intl,'and plays its league');
+// the pool abroad: 28 clubs, drawn by standing, and their standing moves with their 冠军杯 runs
+{newGame(TEAMS.findIndex(t=>t.div===2),teamNames());UI.guide=null;const F=S.teams.filter(t=>t.foreign);
+  ok(F.length===FOREIGN.length&&FOREIGN.length===28&&F.every(t=>t.base===t.rep),'28 clubs abroad, each starting at its own standing');
+  const top=F.reduce((a,b)=>a.rep>b.rep?a:b),low=F.reduce((a,b)=>a.rep<b.rep?a:b);let nt=0,nl=0;
+  for(let k=0;k<300;k++){const d=drawAbroad(13);if(d.includes(top))nt++;if(d.includes(low))nl++}
+  ok(nt>nl*2,'the draw favours the strong: '+top.short+' in '+nt+'/300, '+low.short+' in '+nl+'/300');
+  // a cup played out: the winner goes up, a group's last goes down, a club not in it drifts back
+  const I=S.intl;finishIntl();const W=S.teams[I.winner],last=I.groups.map((g,gi)=>intlTable(gi)[3].id).map(id=>S.teams[id]).find(t=>t.foreign);
+  const out=F.find(t=>!I.groups.flat().includes(t.id));out.rep=out.base+3;
+  const before=new Map(F.map(t=>[t.id,t.rep]));foreignForm(I);
+  ok(!W.foreign||W.rep===Math.min(FOREIGN_REP[1],before.get(W.id)+3),'the winner abroad gains (+3)');
+  ok(!last||last.rep===Math.max(FOREIGN_REP[0],before.get(last.id)-2+(Math.abs(before.get(last.id)-last.base)>FOREIGN_PULL?Math.sign(last.base-before.get(last.id)):0)),'a group\u2019s last loses (-2)');
+  ok(out.rep===out.base+2,'a club not in it drifts back toward its old standing');
+  ok(F.every(t=>t.str===strFromRep(t.rep)),'strength follows standing');
+  // an older save with the first 16 gets the rest
+  const old=JSON.parse(JSON.stringify(S));const keep=new Set(FOREIGN.slice(0,16).map(f=>f[0]));
+  old.teams=old.teams.filter(t=>!t.foreign||keep.has(t.name));old.teams.forEach((t,i)=>t.id=i);S=old;S.intl=null;
+  ensureForeign();ok(S.teams.filter(t=>t.foreign).length===28&&S.teams.every((t,i)=>t.id===i),'an older save gets the 12 new clubs, ids in order');}
 `);

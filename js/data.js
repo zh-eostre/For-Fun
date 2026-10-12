@@ -117,7 +117,14 @@ const INTL_PRIZE={win:30,draw:10,ko:[60,120,200],champion:450};  // per group re
 const FOREIGN=[['霜岭皇家','皇家','#2B3A67',86],['赤道星辰','星辰','#C9A227',82],['苍原白狼','白狼','#8D99AE',80],['冰原极光','极光','#3FA7D6',78],
   ['暮色湾联合','暮色','#6D597A',76],['碧波海岸','碧波','#2A9D8F',74],['东瀛蓝武士','武士','#1D3557',73],['月港联合','月港','#B56576',71],
   ['北岭钢铁','钢铁','#495057',70],['沙海猎鹰','猎鹰','#E09F3E',69],['白岩竞技','白岩','#ADB5BD',67],['珊瑚海盗','海盗','#E76F51',66],
-  ['烈阳城','烈阳','#F4A261',64],['雾都皇冠','皇冠','#5C677D',63],['极北之星','北星','#4361EE',62],['银河体育会','银河','#7209B7',60]];
+  ['烈阳城','烈阳','#F4A261',64],['雾都皇冠','皇冠','#5C677D',63],['极北之星','北星','#4361EE',62],['银河体育会','银河','#7209B7',60],
+  ['铁原竞技','铁原','#6B705C',75],['碧海联合','碧海','#0096C7',72],['金沙城','金沙','#D4A373',70],['苍穹之鹰','苍穹','#3A86FF',68],
+  ['凛风港','凛风','#8ECAE6',66],['赤岩体育会','赤岩','#9D0208',65],['白昼骑士','白昼','#E9C46A',63],['星河联','星河','#5A189A',62],
+  ['云端城竞技','云端','#48CAE4',61],['深蓝港','深蓝','#023E8A',59],['风暴角','风暴','#495867',58],['玄武联合','玄武','#2D6A4F',57]];
+// how a club abroad's standing moves after a 冠军杯, by how far it went (group 4th, 3rd, quarter-finals, semis, final,
+// winner); a club more than FOREIGN_PULL away from where it started is pulled a point back each year, and one not in
+// the cup drifts a point back. kept within FOREIGN_REP
+const FOREIGN_FORM=[-2,-1,0,1,2,3],FOREIGN_PULL=6,FOREIGN_REP=[55,90];
 // a cup's format is stored with the cup (S.cup.fmt), so a save made under the 16-club format finishes its cup as it began
 const CUP_FORMAT={
   names:['资格赛','十六强','八强','半决赛','决赛'],
