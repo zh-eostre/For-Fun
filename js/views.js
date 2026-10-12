@@ -264,7 +264,7 @@ function vRules(){
     `一个赛季 ${weeks()} 周，联赛在周六进行，三个级别在同一天结束。甲级只有 18 轮，有 4 个周末轮空（在${INTL_NAME}周）；乙级每周六一轮；丙级 26 轮，有 4 轮放在周二（避开杯赛周）。`,
     `${CUP_NAME}决赛在联赛最后一轮的前一周，${INTL_NAME}决赛在联赛最后一轮的后一周（进了决赛，赛季就踢到决赛为止）。`,
     `哪一周你没有正式比赛（联赛轮空、杯赛已出局），那周六会自动安排一场热身赛，对手是海外球队，不计成绩、不吃牌。`,
-    `季前一周：转会窗口开放，还有两场友谊赛（对手是本国其他级别的球队，不计成绩、不吃牌）。赛季过半后开 ${WINTER} 天冬窗，其余时间不能买卖球员。AI 球队大多在窗口最后几天才出手，所以想要的人最好早点下手；冬窗只是小修补，出手的球队不多。`,
+    `季前一周：转会窗口开放，还有两场友谊赛（对手是本国其他级别的球队，不计成绩、不吃牌）。赛季过半后开 ${WINTER} 天冬窗，其余时间不能买卖球员。AI 球队大多在窗口最后几天才出手，所以想要的人最好早点下手；冬窗只是小修补，出手的球队不多。窗口结束前 3 天，会传出豪门盯上了哪位年轻天才，窗口最后一天他可能被签走（${diff().name}难度：${Math.round(diff().grab*100)}%）。`,
     `${CUP_NAME}是单场淘汰，平局直接点球大战。杯赛在周中，3 天后就是下一轮联赛。`,
     `${INTL_NAME}：16 队参加，本国派出甲级前两名和${CUP_NAME}冠军（冠军已在前两名时由甲级第三名替补），其余 13 队来自海外（每季从 ${FOREIGN.length} 支海外俱乐部里按实力抽签，强队更常出现；它们的底蕴会随冠军杯成绩升降）。4 个小组主客场双循环，前两名进八强，之后单场淘汰。比赛在周三，收入 1.5 倍；小组赛胜 ${money(INTL_PRIZE.win)}、平 ${money(INTL_PRIZE.draw)}，进八强 ${money(INTL_PRIZE.ko[0])}、四强 ${money(INTL_PRIZE.ko[1])}、决赛 ${money(INTL_PRIZE.ko[2])}，冠军 ${money(INTL_PRIZE.champion)}。海外球队不参加联赛和${CUP_NAME}，也不买卖球员。`])}
   ${sec('比赛怎么踢',['每分钟按双方「进攻对防守」的差距决定进球机会。实力强的一方机会更多，但强队也会输球，强队累了时弱队更有机会。',
@@ -629,7 +629,7 @@ function vMarket(){
   <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
    <button class="btn small" data-act="scout" ${S.budget<scoutCost()?'disabled':''}>加派球探，名单多 4 人（${money(scoutCost())}）</button>
    <span class="muted" style="font-size:13px">符合条件 ${list.length}/${S.market.length} 人</span>${pager}</div>
-  ${list.length?'<div class="mlist">'+shown.map(p=>`<div class="mrow"><div style="min-width:0"><div class="pname">${p.name}${gem(p)} ${p.sale?'<span class="tag2 sale">急售半价</span>':''}${p.fresh===S.season?'<span class="tag2 fresh" title="冬窗新到">新到</span>':''}${p.ex?`<span class="tag2 fresh" title="从${p.ex}放出">老部下</span>`:''} <span class="muted" style="font-weight:400">${POS[p.pos]}，${p.age} 岁</span></div>
+  ${list.length?'<div class="mlist">'+shown.map(p=>`<div class="mrow"><div style="min-width:0"><div class="pname">${p.name}${gem(p)} ${p.sale?'<span class="tag2 sale">急售半价</span>':''}${p.fresh===S.season?'<span class="tag2 fresh" title="冬窗新到">新到</span>':''}${p.eyed!=null?`<span class="tag2 eyed" title="${S.teams[p.eyed].name} 盯上了他，窗口最后一天可能被签走">豪门盯上</span>`:''}${p.ex?`<span class="tag2 fresh" title="从${p.ex}放出">老部下</span>`:''} <span class="muted" style="font-weight:400">${POS[p.pos]}，${p.age} 岁</span></div>
   ${p.sig?`<div class="sig">必杀「${p.sig}」</div>`:''}
   <div class="pbar" aria-hidden="true"><i class="p" style="width:${pctR(p.scout?p.scout.hi:p.pot)}%"></i><i class="o" style="width:${pctR(p.ovr)}%"></i></div>
   <div class="price">转会费 ${money(p.price)}${p.scout&&p.scout.conf!=='high'?`<span class="conf">，球探把握${p.scout.conf==='mid'?'一般':'很低'}</span>`:''}</div></div>

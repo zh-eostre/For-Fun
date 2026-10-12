@@ -534,7 +534,7 @@ function addToMarket(n,season){
   for(let i=0;i<n;i++){
     const pos=pick(['GK','DF','DF','DF','MF','MF','MF','FW','FW','FW']);
     let p;
-    if(i%4===0){p=makePlayer(pos,ri(50,64)+sh*.5,ri(17,20));p.pot=Math.min(95,ri(80,92)+Math.round(sh*.3))}  // a quarter are prospects
+    if(i%4===0){p=makePlayer(pos,ri(50,64)+sh*.5,ri(17,20));p.pot=Math.min(95,(rng()<diff().talent?ri(84,92):ri(72,83))+Math.round(sh*.3))}  // a quarter are prospects, some of them real talents
     else if(season&&i<3*Math.max(1,sh>>2)&&sh>=4)p=makePlayer(pos,ri(78,84)+sh*.6,ri(24,30));  // once the league has grown: marquee names
     else p=makePlayer(pos,ri(52,80)+sh,ri(18,33));
     scoutReport(p);S.market.push(p);
@@ -553,7 +553,7 @@ function aiSign(t){
   for(const w of xi){
     const c=S.market.filter(p=>p.pos===w.pos&&p.ovr>=w.ovr+3&&p.ovr<=aiCeiling(t)).sort((x,y)=>y.ovr-x.ovr)[0];
     if(!c)continue;
-    S.market=S.market.filter(x=>x!==c);delete c.price;delete c.scout;delete c.sale;delete c.ex;
+    S.market=S.market.filter(x=>x!==c);delete c.price;delete c.scout;delete c.sale;delete c.ex;delete c.eyed;
     t.players.push(c);
     if(t.players.length>20){
       const drop=t.players.filter(p=>p.pos===c.pos&&p!==c).sort((x,y)=>x.ovr-y.ovr||y.age-x.age)[0];

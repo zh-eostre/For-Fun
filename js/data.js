@@ -63,9 +63,11 @@ const PEN_SHARE=.11,FK_SHARE=.08;
 // difficulty, chosen when a game starts: our starting budget and match income, the AI clubs' level (in ability points,
 // for their squads at the start and the level they keep to) and our injury risk
 const DIFF={
-  easy:{name:'轻松',budget:1.5,income:1.25,ai:-2,inj:.7,note:'预算多、收入高，对手稍弱，伤病少'},
-  normal:{name:'普通',budget:1,income:1,ai:0,inj:1,note:'标准体验'},
-  hard:{name:'困难',budget:.75,income:.85,ai:2,inj:1.25,note:'预算少、收入低，对手更强，伤病多'}};
+  easy:{name:'轻松',budget:1.5,income:1.25,ai:-2,inj:.7,talent:.5,eyes:1,grab:.3,note:'预算多、收入高，对手稍弱，伤病少'},
+  normal:{name:'普通',budget:1,income:1,ai:0,inj:1,talent:.2,eyes:1,grab:.55,note:'标准体验'},
+  hard:{name:'困难',budget:.75,income:.85,ai:2,inj:1.25,talent:.05,eyes:2,grab:.8,note:'预算少、收入低，对手更强，伤病多'}};
+// talent: the share of the market's prospects with 84+ potential; eyes: young talents a big club sets its sights on in
+// a window (rumoured three days before its end); grab: the chance it signs each of them on the window's last day
 const diff=()=>DIFF[S&&S.diff]||DIFF.normal;
 // the new-player guide: a card at the bottom of the screen, a step per page (tab), shown after a player's first new game
 const GUIDE_KEY='lvyin-guide-seen';

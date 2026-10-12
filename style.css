@@ -904,3 +904,4 @@ tr.intl-maybe td:first-child{box-shadow:inset 4px 0 color-mix(in srgb,var(--ambe
 .hrow .hr-club small{color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hrow .hr-count{white-space:nowrap;color:var(--muted)}
 .hrow .hr-count b{font-size:18px;color:var(--ink)}
+.tag2.eyed{background:color-mix(in srgb,var(--red) 18%,transparent);color:var(--ink)}

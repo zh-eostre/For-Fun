@@ -418,6 +418,25 @@ const aiCeiling=t=>t.str+4+Math.round(t.rep/10);
 // summer: an AI club playing clearly above its 底蕴 (best XI more than 3 over its base strength) loses its best
 // player: to a grander AI club at home that would start him, or else to a club abroad of his level. talent flows
 // upward, and some of it out of the country
+// the big clubs and the market's young talents (as the scouts' reports show them: 21 or under, 84+ potential): three
+// days before a window ends a rumour names the ones a big club has its eye on; on the last day each is signed with
+// the difficulty's chance unless we got there first. so we always have a fair warning and two days to act
+function talentRace(left){
+  if(left===2){
+    const big=domestic().filter(t=>t.id!==S.my&&t.rep>=65&&t.players.length<22);if(!big.length)return;
+    S.market.filter(p=>p.age<=21&&shownPot(p)>=84&&!p.eyed).sort((a,b)=>shownPot(b)-shownPot(a)).slice(0,diff().eyes).forEach(p=>{
+      const club=pick(big);p.eyed=club.id;
+      news(pick([`传闻四起！${club.name} 的球探已经盯上了天才少年 ${p.name}（${POS[p.pos]}，${p.age} 岁）……`,`有人看见 ${club.name} 的总监出现在 ${p.name} 的训练场边——这名天才少年恐怕要被豪门抢走了！`]));
+    });
+  }else if(left===0){
+    S.market.filter(p=>p.eyed!=null).forEach(p=>{
+      const club=S.teams[p.eyed];delete p.eyed;
+      if(!club||rng()>=diff().grab){news(`${club?club.name:'豪门'} 与天才 ${p.name} 的谈判破裂，他仍在转会市场上。`);return}
+      S.market=S.market.filter(x=>x!==p);delete p.price;delete p.scout;delete p.sale;delete p.ex;club.players.push(p);
+      news(`慢了一步！${club.name} 抢先签下了天才少年 ${p.name}。`);
+    });
+  }
+}
 function aiPoach(){
   const lines=[];
   domestic().filter(t=>t.id!==S.my&&aiGap(t)<-3&&t.players.length>16).forEach(seller=>{
@@ -497,6 +516,7 @@ function windowDay(){
   if(S.day<S.pre||inWinter()){
     const left=(S.day<S.pre?S.pre-1:w+WINTER-1)-S.day,B=AI_BUY[S.day<S.pre?'summer':'winter'];  // days of the window still to come after today
     aiWindow(left<B.rush.length?B.rush[B.rush.length-1-left]:B.early);
+    talentRace(left);
     rollOffer();
   }else if(S.day===S.pre||S.day===w+WINTER){
     if((S.offers||[]).length){news(`转会窗口关闭，${S.offers.length} 份报价作废。`);S.offers=[]}

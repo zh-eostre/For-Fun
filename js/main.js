@@ -232,7 +232,7 @@ const ACT={
     if(S.budget<p.price){toast('资金不够');return}
     if(squadFull()){toast(`一线队已满 ${SQUAD_MAX} 人`);return}
     S.budget-=p.price;S.market=S.market.filter(x=>x!==p);const price=p.price,est=shownPot(p);
-    delete p.price;delete p.scout;delete p.sale;delete p.ex;my().players.push(p);
+    delete p.price;delete p.scout;delete p.sale;delete p.ex;delete p.eyed;my().players.push(p);
     const diff=p.pot-est;
     news(`以 ${money(price)} 签下 ${p.name}（${POS[p.pos]}，能力 ${p.ovr}，真实潜力 ${p.pot}）。${diff>=6?'球探严重低估了他！':''}`);
     if(p.age<=23)UI.reveal={name:p.name,pot:p.pot,est,diff};else toast(`签下 ${p.name}，记得去阵容页安排他`);
@@ -243,11 +243,12 @@ const ACT={
   // the log under the calendar adds up every day since our last match; each day's training gains also go to the news
   nextDay:()=>{const log=dayLog(),t=log.trained.length,su=(log.surprises||[]).length;
     if(advanceDay(log)){UI.dayLog=log;trainNews(log.trained.slice(t));save()}render();if((log.surprises||[]).length>su)toast('✨ '+log.surprises[su])},
-  // on to the next match day; it stops on a day that brings transfer bids, so they can be answered before they lapse
-  ff:()=>{const log=dayLog(),t=log.trained.length,su=(log.surprises||[]).length;let bids=false;
-    while(advanceDay(log)){if((S.offers||[]).length){bids=true;break}}UI.dayLog=log;
+  // on to the next match day; it stops on a day that brings transfer bids (so they can be answered before they lapse)
+// or a rumour that a big club is after one of the market's talents (two days to beat it to him)
+  ff:()=>{const log=dayLog(),t=log.trained.length,su=(log.surprises||[]).length,eyed=()=>S.market.filter(p=>p.eyed!=null).length;let bids=false,rumour=false;
+    for(let e=eyed();advanceDay(log);e=eyed()){bids=(S.offers||[]).length>0;rumour=eyed()>e;if(bids||rumour)break}UI.dayLog=log;
     trainNews(log.trained.slice(t));save();render();
-    if(bids)toast(`收到 ${S.offers.length} 份转会报价，处理后再继续`);else if((log.surprises||[]).length>su)toast('✨ '+log.surprises[log.surprises.length-1])},
+    if(bids||rumour)toast([bids?`收到 ${S.offers.length} 份转会报价`:'',rumour?'有豪门盯上了市场上的天才少年，两天后可能被签走':''].filter(Boolean).join('；'));else if((log.surprises||[]).length>su)toast('✨ '+log.surprises[log.surprises.length-1])},
   // match pace, kept for later matches (a setting, so it can be saved even mid-match)
   pace:a=>{if(!PACE[a])return;S.pace=a;try{const d=JSON.parse(localStorage.getItem(KEY));if(d){d.pace=a;localStorage.setItem(KEY,JSON.stringify(d))}}catch(e){}render()},
   // halftime team talk, once a match; a roar works more often for a manager with a name
