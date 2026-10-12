@@ -170,6 +170,14 @@ const ACT={
   tac:a=>{if(M&&!M.done)M.tac=a;else{S.tactic=a;save()}render()},
   auto:()=>{S.lineup=autoPick(my(),S.formation);S.autoXI=true;UI.selSlot=null;fixLineup();save();render()},
   taker:a=>{const [k,id]=a.split(':');S.takers=S.takers||{};S.takers[k]=S.takers[k]===+id?null:+id;save();render()},
+  guide:a=>{
+    if(a==='again'){UI.modal=null;UI.pages=[];UI.guide=0}
+    else if(a==='next'&&UI.guide<GUIDE.length-1)UI.guide++;
+    else if(a==='back'&&UI.guide>0)UI.guide--;
+    else{UI.guide=null;try{localStorage.setItem(GUIDE_KEY,'1')}catch(e){}}
+    if(UI.guide!=null){UI.tab=GUIDE[UI.guide][0];UI.pages=[]}
+    render();window.scrollTo(0,0);
+  },
   rotate:()=>{S.rotate=S.rotate===false;if(S.autoXI!==false)fixLineup();save();render()},
   // player list rows: add to / remove from the XI
   toggle:a=>{

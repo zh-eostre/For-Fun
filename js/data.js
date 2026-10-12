@@ -67,6 +67,16 @@ const DIFF={
   normal:{name:'普通',budget:1,income:1,ai:0,inj:1,note:'标准体验'},
   hard:{name:'困难',budget:.75,income:.85,ai:2,inj:1.25,note:'预算少、收入低，对手更强，伤病多'}};
 const diff=()=>DIFF[S&&S.diff]||DIFF.normal;
+// the new-player guide: a card at the bottom of the screen, a step per page (tab), shown after a player's first new game
+const GUIDE_KEY='lvyin-guide-seen';
+const GUIDE=[
+  ['home','欢迎来到绿茵经理','你是这支球队的新主教练。「俱乐部」页是你的主页：日程、下一场对手、董事会目标和俱乐部动态都在这里。'],
+  ['home','一天一天地过','日程里每一格是一天。点「进入下一天」过一天，点「快进到比赛日」直接到下一场。日程下面选训练：恢复训练回体能，高强度加练进步快但容易累，选了当天就算数。'],
+  ['squad','排兵布阵','在「阵容」页选阵型和战术。首发可以交给自动安排（还能开「自动轮换」让累了的主力休息），也可以自己点选。点球员名字看详情，可以设点球手、任意球手，外租或出售。'],
+  ['home','比赛日','比赛日点「开始比赛」。比赛中随时可以暂停调整：换人、换阵型、改战术；中场休息有作战会议。比赛速度可以调慢或调快。'],
+  ['market','转会市场','季前一周和赛季中段的冬窗才能买卖球员。年轻球员的潜力是球探估计的范围，签下来才知道真实潜力，偶尔能淘到被低估的明珠。'],
+  ['fac','设施与青训','用资金升级球探、理疗室、训练场和球场。青训营每个赛季会送来几个少年，好好培养可能出大器。'],
+  ['table','升级之路','每个级别前 2 名升级、后 2 名降级。还有全国的天穹杯，甲级前列还能去打天际冠军杯。右上角的「规则」随时可以查看全部规则。祝你好运！']];
 const LATE_MIN=85;  // from this minute a goal that wins or levels the match can be a 绝杀 / 绝平
 const YC_BAN=3;   // yellow cards in one competition that add up to a one-match ban in it
 // player name parts; genName in engine.js combines them

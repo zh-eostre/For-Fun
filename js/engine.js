@@ -624,7 +624,9 @@ function newGame(id,names,difficulty='normal'){
   news(`你正式成为${my().name}的主教练。董事会给了你 ${money(S.budget)} 的预算。季前一周转会窗口开放，还有两场友谊赛。`);
   news(`宿敌：${S.teams[S.rival].name}。与他们的对决，收入翻倍，赢了全队士气高涨。`);
   newIntake();setGoals();
-  save();UI={tab:'home',view:'main',mf:{...MF0}};render();
+  save();UI={tab:'home',view:'main',mf:{...MF0}};
+  try{if(!localStorage.getItem(GUIDE_KEY))UI.guide=0}catch(e){}  // first game on this device: the guide
+  render();
 }
 
 function table(div=my().div){
