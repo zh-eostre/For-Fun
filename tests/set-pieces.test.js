@@ -27,8 +27,21 @@ ok(L.some(t=>t.includes(df.name+' 站上十二码')||t.includes(df.name+' 主罚
 skipMatch();ACT.matchDone();
 // the controls: the player dialog sets and clears a taker; the squad page names them
 const fw=my().players.find(p=>p.pos==='FW');S.takers={};
-ACT.player(String(fw.id));ok(/data-act="taker" data-arg="pen:/.test(els.app.innerHTML),'the player dialog offers 设为点球手');
-ACT.taker('pen:'+fw.id);ok(S.takers.pen===fw.id,'set as penalty taker');
+ACT.player(String(fw.id));ok(/data-act="taker" data-arg="pen:/.test(els.app.innerHTML)&&/加入点球人选/.test(els.app.innerHTML),'the player dialog offers 加入点球人选');
+ACT.taker('pen:'+fw.id);ok(takerList('pen').join()===String(fw.id),'first in the penalty order');
 UI.modal=null;UI.pages=[];UI.tab='squad';render();ok(/点球 <button class="link"/.test(els.app.innerHTML)&&/任意球 <span class="muted">自动/.test(els.app.innerHTML),'the squad page names him (free kicks: 自动)');
-ACT.taker('pen:'+fw.id);ok(S.takers.pen==null,'pressed again: back to automatic');
+ACT.taker('pen:'+fw.id);ok(takerList('pen').length===0,'pressed again: out, back to automatic');
+// an order: the first of them on the pitch takes it
+{const ids=autoPick(my(),S.formation),xi=onPitch(my(),ids).filter(p=>p&&p.pos!=='GK'),bench=my().players.find(p=>p.pos!=='GK'&&!ids.includes(p.id));
+  ['pen:'+bench.id,'pen:'+xi[0].id,'pen:'+xi[1].id].forEach(a=>ACT.taker(a));
+  ok(takerList('pen').join()===[bench.id,xi[0].id,xi[1].id].join(),'three in order');
+  ok(taker(my(),ids,'pen')===xi[0],'the first choice is not on the pitch: the second takes it');
+  const extra=my().players.find(p=>p.pos!=='GK'&&!takerList('pen').includes(p.id));ACT.taker('pen:'+extra.id);ok(takerList('pen').length===TAKER_MAX,'no more than '+TAKER_MAX);
+  // an older save (one id) still works
+  S.takers={pen:xi[1].id};ok(takerList('pen').join()===String(xi[1].id)&&taker(my(),ids,'pen')===xi[1],'an older save with a single taker');
+  // the dialog
+  UI.tab='squad';render();ok(/data-act="takers"/.test(els.app.innerHTML),'the squad page has 设置');
+  ACT.takers();const h=els.app.innerHTML;ok(/定位球主罚/.test(h)&&(h.match(/class="tk-col"/g)||[]).length===2&&/对上普通门将的命中率/.test(h)&&!bad(h),'the dialog: penalties and free kicks, with each player\u2019s chances');
+  ACT.taker('fk:'+xi[2].id);ok(/class="tk-row on"/.test(els.app.innerHTML)&&takerList('fk').join()===String(xi[2].id),'picking in the dialog');
+  ACT.takerClear('fk');ok(takerList('fk').length===0,'清空: back to automatic');closeModal();}
 `);

@@ -169,7 +169,14 @@ const ACT={
   // in a match only that match's tactic changes; otherwise it's the club's default for coming matches
   tac:a=>{if(M&&!M.done)M.tac=a;else{S.tactic=a;save()}render()},
   auto:()=>{S.lineup=autoPick(my(),S.formation);S.autoXI=true;UI.selSlot=null;fixLineup();save();render()},
-  taker:a=>{const [k,id]=a.split(':');S.takers=S.takers||{};S.takers[k]=S.takers[k]===+id?null:+id;save();render()},
+  // set-piece order: a player in it comes out, one not in it goes to the end (up to TAKER_MAX)
+  taker:a=>{const [k,id]=a.split(':'),L=takerList(k);S.takers=S.takers||{};
+    if(L.includes(+id))S.takers[k]=L.filter(x=>x!==+id);
+    else if(L.length>=TAKER_MAX){toast(`最多排 ${TAKER_MAX} 个人选，先移出一个`);return}
+    else S.takers[k]=[...L,+id];
+    save();render()},
+  takerClear:k=>{S.takers=S.takers||{};S.takers[k]=[];save();render()},
+  takers:()=>{UI.modal={type:'takers'};render()},
   guide:a=>{
     if(a==='again'){UI.modal=null;UI.pages=[];UI.guide=0}
     else if(a==='next'&&UI.guide<GUIDE.length-1)UI.guide++;
@@ -285,7 +292,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(
   const f=ACT[b.dataset.act];if(f)f(b.dataset.arg,b)});
 // remember which folding panels are open across re-renders ('toggle' doesn't bubble, so listen while capturing)
 document.addEventListener('toggle',e=>{const d=e.target;if(d.dataset&&d.dataset.fold){(UI.folds=UI.folds||{})[d.dataset.fold]=d.open;if(d.open)scrollFixtures(d)}},true);
-function closeModal(){if(!UI.modal)return;const t=UI.modal.type;UI.returnFocus=t==='opp'?{act:'oppXI'}:t==='rules'?{act:'rules'}:{act:'player',arg:UI.modal.id};UI.modal=null;render()}
+function closeModal(){if(!UI.modal)return;const t=UI.modal.type;UI.returnFocus=t==='opp'?{act:'oppXI'}:t==='rules'?{act:'rules'}:t==='takers'?{act:'takers'}:{act:'player',arg:UI.modal.id};UI.modal=null;render()}
 // Escape on the dialog: let our state close it (and re-render) rather than the browser alone
 document.addEventListener('cancel',e=>{if(e.target.matches&&e.target.matches('dialog.modal')){e.preventDefault();closeModal()}},true);
 // a click on the dialog's backdrop lands on the <dialog> itself; only close if the press also started there,

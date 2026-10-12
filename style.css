@@ -850,3 +850,17 @@ tr.intl-maybe td:first-child{box-shadow:inset 4px 0 color-mix(in srgb,var(--ambe
 #chart-tip{position:fixed;z-index:60;pointer-events:none;background:var(--board);color:#fff;font-size:12px;padding:5px 8px;border-radius:6px;max-width:260px;box-shadow:0 4px 12px rgba(0,0,0,.25)}
 .tag2.listed{background:color-mix(in srgb,var(--amber) 25%,transparent);color:var(--ink)}
 .offer-one+.offer-one{border-top:1px solid var(--line);margin-top:10px;padding-top:10px}
+/* set-piece takers dialog */
+.tk-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.tk-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tk-head h3{margin:0}
+.tk-order{margin:8px 0 10px;padding-left:22px;font-size:14px}
+.tk-order li{margin:2px 0}
+.tk-list{display:flex;flex-direction:column;gap:2px;max-height:340px;overflow:auto}
+.tk-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;border:1px solid transparent;
+  background:none;color:inherit;font:inherit;font-size:14px;text-align:left;cursor:pointer}
+.tk-row:hover{background:var(--pitch-soft)}
+.tk-row.on{border-color:var(--pitch);background:var(--pitch-soft)}
+.tk-th{cursor:default;font-size:12px;color:var(--muted)}
+.tk-th:hover{background:none}
+.tk-n{display:inline-block;min-width:18px;height:18px;border-radius:9px;background:var(--pitch);color:#fff;font-size:12px;text-align:center;margin-right:6px}

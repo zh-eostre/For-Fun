@@ -218,7 +218,7 @@ function vTeamPage(tid){
 // inside it, makes the page behind inert and handles Escape (see the 'cancel' listener in main.js)
 function vModal(){
   const t=UI.modal.type;
-  return `<dialog class="modal ${t==='opp'||t==='rules'?'wide':''}" aria-labelledby="mtitle">${t==='opp'?vOppXI():t==='rules'?vRules():vPlayer(UI.modal.id)}</dialog>`;
+  return `<dialog class="modal ${t==='opp'||t==='rules'||t==='takers'?'wide':''}" aria-labelledby="mtitle">${t==='opp'?vOppXI():t==='rules'?vRules():t==='takers'?vTakersModal():vPlayer(UI.modal.id)}</dialog>`;
 }
 // how the game works, in plain words; the numbers come from the game's own settings
 function vRules(){
@@ -247,7 +247,7 @@ function vRules(){
     `球探部 3 级以上，赛前情报会指出对方最薄弱的一线。阵型或战术针对它的话，进攻会有加成（比分板会亮出「针对弱点」）；怎么针对要自己琢磨，球探部升到 4、5 级后情报会说得更清楚。`,
     '第 75 分钟后还有「名帅光环」：教练声望越高，进攻加成越大，必杀技也越容易打出来。落后逆转取胜可以解锁「逆转之王」。'])}
   ${sec('体能与换人',['比赛中会消耗体能：中场跑得最多，前锋、后卫其次，门将几乎不累。体能 80 以上基本不影响发挥，越低越弱（70 约九折，60 约八折）。',
-    `比赛中会有点球和禁区前的直接任意球。在球员详情里可以指定点球手和任意球手；指定的人不在场上时，由场上最合适的人主罚（点球优先前锋，任意球优先中场，有必杀技的更优先）。`,
+    `比赛中会有点球和禁区前的直接任意球。在阵容页「定位球」的「设置」里（或球员详情里），点球和任意球各可以排 ${TAKER_MAX} 个人选：由排在前面、而且在场上的人主罚；都不在场时，由场上最合适的人主罚（点球优先前锋，任意球优先中场，有必杀技的更优先）。`,
     `转会：直接出售只拿到身价的 85%；AI 球队主动报价通常是身价的 1.05–1.6 倍，但看中谁是随机的，报价只保留到第二天。在球员详情里「挂牌出售」，窗口期间就会常有球队专门为他报价（约身价的 ${LIST_RANGE[0]}–${LIST_RANGE[1]} 倍）。`,
     `首发设为自动时，阵容每天按体能更新；打开「自动轮换」，体能低于 ${ROTATE_AT} 的首发会让给同位置、能力最多低 ${ROTATE_GAP}、体能好得多的替补。`,
     `中场休息时，我方球员会恢复一点体能。每场最多换 ${SUBS} 人；自动换人从第 60 分钟起，把体能低于 ${TIRED}、而且替补更强的人换下；体能跌破 ${SPENT} 的球员不管能力多高都会被换下（受伤风险太大）。可以关掉自己来换。`,
@@ -288,9 +288,9 @@ function vPlayer(id){
   const {p,t}=f,mine=t.id===S.my,c=S.club[p.id]||{},hist=(p.hist||[]).concat([{s:S.season,o:p.ovr}]);
   const cell=(l,v)=>`<div class="pcell"><small>${l}</small><b>${v}</b></div>`;
   const status=[p.inj?`伤停 ${p.inj} 天`:'',...Object.entries(p.bans||{}).filter(([,n])=>n>0).map(([c,n])=>`${COMPS[c]}停赛 ${n} 场`),p.away?'探亲中':'',p.loan?`租借至${loanLabel(p)}（${p.lapps||0} 场）`:'',unproven(p)?`未出道 ${careerApps(p)}/${YOUTH_PROVEN}`:''].filter(Boolean).join('，');
-  const tk=k=>!!S.takers&&S.takers[k]===p.id,TK={pen:'点球手',fk:'任意球手'};
+  const tk=k=>takerList(k).indexOf(p.id),TK={pen:'点球',fk:'任意球'};
   const actions=mine
-    ?`${Object.entries(TK).map(([k,l])=>`<button class="btn small" data-act="taker" data-arg="${k}:${p.id}" aria-pressed="${tk(k)}">${tk(k)?`✓ ${l}（点击取消）`:`设为${l}`}</button>`).join('')}
+    ?`${Object.entries(TK).map(([k,l])=>`<button class="btn small" data-act="taker" data-arg="${k}:${p.id}" aria-pressed="${tk(k)>=0}">${tk(k)>=0?`✓ ${l}第 ${tk(k)+1} 顺位（点击移出）`:`加入${l}人选`}</button>`).join('')}
       ${p.loan?`<button class="btn small" data-act="recall" data-arg="${p.id}">召回</button>`:p.age<=LOAN_AGE?`<button class="btn small" data-act="loan" data-arg="${p.id}">外租（赛季结束回归）</button>`:''}
       <button class="btn small" data-act="list" data-arg="${p.id}" aria-pressed="${!!p.listed}" title="挂牌后，转会窗口期间球队会专门为他报价（约身价的 ${LIST_RANGE[0]}–${LIST_RANGE[1]} 倍）">${p.listed?'✓ 挂牌中（点击撤下）':'挂牌出售'}</button>
       <button class="btn small danger" data-act="sell" data-arg="${p.id}" ${windowOpen()?'':`disabled title="${windowShut()}"`}>直接出售 ${money(sellPrice(p))}</button>`
@@ -364,11 +364,26 @@ function formNote(form){
   const f=FORMS[form],bits=[f.dm&&`${f.dm} 名后腰偏防守、多抢断`,f.am&&`${f.am} 名前腰更容易进球和助攻`].filter(Boolean);
   return bits.length?`中场里 ${bits.join('，')}（由中场球员担任）`:'阵型决定 11 个位置，球场上按位置排';
 }
-// who takes our set pieces: the one we chose (in the player dialog), or 自动 (the best man on the pitch)
+// who takes our set pieces: the order we chose, or 自动 (the best man on the pitch); 设置 opens the dialog
 function vTakers(){
-  const one=k=>{const id=S.takers&&S.takers[k],p=id!=null&&findP(id);
-    return p?`<button class="link" data-act="player" data-arg="${p.id}">${pName(p)}</button>`:'<span class="muted">自动</span>'};
-  return `<span class="takers" title="在球员详情里设置；不在场上时由场上最合适的人主罚">点球 ${one('pen')} · 任意球 ${one('fk')}</span>`;
+  const one=k=>{const L=takerList(k).map(findP);
+    return L.length?L.map(p=>`<button class="link" data-act="player" data-arg="${p.id}">${pName(p)}</button>`).join(' › '):'<span class="muted">自动</span>'};
+  return `<span class="takers" title="依次由排在前面、而且在场上的人主罚；都不在场时由场上最合适的人主罚">点球 ${one('pen')} · 任意球 ${one('fk')}
+  <button class="btn small" data-act="takers">设置</button></span>`;
+}
+// the set-piece dialog: for penalties and free kicks, an order of up to TAKER_MAX; every first-team player with his
+// chances (a penalty against an average keeper, a direct free kick), best first
+function vTakersModal(){
+  const avgGK={ovr:70},pct=v=>Math.round(v*100)+'%';
+  const kinds=[['pen','点球','对上普通门将的命中率',p=>penOdds(p,avgGK)],['fk','直接任意球','直接破门率',p=>fkOdds(p,null)]];
+  const squad=my().players.filter(p=>!p.loan&&p.pos!=='GK');
+  return `<section class="panel"><div class="mhead"><h2 id="mtitle">定位球主罚</h2><button class="btn small mclose" data-act="closeModal" aria-label="关闭">✕</button></div>
+  <p class="muted" style="margin:-4px 0 10px;font-size:13px">每种最多排 ${TAKER_MAX} 个人选：比赛中由排在前面、而且在场上的人主罚；都不在场时，由场上最合适的人主罚（点球优先前锋，任意球优先中场，有必杀技的更优先）。点球员加入或移出。</p>
+  <div class="tk-cols">${kinds.map(([k,l,note,odds])=>{const L=takerList(k),list=[...squad].sort((a,b)=>odds(b)-odds(a));
+    return `<div class="tk-col"><div class="tk-head"><h3>${l}</h3>${L.length?`<button class="btn small" data-act="takerClear" data-arg="${k}">清空（改回自动）</button>`:'<span class="muted" style="font-size:13px">现在：自动</span>'}</div>
+    <ol class="tk-order">${Array.from({length:TAKER_MAX},(_,i)=>{const p=L[i]!=null&&findP(L[i]);return `<li>${p?`<b>${p.name}</b> <span class="muted">${POS[p.pos]} ${p.ovr}</span>`:'<span class="muted">—</span>'}</li>`}).join('')}</ol>
+    <div class="tk-list"><div class="tk-row tk-th"><span>球员</span><span>${note}</span></div>${list.map(p=>{const i=L.indexOf(p.id);
+      return `<button class="tk-row ${i>=0?'on':''}" data-act="taker" data-arg="${k}:${p.id}" aria-pressed="${i>=0}"><span>${i>=0?`<b class="tk-n">${i+1}</b>`:''}${p.name} <span class="muted">${POS[p.pos]} ${p.ovr}${p.sig?' ★':''}${unavail(p)?' · 缺阵':''}</span></span><span class="num">${pct(odds(p))}</span></button>`}).join('')}</div></div>`}).join('')}</div></section>`;
 }
 function vSquad(){
   const t=my(),on=new Set(S.lineup),iss=lineupIssues();

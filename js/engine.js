@@ -251,12 +251,14 @@ function scorer(team,ids,form='4-4-2'){
   for(const x of ps){r-=x.w;if(r<=0)return x.p}
   return ps[0].p;
 }
-// set pieces. who takes them: ours as set on the squad page when he's on the pitch, otherwise the best man for it on
-// the pitch (penalties: forwards first; free kicks: midfielders first; a signature move counts in his favour)
+// set pieces. our takers are an order of up to TAKER_MAX players per kind (an older save has a single id): the first
+// of them on the pitch takes it. otherwise, and for other clubs, the best man for it on the pitch (penalties: forwards
+// first; free kicks: midfielders first; a signature move counts in his favour)
+const TAKER_MAX=3;
+const takerList=k=>{const v=S.takers&&S.takers[k];return (Array.isArray(v)?v:v!=null?[v]:[]).filter(id=>findP(id))};
 function taker(team,ids,kind){
   const on=onPitch(team,ids).filter(p=>p&&p.pos!=='GK');if(!on.length)return onPitch(team,ids).find(Boolean)||null;
-  const set=team.id===S.my&&S.takers&&S.takers[kind];
-  if(set){const p=on.find(x=>x.id===set);if(p)return p}
+  if(team.id===S.my)for(const id of takerList(kind)){const p=on.find(x=>x.id===id);if(p)return p}
   const pref=kind==='pen'?{FW:4,MF:2,DF:0}:{MF:4,FW:2,DF:0};
   return on.sort((a,b)=>(b.ovr+pref[b.pos]+(b.sig?3:0))-(a.ovr+pref[a.pos]+(a.sig?3:0)))[0];
 }
