@@ -44,6 +44,14 @@ render();ok(els.app.innerHTML.includes(INTL_NAME),'the season-end screen mention
 S.round--;UI.view='main';UI.tab='cup';UI.cupv='intl';render();ok(!bad(els.app.innerHTML)&&/八强/.test(els.app.innerHTML)&&/决赛/.test(els.app.innerHTML),'cup tab shows the knockout rounds');
 UI.tab='honours';render();ok(!bad(els.app.innerHTML)&&els.app.innerHTML.includes(INTL_NAME),'honours has a 冠军杯 trophy count');S.round++;
 // next season: a new draw from the final 甲级 table and the 天穹杯 winner
+// the 甲级 table marks next season's places: amber for the entrants (top two plus the cup winner or 3rd)
+{const rows=h=>(h.match(/<tr class="[^"]*"/g)||[]),T=table(0),E=intlEntrants(T.map(r=>r.id),S.cup.winner);
+  S.round--;UI.view='main';UI.tab='table';UI.div=0;render();const r=rows(els.app.innerHTML);
+  ok(T.every((x,i)=>/ intl"/.test(r[i])===(E.includes(x.id))),'甲级 table: the clubs in next season\u2019s 冠军杯 are marked ('+E.map(id=>S.teams[id].short).join('、')+')');
+  ok(/获得下赛季/.test(els.app.innerHTML),'with a legend');
+  const keep=S.cup.winner;S.cup.winner=null;render();const r2=rows(els.app.innerHTML);
+  ok(/ intl"/.test(r2[0])&&/ intl"/.test(r2[1])&&/intl-maybe/.test(r2[2])&&/递补/.test(els.app.innerHTML),'before the cup final: top two in, 3rd a maybe');
+  S.cup.winner=keep;S.round++;UI.tab='home';}
 const t0=table(0).map(r=>r.id),cw=S.cup.winner,want=intlEntrants(t0,cw),winner=S.teams[I.winner].name;
 newSeason();
 ok(S.records[S.records.length-1].intl===winner,'the season record keeps the winner');

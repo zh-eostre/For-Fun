@@ -812,3 +812,9 @@ button.xi-tok{cursor:pointer}
 #fx.learn .cut small{font-size:15px;color:#FFE08A}
 @media (prefers-reduced-motion:no-preference){#fx.learn .cut{animation-duration:2.6s}#fx.learn .cut b{animation:sigglow 2.6s ease-in-out}
   @keyframes sigglow{0%,20%{text-shadow:0 3px 0 rgba(0,0,0,.5),0 0 0 rgba(245,184,65,0)}45%{text-shadow:0 3px 0 rgba(0,0,0,.5),0 0 40px rgba(255,224,138,1)}100%{text-shadow:0 3px 0 rgba(0,0,0,.5),0 0 24px rgba(245,184,65,.6)}}}
+/* 甲级: places in next season's 天际冠军杯 */
+tr.intl td:first-child{box-shadow:inset 4px 0 var(--amber)}
+tr.intl-maybe td:first-child{box-shadow:inset 4px 0 color-mix(in srgb,var(--amber) 45%,transparent)}
+.zl.intl::before{background:var(--amber)}
+.zl.maybe::before{background:color-mix(in srgb,var(--amber) 45%,transparent)}
+.tag2.intlq{background:color-mix(in srgb,var(--amber) 25%,transparent);color:var(--ink)}

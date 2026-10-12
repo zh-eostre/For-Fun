@@ -451,11 +451,25 @@ function vLeaders(title,note,rows,scale){
     <b class="lb-val num">${r.label}</b></li>`).join('')}</ol></section>`;
 }
 // a division's table with the promotion / relegation places marked
+// 甲级's places in next season's 天际冠军杯: the top two, and the 天穹杯 winner, or 3rd when the cup winner is already
+// in the top two (until the cup is decided, 3rd is marked as a maybe)
+function intlPlaces(T){
+  const top=T.map(r=>r.id),cw=S.cup&&S.cup.winner,sure=new Set(top.slice(0,2));let maybe=null,cup=null;
+  if(cw==null)maybe=top[2];
+  else{const e=intlEntrants(top,cw);e.forEach(id=>sure.add(id));if(e[2]===cw&&!top.slice(0,2).includes(cw))cup=cw}
+  return {sure,maybe,cup};
+}
 function standings(div){
-  const T=table(div),legend=[div>0?`<span class="zl up">前 ${SWAP} 名升级</span>`:'',div<DIVS.length-1?`<span class="zl down">后 ${SWAP} 名降级</span>`:''].join('');
+  const T=table(div),Q=div===0?intlPlaces(T):null,cupW=Q&&Q.cup!=null?S.teams[Q.cup]:null;
+  const legend=[Q?`<span class="zl intl">前 2 名获得下赛季${INTL_NAME}资格</span>`:'',
+    Q&&Q.maybe!=null?`<span class="zl maybe">第 3 名：${CUP_NAME}冠军已在前两名时递补</span>`:'',
+    cupW&&cupW.div!==0?`<span class="zl intl">${CUP_NAME}冠军 ${cupW.name} 也获得资格</span>`:'',
+    div>0?`<span class="zl up">前 ${SWAP} 名升级</span>`:'',div<DIVS.length-1?`<span class="zl down">后 ${SWAP} 名降级</span>`:''].join('');
+  const qcls=id=>!Q?'':Q.sure.has(id)?'intl':Q.maybe===id?'intl-maybe':'';
+  const qtag=id=>Q&&Q.cup===id?` <span class="tag2 intlq" title="${CUP_NAME}冠军，获得${INTL_NAME}资格">杯赛冠军</span>`:'';
   return `<div class="tw"><table>
   <thead><tr><th>#</th><th>球队</th><th>场</th><th>胜</th><th>平</th><th>负</th><th>进/失</th><th>积分</th></tr></thead>
-  <tbody>${T.map((r,i)=>`<tr class="${r.id===S.my?'me':''} ${zone(div,i+1)}"><td>${i+1}</td><td><span class="dot" style="background:${r.color}"></span>${r.id===S.my?r.name:`<button class="link" data-act="team" data-arg="${r.id}">${r.name}</button>${tierTag(S.teams[r.id])}`}${r.id===S.rival?' <span class="tag2 derby">宿敌</span>':''}</td>
+  <tbody>${T.map((r,i)=>`<tr class="${r.id===S.my?'me':''} ${zone(div,i+1)} ${qcls(r.id)}"><td>${i+1}</td><td><span class="dot" style="background:${r.color}"></span>${r.id===S.my?r.name:`<button class="link" data-act="team" data-arg="${r.id}">${r.name}</button>${tierTag(S.teams[r.id])}`}${qtag(r.id)}${r.id===S.rival?' <span class="tag2 derby">宿敌</span>':''}</td>
   <td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td><td>${r.gf}:${r.ga}</td><td class="pts">${r.pts}</td></tr>`).join('')}</tbody></table></div><p class="legend">${legend}</p>`;
 }
 function vTable(div,switcher=true){
