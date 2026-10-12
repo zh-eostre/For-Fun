@@ -776,11 +776,12 @@ const dayLabel=d=>`第 ${Math.floor(d/7)+1} 周${WEEKDAYS[d%7]}`;
 function advanceDay(log){
   if(seasonDone()||S.day>=nextMatchDay())return false;
   // today's programme counts as we move on: the training chosen today (so the eve of a match counts too), a rest day
-  // the day after one of our matches, nothing more on a day we played
+  // the day after one of our matches, nothing more on a day we played. injuries mend every day, match days included
   const today=S.day,type=S.lastMatchDay===today?'match':dayType(today),mode=type==='rest'?{cond:restAmt(),grow:0}:TRAIN_DAY[S.training];
   S.day++;
   playOtherDivisions();
-  if(type!=='match')my().players.forEach(p=>{
+  if(type==='match')my().players.forEach(p=>{if(p.inj>0&&--p.inj===0)(log.healed||(log.healed=[])).push(p)});
+  else my().players.forEach(p=>{
     const before=p.cond;
     const wasHurt=p.inj>0;
     p.cond=clamp(p.cond+(wasHurt?restAmt():mode.cond),30,100);

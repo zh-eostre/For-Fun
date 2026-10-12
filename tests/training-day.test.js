@@ -9,4 +9,11 @@ ok(S.day===nextMatchDay()&&p.cond===60+TRAIN_DAY.rest.cond,'recovery training ch
 S.event=null;S.offer=null;startMatch();skipMatch();ACT.matchDone();
 const q=my().players[1];q.cond=70;q.inj=0;const day=S.day;ACT.nextDay();ok(q.cond===70,'leaving the day we played: nothing more ('+q.cond+')');
 ACT.nextDay();ok(q.cond===70+restAmt(),'leaving the rest day: +'+restAmt()+' ('+q.cond+')');
+// an injured man mends on a match day too (he didn't play): a 2-day knock is gone two days after
+{newGame(TEAMS.findIndex(t=>t.div===2),teamNames());rollSurprise=()=>{};
+  while(S.day<nextMatchDay())ACT.nextDay();
+  const p=my().players.find(x=>x.pos!=='GK');p.inj=2;S.lineup=autoPick(my(),S.formation);
+  startMatch();skipMatch();ACT.matchDone();const d=S.day;
+  ACT.nextDay();ok(S.day===d+1&&p.inj===1,'the day of the match counts: 2 → '+p.inj);
+  if(S.day<nextMatchDay()){ACT.nextDay();ok(p.inj===0,'and the day after: fit again')}else ok(true,'(next match straight away)');}
 `);
