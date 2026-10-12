@@ -9,9 +9,9 @@ ACT.player(String(p.id));ok(/data-act="list"/.test(els.app.innerHTML)&&/挂牌�
 ACT.list(String(p.id));ok(p.listed===true,'listed');UI.modal=null;
 UI.tab='squad';render();ok(/tag2 listed/.test(els.app.innerHTML),'tagged 挂牌 in the squad list');
 let mine=0,other=0,inRange=true;const v=marketValue(p);
-for(let k=0;k<400;k++){rollOffer();S.offers.forEach(o=>{if(o.pid===p.id&&o.listed){mine++;const r=o.amount/v;if(r<LIST_RANGE[0]-.02||r>LIST_RANGE[1]+.02)inRange=false}else other++})}
+for(let k=0;k<400;k++){rollOffer();S.offers.forEach(o=>{if(o.pid===p.id&&o.listed){mine++;const R=o.club>=0?LIST_RANGE:MINOR_RANGE,r=o.amount/v;if(r<R[0]-.02||r>R[1]+.02)inRange=false}else other++})}
 ok(mine>120&&mine<240,'bids for him on about '+Math.round(LIST_CHANCE*100)+'% of window days ('+mine+' of 400)');
-ok(inRange,'each between '+LIST_RANGE.join(' and ')+' of his value');
+ok(inRange,'each between '+LIST_RANGE.join(' and ')+' of his value ('+MINOR_RANGE.join('-')+' from a small club abroad)');
 ok(other>20,'other players still draw the usual bids now and then ('+other+')');
 for(let k=0;k<200&&!(offerFor(p.id)&&offerFor(p.id).listed);k++)rollOffer();
 UI.tab='home';render();ok(/挂牌出售中/.test(els.app.innerHTML),'the offer card (club page) says he was listed');
@@ -39,4 +39,13 @@ let listedBids=0;for(let k=0;k<200;k++){rollOffer();listedBids+=S.offers.filter(
     ACT.ff();if(S.offers.length){stopped=true;ok(!isMatchDay()||S.day===nextMatchDay(),'stopped on '+dayLabel(S.day)+' with '+S.offers.length+' bid(s), next match '+dayLabel(nextMatchDay()));
       ok(/转会报价/.test(els.toast.textContent),'and says so: '+els.toast.textContent)}}
   ok(stopped,'a fast-forward through the window stopped for bids');}
+// clubs only bid for players who'd fit in; a weak listed player goes to a small club abroad
+{newGame(TEAMS.findIndex(t=>t.div===2),teamNames());UI.guide=null;
+  const w=my().players.find(x=>x.pos!=='GK');w.ovr=30;w.listed=true;const clubs=new Set(),minors=new Set();
+  for(let k=0;k<300;k++){rollOffer();const o=offerFor(w.id);if(o){if(o.club>=0)clubs.add(o.club);else minors.add(o.minor)}}
+  ok(clubs.size===0&&minors.size>0&&[...minors].every(n=>LOAN_LEAGUES.abroad[1].includes(n)),'a 30-rated listed player: bids only from small clubs abroad ('+[...minors].join('、')+')');
+  ok([...Array(50)].every(()=>{rollOffer();return S.offers.every(o=>o.club<0||(findP(o.pid).ovr>=S.teams[o.club].str-(S.teams[o.club].foreign?FIT_BELOW_INTL:FIT_BELOW)))}),'no club bids for a player well below its level');
+  for(let k=0;k<100&&!offerFor(w.id);k++)rollOffer();const o=offerFor(w.id);UI.tab='home';render();
+  ok(els.app.innerHTML.includes(o.minor+'（海外联赛）'),'the offer card names the small club');
+  acceptOffer(w.id);ok(!findP(w.id)&&!S.teams.some(t=>t.players.includes(w))&&S.news.some(n=>n.t.includes('转投海外联赛的 '+o.minor)),'accepted: he leaves for the leagues abroad');}
 `);

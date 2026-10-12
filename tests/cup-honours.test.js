@@ -11,9 +11,9 @@ ok(h.includes('3 冠')&&h.includes('S1、S3、S4')&&h.includes('S2、S5'),'count
 UI.cupv='intl';render();h=els.app.innerHTML;ok(/天际冠军杯历届冠军/.test(h)&&h.includes(B)&&h.includes('2 冠'),'the 冠军杯 has its own');
 // listed players: some bids from abroad
 newGame(TEAMS.findIndex(t=>t.div===2),teamNames());UI.guide=null;const p=my().players.filter(x=>x.pos!=='GK').sort((a,b)=>b.ovr-a.ovr)[0];p.listed=true;
-let home=0,abroad=0;for(let k=0;k<400;k++){rollOffer();const o=offerFor(p.id);if(o&&o.listed)(S.teams[o.club].foreign?abroad++:home++)}
+let home=0,abroad=0;for(let k=0;k<400;k++){rollOffer();const o=offerFor(p.id);if(o&&o.listed)(o.club<0||S.teams[o.club].foreign?abroad++:home++)}
 ok(abroad>home*.25&&abroad<home*.9,'bids for a listed player from abroad too ('+abroad+' abroad, '+home+' at home)');
-for(let k=0;k<200&&!(offerFor(p.id)&&S.teams[offerFor(p.id).club].foreign);k++)rollOffer();
+for(let k=0;k<200&&!(offerFor(p.id)&&offerFor(p.id).club>=0&&S.teams[offerFor(p.id).club].foreign);k++)rollOffer();
 const o=offerFor(p.id),club=S.teams[o.club];UI.tab='home';render();ok(els.app.innerHTML.includes(club.name+'（海外）'),'the offer card says 海外');
 acceptOffer(p.id);ok(club.foreign&&club.players.includes(p)&&!findP(p.id),'accepted: he moves abroad');
 `);

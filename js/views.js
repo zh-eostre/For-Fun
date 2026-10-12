@@ -368,7 +368,7 @@ function vOffer(){
   const list=(S.offers||[]).map(o=>({o,p:findP(o.pid)})).filter(x=>x.p);
   if(!list.length)return '';
   return `<section class="panel offer"><h2>转会报价${list.length>1?` <span class="muted" style="font-weight:400;font-size:14px">${list.length} 份</span>`:''}</h2>
-  ${list.map(({o,p})=>`<div class="offer-one"><p style="margin:0 0 8px">${S.teams[o.club].name}（${divName(S.teams[o.club])}）带着 <b>${money(o.amount)}</b> 的契约书前来，想要带走 <b>${p.name}</b>（${POS[p.pos]}，能力 ${p.ovr}，${p.age} 岁）。
+  ${list.map(({o,p})=>`<div class="offer-one"><p style="margin:0 0 8px">${offerClub(o).name}（${o.club>=0?divName(S.teams[o.club]):'海外联赛'}）带着 <b>${money(o.amount)}</b> 的契约书前来，想要带走 <b>${p.name}</b>（${POS[p.pos]}，能力 ${p.ovr}，${p.age} 岁）。
   <span class="muted">他的身价约 ${money(marketValue(p))}${o.listed?'（挂牌出售中）':''}。</span></p>
   <div class="go" style="justify-content:flex-start;margin-top:0"><button class="btn primary" data-act="offerYes" data-arg="${p.id}">接受</button><button class="btn" data-act="offerNo" data-arg="${p.id}">拒绝</button></div></div>`).join('')}
   <p class="muted" style="font-size:13px;margin:8px 0 0">报价只保留到明天。</p></section>`;

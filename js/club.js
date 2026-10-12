@@ -17,15 +17,20 @@ function unlock(k){
 function rollOffer(){
   if(!windowOpen())return;
   const old=S.offers||[];
-  if(old.length)news(old.length===1?`${S.teams[old[0].club].name} 的报价已过期。`:`${old.length} 份报价已过期。`);
+  if(old.length)news(old.length===1?`${offerClub(old[0]).name} 的报价已过期。`:`${old.length} 份报价已过期。`);
   S.offers=[];
   const bid=(p,listed,range)=>{
-    // a listed player can also go abroad: a club from the 冠军杯 good enough for him makes some of those bids
-    const clubs=domestic().filter(t=>t.id!==S.my&&t.str+10>=p.ovr),abroad=listed?S.teams.filter(t=>t.foreign&&t.str+10>=p.ovr):[];
-    if(!clubs.length&&!abroad.length)return;
-    const club=abroad.length&&(!clubs.length||rng()<LIST_ABROAD)?pick(abroad):pick(clubs),o={pid:p.id,club:club.id,amount:Math.max(5,Math.round(marketValue(p)*rnd(...range)))};
+    // clubs he'd fit in at; a listed player can also go abroad: to a 冠军杯 club he's good enough for, or else to a
+    // small club in the leagues abroad
+    const fits=(t,below)=>p.ovr>=t.str-below&&p.ovr<=t.str+FIT_ABOVE;
+    const clubs=domestic().filter(t=>t.id!==S.my&&fits(t,FIT_BELOW)),abroad=listed?S.teams.filter(t=>t.foreign&&fits(t,FIT_BELOW_INTL)):[];
+    if(!listed&&!clubs.length)return;
+    const away=listed&&(!clubs.length||rng()<LIST_ABROAD),club=away?(abroad.length?pick(abroad):null):pick(clubs);
+    const o={pid:p.id,club:club?club.id:-1,amount:Math.max(5,Math.round(marketValue(p)*rnd(...(club?range:MINOR_RANGE))))};
+    if(!club)o.minor=pick(LOAN_LEAGUES.abroad[1]);
     if(listed)o.listed=true;S.offers.push(o);
-    news(listed?`${club.foreign?'海外俱乐部 ':''}${club.name} 看中了挂牌出售的 ${p.name}，报价 ${money(o.amount)}。`:`${club.name} 带着 ${money(o.amount)} 的契约书前来，想要带走 ${p.name}。`);
+    const by=offerClub(o).name,from=club&&!club.foreign?'':'海外俱乐部 ';
+    news(listed?`${from}${by} 看中了挂牌出售的 ${p.name}，报价 ${money(o.amount)}。`:`${by} 带着 ${money(o.amount)} 的契约书前来，想要带走 ${p.name}。`);
   };
   my().players.filter(p=>p.listed&&!p.loan).forEach(p=>{if(rng()<LIST_CHANCE)bid(p,true,LIST_RANGE)});
   const day=S.day<S.pre?S.day-1:S.day-winterStart(),ch=day<OFFER_EARLY_DAYS?OFFER_CHANCE.early:OFFER_CHANCE.late;  // day of the window, from 0
@@ -47,29 +52,31 @@ function bankPlayer(p){
 }
 // pid: the player the offer is for (one offer per player)
 const offerFor=pid=>(S.offers||[]).find(o=>o.pid===pid);
+// who an offer is from: a club in the game, or a small club abroad that isn't (o.club -1, its name in o.minor)
+const offerClub=o=>o.club>=0?S.teams[o.club]:{name:o.minor,short:o.minor,foreign:true,minor:true,players:null};
 function acceptOffer(pid){
   if(!windowOpen()){toast(windowShut());return}
-  const o=offerFor(pid),p=o&&findP(o.pid),club=o&&S.teams[o.club];
+  const o=offerFor(pid),p=o&&findP(o.pid),club=o&&offerClub(o);
   if(!o)return;
   if(!p){S.offers=S.offers.filter(x=>x!==o);return}
   if(squadSize()<=14){toast('一线队至少要保留 14 人');return}
   bankPlayer(p);  // his season goals stay with him so the golden boot race is unaffected
   delete p.listed;
   my().players=my().players.filter(x=>x!==p);dropFromLineup(p.id);
-  club.players.push(p);
-  if(club.players.length>20){
+  if(club.players)club.players.push(p);  // to a small club abroad, he leaves our world
+  if(club.players&&club.players.length>20){
     const drop=club.players.filter(x=>x.pos===p.pos&&x!==p).sort((x,y)=>x.ovr-y.ovr||y.age-x.age)[0];
     if(drop)club.players=club.players.filter(x=>x!==drop);
   }
   S.budget+=o.amount;S.offers=S.offers.filter(x=>x!==o);
-  news(`契约成立：${p.name} 以 ${money(o.amount)} 转投 ${club.name}。`);
+  news(`契约成立：${p.name} 以 ${money(o.amount)} 转投${club.minor?'海外联赛的 ':' '}${club.name}。`);
   if(o.amount>=200)unlock('deal');
   toast(`${p.name} 已转会，进账 ${money(o.amount)}`);
 }
 // pid: one offer; none: all of them
 function rejectOffer(pid){
   const out=(S.offers||[]).filter(o=>pid==null||o.pid===pid);
-  out.forEach(o=>news(`拒绝了 ${S.teams[o.club].name} 对 ${(findP(o.pid)||{}).name} 的报价。`));
+  out.forEach(o=>news(`拒绝了 ${offerClub(o).name} 对 ${(findP(o.pid)||{}).name} 的报价。`));
   S.offers=(S.offers||[]).filter(o=>!out.includes(o));if(out.length)toast(out.length>1?`拒绝了 ${out.length} 份报价`:'报价已拒绝');
 }
 

@@ -156,6 +156,10 @@ const AI_BUY={summer:{early:.02,rush:[.14,.24,.38]},winter:{early:.004,rush:[.03
 const OFFER_TRIES=3,OFFER_CHANCE={early:.25,late:.04},OFFER_EARLY_DAYS=3;
 // a player on our transfer list draws bids of his own: on this share of window days, at this range of his value
 const LIST_CHANCE=.45,LIST_RANGE=[.95,1.3],LIST_ABROAD=1/3;  // and this share of those bids come from clubs abroad
+// a club bids for a player who would fit in: at most FIT_BELOW below its level (FIT_BELOW_INTL for a club from the
+// 冠军杯) and not more than FIT_ABOVE above it. a listed player too weak for the 冠军杯 clubs draws bids from the
+// small clubs of the leagues abroad (the ones we loan to), for a little less
+const FIT_BELOW=12,FIT_BELOW_INTL=8,FIT_ABOVE=10,MINOR_RANGE=[.85,1.15];
 const EVENT_CHANCE=.2;   // chance after each match of a random event
 
 const ACH={
