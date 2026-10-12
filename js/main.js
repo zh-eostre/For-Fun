@@ -8,7 +8,7 @@ function announce(t){const el=document.getElementById('sr');if(el)el.textContent
 function cutIn(name,sig,color,next,learn){
   const el=document.getElementById('fx');if(!el||!el.classList){if(next)next();return}
   el.className='';el.innerHTML=`<div class="cut" style="--c:${color}"><small>${learn?'必杀技觉醒':'必杀技发动'}</small><b class="disp">「${sig}」</b><span>${name}</span></div>`;
-  void el.offsetWidth;el.className='show sig'+(learn?' learn':'');
+  void el.offsetWidth;el.className='show sig'+(learn?' learn':'');sfx(learn?'fanfare':'sig');
   clearTimeout(celebrate.t);celebrate.t=setTimeout(()=>{if(next)next();else{el.className='';el.innerHTML=''}},learn?2600:1300);
 }
 // moves our players have learned since the last look: one cut-in each, in turn, once the match screen is closed
@@ -22,7 +22,7 @@ function celebrate(big,small,kind){
   const el=document.getElementById('fx');if(!el||!el.classList)return;
   const bits=kind==='party'?Array.from({length:70},(_,i)=>`<i style="left:${Math.random()*100}%;animation-delay:${(Math.random()*1.2).toFixed(2)}s;background:${['#F5B841','#4FA36F','#C6402F','#3567A6','#fff'][i%5]}"></i>`).join(''):'';
   el.className='';el.innerHTML=`<div class="fx-box"><b class="disp">${big}</b>${small?`<span>${small}</span>`:''}</div>${bits}`;
-  void el.offsetWidth;el.className='show '+kind;
+  void el.offsetWidth;el.className='show '+kind;if(kind==='party')sfx('fanfare');
   clearTimeout(celebrate.t);celebrate.t=setTimeout(()=>{el.className='';el.innerHTML=''},kind==='party'?4500:2800);
 }
 // a short card at the top for something that matters during a match (a change, an injury, a red card, a goal
@@ -178,6 +178,7 @@ const ACT={
     if(UI.guide!=null){UI.tab=GUIDE[UI.guide][0];UI.pages=[]}
     render();window.scrollTo(0,0);
   },
+  sound:()=>{setSound(!soundOn());if(soundOn())sfx('card');render()},
   rotate:()=>{S.rotate=S.rotate===false;if(S.autoXI!==false)fixLineup();save();render()},
   // player list rows: add to / remove from the XI
   toggle:a=>{

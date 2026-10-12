@@ -93,6 +93,7 @@ function vHeader(){
   <div class="crest disp">${t.short[0]}</div>
   <div><div class="club-name disp">${t.name}</div>
   <div class="club-meta">${DIVS[t.div]}联赛，第 ${S.season} 赛季，${S.round<rounds()?`${dayLabel(S.day)}，第 ${S.round+1}/${rounds()} 轮`:seasonDone()?'赛季结束':`${dayLabel(S.day)}，联赛已结束`}，排名第 ${myRank()}${S.boost>0?' <span class="tag2 boost">士气高涨</span>':''}${(S.streak||0)>=3?` <span class="tag2 fire">🔥 ${S.streak} 连胜</span>`:''}</div></div>
+  <button class="btn small rules-btn" data-act="sound" aria-label="音效：${soundOn()?'开':'关'}" title="音效">${soundOn()?'🔊':'🔇'}</button>
   <button class="btn small rules-btn" data-act="rules" aria-label="规则说明">规则</button>
   <div class="cash"><div class="club-meta">俱乐部资金</div><div class="num" style="color:${S.budget<0?'var(--red)':'inherit'}">${money(S.budget)}</div></div>
   </div></header>`;
@@ -224,7 +225,7 @@ function vRules(){
   const sec=(h,items)=>`<section class="rule"><h3>${h}</h3><ul>${items.map(i=>`<li>${i}</li>`).join('')}</ul></section>`;
   return `<section class="panel"><div class="mhead"><h2 id="mtitle">规则说明</h2><button class="btn small mclose" data-act="closeModal" aria-label="关闭">✕</button></div>
   <div class="rules">
-  <p style="margin:0 0 10px"><button class="btn small" data-act="guide" data-arg="again">重看新手引导</button></p>
+  <p style="margin:0 0 10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" data-act="guide" data-arg="again">重看新手引导</button><button class="btn small" data-act="sound">音效：${soundOn()?'开':'关'}</button></p>
   <p class="rule-diff">本档难度：<b>${diff().name}</b>（${diff().note}）。开局预算 ×${diff().budget}，比赛收入 ×${diff().income}，AI 球队水平 ${diff().ai>0?'+':''}${diff().ai}，我方伤病几率 ×${diff().inj}。</p>
   ${sec('赛季与日程',[`联赛是金字塔：${DIVS.map((dn,d)=>`${dn} ${DIV_SIZES[d]} 队`).join('、')}，各自主客场双循环（${DIVS.map((dn,d)=>`${dn} ${2*(DIV_SIZES[d]-1)} 轮`).join('、')}）。每级前 ${SWAP} 名升级、后 ${SWAP} 名降级。`,
     `一个赛季 ${weeks()} 周，联赛在周六进行，三个级别在同一天结束。甲级只有 18 轮，有 4 个周末轮空（在${INTL_NAME}周）；乙级每周六一轮；丙级 26 轮，有 4 轮放在周二（避开杯赛周）。`,
@@ -733,7 +734,7 @@ function vMatch(){
     ${offPitch().length?`<div class="gone-row"><span class="muted">已下场</span>${offPitch().map(p=>`<span>${pName(p)}${subMark(p.id)}${(M.ev[p.id]||{}).red?'':` <span class="muted num">${Math.round(p.cond)}</span>`}</span>`).join('')}</div>`:''}</div></div>
     <button class="btn primary" data-act="resume" style="margin-top:12px">再战，下半场！</button></div>`;
   }else{
-    ctl=M.pk?vShootout():`<div class="mctl"><div class="seg sm pace" role="group" aria-label="比赛速度">${Object.entries(PACE).map(([k,[l]])=>`<button data-act="pace" data-arg="${k}" aria-pressed="${(S.pace||'normal')===k}">${l}</button>`).join('')}</div><button class="btn primary" data-act="pauseSub">换人 / 调整</button><button class="btn" data-act="skip">直接看结果</button>${autoSubBtn()}</div>${vLiveStamina()}`;
+    ctl=M.pk?vShootout():`<div class="mctl"><button class="btn small" data-act="sound" aria-label="音效：${soundOn()?'开':'关'}" title="音效">${soundOn()?'🔊':'🔇'}</button><div class="seg sm pace" role="group" aria-label="比赛速度">${Object.entries(PACE).map(([k,[l]])=>`<button data-act="pace" data-arg="${k}" aria-pressed="${(S.pace||'normal')===k}">${l}</button>`).join('')}</div><button class="btn primary" data-act="pauseSub">换人 / 调整</button><button class="btn" data-act="skip">直接看结果</button>${autoSubBtn()}</div>${vLiveStamina()}`;
   }
   const tag=M.friendly?`${M.warm?'热身赛':'季前友谊赛'} · 对手${divName(S.teams[M.h===S.my?M.a:M.h])}`:M.cup?`${CUP_NAME}·${stageName(M.stage)}`:M.intl?`${INTL_NAME}·${INTL_STAGES[M.stage]}`:M.derby?'宿敌之战':'';
   return `<div class="matchwrap">${tag?`<div class="mtag">${tag}</div>`:''}<div class="board">

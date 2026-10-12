@@ -26,6 +26,7 @@ function startMatch(){
   M.poss=possession(S.teams[M.h],M.hIds,M.hForm,M.h===S.my?M.tac:M.aiTac,S.teams[M.a],M.aIds,M.aForm,M.a===S.my?M.tac:M.aiTac);
   const hn=S.teams[M.h].name,an=S.teams[M.a].name;
   M.feed.unshift({min:0,cls:'sys',t:f.friendly?(f.warm?LINE.warmKick(hn,an):LINE.friendlyKick(hn,an)):f.cup?LINE.cupKick(hn,an,stageName(M.stage)):f.intl?LINE.intlKick(hn,an,INTL_STAGES[M.stage],M.stage>=6):f.derby?LINE.derbyKick(hn,an):LINE.kickoff(hn,an)});
+  sfx('kickoff');
   M.feed.unshift({min:0,cls:'sys',t:`${opp.short}开场打法：${TACT[M.aiTac]}。`});
   UI.view='match';render();M.timer=setTimeout(loop,600);
 }
@@ -76,6 +77,7 @@ function tick(skipping){
   }
   if(M.min===75&&aura()>=1)M.feed.unshift({min:75,cls:'sys',t:`场边的主教练站了起来。名帅的气场笼罩全场，${my().short}的球员们眼神变了（进攻 +${aura()}）。`});
   if(M.min===45){
+    if(!skipping)sfx('half');
     const myG=M.h===S.my?M.hg:M.ag,opG=M.h===S.my?M.ag:M.hg;
     const was=M.aiTac;M.aiTac=opG<myG?'att':opG>myG?'def':'bal';
     M.feed.unshift({min:45,cls:'sys',t:LINE.half(M.hg,M.ag)});announce(LINE.half(M.hg,M.ag));
@@ -87,7 +89,7 @@ function tick(skipping){
     if(!skipping){M.paused=true;M.ht=true;M.stop=(M.stop||0)+1}
   }
   if(M.min>=90){
-    M.feed.unshift({min:90,cls:'sys',t:LINE.full(M.hg,M.ag)});announce(LINE.full(M.hg,M.ag));
+    M.feed.unshift({min:90,cls:'sys',t:LINE.full(M.hg,M.ag)});announce(LINE.full(M.hg,M.ag));if(!skipping)sfx('full');
     lateCheck(skipping);
     if(knockout()&&M.hg===M.ag){
       // a shootout: decided now, then revealed one kick at a time (all at once when skipping)
@@ -123,6 +125,7 @@ function side(s,p){
     const a=by||(solo?null:assister(team,ids,form,sc));if(a){ev(a.id).a=(ev(a.id).a||0)+1;if(!M.friendly)a.ast=(a.ast||0)+1}
     if(by)ev(by.id).sig=(ev(by.id).sig||0)+1;
     if(s==='h')M.hg++;else M.ag++;
+    if(!M.skip)sfx(mine?'goal':'concede');
     // was the scorer's side level (win) or one down (level) before it, this late? only the last goal of the match
     // turns out to be a 绝杀 / 绝平, so it's kept and judged at the final whistle (lateCheck)
     const margin=(s==='h'?M.hg-M.ag:M.ag-M.hg)-1;
@@ -174,6 +177,7 @@ function side(s,p){
   }else if(rng()<p*3.5)st.sh++;  // speculative efforts that never make the commentary
   if(!M.friendly&&rng()<CARD){
     const b=booking(team,ids,M.yc);
+    if(b&&!M.skip)sfx(b.red?'red':'card');
     if(b){ev(b.p.id)[b.red?'red':'yc']=1;if(b.red){M.off[b.p.id]=M.min;flag('red',`🟥 红牌 ${M.min}'`,`${b.p.name}（${team.short}）两黄变一红，被罚下`,1200)}}
     if(b)M.feed.unshift(b.red
       ?(announce(LINE.red(b.p.name,team.short)),{min:M.min,cls:'red',t:LINE.red(b.p.name,team.short)})

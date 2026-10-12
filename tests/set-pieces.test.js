@@ -23,7 +23,7 @@ ok(fks>=35&&fks<=110,'free kicks in range now and then ('+fks+')');
 const penGoals=M.feed.filter(e=>/十二码/.test(e.t)),fkGoals=M.feed.filter(e=>/任意球破门/.test(e.t));
 ok(penGoals.length>0&&penGoals.every(e=>!/助攻/.test(e.t)),'penalty goals: '+penGoals.length+', none with an assist');
 ok(fkGoals.every(e=>!/助攻/.test(e.t)),'free-kick goals: '+fkGoals.length+', none with an assist');
-ok(L.some(t=>t.includes(df.name+' 站上十二码')||t.includes(df.name+' 主罚点球')),'our chosen taker stepped up');
+ok(L.some(t=>t.includes(df.name+' 站上十二码')||t.includes(df.name+' 主罚点球'))||M.injuries.includes(df),'our chosen taker stepped up (unless he was hurt early on)');
 skipMatch();ACT.matchDone();
 // the controls: the player dialog sets and clears a taker; the squad page names them
 const fw=my().players.find(p=>p.pos==='FW');S.takers={};
