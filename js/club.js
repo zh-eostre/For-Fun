@@ -27,7 +27,7 @@ function rollOffer(){
     if(!listed&&!clubs.length)return;
     const away=listed&&(!clubs.length||rng()<LIST_ABROAD),club=away?(abroad.length?pick(abroad):null):pick(clubs);
     // one of our 一人一城 turns half the clubs that come for him away before it comes to a bid
-    if(!listed&&club&&oneClub(p,my())&&rng()<ONE_CLUB_REFUSE){news(`${club.name} 想挖走 ${p.name}，却被他一口回绝：「我的心，永远属于${my().short}。」`);return}
+    if(!listed&&club&&loyal(p,my())&&rng()<ONE_CLUB_REFUSE){news(`${club.name} 想挖走 ${p.name}，却被他一口回绝：「我的心，永远属于${my().short}。」`);return}
     const o={pid:p.id,club:club?club.id:-1,amount:Math.max(5,Math.round(marketValue(p)*rnd(...(club?range:MINOR_RANGE))))};
     if(!club)o.minor=pick(LOAN_LEAGUES.abroad[1]);
     if(listed)o.listed=true;S.offers.push(o);
@@ -183,17 +183,28 @@ function retireLegend(p){
   if(isLegend(c)||one)S.legends.push({name:p.name,pos:p.pos,goals:c.goals,apps:c.apps,seasons:c.seasons,titles:c.titles||[],season:S.season,club:my().name,oneClub:one||undefined});
   if(one){news(`🏟 告别赛：${p.name} 挂靴了。${seasonsAt(p)} 个赛季，一人一城——今天全场起立，为他送上最后的掌声。`);(UI.sigQueue||(UI.sigQueue=[])).push({farewell:true,name:p.name,seasons:seasonsAt(p)})}
 }
+// the stories of the AI clubs' 一人一城: those who became one this summer, and those who retired as one
+function aiOneClubNews(farewells){
+  const crowned=domestic().filter(t=>t.id!==S.my).flatMap(t=>t.players.filter(p=>crownOneClub(p,t)).map(p=>({p,t})));
+  if(crowned.length>2)news(`✨ 传说诞生！${crowned.map(({p,t})=>`${t.short}的${p.name}`).join('、')}——${crowned.length} 位一人一城同时加冕，他们的名字将与各自的城永远相连。`);
+  else crowned.forEach(({p,t})=>news(pick([`✨ 传说诞生！${p.name}（${p.ovr}）在${t.name}的第 ${seasonsAt(p)} 个赛季加冕一人一城，誓言此生不渡他城。`,
+    `✨ ${t.name} 的 ${p.name}（${p.ovr}）拒绝了无数豪门的橄榄枝，迎来第 ${seasonsAt(p)} 个赛季——一人一城，就此成名。`])));
+  if(farewells.length>2)news(`🏟 一个时代的落幕：${farewells.map(({p,t})=>`${t.short}的${p.name}`).join('、')}同时挂靴，一人一城的传说就此封存。`);
+  else farewells.forEach(({p,t,n})=>news(`🏟 ${t.name} 的 ${p.name} 挂靴了。${n} 个赛季，一人一城——他的球衣号码从此高悬于球场上空。`));
+}
 // we sold one of our 一人一城: the fans don't forgive it easily
 function soldOneClub(p){
   S.mgr.rep=Math.max(0,S.mgr.rep-ONE_CLUB_SALE_REP);
   news(`球迷愤怒了！一人一城的 ${p.name} 被卖走，看台上拉起了横幅：「卖掉灵魂的人，不配站在这里。」教练声望 -${ONE_CLUB_SALE_REP}。`);
 }
-// milestones of the players who came up with us: the title after ONE_CLUB seasons, the tenth season, and
-// appearances (100, 200, 300). season: at a new season's start; apps: after a match
+// milestones of the players who came up with us: loyal after ONE_CLUB seasons, 一人一城 once he is good enough too
+// (then or later), the tenth season, and appearances (100, 200, 300). season: at a new season's start; apps: after a match
 function oneClubNews(when){
   my().players.filter(p=>p.home===S.my).forEach(p=>{
     const n=seasonsAt(p);
-    if(when==='season'&&n===ONE_CLUB){news(`✨ 一人一城：${p.name} 迎来在${my().short}的第 ${n} 个赛季，从此他的名字与这座城连在一起。`);unlock('oneclub')}
+    if(crownOneClub(p,my())){news(when==='season'&&n===ONE_CLUB?`✨ 一人一城：${p.name} 迎来在${my().short}的第 ${n} 个赛季，从此他的名字与这座城连在一起。`
+      :`✨ 一人一城：坚守${my().short} ${n} 季的 ${p.name} 终于登上巅峰（能力 ${p.ovr}），从此他的名字与这座城连在一起。`);unlock('oneclub')}
+    else if(when==='season'&&n===ONE_CLUB&&loyal(p,my()))news(`🛡 忠诚：${p.name} 迎来在${my().short}的第 ${n} 个赛季。能力到达 ${ONE_CLUB_OVR}，他就是一人一城。`);
     if(when==='season'&&n===10)news(`✨ 十年如一日：${p.name} 把整整十个赛季献给了${my().short}。`);
     if(when==='apps'&&[100,200,300].includes(careerApps(p)))news(`✨ ${p.name} 迎来在${my().short}的第 ${careerApps(p)} 场比赛，看台上响起了他的名字。`);
   });
@@ -289,7 +300,7 @@ function askPrice(p,t){
 // why a club won't sell (or we can't buy) right now; '' when the deal can go ahead
 function buyBlock(p,t){
   if(t.foreign)return '海外俱乐部不出售球员';
-  if(oneClub(p,t))return `他誓言终老于${t.short}，不会离开`;  // a loyal one at an AI club
+  if(loyal(p,t))return `他誓言终老于${t.short}，不会离开`;  // a loyal one (or a 一人一城) at an AI club
   if(!windowOpen())return windowShut();
   if(t.players.length<=15)return '对方阵容人数不足，不愿出售';
   if(p.pos==='GK'&&t.players.filter(x=>x.pos==='GK').length<=2)return '对方门将不够，不愿出售';
@@ -461,7 +472,8 @@ function aiPoach(){
   const lines=[];
   domestic().filter(t=>t.id!==S.my&&aiGap(t)<-3&&t.players.length>16).forEach(seller=>{
     const star=[...seller.players].sort((a,b)=>b.ovr-a.ovr)[0];
-    if(oneClub(star,seller)){lines.push(`${seller.name} 的 ${star.name}（${star.ovr}）拒绝了所有邀约，誓言终老于此。`);return}  // a loyal one stays
+    if(loyal(star,seller)){lines.push(oneClub(star,seller)?`豪门的支票堆成了山，${seller.name} 的一人一城 ${star.name}（${star.ovr}）却连看都没看一眼：「这座城，就是我的全部。」`
+      :`${seller.name} 的 ${star.name}（${star.ovr}）拒绝了所有邀约，誓言终老于此。`);return}  // a loyal one stays
     // a bigger club at home that isn't well above its own level, has room, and would start him; the biggest gets him
     const buyer=domestic().filter(t=>t.id!==S.my&&t!==seller&&t.rep>seller.rep&&aiGap(t)>-3&&t.players.length<22&&star.ovr>=xiLevel(t)-4)
       .sort((a,b)=>b.rep-a.rep)[0];
@@ -589,7 +601,7 @@ function releaseSurplus(t){
   const out=[];
   for(const p of [...t.players].sort((a,b)=>a.ovr-b.ovr||b.age-a.age)){
     if(t.players.length-out.length<=AI_SQUAD_MAX)break;
-    if(n[p.pos]>POS_MIN[p.pos]){n[p.pos]--;out.push(p)}
+    if(n[p.pos]>POS_MIN[p.pos]&&!loyal(p,t)){n[p.pos]--;out.push(p)}
   }
   t.players=t.players.filter(p=>!out.includes(p));
   out.forEach(p=>{['youth','joined','loan','lapps','hist','chosen'].forEach(k=>delete p[k]);scoutReport(p);p.ex=t.name;S.market.push(p)});

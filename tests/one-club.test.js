@@ -1,10 +1,11 @@
-// 一人一城: players who came up at a club (or joined it at 20 or under) and never left take the name after ONE_CLUB
-// seasons. ours: milestones in the news, a home lift, half of clubs' approaches turned down, a cost for selling one,
-// a farewell when they retire, a panel in the honours room. at AI clubs: harder to prise away, dearer to buy.
+// a club's own (its academy, its young players at the start) who never left are loyal after ONE_CLUB seasons, and a
+// 一人一城 once they reach ONE_CLUB_OVR. ours: milestones in the news, half of clubs' approaches turned down; a
+// 一人一城 also lifts the team at home, costs reputation to sell, gets a farewell and a panel in the honours room.
+// at AI clubs both kinds never move; their 一人一城 make the news when crowned and when they retire.
 require('./harness').run(`
 newGame(TEAMS.findIndex(t=>t.div===2),teamNames());UI.guide=null;
 ok(S.teams.every(t=>t.players.every(p=>p.since===1&&(p.home===t.id)===(p.age<=21))),'a new game: the young ones count as their club\u2019s own');
-const p=my().players.find(x=>x.pos==='MF'),q=my().players.find(x=>x.pos==='FW');p.home=q.home=S.my;  // say they came up here
+const p=my().players.find(x=>x.pos==='MF'),q=my().players.find(x=>x.pos==='FW');p.home=q.home=S.my;p.ovr=q.ovr=82;  // say they came up here, and are good
 ok(seasonsAt(p)===1&&!oneClub(p,my()),'first season: not yet');
 // five seasons on: the sixth brings the name, the news and the title
 S.season=ONE_CLUB;oneClubNews('season');
@@ -17,7 +18,7 @@ S.club[p.id]={name:p.name,pos:p.pos,goals:0,apps:99,seasons:5};p.apps=1;delete p
 // clubs' approaches: about half turned down
 let refused=0,bids=0;my().players.forEach(x=>{x.inj=0;x.bans={}});
 const nw=news;news=t=>{if(t.includes(p.name)&&/回绝/.test(t))refused++;nw(t)};  // count every approach turned down
-for(let k=0;k<600;k++){S.day=S.pre-6;rollOffer();if(offerFor(p.id))bids++}
+for(let k=0;k<2000;k++){S.day=S.pre-6;rollOffer();if(offerFor(p.id))bids++}
 news=nw;
 ok(refused>0&&bids>0&&refused/(refused+bids)>.3&&refused/(refused+bids)<.7,'about half the approaches turned down ('+refused+' refused, '+bids+' bids)');
 // the home lift: a 一人一城 on the pitch at home
@@ -33,15 +34,27 @@ ok(!findP(q.id)&&S.mgr.rep===r0-ONE_CLUB_SALE_REP&&S.news.some(n=>/球迷愤怒/
 // retiring: a farewell, and he joins the legends as one
 retireLegend(p);const L=S.legends[S.legends.length-1];
 ok(L&&L.name===p.name&&L.oneClub&&S.news.some(n=>/告别赛/.test(n.t)),'his retirement: a farewell, and a place among the legends');
-// a player signed at 22 is never one, even after years
-const m=makePlayer('DF',60,22);joinClub(m,my(),m.age<=20,1);my().players.push(m);ok(!oneClub(m,my()),'signed at 22: never 一人一城');
-const y=makePlayer('DF',55,19);joinClub(y,my(),y.age<=20,1);my().players.push(y);ok(oneClub(y,my()),'signed at 19 and stayed: 一人一城');
-// AI clubs: their loyal players don't move, to us or anyone
-const t=S.teams.find(x=>x.id!==S.my&&!x.foreign),a=t.players[0];a.home=t.id;a.since=1;S.season=Math.max(S.season,ONE_CLUB);
-ok(/终老/.test(buyBlock(a,t)||''),'an AI club\u2019s loyal player is not for sale: '+buyBlock(a,t));
-ACT.team(String(t.id));ok(/tag2 loyal/.test(els.app.innerHTML)&&!/tag2 oneclub/.test(els.app.innerHTML),'tagged 忠诚 on its team page (一人一城 is ours alone)');UI.pages=[];
+// bought, however young: never one, even after years
+const y=makePlayer('DF',82,19);joinClub(y,my(),false,1);my().players.push(y);ok(!loyal(y,my())&&!oneClub(y,my()),'bought at 19 and stayed: never one');
+// one of ours under ONE_CLUB_OVR: loyal only, no lift; reaching it makes him one for good
+const w=makePlayer('DF',70,24);joinClub(w,my(),true,1);w.youth=true;my().players.push(w);S.season=ONE_CLUB;
+oneClubNews('season');ok(loyal(w,my())&&!oneClub(w,my())&&S.news.some(n=>n.t.includes(w.name)&&/🛡 忠诚/.test(n.t)),'ability 70: loyal, in the news, not 一人一城');
+UI.tab='squad';render();ok(/tag2 loyal/.test(els.app.innerHTML),'tagged 忠诚 in the squad list');
+w.ovr=ONE_CLUB_OVR;oneClubNews('apps');ok(oneClub(w,my())&&w.ocs&&S.news[0].t.includes(w.name)&&/登上巅峰/.test(S.news[0].t),'he reaches '+ONE_CLUB_OVR+': crowned 一人一城 in the news');
+w.ovr=75;ok(oneClub(w,my()),'and keeps the name when he falls back');
+// AI clubs: their loyal players and 一人一城 don't move, to us or anyone
+const t=S.teams.find(x=>x.id!==S.my&&!x.foreign);S.season=Math.max(S.season,ONE_CLUB);
+t.players.forEach(x=>{delete x.home;delete x.ocs});const a=t.players[0],b=t.players[1];[a,b].forEach(x=>{x.home=t.id;x.since=1});a.ovr=70;b.ovr=85;
+ok(/终老/.test(buyBlock(a,t)||'')&&/终老/.test(buyBlock(b,t)||''),'an AI club\u2019s loyal player and 一人一城 are not for sale: '+buyBlock(a,t));
+ACT.team(String(t.id));ok(/tag2 loyal/.test(els.app.innerHTML)&&/tag2 oneclub/.test(els.app.innerHTML),'tagged 忠诚 and 一人一城 on its team page');UI.pages=[];
+S.teams.forEach(x=>{if(x.id!==S.my)x.players.forEach(z=>{if(z!==b)z.ocs=true})});  // only b is new this summer
+aiOneClubNews([{p:b,t,n:9}]);ok(b.ocs&&S.news.some(n=>n.t.includes(b.name)&&/一人一城/.test(n.t)&&/✨/.test(n.t))&&S.news[0].t.includes(b.name)&&/挂靴/.test(S.news[0].t),'his crowning and his farewell make the news');
 // an older save: our record says how long ours have been here; academy players are ours from the start
 const old=JSON.parse(JSON.stringify(S));old.v=21;old.teams.forEach(tm=>tm.players.forEach(x=>{delete x.since;delete x.home}));
 const k=old.teams[old.my].players[0];k.youth=true;old.club[k.id]={seasons:3};store[KEY]=JSON.stringify(old);const up=load();
 const k2=up.teams[up.my].players.find(x=>x.id===k.id);ok(up.v===SAVE_V&&k2.since===up.season-3&&k2.home===up.my,'an older save: an academy player who has been with us 3 seasons');
+// a v22 save: the young ones we bought lose the mark, the academy and the young ones from the start keep it
+const o2=JSON.parse(JSON.stringify(S));o2.v=22;const ps=o2.teams[o2.my].players;ps.forEach(x=>{delete x.youth;x.since=1;x.home=o2.my});ps[0].since=3;ps[1].since=3;ps[1].youth=true;
+store[KEY]=JSON.stringify(o2);const u2=load().teams[o2.my].players;
+ok(u2[0].home==null&&u2[1].home===o2.my&&u2[2].home===o2.my,'a v22 save: bought young, the mark goes; academy and the start keep it');
 `);

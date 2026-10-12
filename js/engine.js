@@ -83,7 +83,9 @@ const MIGRATE={
   // v22: where each player came from and since when (our record says how long ours have been with us; academy
   // players are ours from the start; at other clubs the young ones are theirs, and the count starts now)
   21:d=>d.teams.forEach(t=>t.players.forEach(p=>{if(p.since!=null)return;const c=t.id===d.my&&d.club&&d.club[p.id];
-    p.since=c?d.season-(c.seasons||0):d.season;if(t.id===d.my?p.youth:p.age<=21)p.home=t.id}))
+    p.since=c?d.season-(c.seasons||0):d.season;if(t.id===d.my?p.youth:p.age<=21)p.home=t.id})),
+  // only the academy makes a club's own: the players we bought young lose the mark (ours from the start keep it)
+  22:d=>d.teams[d.my].players.forEach(p=>{if(p.home===d.my&&!p.youth&&p.since!==1)delete p.home})
 };
 // a save can come from anywhere (a shared file, an edited one), and its text ends up in the page's HTML, so
 // every string in it loses the characters that could form markup before the game touches it
@@ -165,7 +167,10 @@ const sellPrice=p=>Math.round(marketValue(p)*.85);
 // 20 or under), which he loses for good once he leaves it
 function joinClub(p,t,home,season=S.season){p.since=season;if(home)p.home=t.id;else delete p.home}
 const seasonsAt=p=>p.since==null?0:S.season-p.since+1;
-const oneClub=(p,t)=>!!t&&p.home===t.id&&seasonsAt(p)>=ONE_CLUB;
+const loyal=(p,t)=>!!t&&p.home===t.id&&seasonsAt(p)>=ONE_CLUB;
+const oneClub=(p,t)=>loyal(p,t)&&(!!p.ocs||p.ovr>=ONE_CLUB_OVR);
+// the first time a player is a 一人一城 the name is his for good (true then, for the news)
+function crownOneClub(p,t){if(p.ocs||!oneClub(p,t))return false;p.ocs=true;return true}
 function makeSquad(str){
   const arr=[],starters={GK:1,DF:4,MF:4,FW:2},n={GK:2,DF:5,MF:5,FW:4};
   PO.forEach(pos=>{for(let i=0;i<n[pos];i++)arr.push(makePlayer(pos,str+(i<starters[pos]?2:-5)))});
@@ -566,7 +571,7 @@ function aiSign(t){
     t.players.push(c);joinClub(c,t,false);
     if(t.players.length>20){
       const drop=t.players.filter(p=>p.pos===c.pos&&p!==c).sort((x,y)=>x.ovr-y.ovr||y.age-x.age)[0];
-      if(drop)t.players=t.players.filter(p=>p!==drop);
+      if(drop&&!loyal(drop,t))t.players=t.players.filter(p=>p!==drop);
     }
     return `${t.name}签下${c.name}（${POS[c.pos]}，能力 ${c.ovr}）`;
   }
@@ -758,7 +763,7 @@ function newSeason(moveTo){
   moves.forEach(({t,z})=>{t.div+=z==='up'?-1:1});
   if(DIV_SIZES.some((n,d)=>divSize(d)<n))growLeague();
   const names=z=>moves.filter(m=>m.z===z).map(m=>m.t.name).join('、');
-  const retired=[];
+  const retired=[],farewells=[];
   S.teams.forEach(t=>{
     t.players.forEach(p=>{
       if(t.id===S.my)(p.hist=p.hist||[]).push({s:S.season,o:p.ovr});
@@ -774,6 +779,7 @@ function newSeason(moveTo){
     });
     const lvl=xiLevel(t),out=t.players.filter(p=>rng()<retireChance(p,lvl));
     if(t.id===S.my)out.forEach(p=>{retired.push(p.name);retireLegend(p)});
+    else if(!t.foreign)out.filter(p=>oneClub(p,t)).forEach(p=>farewells.push({p,t,n:seasonsAt(p)}));
     t.players=t.players.filter(p=>!out.includes(p));
     const minN=t.id===S.my?15:16;
     while(t.players.length<minN){
@@ -797,6 +803,7 @@ function newSeason(moveTo){
   news(`升级：${names('up')}。降级：${names('down')}。`);
   prestigeNotes.forEach(t=>news(t+'。'));
   oneClubNews('season');
+  aiOneClubNews(farewells);
   const mz=moves.find(m=>m.t.id===S.my);
   news(`新赛季开始！上赛季${DIVS[div]}第 ${rank}，获得奖金 ${money(prize)}。${mz?mz.z==='up'?`球队升入${DIVS[my().div]}！`:`球队降入${DIVS[my().div]}。`:''}`);
   if(retired.length)news(`退役：${retired.join('、')}。`);
