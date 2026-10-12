@@ -1,5 +1,5 @@
-// Copies the game into desktop/app/ for the desktop build, with its Google Fonts downloaded so the app looks the
-// same without a network. The web version in the project root keeps loading the fonts from Google.
+// Copies the game (page, styles, scripts, sounds) into desktop/app/ for the desktop build, with its Google Fonts
+// downloaded so the app looks the same without a network. The web version in the project root keeps loading the fonts from Google.
 // Fonts are cached in desktop/.font-cache, so only the first run needs a connection.
 const fs=require('fs'),path=require('path'),crypto=require('crypto');
 const root=path.join(__dirname,'..'),out=path.join(__dirname,'app'),cache=path.join(__dirname,'.font-cache');
@@ -38,7 +38,7 @@ async function fonts(href){
 
 (async()=>{
   fs.rmSync(out,{recursive:true,force:true});fs.mkdirSync(out,{recursive:true});
-  ['football-manager.html','style.css','js'].forEach(copy);
+  ['football-manager.html','style.css','js','sounds'].forEach(copy);
   const page=path.join(out,'football-manager.html');let html=fs.readFileSync(page,'utf8');
   const href=(html.match(/<link href="(https:\/\/fonts\.googleapis\.com\/css2[^"]+)"/)||[])[1];
   if(href){

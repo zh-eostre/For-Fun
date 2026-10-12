@@ -1,7 +1,15 @@
 /* ---------- sound effects ----------
-   made on the spot with the Web Audio API (no sound files): whistles, a rising chord for our goals, a falling one for
-   theirs, card beeps, a whoosh for a signature move and a fanfare for the big moments. on unless switched off (the
-   setting is kept on this device). nothing plays while a match is skipped, or where the browser has no audio */
+   the crowd is recorded (sounds/, see sounds/CREDITS.md): a cheer for our goals, a disappointed sigh for theirs, a
+   long roar for a title or a 绝杀. the rest is made on the spot with the Web Audio API: whistles, card beeps, a whoosh
+   for a signature move, a fanfare. on unless switched off (the setting is kept on this device). nothing plays while
+   a match is skipped, or where the browser has no audio */
+const SAMPLES={goal:['sounds/goal.wav',.75],concede:['sounds/concede.wav',.8],roar:['sounds/roar.wav',.8]};
+// a recording through an <audio> element (works for a page opened from a file, and in the desktop app); false if
+// it can't be played, so the synthesised version stands in
+function playSample(k){
+  if(typeof Audio==='undefined'||!SAMPLES[k])return false;
+  try{const a=new Audio(SAMPLES[k][0]);a.volume=SAMPLES[k][1];const p=a.play();if(p&&p.catch)p.catch(()=>{});return true}catch(e){return false}
+}
 const SOUND_KEY='lvyin-sound';
 let audioCtx=null;
 const soundOn=()=>{try{return localStorage.getItem(SOUND_KEY)!=='off'}catch(e){return true}};
@@ -48,7 +56,10 @@ const SFX={
   fanfare:c=>{[[523,0],[659,.14],[784,.28],[1047,.42],[784,.62],[1047,.76]].forEach(([f,at],i)=>tone(c,f,at,i===5?1:.22,'triangle',.17));noise(c,.4,1.4,[800,1800],.08)}
 };
 function sfx(kind){
-  if(!soundOn()||!SFX[kind]||(typeof M!=='undefined'&&M&&M.skip))return;
+  if(!soundOn()||(typeof M!=='undefined'&&M&&M.skip))return;
+  const rec=playSample(kind);  // the crowd, if there's a recording of it
+  const synth=kind==='roar'?'fanfare':rec?null:kind;  // a roar has the fanfare over it; otherwise the recording is enough
+  if(!synth||!SFX[synth])return;
   const c=ac();if(!c)return;
-  try{if(c.state==='suspended')c.resume();SFX[kind](c)}catch(e){}
+  try{if(c.state==='suspended')c.resume();SFX[synth](c)}catch(e){}
 }

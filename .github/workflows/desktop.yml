@@ -8,6 +8,7 @@ on:
       - football-manager.html
       - style.css
       - js/**
+      - sounds/**
       - desktop/**
       - .github/workflows/desktop.yml
   workflow_dispatch:
