@@ -652,6 +652,7 @@ function vMatch(){
     ctl=`<div class="ht ft ${wcls}"><div class="ft-head"><div class="verdict disp">${s.w==='胜'?LINE.win:s.w==='负'?LINE.lose:LINE.draw}</div>
       <span class="ft-score num">${s.mg} : ${s.og}${s.pens?` <small>点球 ${s.mp}:${s.op}</small>`:''}</span></div>
     <div class="ft-chips">${M.friendly?chip('','友谊赛不计成绩'):chip('money',`💰 收入 ${money(s.income)}${M.derby?'（宿敌之战翻倍）':''}`)}
+      ${s.late?chip(s.late.mine?'late':'hurt',s.late.mine?`⚡ ${s.late.name} ${s.late.min}' ${s.late.kind==='win'?'绝杀':'绝平'}`:`💔 ${s.late.min}' 被${s.late.kind==='win'?'绝杀':'绝平'}`):''}
       ${s.grown.map(p=>chip('grow',`↑ ${p.name} ${p.ovr}`)).join('')}
       ${M.myInjuries.map(p=>chip('hurt',`🚑 ${p.name} 伤停 ${p.inj} 天`)).join('')}
       ${s.banned.map(p=>{const n=p.bans[s.banComp];return chip('ban',`⛔ ${p.name} ${COMPS[s.banComp]}停赛${n>1?` ${n} 场`:'一场'}`)}).join('')}</div>

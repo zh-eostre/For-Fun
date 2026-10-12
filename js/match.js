@@ -88,6 +88,7 @@ function tick(skipping){
   }
   if(M.min>=90){
     M.feed.unshift({min:90,cls:'sys',t:LINE.full(M.hg,M.ag)});announce(LINE.full(M.hg,M.ag));
+    lateCheck(skipping);
     if(knockout()&&M.hg===M.ag){
       // a shootout: decided now, then revealed one kick at a time (all at once when skipping)
       M.feed.unshift({min:'PK',cls:'sys',t:LINE.pensStart});announce(LINE.pensStart);
@@ -121,11 +122,16 @@ function side(s,p){
     const a=by||assister(team,ids,form,sc);if(a){ev(a.id).a=(ev(a.id).a||0)+1;if(!M.friendly)a.ast=(a.ast||0)+1}
     if(by)ev(by.id).sig=(ev(by.id).sig||0)+1;
     if(s==='h')M.hg++;else M.ag++;
+    // was the scorer's side level (win) or one down (level) before it, this late? only the last goal of the match
+    // turns out to be a 绝杀 / 绝平, so it's kept and judged at the final whistle (lateCheck)
+    const margin=(s==='h'?M.hg-M.ag:M.ag-M.hg)-1;
+    M.lastGoal={s,min:M.min,name:sc.name,kind:M.min>=LATE_MIN?(margin===0?'win':margin===-1?'level':null):null};
     M.flash=s;M.feed.unshift({min:M.min,cls:'goal '+(mine?'mine':'theirs'),t:`进球！${t}（${team.short}${a?` · 助攻 ${a.name}`:''}）`});
+    if(M.lastGoal.kind)M.feed.unshift({min:M.min,cls:'sys',t:LINE.lateMaybe(M.lastGoal.kind,team.short,90-M.min)});
     const star=by||(sig?sc:null);  // a signature move behind it: its cut-in plays first
     if(!M.skip)M.hold=Date.now()+(mine?2600:800)+(star?1300:0);
     if(!mine&&!M.skip)notice('against',`失球 ${M.min}'　${M.hg} : ${M.ag}`,`${sc.name}（${team.short}）${a?` · 助攻 ${a.name}`:''}`);
-    const n=M.goals[sc.id],cel=()=>celebrate('GOAL!',`${sc.name}${n===2?' · 梅开二度':n===3?' · 帽子戏法':n>3?` · 大四喜`:''}　${M.hg} : ${M.ag}`,n>=2?'brace':'goal');
+    const n=M.goals[sc.id],cel=()=>celebrate('GOAL!',`${sc.name}${n===2?' · 梅开二度':n===3?' · 帽子戏法':n>3?` · 大四喜`:''}　${M.hg} : ${M.ag}${M.lastGoal.kind==='win'?`　${M.min}' · 这会是绝杀吗？`:M.lastGoal.kind==='level'?`　${M.min}' · 还有时间！`:''}`,n>=2?'brace':'goal');
     if(!M.skip){if(star)cutIn(star.name,star.sig,team.color,mine?cel:null);else if(mine)cel()}
     announce(`${M.min} 分钟，${team.short}进球，比分 ${M.hg} 比 ${M.ag}`);
   };
@@ -239,6 +245,17 @@ function matchActs(){
   M.act={...matchActions(H,M.hXI,M.line,mins,M.poss/100,edge,M.st.h.sh),...matchActions(A,M.aXI,M.line,mins,1-M.poss/100,-edge,M.st.a.sh)};
   for(const id in M.live||{}){const a=M.act[id];if(a)for(const k in M.live[id])a[k]=Math.max(a[k],M.live[id][k])}
 }
+// at the final whistle: was the last goal a late winner or equaliser? now it's certain, so it's called what it was
+function lateCheck(skipping){
+  const g=M.lastGoal;if(!g||!g.kind)return;
+  const team=S.teams[g.s==='h'?M.h:M.a],mine=team.id===S.my,word=g.kind==='win'?'绝杀':'绝平';
+  M.late={kind:g.kind,min:g.min,name:g.name,team:team.short,mine};
+  const t=LINE.lateSure(g.kind,team.short,g.name,g.min,knockout()&&M.hg===M.ag);
+  M.feed.unshift({min:90,cls:'goal '+(mine?'mine':'theirs'),t});announce(t);
+  if(skipping||M.skip)return;
+  if(mine)celebrate(word+'！',`${g.name} ${g.min}'`,g.kind==='win'?'party':'goal');
+  else notice('against',`被${word} ${g.min}'`,`${g.name}（${team.short}）`);
+}
 // a match that can't end level: a 天穹杯 tie or a 天际冠军杯 knockout tie
 const knockout=()=>M.cup||M.intl&&M.stage>=6;
 function finish(){
@@ -267,7 +284,7 @@ function finish(){
   matchActs();
   M.rh=rateSide(S.teams[M.h],M.hXI,M.role,M.ev,M.hg,M.ag,M.mins,false,M.act);M.ra=rateSide(S.teams[M.a],M.aXI,M.role,M.ev,M.ag,M.hg,M.mins,false,M.act);
   M.mvp=[...M.rh,...M.ra].sort((a,b)=>b.r-a.r)[0];
-  M.summary={w,mg,og,mp,op,pens,income,grown,awoken,banned:susp,banComp:M.comp};
+  M.summary={w,mg,og,mp,op,pens,income,grown,awoken,banned:susp,banComp:M.comp,late:M.late||null};
   news(`${w} ${mg}:${og}${pens?`（点球 ${mp}:${op}）`:''} 对阵${S.teams[oppId].name}${M.derby?'（宿敌之战）':''}。比赛收入 ${money(income)}。`);
   hurt.forEach(p=>news(`${p.name} 受伤，预计伤停 ${p.inj} 天。`));
   if(susp.length)news(`${susp.map(p=>bn(p)>1?`${p.name}（${bn(p)} 场）`:p.name).join('、')} 在${COMPS[M.comp]}停赛${susp.every(p=>bn(p)===1)?'一场':''}。`);
@@ -280,6 +297,9 @@ function finish(){
   if(mg-og>=5)unlock('rout');
   if(pens&&w==='胜')unlock('pens');
   if(w==='胜'&&M.trailed){unlock('comeback');news('逆转！落后的情况下拿下了比赛。')}
+  if(M.late){const L=M.late,word=L.kind==='win'?'绝杀':'绝平';
+    news(L.mine?`⚡ ${L.name} 第 ${L.min} 分钟${word}！`:`第 ${L.min} 分钟被${L.team}的 ${L.name} ${word}。`);
+    if(L.mine&&L.kind==='win')unlock('late')}
   if(M.cup)playCupStage(res);else if(M.intl)playIntl(res);else{loanRound();S.round++}
   if(!M.cup&&seasonDone())careerSeasonEnd();  // after the last league round, or after a 冠军杯 final that comes after it
   // a title or promotion settled by this match: confetti
@@ -303,7 +323,7 @@ function finishFriendly(){
   matchActs();
   M.rh=rateSide(S.teams[M.h],M.hXI,M.role,M.ev,M.hg,M.ag,M.mins,true,M.act);M.ra=rateSide(S.teams[M.a],M.aXI,M.role,M.ev,M.ag,M.hg,M.mins,true,M.act);
   M.mvp=[...M.rh,...M.ra].sort((a,b)=>b.r-a.r)[0];
-  M.summary={w,mg,og,income:0,grown,awoken,banned:[],pens:false};
+  M.summary={w,mg,og,income:0,grown,awoken,banned:[],pens:false,late:M.late||null};
   S.friendlies[M.fIdx].res={hg:M.hg,ag:M.ag};
   news(`${M.warm?'热身赛':'季前友谊赛'}：${w} ${mg}:${og} 对阵${opp.name}。`);
   M.myInjuries.forEach(p=>news(`${p.name} 在友谊赛中受伤，预计伤停 ${p.inj} 天。`));

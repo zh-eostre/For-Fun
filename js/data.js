@@ -54,6 +54,7 @@ const TRAIN={rest:['恢复训练','训练日体能 +10，不会通过训练进�
 const CARD=.013;   // chance per team per minute of a booking (about 1.2 per team per match)
 // chance to retire at the end of a season by age (33-39; 40+ always retires), scaled by ability below
 const RETIRE_AGE={33:.08,34:.2,35:.4,36:.6,37:.75,38:.85,39:.95};
+const LATE_MIN=85;  // from this minute a goal that wins or levels the match can be a 绝杀 / 绝平
 const YC_BAN=3;   // yellow cards in one competition that add up to a one-match ban in it
 // player name parts; genName in engine.js combines them
 // calendar 3: a season of SEASON_WEEKS weeks, league rounds on Saturdays. 甲级 (18 rounds) sits 4 weekends out, on
@@ -143,6 +144,7 @@ const ACH={
   vet:['老兵不死','执教满 5 个赛季'],
   academy:['青训之光','青训出身的球员能力达到 75'],
   comeback:['逆转之王','落后的情况下逆转取胜'],
+  late:['读秒杀手','在第 85 分钟以后打进绝杀球'],
   intl:['大陆之王','夺得天际冠军杯']
 };
 // halftime team talk (once a match): [name, what the manager says, what it does]
@@ -231,6 +233,9 @@ const LINE={
   kickoff:(h,a)=>`宿命的对决开始了。${h} 在主场迎战 ${a}！`,
   half:(hg,ag)=>`上半场的战斗落幕，比分 ${hg} : ${ag}。`,
   full:(hg,ag)=>`终焉之笛响起！${hg} : ${ag}`,
+  // a goal from LATE_MIN that wins or levels it: a question when it goes in, the verdict at the final whistle
+  lateMaybe:(k,team,left)=>k==='win'?`${team}打破僵局！${left>0?`还剩最后 ${left} 分钟，这会是绝杀吗？`:'这已经是最后一分钟了！'}`:`${team}在最后时刻扳平了！${left>0?'还有时间再进一个吗？':'这已经是最后一分钟了！'}`,
+  lateSure:(k,team,name,min,pens)=>k==='win'?`${name} 第 ${min} 分钟的进球成为绝杀，${team}笑到了最后！`:`${name} 第 ${min} 分钟的进球绝平${pens?'，把比赛拖进了点球大战':'，硬生生抢回一分'}！`,
   yellow:(n,t)=>`${n}（${t}）被裁判之眼锁定，吃到一张黄牌`,
   ban:`，黄牌之印已集满 ${YC_BAN} 枚——本场仍可继续作战，下一场将被放逐`,
   red:(n,t)=>`${n}（${t}）第二张黄牌！审判降临，红牌罚下！`,

@@ -730,6 +730,7 @@ button.xi-tok{cursor:pointer}
 .ft-chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 12px}
 .ft-chip{font-size:12.5px;padding:2px 10px;border-radius:99px;background:var(--pitch-soft);border:1px solid var(--line)}
 .ft-chip.grow{color:var(--pitch);font-weight:700}
+.ft-chip.late{background:color-mix(in srgb,var(--amber) 28%,transparent);font-weight:700}
 .ft-chip.hurt,.ft-chip.ban{color:var(--red-text,var(--red))}
 .ft-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:10px;align-items:stretch}
 @media (max-width:560px){.ft-grid{grid-template-columns:1fr}}
