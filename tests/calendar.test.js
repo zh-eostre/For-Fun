@@ -39,8 +39,8 @@ ok(true,'three full seasons with the calendar ran');
 newGame(2,teamNames());const kid=S.academy.intake[0];ACT.ysign(String(kid.id));
 const k=findP(kid.id);ok(unproven(k),'signed youth is unproven: sells for '+sellPrice(k)+' (potential-based value would be '+Math.round(value(k)*.85)+')');
 k.apps=5;ok(!unproven(k)&&sellPrice(k)===Math.round(value(k)*.85),'after 5 apps he sells for '+sellPrice(k));
-k.apps=0;S.offer=null;for(let i=0;i<200&&!(S.offer&&S.offer.pid===k.id);i++){S.offer=null;rollOffer()}
-if(S.offer&&S.offer.pid===k.id)ok(S.offer.amount<=Math.ceil(40*1.6),'bid for unproven youth is small: '+S.offer.amount);
+k.apps=0;for(let i=0;i<200&&!offerFor(k.id);i++)rollOffer();
+if(offerFor(k.id))ok(offerFor(k.id).amount<=Math.ceil(40*1.6),'bid for unproven youth is small: '+offerFor(k.id).amount);
 // migration v6 -> v7
 newGame(5,teamNames());ACT.ff();playMatch();const old=JSON.parse(JSON.stringify(S));old.v=6;delete old.day;delete old.lastMatchDay;
 store[KEY]=JSON.stringify(old);const up=load();S=up;ok(up.v===SAVE_V&&up.day===nextMatchDay(),'v6 save resumes on its next match day: '+dayLabel(up.day));

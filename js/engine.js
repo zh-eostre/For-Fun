@@ -77,7 +77,9 @@ const MIGRATE={
   // v18 -> v19: the international cup (天际冠军杯) starts with the next season; nothing to change now
   18:d=>{},
   // v20: yellow-card counts and bans by competition (what there was counts for the league)
-  19:d=>d.teams.forEach(t=>t.players.forEach(p=>{p.ycc=p.yc?{lg:p.yc}:{};p.bans=p.ban?{lg:p.ban}:{};delete p.yc;delete p.ban;delete p.banNext}))
+  19:d=>d.teams.forEach(t=>t.players.forEach(p=>{p.ycc=p.yc?{lg:p.yc}:{};p.bans=p.ban?{lg:p.ban}:{};delete p.yc;delete p.ban;delete p.banNext})),
+  // v21: offers for several players at once
+  20:d=>{d.offers=d.offer?[d.offer]:[];delete d.offer}
 };
 // a save can come from anywhere (a shared file, an edited one), and its text ends up in the page's HTML, so
 // every string in it loses the characters that could form markup before the game touches it
@@ -612,7 +614,7 @@ const divIds=div=>S.teams.filter(t=>t.div===div).map(t=>t.id);
 const newFixtures=()=>DIVS.map((_,div)=>genFixtures(divIds(div)));
 function newGame(id,names,difficulty='normal'){
   S={v:SAVE_V,diff:DIFF[difficulty]?difficulty:'normal',cal:CAL_V,pid:1,season:1,round:0,my:id,formation:'4-4-2',tactic:'bal',training:'normal',news:[],history:[],
-    mgr:{rep:15,last:0},ach:{},streak:0,boost:0,records:[],club:{},legends:[],offer:null,event:null,academy:{lv:1,intake:[]},day:0,lastMatchDay:-9,fac:{scout:1,physio:1,ground:1}};
+    mgr:{rep:15,last:0},ach:{},streak:0,boost:0,records:[],club:{},legends:[],offers:[],event:null,academy:{lv:1,intake:[]},day:0,lastMatchDay:-9,fac:{scout:1,physio:1,ground:1}};
   usedNames=new Set();
   S.teams=TEAMS.map((t,i)=>({...t,...names[i],id:i,players:makeSquad(t.str+(i===id?0:diff().ai))}));
   S.fixtures=newFixtures();S.results=DIVS.map(()=>[]);S.cup=newCup();S.rival=pickRival();

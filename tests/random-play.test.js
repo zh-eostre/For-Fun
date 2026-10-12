@@ -60,7 +60,7 @@ while(seasons<${SEASONS}&&guard++<20000){
   step++;where='S'+S.season+' d'+S.day+' r'+S.round+' step '+step;
   try{
     if(S.event){const n=EVENTS[S.event.k].opts.length;ACT.event(String(Math.floor(R()*n)));for(let i=0;S.event&&i<n;i++)ACT.event(String(i));if(S.event)fails.push(where+' event cannot be resolved '+S.event.k);check();continue}
-    if(S.offer&&R()<.5){R()<.3?twice('offerYes'):ACT.offerNo();check();continue}
+    if((S.offers||[]).length&&R()<.5){const o=S.offers[0];R()<.3?twice('offerYes',String(o.pid)):ACT.offerNo(String(o.pid));check();continue}
     if(S.round>=rounds()){
       views();
       const offers=S.jobOffers||[];if(offers.length&&R()<.6)twice('takeJob',String(pk(offers).club));else ACT.newSeason();

@@ -1,6 +1,6 @@
 /* ---------- constants, shared state, small helpers ---------- */
 const KEY='lvyin-fm-v1';  // localStorage key; kept as-is so old saves are still found
-const SAVE_V=20;         // bump when the save format changes, and add a step to MIGRATE in engine.js
+const SAVE_V=21;         // bump when the save format changes, and add a step to MIGRATE in engine.js
 // a club's base strength (its typical best-XI level) from its 底蕴: 98 → 84, 86 → 80, 50 → 68, 14 → 55
 function strFromRep(rep){return Math.round(50+rep*.35)}
 const TIERS=[[80,'豪门'],[65,'强队'],[45,'中游'],[0,'弱旅']];
@@ -147,7 +147,7 @@ const SIG_A=['苍雷','黑炎','绝影','天狼','冥王','流星','修罗','月
 const SIG_B=['贯穿','断罪','葬送','乱舞','一闪','崩坏','螺旋','终焉','天翔','灭杀','裂空','轮回'];
 const AWAKEN=.004;       // chance per match that a player aged 23 or under awakens (rare: once in a career for a few)
 const BOOST=2;           // strength bonus while morale is high (after a derby win or some events)
-const OFFER_CHANCE=.2;   // chance on each transfer-window day that an AI club bids for one of your players
+const OFFER_TRIES=3,OFFER_CHANCE=.12;   // each transfer-window day, this many chances that an AI club bids for one of your players
 // a player on our transfer list draws bids of his own: on this share of window days, at this range of his value
 const LIST_CHANCE=.45,LIST_RANGE=[.95,1.3];
 const EVENT_CHANCE=.2;   // chance after each match of a random event

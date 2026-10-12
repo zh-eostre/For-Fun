@@ -271,8 +271,8 @@ const ACT={
     }
     render();
   },
-  offerYes:(a,b)=>{if(!arm(b,'再点一次，签下契约'))return;acceptOffer();save();render()},
-  offerNo:()=>{rejectOffer();save();render()},
+  offerYes:(a,b)=>{if(!arm(b,'再点一次，签下契约'))return;acceptOffer(+a);save();render()},
+  offerNo:a=>{rejectOffer(a==null?null:+a);save();render()},
   event:a=>{resolveEvent(+a);fixLineup();save();render()},
   ysign:a=>{signYouth(+a);save();render()},
   yrel:(a,b)=>{if(!arm(b,'确定放走？'))return;releaseYouth(+a);save();render()},

@@ -11,27 +11,26 @@ function unlock(k){
 
 /* ---------- AI bids for your players ---------- */
 // a pending bid lasts until the next match; then it lapses and a new one may arrive
+// bids for our players, in the transfer windows. several can stand at once (one per player); each lasts until the
+// next day. a player we've put on the transfer list draws bids of his own, often, a little under what a club pays
+// for a man it goes after itself; otherwise clubs come for players of their choosing now and then
 function rollOffer(){
   if(!windowOpen())return;
-  if(S.offer){news(`${S.teams[S.offer.club].name} 的报价已过期。`);S.offer=null}
-  // someone we've put on the transfer list: bids for him come often, a little under what a club pays for a man it
-  // goes after itself
-  const listed=my().players.filter(x=>x.listed&&!x.loan);
-  if(listed.length&&rng()<LIST_CHANCE){
-    const p=pick(listed),clubs=domestic().filter(t=>t.id!==S.my&&t.str+10>=p.ovr);
-    if(clubs.length){
-      const club=pick(clubs);
-      S.offer={pid:p.id,club:club.id,listed:true,amount:Math.max(5,Math.round(marketValue(p)*rnd(...LIST_RANGE)))};
-      news(`${club.name} 看中了挂牌出售的 ${p.name}，报价 ${money(S.offer.amount)}。`);return;
-    }
+  const old=S.offers||[];
+  if(old.length)news(old.length===1?`${S.teams[old[0].club].name} 的报价已过期。`:`${old.length} 份报价已过期。`);
+  S.offers=[];
+  const bid=(p,listed,range)=>{
+    const clubs=domestic().filter(t=>t.id!==S.my&&t.str+10>=p.ovr);if(!clubs.length)return;
+    const club=pick(clubs),o={pid:p.id,club:club.id,amount:Math.max(5,Math.round(marketValue(p)*rnd(...range)))};
+    if(listed)o.listed=true;S.offers.push(o);
+    news(listed?`${club.name} 看中了挂牌出售的 ${p.name}，报价 ${money(o.amount)}。`:`${club.name} 带着 ${money(o.amount)} 的契约书前来，想要带走 ${p.name}。`);
+  };
+  my().players.filter(p=>p.listed&&!p.loan).forEach(p=>{if(rng()<LIST_CHANCE)bid(p,true,LIST_RANGE)});
+  for(let k=0;k<OFFER_TRIES;k++){
+    if(rng()>=OFFER_CHANCE)continue;
+    const free=my().players.filter(p=>!unavail(p)&&!S.offers.some(o=>o.pid===p.id));
+    if(free.length)bid(pick(free),false,[1.05,1.6]);
   }
-  if(rng()>=OFFER_CHANCE)return;
-  const p=pick(my().players.filter(x=>!unavail(x)));
-  const clubs=p&&domestic().filter(t=>t.id!==S.my&&t.str+10>=p.ovr);
-  if(!clubs||!clubs.length)return;
-  const club=pick(clubs);
-  S.offer={pid:p.id,club:club.id,amount:Math.max(5,Math.round(marketValue(p)*rnd(1.05,1.6)))};
-  news(`${club.name} 带着 ${money(S.offer.amount)} 的契约书前来，想要带走 ${p.name}。`);
 }
 // moving a player to an AI club keeps his career at our club on record
 // p.bk: what of this season's figures is already banked (sold mid-season, and maybe bought back since), so only the
@@ -43,10 +42,13 @@ function bankPlayer(p){
   SEASON_KEYS.forEach(k=>c[k]=(c[k]||0)+unbanked(p,k));
   p.bk=Object.fromEntries(SEASON_KEYS.map(k=>[k,p[k]||0]));
 }
-function acceptOffer(){
+// pid: the player the offer is for (one offer per player)
+const offerFor=pid=>(S.offers||[]).find(o=>o.pid===pid);
+function acceptOffer(pid){
   if(!windowOpen()){toast(windowShut());return}
-  const o=S.offer,p=findP(o.pid),club=S.teams[o.club];
-  if(!p){S.offer=null;return}
+  const o=offerFor(pid),p=o&&findP(o.pid),club=o&&S.teams[o.club];
+  if(!o)return;
+  if(!p){S.offers=S.offers.filter(x=>x!==o);return}
   if(squadSize()<=14){toast('一线队至少要保留 14 人');return}
   bankPlayer(p);  // his season goals stay with him so the golden boot race is unaffected
   delete p.listed;
@@ -56,14 +58,16 @@ function acceptOffer(){
     const drop=club.players.filter(x=>x.pos===p.pos&&x!==p).sort((x,y)=>x.ovr-y.ovr||y.age-x.age)[0];
     if(drop)club.players=club.players.filter(x=>x!==drop);
   }
-  S.budget+=o.amount;S.offer=null;
+  S.budget+=o.amount;S.offers=S.offers.filter(x=>x!==o);
   news(`契约成立：${p.name} 以 ${money(o.amount)} 转投 ${club.name}。`);
   if(o.amount>=200)unlock('deal');
   toast(`${p.name} 已转会，进账 ${money(o.amount)}`);
 }
-function rejectOffer(){
-  news(`拒绝了 ${S.teams[S.offer.club].name} 对 ${(findP(S.offer.pid)||{}).name} 的报价。`);
-  S.offer=null;toast('报价已拒绝');
+// pid: one offer; none: all of them
+function rejectOffer(pid){
+  const out=(S.offers||[]).filter(o=>pid==null||o.pid===pid);
+  out.forEach(o=>news(`拒绝了 ${S.teams[o.club].name} 对 ${(findP(o.pid)||{}).name} 的报价。`));
+  S.offers=(S.offers||[]).filter(o=>!out.includes(o));if(out.length)toast(out.length>1?`拒绝了 ${out.length} 份报价`:'报价已拒绝');
 }
 
 /* ---------- random events ---------- */
@@ -475,7 +479,7 @@ function windowDay(){
     aiWindow(S.day===S.pre-1||S.day===w+WINTER-1?.35:.06);
     rollOffer();
   }else if(S.day===S.pre||S.day===w+WINTER){
-    if(S.offer){news(`转会窗口关闭，${S.teams[S.offer.club].name} 的报价作废。`);S.offer=null}
+    if((S.offers||[]).length){news(`转会窗口关闭，${S.offers.length} 份报价作废。`);S.offers=[]}
     news('转会窗口关闭。');
   }
 }
@@ -536,7 +540,7 @@ function switchClub(o){
   old.players.forEach(p=>{if(p.loan)p.loan=null});
   S.my=t.id;S.budget=o.budget;
   S.fac={scout:lv,physio:lv,ground:lv,stadium:lv};S.academy={lv,intake:[]};
-  S.offer=null;S.event=null;S.boost=0;S.streak=0;S.rival=pickRival();UI.selSlot=null;
+  S.offers=[];S.event=null;S.boost=0;S.streak=0;S.rival=pickRival();UI.selSlot=null;
   S.club={};  // the club records (all-time boards, legend status) start afresh at the new club
   news(`你离开了 ${old.name}，正式执掌 ${t.name}（${DIVS[t.div]}，${tierOf(t.rep)}）！转会预算 ${money(o.budget)}。`);
 }
