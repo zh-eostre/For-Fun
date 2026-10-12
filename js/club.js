@@ -20,10 +20,12 @@ function rollOffer(){
   if(old.length)news(old.length===1?`${S.teams[old[0].club].name} 的报价已过期。`:`${old.length} 份报价已过期。`);
   S.offers=[];
   const bid=(p,listed,range)=>{
-    const clubs=domestic().filter(t=>t.id!==S.my&&t.str+10>=p.ovr);if(!clubs.length)return;
-    const club=pick(clubs),o={pid:p.id,club:club.id,amount:Math.max(5,Math.round(marketValue(p)*rnd(...range)))};
+    // a listed player can also go abroad: a club from the 冠军杯 good enough for him makes some of those bids
+    const clubs=domestic().filter(t=>t.id!==S.my&&t.str+10>=p.ovr),abroad=listed?S.teams.filter(t=>t.foreign&&t.str+10>=p.ovr):[];
+    if(!clubs.length&&!abroad.length)return;
+    const club=abroad.length&&(!clubs.length||rng()<LIST_ABROAD)?pick(abroad):pick(clubs),o={pid:p.id,club:club.id,amount:Math.max(5,Math.round(marketValue(p)*rnd(...range)))};
     if(listed)o.listed=true;S.offers.push(o);
-    news(listed?`${club.name} 看中了挂牌出售的 ${p.name}，报价 ${money(o.amount)}。`:`${club.name} 带着 ${money(o.amount)} 的契约书前来，想要带走 ${p.name}。`);
+    news(listed?`${club.foreign?'海外俱乐部 ':''}${club.name} 看中了挂牌出售的 ${p.name}，报价 ${money(o.amount)}。`:`${club.name} 带着 ${money(o.amount)} 的契约书前来，想要带走 ${p.name}。`);
   };
   my().players.filter(p=>p.listed&&!p.loan).forEach(p=>{if(rng()<LIST_CHANCE)bid(p,true,LIST_RANGE)});
   const day=S.day<S.pre?S.day-1:S.day-winterStart(),ch=day<OFFER_EARLY_DAYS?OFFER_CHANCE.early:OFFER_CHANCE.late;  // day of the window, from 0

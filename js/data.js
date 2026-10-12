@@ -155,7 +155,7 @@ const AI_BUY={summer:{early:.02,rush:[.14,.24,.38]},winter:{early:.004,rush:[.03
 // window's first OFFER_EARLY_DAYS days, few later
 const OFFER_TRIES=3,OFFER_CHANCE={early:.25,late:.04},OFFER_EARLY_DAYS=3;
 // a player on our transfer list draws bids of his own: on this share of window days, at this range of his value
-const LIST_CHANCE=.45,LIST_RANGE=[.95,1.3];
+const LIST_CHANCE=.45,LIST_RANGE=[.95,1.3],LIST_ABROAD=1/3;  // and this share of those bids come from clubs abroad
 const EVENT_CHANCE=.2;   // chance after each match of a random event
 
 const ACH={

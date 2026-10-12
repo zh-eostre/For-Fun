@@ -869,3 +869,4 @@ tr.intl-maybe td:first-child{box-shadow:inset 4px 0 color-mix(in srgb,var(--ambe
 .headline b{font-size:16px}
 .headline .hl-win{margin-left:auto;font-weight:700}
 .headline.mine{background:linear-gradient(90deg,color-mix(in srgb,var(--amber) 55%,var(--card)),var(--card))}
+.hrow.me{background:var(--pitch-soft);border-radius:6px}

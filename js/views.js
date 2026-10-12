@@ -368,7 +368,7 @@ function vOffer(){
   const list=(S.offers||[]).map(o=>({o,p:findP(o.pid)})).filter(x=>x.p);
   if(!list.length)return '';
   return `<section class="panel offer"><h2>转会报价${list.length>1?` <span class="muted" style="font-weight:400;font-size:14px">${list.length} 份</span>`:''}</h2>
-  ${list.map(({o,p})=>`<div class="offer-one"><p style="margin:0 0 8px">${S.teams[o.club].name}（${DIVS[S.teams[o.club].div]}）带着 <b>${money(o.amount)}</b> 的契约书前来，想要带走 <b>${p.name}</b>（${POS[p.pos]}，能力 ${p.ovr}，${p.age} 岁）。
+  ${list.map(({o,p})=>`<div class="offer-one"><p style="margin:0 0 8px">${S.teams[o.club].name}（${divName(S.teams[o.club])}）带着 <b>${money(o.amount)}</b> 的契约书前来，想要带走 <b>${p.name}</b>（${POS[p.pos]}，能力 ${p.ovr}，${p.age} 岁）。
   <span class="muted">他的身价约 ${money(marketValue(p))}${o.listed?'（挂牌出售中）':''}。</span></p>
   <div class="go" style="justify-content:flex-start;margin-top:0"><button class="btn primary" data-act="offerYes" data-arg="${p.id}">接受</button><button class="btn" data-act="offerNo" data-arg="${p.id}">拒绝</button></div></div>`).join('')}
   <p class="muted" style="font-size:13px;margin:8px 0 0">报价只保留到明天。</p></section>`;
@@ -879,6 +879,18 @@ function intlStatus(){
   const out=I.ko.findIndex(rd=>rd.some(r=>(r.h===S.my||r.a===S.my)&&r.w!==S.my));
   return out===2?'获得亚军。':out>=0?`止步${INTL_STAGES[6+out]}。`:'小组赛出局。';
 }
+// a cup's roll of honour: every club that has won it, most titles first (then the most recent), with the seasons.
+// key: 'cup' or 'intl' in the season records; this season's winner counts as soon as the final is played
+function cupHonours(key,title){
+  const won={},add=(name,season)=>{(won[name]||(won[name]={name,seasons:[]})).seasons.push(season)};
+  (S.records||[]).forEach(r=>{if(r[key])add(r[key],r.season)});
+  const C=key==='cup'?S.cup:S.intl,recorded=(S.records||[]).some(r=>r.season===S.season);
+  if(C&&C.winner!=null&&!recorded)add(S.teams[C.winner].name,S.season);
+  const list=Object.values(won).sort((a,b)=>b.seasons.length-a.seasons.length||Math.max(...b.seasons)-Math.max(...a.seasons));
+  return `<section class="panel"><h2>${title}历届冠军</h2>${list.length?`<div class="honours-list">${list.map((c,i)=>`<div class="res hrow ${c.name===my().name?'me':''}" style="grid-template-columns:24px 1fr auto">
+    <span class="muted num">${i+1}</span><span style="text-align:left"><b>${c.name}</b> <span class="muted">${c.seasons.map(x=>'S'+x).join('、')}</span></span><span class="num">${c.seasons.length} 冠</span></div>`).join('')}</div>`
+    :'<p class="muted" style="margin:0">还没有决出过冠军。</p>'}</section>`;
+}
 function vIntl(){
   const I=S.intl,nm=id=>S.teams[id].name,me=id=>id===S.my?'me':'';
   const tbl=gi=>{const rows=intlTable(gi);
@@ -895,7 +907,8 @@ function vIntl(){
   ${I.winner!=null?`<p class="disp" style="font-size:24px;margin:10px 0 0;color:var(--amber)">🏆 ${nm(I.winner)}</p>`:''}</section>
   ${pending}
   ${I.ko.length?`<div class="grid2">${I.ko.map((rd,j)=>`<section class="panel"><h2>${INTL_STAGES[6+j]}</h2>${rd.map(row).join('')}</section>`).reverse().join('')}</div>`:''}
-  <div class="grid2">${[0,1,2,3].map(tbl).join('')}</div>`;
+  <div class="grid2">${[0,1,2,3].map(tbl).join('')}</div>
+  ${cupHonours('intl',INTL_NAME)}`;
 }
 function vDomCup(){
   const C=S.cup,nm=id=>S.teams[id].name;
@@ -911,7 +924,8 @@ function vDomCup(){
   <p style="margin:10px 0 0"><b>本队：</b>${cupStatus()}</p>
   ${C.winner!=null?`<p class="disp" style="font-size:24px;margin:10px 0 0;color:var(--amber)">🏆 ${nm(C.winner)}</p>`:''}</section>
   ${pending}
-  <div class="grid2">${C.rounds.map((rd,k)=>`<section class="panel"><h2>${stageName(k)}</h2>${rd.map(row).join('')}</section>`).reverse().join('')}</div>`;
+  <div class="grid2">${C.rounds.map((rd,k)=>`<section class="panel"><h2>${stageName(k)}</h2>${rd.map(row).join('')}</section>`).reverse().join('')}</div>
+  ${cupHonours('cup',CUP_NAME)}`;
 }
 // our club's all-time boards: scorers, assists, average rating (players still here are marked)
 function vClubBoards(){
