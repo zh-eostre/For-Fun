@@ -186,7 +186,8 @@ const compOf=f=>f.friendly?'fr':f.cup?'cup':f.intl?'intl':'lg';
 function ourComp(){
   if(!S||!S.fixtures||!S.teams||seasonDone())return 'lg';
   const k=[S.day,S.round,S.cup&&S.cup.stage,S.intl&&S.intl.stage,(S.friendlies||[]).filter(f=>f.res).length,S.my].join();
-  if(ourComp.k!==k){ourComp.k=k;ourComp.v=compOf(nextFix())}
+  // (between seasons, after promotion and relegation but before the new fixtures, there is no next match: league)
+  if(ourComp.k!==k){ourComp.k=k;try{ourComp.v=compOf(nextFix())}catch(e){ourComp.v='lg'}}
   return ourComp.v;
 }
 // suspended for this competition (a friendly takes nobody's suspension into account)
@@ -717,12 +718,16 @@ function placeInLineup(p,slot){
 const dropFromLineup=id=>S.lineup=S.lineup.map(x=>x===id?null:x);
 
 /* ---------- season ---------- */
-// good players keep going longer: 75+ at 40% of the base chance, 70-74 at 70%, under 60 at 130%
-function retireChance(p){
+// the chance by age (RETIRE_AGE), scaled by ability (good players keep going longer, in 5-point steps) and by
+// where he stands at his club: a regular carries on longer than a veteran stuck well below the side's level.
+// lvl: the club's first-choice level (the average of its best XI)
+const RETIRE_ABILITY=o=>o>=85?.25:o>=80?.4:o>=75?.55:o>=70?.75:o>=65?1:o>=60?1.2:1.5;
+const RETIRE_PLACE=d=>d>=0?.8:d>-5?1:d>-10?1.2:1.4;  // his ability minus the club's level
+function retireChance(p,lvl=p.ovr){
   if(p.age>=40)return 1;
-  const base=RETIRE_AGE[p.age]||0;
-  return Math.min(1,base*(p.ovr>=75?.4:p.ovr>=70?.7:p.ovr<60?1.3:1));
+  return Math.min(1,(RETIRE_AGE[p.age]||0)*RETIRE_ABILITY(p.ovr)*RETIRE_PLACE(p.ovr-lvl));
 }
+const xiLevel=t=>{const ps=onPitch(t,bestForm(t,true).ids).filter(Boolean);return ps.reduce((s,p)=>s+p.ovr,0)/(ps.length||1)};
 function expectedRank(){return S.teams.filter(t=>t.div===my().div).sort((a,b)=>b.str-a.str).findIndex(t=>t.id===S.my)+1}
 const prizeFor=(div,rank)=>PRIZES[div][Math.min(rank,PRIZES[div].length)-1];
 // moveTo: the id of a club whose offer we accept (otherwise we stay)
@@ -757,7 +762,7 @@ function newSeason(moveTo){
       if(p.sig&&p.age>=SIG_FADE){if(t.id===S.my)news(`${p.name} 年满 ${p.age} 岁，必杀技「${p.sig}」渐渐生疏了。`);delete p.sig}
       else learnSig(p);
     });
-    const out=t.players.filter(p=>rng()<retireChance(p));
+    const lvl=xiLevel(t),out=t.players.filter(p=>rng()<retireChance(p,lvl));
     if(t.id===S.my)out.forEach(p=>{retired.push(p.name);retireLegend(p)});
     t.players=t.players.filter(p=>!out.includes(p));
     const minN=t.id===S.my?15:16;

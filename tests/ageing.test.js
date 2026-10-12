@@ -15,4 +15,11 @@ ok(after.length===0||after.every(p=>p.pot===p.ovr),'after the summer every 33+ p
 // a star above 92 keeps his level into the new season (the cap is 95, the same as potential)
 {newGame(TEAMS.findIndex(t=>t.div===2),teamNames());const st=my().players.find(p=>p.pos!=='GK');st.age=26;st.pot=95;st.ovr=94;
   S.round=rounds();newSeason();ok(st.ovr>=93,'a 94 at 26 is still 93-95 next season ('+st.ovr+')')}
+// retirement: by age, then ability in 5-point steps, then his place at the club
+{const at=(age,ovr,lvl)=>retireChance({age,ovr},lvl);
+  ok(at(35,88,80)<at(35,82,80)&&at(35,82,80)<at(35,77,80)&&at(35,77,80)<at(35,72,80)&&at(35,72,80)<at(35,67,80)&&at(35,67,80)<at(35,62,80)&&at(35,62,80)<at(35,57,80),'at 35, the better the player the less likely he stops');
+  ok(at(35,70,68)<at(35,70,72)&&at(35,70,72)<at(35,70,77)&&at(35,70,77)<at(35,70,82),'the further below his club\u2019s level, the more likely ('+[68,72,77,82].map(l=>Math.round(at(35,70,l)*100)+'%').join(' ')+')');
+  ok(at(32,90,70)===0&&at(40,90,70)===1,'nobody stops before 33; everyone at 40');
+  newGame(TEAMS.findIndex(t=>t.div===2),teamNames());UI.guide=null;const v=my().players[0];v.age=37;v.ovr=50;UI.tab='squad';render();
+  ok(/赛季结束时有 [0-9]+% 机会退役/.test(els.app.innerHTML),'the squad list warns about a likely retirement');}
 `);
