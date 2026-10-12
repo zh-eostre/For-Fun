@@ -11,8 +11,8 @@
 1. 打开仓库的 **Actions** 页面，点最新一次 **桌面版打包**。
 2. 拉到底部 **Artifacts**，下载 `LvYinJingLi-windows`（一个 zip，保留 90 天）。
 3. 解压后有两个文件：
-   - `LvYinJingLi-1.0.0-portable.exe`：便携版，双击就能玩；
-   - `LvYinJingLi-Setup-1.0.0.exe`：安装版，会建桌面快捷方式。
+   - `LvYinJingLi-<版本号>-portable.exe`：便携版，双击就能玩；
+   - `LvYinJingLi-Setup-<版本号>.exe`：安装版，会建桌面快捷方式。
 
 第一次打开时，Windows 可能提示「Windows 已保护你的电脑」（因为程序没有付费签名），点 **更多信息 → 仍要运行** 即可。
 
