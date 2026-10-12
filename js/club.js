@@ -66,7 +66,7 @@ function acceptOffer(pid){
   bankPlayer(p);  // his season goals stay with him so the golden boot race is unaffected
   delete p.listed;
   my().players=my().players.filter(x=>x!==p);dropFromLineup(p.id);
-  if(club.players){club.players.push(p);joinClub(p,club,p.age<=20)}  // to a small club abroad, he leaves our world
+  if(club.players){club.players.push(p);joinClub(p,club,false)}  // to a small club abroad, he leaves our world
   if(club.players&&club.players.length>20){
     const drop=club.players.filter(x=>x.pos===p.pos&&x!==p).sort((x,y)=>x.ovr-y.ovr||y.age-x.age)[0];
     if(drop)club.players=club.players.filter(x=>x!==drop);
@@ -302,7 +302,7 @@ function buyFrom(id){
   const f=findAny(id);if(!f||f.t.id===S.my)return;
   const {p,t}=f,why=buyBlock(p,t);if(why){toast(why);return}
   const price=askPrice(p,t);S.budget-=price;
-  t.players=t.players.filter(x=>x!==p);my().players.push(p);joinClub(p,my(),p.age<=20);
+  t.players=t.players.filter(x=>x!==p);my().players.push(p);joinClub(p,my(),false);
   news(`以 ${money(price)} 从 ${t.name} 签下 ${p.name}（${POS[p.pos]}，能力 ${p.ovr}）。`);
   toast(`签下 ${p.name}，记得去阵容页安排他`);
 }
@@ -452,7 +452,7 @@ function talentRace(left){
     S.market.filter(p=>p.eyed!=null).forEach(p=>{
       const club=S.teams[p.eyed];delete p.eyed;
       if(!club||rng()>=diff().grab){news(`${club?club.name:'豪门'} 与天才 ${p.name} 的谈判破裂，他仍在转会市场上。`);return}
-      S.market=S.market.filter(x=>x!==p);delete p.price;delete p.scout;delete p.sale;delete p.ex;club.players.push(p);joinClub(p,club,p.age<=20);
+      S.market=S.market.filter(x=>x!==p);delete p.price;delete p.scout;delete p.sale;delete p.ex;club.players.push(p);joinClub(p,club,false);
       news(`慢了一步！${club.name} 抢先签下了天才少年 ${p.name}。`);
     });
   }
@@ -466,7 +466,7 @@ function aiPoach(){
     const buyer=domestic().filter(t=>t.id!==S.my&&t!==seller&&t.rep>seller.rep&&aiGap(t)>-3&&t.players.length<22&&star.ovr>=xiLevel(t)-4)
       .sort((a,b)=>b.rep-a.rep)[0];
     seller.players=seller.players.filter(p=>p!==star);
-    if(buyer){buyer.players.push(star);joinClub(star,buyer,star.age<=20);lines.push(pick([`豪门的召唤！${buyer.name} 从 ${seller.name} 手中夺走了王牌 ${star.name}（${star.ovr}）`,`${buyer.name} 挥舞着支票簿闯进 ${seller.name} 的更衣室，把 ${star.name}（${star.ovr}）带回了自己的城堡`,`${seller.name} 的球迷含泪送别 ${star.name}（${star.ovr}）——他被 ${buyer.name} 挖走了`]));return}
+    if(buyer){buyer.players.push(star);joinClub(star,buyer,false);lines.push(pick([`豪门的召唤！${buyer.name} 从 ${seller.name} 手中夺走了王牌 ${star.name}（${star.ovr}）`,`${buyer.name} 挥舞着支票簿闯进 ${seller.name} 的更衣室，把 ${star.name}（${star.ovr}）带回了自己的城堡`,`${seller.name} 的球迷含泪送别 ${star.name}（${star.ovr}）——他被 ${buyer.name} 挖走了`]));return}
     // nobody at home: a club abroad of his level takes him (the strongest one for a star beyond them all)
     const abroad=S.teams.filter(t=>t.foreign),fit=abroad.filter(t=>star.ovr>=t.str-FIT_BELOW_INTL&&star.ovr<=t.str+FIT_ABOVE);
     if(!abroad.length){lines.push(`${star.name}（${star.ovr}）留下一句「这片天空已经装不下我了」，离开 ${seller.name} 远走海外`);return}  // an old save, before the clubs abroad

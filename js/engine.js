@@ -563,7 +563,7 @@ function aiSign(t){
     const c=S.market.filter(p=>p.pos===w.pos&&p.ovr>=w.ovr+3&&p.ovr<=aiCeiling(t)).sort((x,y)=>y.ovr-x.ovr)[0];
     if(!c)continue;
     S.market=S.market.filter(x=>x!==c);delete c.price;delete c.scout;delete c.sale;delete c.ex;delete c.eyed;
-    t.players.push(c);joinClub(c,t,c.age<=20);
+    t.players.push(c);joinClub(c,t,false);
     if(t.players.length>20){
       const drop=t.players.filter(p=>p.pos===c.pos&&p!==c).sort((x,y)=>x.ovr-y.ovr||y.age-x.age)[0];
       if(drop)t.players=t.players.filter(p=>p!==drop);

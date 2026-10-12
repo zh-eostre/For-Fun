@@ -16,7 +16,9 @@ UI.tab='honours';render();ok(/<h2>一人一城<\\/h2>/.test(els.app.innerHTML)&&
 S.club[p.id]={name:p.name,pos:p.pos,goals:0,apps:99,seasons:5};p.apps=1;delete p.bk;oneClubNews('apps');ok(S.news[0].t.includes('第 100 场'),'his 100th match is in the news');
 // clubs' approaches: about half turned down
 let refused=0,bids=0;my().players.forEach(x=>{x.inj=0;x.bans={}});
-for(let k=0;k<600;k++){S.day=S.pre-6;const n0=S.news.length;rollOffer();if(S.news.slice(0,S.news.length-n0+1).some(n=>n.t.includes(p.name)&&/回绝/.test(n.t)))refused++;if(offerFor(p.id))bids++}
+const nw=news;news=t=>{if(t.includes(p.name)&&/回绝/.test(t))refused++;nw(t)};  // count every approach turned down
+for(let k=0;k<600;k++){S.day=S.pre-6;rollOffer();if(offerFor(p.id))bids++}
+news=nw;
 ok(refused>0&&bids>0&&refused/(refused+bids)>.3&&refused/(refused+bids)<.7,'about half the approaches turned down ('+refused+' refused, '+bids+' bids)');
 // the home lift: a 一人一城 on the pitch at home
 S.season=ONE_CLUB;S.offers=[];S.friendlies.forEach(f=>f.res={hg:0,ag:0});ffToMatch();S.event=null;
