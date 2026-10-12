@@ -232,6 +232,7 @@ function vRules(){
     `球探部 3 级以上，赛前情报会指出对方最薄弱的一线。阵型或战术针对它的话，进攻会有加成（比分板会亮出「针对弱点」）；怎么针对要自己琢磨，球探部升到 4、5 级后情报会说得更清楚。`,
     '第 75 分钟后还有「名帅光环」：教练声望越高，进攻加成越大，必杀技也越容易打出来。落后逆转取胜可以解锁「逆转之王」。'])}
   ${sec('体能与换人',['比赛中会消耗体能：中场跑得最多，前锋、后卫其次，门将几乎不累。体能 80 以上基本不影响发挥，越低越弱（70 约九折，60 约八折）。',
+    `比赛中会有点球和禁区前的直接任意球。在球员详情里可以指定点球手和任意球手；指定的人不在场上时，由场上最合适的人主罚（点球优先前锋，任意球优先中场，有必杀技的更优先）。`,
     `首发设为自动时，阵容每天按体能更新；打开「自动轮换」，体能低于 ${ROTATE_AT} 的首发会让给同位置、能力最多低 ${ROTATE_GAP}、体能好得多的替补。`,
     `中场休息时，我方球员会恢复一点体能。每场最多换 ${SUBS} 人；自动换人从第 60 分钟起，把体能低于 ${TIRED}、而且替补更强的人换下；体能跌破 ${SPENT} 的球员不管能力多高都会被换下（受伤风险太大）。可以关掉自己来换。`,
     '同一次暂停里的换人在继续比赛前都可以改或撤销。',
@@ -271,8 +272,10 @@ function vPlayer(id){
   const {p,t}=f,mine=t.id===S.my,c=S.club[p.id]||{},hist=(p.hist||[]).concat([{s:S.season,o:p.ovr}]);
   const cell=(l,v)=>`<div class="pcell"><small>${l}</small><b>${v}</b></div>`;
   const status=[p.inj?`伤停 ${p.inj} 天`:'',...Object.entries(p.bans||{}).filter(([,n])=>n>0).map(([c,n])=>`${COMPS[c]}停赛 ${n} 场`),p.away?'探亲中':'',p.loan?`租借至${loanLabel(p)}（${p.lapps||0} 场）`:'',unproven(p)?`未出道 ${careerApps(p)}/${YOUTH_PROVEN}`:''].filter(Boolean).join('，');
+  const tk=k=>!!S.takers&&S.takers[k]===p.id,TK={pen:'点球手',fk:'任意球手'};
   const actions=mine
-    ?`${p.loan?`<button class="btn small" data-act="recall" data-arg="${p.id}">召回</button>`:p.age<=LOAN_AGE?`<button class="btn small" data-act="loan" data-arg="${p.id}">外租（赛季结束回归）</button>`:''}
+    ?`${Object.entries(TK).map(([k,l])=>`<button class="btn small" data-act="taker" data-arg="${k}:${p.id}" aria-pressed="${tk(k)}">${tk(k)?`✓ ${l}（点击取消）`:`设为${l}`}</button>`).join('')}
+      ${p.loan?`<button class="btn small" data-act="recall" data-arg="${p.id}">召回</button>`:p.age<=LOAN_AGE?`<button class="btn small" data-act="loan" data-arg="${p.id}">外租（赛季结束回归）</button>`:''}
       <button class="btn small danger" data-act="sell" data-arg="${p.id}" ${windowOpen()?'':`disabled title="${windowShut()}"`}>出售 ${money(sellPrice(p))}</button>`
     :(()=>{const why=buyBlock(p,t);return `<button class="btn small primary" data-act="bid" data-arg="${p.id}" ${why?'disabled':''}>以 ${money(askPrice(p,t))} 签下</button>${why?`<span class="muted" style="font-size:13px">${why}</span>`:''}`})();
   return `<section class="panel"><div class="mhead"><h2 id="mtitle">${p.name}${p.youth?' <span class="tag2 youth">青训</span>':''}</h2><button class="btn small mclose" data-act="closeModal" aria-label="关闭">✕</button></div>
@@ -343,6 +346,12 @@ function formNote(form){
   const f=FORMS[form],bits=[f.dm&&`${f.dm} 名后腰偏防守、多抢断`,f.am&&`${f.am} 名前腰更容易进球和助攻`].filter(Boolean);
   return bits.length?`中场里 ${bits.join('，')}（由中场球员担任）`:'阵型决定 11 个位置，球场上按位置排';
 }
+// who takes our set pieces: the one we chose (in the player dialog), or 自动 (the best man on the pitch)
+function vTakers(){
+  const one=k=>{const id=S.takers&&S.takers[k],p=id!=null&&findP(id);
+    return p?`<button class="link" data-act="player" data-arg="${p.id}">${pName(p)}</button>`:'<span class="muted">自动</span>'};
+  return `<span class="takers" title="在球员详情里设置；不在场上时由场上最合适的人主罚">点球 ${one('pen')} · 任意球 ${one('fk')}</span>`;
+}
 function vSquad(){
   const t=my(),on=new Set(S.lineup),iss=lineupIssues();
   const rows=PO.map(pos=>{
@@ -367,6 +376,7 @@ function vSquad(){
   <button class="btn" data-act="auto">按 ${S.formation} 自动选人</button>
   <span class="xi-mode ${S.autoXI!==false?'auto':''}" title="${S.autoXI!==false?'每场赛后都按最佳阵容重新安排，伤愈的主力会自动回到首发':'保留你的安排，只在有人缺阵时自动补位；点「自动选人」恢复自动'}">${S.autoXI!==false?'首发：自动':'首发：手动'}</span>
   <button class="btn small" data-act="rotate" aria-pressed="${S.rotate!==false}" title="自动首发时：体能低于 ${ROTATE_AT} 的首发，换上同位置、能力最多低 ${ROTATE_GAP}、体能更好的替补">自动轮换：${S.rotate!==false?'开':'关'}</button>
+  ${vTakers()}
   ${iss.length?`<span class="warn">${iss[0]}</span>`:`<span class="muted" style="font-size:14px">${formNote(S.formation)}</span>`}
   </div></section>
   <div class="cols squad"><div class="col">${vPitch()}</div>

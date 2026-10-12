@@ -249,10 +249,22 @@ function scorer(team,ids,form='4-4-2'){
   for(const x of ps){r-=x.w;if(r<=0)return x.p}
   return ps[0].p;
 }
-// who set the goal up: about 78% of goals have an assist; midfielders most often, then forwards, defenders now
+// set pieces. who takes them: ours as set on the squad page when he's on the pitch, otherwise the best man for it on
+// the pitch (penalties: forwards first; free kicks: midfielders first; a signature move counts in his favour)
+function taker(team,ids,kind){
+  const on=onPitch(team,ids).filter(p=>p&&p.pos!=='GK');if(!on.length)return onPitch(team,ids).find(Boolean)||null;
+  const set=team.id===S.my&&S.takers&&S.takers[kind];
+  if(set){const p=on.find(x=>x.id===set);if(p)return p}
+  const pref=kind==='pen'?{FW:4,MF:2,DF:0}:{MF:4,FW:2,DF:0};
+  return on.sort((a,b)=>(b.ovr+pref[b.pos]+(b.sig?3:0))-(a.ovr+pref[a.pos]+(a.sig?3:0)))[0];
+}
+// how likely a penalty / a direct free kick goes in: the taker against the keeper (no keeper: nearly always)
+const penOdds=(t,gk)=>!gk?.97:clamp(.76+(t.ovr-gk.ovr)*.006+(t.sig?.08:0)-(gk.sig?.06:0),.55,.93);
+const fkOdds=(t,gk)=>clamp(.12+(t.ovr-75)*.004+(t.sig?.06:0)-(gk&&gk.sig?.03:0),.04,.25);
+// who set the goal up: about 86% of open-play goals have an assist; midfielders most often, then forwards, defenders now
 // and then, keepers almost never; better players more often. never the scorer himself
 function assister(team,ids,form,sc){
-  if(rng()>=.78)return null;
+  if(rng()>=.86)return null;  // open play; with set pieces (no assist) about 77% of all goals
   const w={AM:4.2,MF:3,DM:2.2,FW:4.5,DF:1.1,GK:.05},lines=slotLines(form);  // roughly 45% midfield, 35% forwards, 20% defence
   const ps=onPitch(team,ids).map((p,i)=>p&&p!==sc&&{p,w:w[lines[i]]*p.ovr}).filter(Boolean);
   let r=rng()*ps.reduce((s,x)=>s+x.w,0);
@@ -452,8 +464,16 @@ function simMatch(h,a){
     // about as many saves as the live match credits to a keeper
     const stop=(T,ids)=>{const k=keeper(T,ids);if(k)e(k.id).sv=(e(k.id).sv||0)+1};
     const assist=(T,ids,form,p)=>{const a=assister(T,ids,form,p);if(a){a.ast=(a.ast||0)+1;e(a.id).a=(e(a.id).a||0)+1}};
-    if(rng()<ph){hg++;shots.h++;const p=scorer(H,hi,bh.form);p.goals++;e(p.id).g=(e(p.id).g||0)+1;assist(H,hi,bh.form,p)}else{const r=rng();if(r<ph*.6){shots.h++;stop(A,ai)}else if(r<ph*4.7)shots.h++}
-    if(rng()<pa){ag++;shots.a++;const p=scorer(A,ai,ba.form);p.goals++;e(p.id).g=(e(p.id).g||0)+1;assist(A,ai,ba.form,p)}else{const r=rng();if(r<pa*.6){shots.a++;stop(H,hi)}else if(r<pa*4.7)shots.a++}
+    // a goal chance (a tenth of them a penalty), else maybe a save or a shot; now and then a free kick in range
+    const score=(T,ids,form,p,k,solo)=>{if(k==='h')hg++;else ag++;shots[k]++;p.goals++;e(p.id).g=(e(p.id).g||0)+1;if(!solo)assist(T,ids,form,p)};
+    const chance=(T,ids,form,O,oids,k,pr)=>{
+      if(rng()<pr){
+        if(rng()<PEN_SHARE){const t=taker(T,ids,'pen'),gk=keeper(O,oids);if(rng()<penOdds(t,gk))score(T,ids,form,t,k,true);else{shots[k]++;if(gk&&rng()<.6)stop(O,oids)}}
+        else score(T,ids,form,scorer(T,ids,form),k,false);
+      }else{const r=rng();if(r<pr*.6){shots[k]++;stop(O,oids)}else if(r<pr*4.7)shots[k]++}
+      if(rng()<pr*1.2*FK_SHARE){const t=taker(T,ids,'fk');shots[k]++;if(rng()<fkOdds(t,keeper(O,oids)))score(T,ids,form,t,k,true)}
+    };
+    chance(H,hi,bh.form,A,ai,'h',ph);chance(A,ai,ba.form,H,hi,'a',pa);
     if(rng()<CARD)book(booking(H,hi,yc));
     if(rng()<CARD)book(booking(A,ai,yc));
     injure(H,hi);injure(A,ai);

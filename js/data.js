@@ -57,6 +57,9 @@ const RETIRE_AGE={33:.08,34:.2,35:.4,36:.6,37:.75,38:.85,39:.95};
 // auto lineup rotation: a starter under ROTATE_AT stamina sits out for a fitter man in his position at most
 // ROTATE_GAP points worse (and ROTATE_FRESH stamina fresher)
 const ROTATE_AT=70,ROTATE_GAP=5,ROTATE_FRESH=15;
+// set pieces: the share of goal chances that are a foul in the box (a penalty, scored by the taker about three times
+// in four) and of near misses that win a free kick in range (struck at goal, in about one in eight)
+const PEN_SHARE=.11,FK_SHARE=.08;
 const LATE_MIN=85;  // from this minute a goal that wins or levels the match can be a 绝杀 / 绝平
 const YC_BAN=3;   // yellow cards in one competition that add up to a one-match ban in it
 // player name parts; genName in engine.js combines them
@@ -236,6 +239,14 @@ const LINE={
   kickoff:(h,a)=>`宿命的对决开始了。${h} 在主场迎战 ${a}！`,
   half:(hg,ag)=>`上半场的战斗落幕，比分 ${hg} : ${ag}。`,
   full:(hg,ag)=>`终焉之笛响起！${hg} : ${ag}`,
+  penAward:(team,victim)=>`${victim}在禁区里被放倒——点球！${team}获得一个点球！`,
+  penGoal:n=>`${n} 站上十二码……推射死角，稳稳命中！`,
+  penSaved:(n,gk)=>`${n} 主罚点球……被 ${gk} 判断对方向扑了出来！`,
+  penMiss:n=>`${n} 主罚点球……打偏了！皮球擦着门柱飞出底线！`,
+  fkAward:(team,n)=>`${team}在禁区前沿获得任意球，${n} 站到了球前。`,
+  fkGoal:n=>`${n} 一脚弧线绕过人墙，直挂死角！任意球破门！`,
+  fkSaved:(n,gk)=>`${n} 的任意球直奔球门，被 ${gk} 奋力扑出。`,
+  fkMiss:n=>`${n} 的任意球稍稍高出横梁。`,
   // a goal from LATE_MIN that wins or levels it: a question when it goes in, the verdict at the final whistle
   lateMaybe:(k,team,left)=>k==='win'?`${team}打破僵局！${left>0?`还剩最后 ${left} 分钟，这会是绝杀吗？`:'这已经是最后一分钟了！'}`:`${team}在最后时刻扳平了！${left>0?'还有时间再进一个吗？':'这已经是最后一分钟了！'}`,
   lateSure:(k,team,name,min,pens)=>k==='win'?`${name} 第 ${min} 分钟的进球成为绝杀，${team}笑到了最后！`:`${name} 第 ${min} 分钟的进球绝平${pens?'，把比赛拖进了点球大战':'，硬生生抢回一分'}！`,

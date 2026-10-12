@@ -168,6 +168,7 @@ const ACT={
   // in a match only that match's tactic changes; otherwise it's the club's default for coming matches
   tac:a=>{if(M&&!M.done)M.tac=a;else{S.tactic=a;save()}render()},
   auto:()=>{S.lineup=autoPick(my(),S.formation);S.autoXI=true;UI.selSlot=null;fixLineup();save();render()},
+  taker:a=>{const [k,id]=a.split(':');S.takers=S.takers||{};S.takers[k]=S.takers[k]===+id?null:+id;save();render()},
   rotate:()=>{S.rotate=S.rotate===false;if(S.autoXI!==false)fixLineup();save();render()},
   // player list rows: add to / remove from the XI
   toggle:a=>{

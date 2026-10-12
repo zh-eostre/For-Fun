@@ -818,3 +818,5 @@ tr.intl-maybe td:first-child{box-shadow:inset 4px 0 color-mix(in srgb,var(--ambe
 .zl.intl::before{background:var(--amber)}
 .zl.maybe::before{background:color-mix(in srgb,var(--amber) 45%,transparent)}
 .tag2.intlq{background:color-mix(in srgb,var(--amber) 25%,transparent);color:var(--ink)}
+.takers{font-size:13px;color:var(--muted)}
+.takers .link{font-size:13px}

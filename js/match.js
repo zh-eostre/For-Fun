@@ -115,11 +115,12 @@ function side(s,p){
   // a signature move that decides something: a cut-in banner first, and the match holds for it
   const sigShow=(p,t)=>{if(M.skip)return false;M.hold=Math.max(M.hold||0,Date.now()+1400);cutIn(p.name,p.sig,t.color);return true};
   // goal: sig marks a signature goal; by = a midfielder whose signature pass made it (he gets the assist)
-  const goal=(sc,t,sig,by)=>{
+  // solo: a set piece, no assist
+  const goal=(sc,t,sig,by,solo)=>{
     // goals and assists in friendlies show in the match but don't count toward season tallies
     if(!M.friendly)sc.goals++;
     M.goals[sc.id]=(M.goals[sc.id]||0)+1;ev(sc.id).g=(ev(sc.id).g||0)+1;if(sig)ev(sc.id).sig=(ev(sc.id).sig||0)+1;st.sh++;st.on++;
-    const a=by||assister(team,ids,form,sc);if(a){ev(a.id).a=(ev(a.id).a||0)+1;if(!M.friendly)a.ast=(a.ast||0)+1}
+    const a=by||(solo?null:assister(team,ids,form,sc));if(a){ev(a.id).a=(ev(a.id).a||0)+1;if(!M.friendly)a.ast=(a.ast||0)+1}
     if(by)ev(by.id).sig=(ev(by.id).sig||0)+1;
     if(s==='h')M.hg++;else M.ag++;
     // was the scorer's side level (win) or one down (level) before it, this late? only the last goal of the match
@@ -136,13 +137,32 @@ function side(s,p){
     announce(`${M.min} 分钟，${team.short}进球，比分 ${M.hg} 比 ${M.ag}`);
   };
   const oppIds=s==='h'?M.aIds:M.hIds,blocker=sigOn(opp,oppIds,'DF');
-  if(r<p){
+  // set pieces: a penalty (a share of the goal chances) or a direct free kick in range (a share of the near misses)
+  const penalty=()=>{
+    const tk=taker(team,ids,'pen'),victim=scorer(team,ids,form);st.sh++;
+    M.feed.unshift({min:M.min,cls:'sys',t:LINE.penAward(team.short,victim.name)});
+    if(rng()<penOdds(tk,gk)){st.sh--;goal(tk,LINE.penGoal(tk.name),false,null,true);return}
+    const saved=gk&&rng()<.6;ev(tk.id).miss=(ev(tk.id).miss||0)+1;
+    if(saved){ev(gk.id).sv=(ev(gk.id).sv||0)+1;st.on++}
+    M.feed.unshift({min:M.min,cls:saved?'save':'',t:saved?LINE.penSaved(tk.name,gk.name):LINE.penMiss(tk.name)});
+    if(!M.skip&&(mine||saved))notice(mine?'against':'sub',mine?`点球未进 ${M.min}'`:`点球被扑出 ${M.min}'`,saved?`${gk.name} 扑出 ${tk.name} 的点球`:`${tk.name} 罚丢`);
+  };
+  const freeKick=()=>{
+    const tk=taker(team,ids,'fk');st.sh++;
+    M.feed.unshift({min:M.min,cls:'sys',t:LINE.fkAward(team.short,tk.name)});
+    if(rng()<fkOdds(tk,gk)){st.sh--;goal(tk,LINE.fkGoal(tk.name),false,null,true);return}
+    const saved=gk&&rng()<.5;if(saved){ev(gk.id).sv=(ev(gk.id).sv||0)+1;st.on++}
+    M.feed.unshift({min:M.min,cls:saved?'save':'',t:saved?LINE.fkSaved(tk.name,gk.name):LINE.fkMiss(tk.name)});
+  };
+  if(r<p&&rng()<PEN_SHARE)penalty();
+  else if(r<p){
     const sc=scorer(team,ids,form);
     // a defender with a signature move can throw himself in front of a sure goal; a keeper with one can deny it
     if(blocker&&rng()<.05){M.feed.unshift({min:M.min,cls:'save',t:LINE.sigBlock(blocker.name,blocker.sig,sc.name)});ev(blocker.id).blk=(ev(blocker.id).blk||0)+1;st.sh++;sigShow(blocker,opp)}
     else if(gk&&gk.sig&&rng()<.08){M.feed.unshift({min:M.min,cls:'save',t:LINE.sigSave(gk.name,gk.sig,sc.name)});ev(gk.id).sv=(ev(gk.id).sv||0)+1;st.sh++;st.on++;sigShow(gk,opp)}
     else{const sig=sc.sig&&rng()<.4;goal(sc,sig?LINE.sigGoal(sc.name,sc.sig):pick(GOAL)(sc.name),sig)}
-  }else if(r<p*2.2){
+  }else if(r<p*2.2&&rng()<FK_SHARE)freeKick();
+  else if(r<p*2.2){
     const sc=scorer(team,ids,form),maker=sigOn(team,ids,'MF',sc);
     // a shooter with a signature move can occasionally turn a chance into a goal
     if(sc.sig&&rng()<.12*(mine&&M.min>=75?1+((S.mgr&&S.mgr.rep)||0)/100:1))goal(sc,LINE.sigGoal(sc.name,sc.sig),true);
