@@ -162,7 +162,7 @@ function vCalendar(){
   };
   // four weeks ahead (swipe sideways), up to the last round
   const strip=Array.from({length:28},(_,i)=>S.day+i).filter(d=>d<=seasonEndDay()).map(cell).join('');
-  const xi=S.lineup.map(id=>id!=null&&findP(id)).filter(Boolean);
+  const xi=S.lineup.map(id=>id!=null&&findP(id)).filter(Boolean),avg=xi.length?Math.round(xi.reduce((s,p)=>s+p.cond,0)/xi.length):0;
   const tired=xi.filter(p=>p.cond<80).sort((a,b)=>a.cond-b.cond).slice(0,3);
   const L=UI.dayLog,left=nextMatchDay()-S.day;
   return `<section class="panel"><h2>日程 <span class="muted" style="font-weight:400;font-size:14px">${dayLabel(S.day)} · 今天：${played?'比赛已结束':today==='match'?'比赛日':today==='rest'?'休息':T}</span></h2>
@@ -170,7 +170,7 @@ function vCalendar(){
   ${vFixtures()}
   ${L?`<p class="daylog">过了 ${L.days} 天：全队体能共 ${L.cond>=0?'+':''}${L.cond}${L.trained.length?`；训练中进步：${[...new Set(L.trained)].map(p=>{const n=L.trained.filter(x=>x===p).length;return `${p.name}（${p.ovr}${n>1?`，+${n}`:''}）`}).join('、')}`:'；训练中没有人进步'}${L.healed.length?`；伤愈复出：${L.healed.map(p=>p.name).join('、')}`:''}。</p>`:''}
   ${L&&L.surprises?L.surprises.map(t=>`<p class="surprise">✨ ${t}</p>`).join(''):''}
-  ${tired.length?`<p class="muted" style="margin:8px 0 0;font-size:14px">体能偏低：${tired.map(p=>`${p.name} ${p.cond}`).join('、')}</p>`:''}
+  <p class="muted" style="margin:8px 0 0;font-size:14px">首发平均体能 <b>${avg}</b> · 全队 ${(()=>{const ps=firstTeam();return ps.length?Math.round(ps.reduce((s,p)=>s+p.cond,0)/ps.length):0})()}${tired.length?` · 偏低：${tired.map(p=>`${p.name} ${p.cond}`).join('、')}`:''}</p>
   ${windowOpen()&&S.pre!=null?`<p class="window open" style="margin:8px 0 0">${windowName()}开放中，还剩 ${windowLeft()} 天</p>`:''}
   <div class="cal-train"><span class="muted">训练</span><div class="seg sm">${Object.entries(TRAIN).map(([k,v])=>`<button data-act="train" data-arg="${k}" aria-pressed="${S.training===k}" title="${v[1]}">${v[0]}</button>`).join('')}</div></div>
   ${today==='match'&&!played?'':`<div class="go" style="justify-content:flex-start;margin-top:10px"><button class="btn" data-act="nextDay">进入下一天</button><button class="btn primary" data-act="ff">快进到比赛日（${left} 天）</button></div>`}</section>`;
