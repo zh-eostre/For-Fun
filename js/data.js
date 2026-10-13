@@ -47,7 +47,11 @@ const FORMS={'4-4-2':{GK:1,DF:4,MF:4,FW:2},'4-3-3':{GK:1,DF:4,MF:3,FW:3},'4-2-3-
   '3-5-2':{GK:1,DF:3,MF:5,FW:2},'3-4-3':{GK:1,DF:3,MF:4,FW:3},'3-4-2-1':{GK:1,DF:3,MF:6,FW:1,am:2},
   '5-3-2':{GK:1,DF:5,MF:3,FW:2},'5-4-1':{GK:1,DF:5,MF:4,FW:1}};
 // a five-man back line, to an AI club, is worth this much less than it plays by its tier (豪门 hardly ever, 强队 now and then)
-const FIVE_BACK_COST={豪门:1,强队:.7};
+const FIVE_BACK_COST={豪门:1,强队:.7,中游:.4,弱旅:.4};
+// in a match an AI club's shape also follows the matchup: rated FORM_GAP below the opponent (counting FORM_AWAY more
+// away from home) it leans FORM_LEAN toward five at the back (half that to a lone striker), FORM_GAP above toward
+// three up front (half that to a 前腰)
+const FORM_GAP=3,FORM_AWAY=1,FORM_LEAN=.7;
 const LINE_NAME={DM:'后腰',AM:'前腰'};
 const TACT={def:'防守反击',bal:'平衡',att:'全力进攻'};
 // match pace: ms per minute of play, plus ms for each new line of commentary so there's time to read it

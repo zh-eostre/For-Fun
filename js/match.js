@@ -12,7 +12,7 @@ function startMatch(){
   M={comp:COMP,h:f.h,a:f.a,cup:f.cup,intl:!!f.intl,derby:f.derby,friendly:!!f.friendly,warm:!!f.warm,fIdx:f.idx,stage:f.cup?S.cup.stage:f.intl?S.intl.stage:null,hg:0,ag:0,min:0,feed:[],paused:false,ht:false,done:false,
     flash:null,injuries:[],yc:{},goals:{},on:{},off:{},subs:0,oppSubs:0,sel:null,aiTac:'bal',tac:S.tactic,subMode:false,lastAuto:{h:-9,a:-9},talk:null,trailed:false,despair:false};  // tac: our tactic for this match only
   // the opponent picks its best formation, and a tactic from how it rates against our XI
-  const os=bestForm(opp,!f.home),mr=rating(strength(my(),S.lineup,S.tactic,f.home,S.boost>0?BOOST:0,S.formation));
+  const mr=rating(strength(my(),S.lineup,S.tactic,f.home,S.boost>0?BOOST:0,S.formation)),os=bestForm(opp,!f.home,mr);
   M.aiTac=tacFor(os.r,mr);
   M.weak=facLv('scout')>=3?weakLine(opp,os.ids,os.form):null;  // known only with a scout report (department 3+)
   M.hXI=f.h===S.my?[...S.lineup]:[...os.ids];

@@ -200,8 +200,7 @@ function cupAfterExit(){
   return rows;
 }
 function vHome(){
-  const f=nextFix(),opp=S.teams[f.opp],ob=bestForm(opp,!f.home);
-  const ms=strength(my(),S.lineup,S.tactic,f.home,S.boost>0?BOOST:0,S.formation);
+  const f=nextFix(),opp=S.teams[f.opp],ms=strength(my(),S.lineup,S.tactic,f.home,S.boost>0?BOOST:0,S.formation),ob=bestForm(opp,!f.home,rating(ms));
   const os=strength(opp,ob.ids,tacFor(ob.r,rating(ms)),!f.home,0,ob.form);
   const H=S.teams[f.h],A=S.teams[f.a],iss=lineupIssues();
   const hs=f.home?rating(ms):rating(os),as=f.home?rating(os):rating(ms);
@@ -272,7 +271,7 @@ function vRules(){
     `球员打非本职位置，能力打 ${Math.round(OOP*100)} 折；外场球员当门将（或门将踢外场）只剩一半。`,
     `能力达到 ${SIG_OVR} 的球员会领悟必杀技（名字旁的 ★），满 ${SIG_FADE} 岁的那个赛季会渐渐生疏。射手把射偏的机会变成进球，中场送出必进的直塞，后卫用身体挡下必进之球，门将扑出必进之球。`])}
   ${sec('战术与阵型',['全力进攻：进攻加成比防守代价大，实力占优时最能拿分，但更累。防守反击：防守更强、进攻更弱，对上全力进攻的对手还有反击加成，实力处于下风时最划算。平衡：波动最小。',
-    'AI 实力明显占优时会全力进攻，处于下风时会防守反击；中场落后会改打全力进攻，领先会收缩。对手当前的打法在赛前和比赛中都看得到。',
+    'AI 实力明显占优时会全力进攻，处于下风时会防守反击；中场落后会改打全力进攻，领先会收缩。阵型也看对手：处于下风（尤其在客场）更常摆五后卫或单前锋，占优时更常摆三前锋；豪门几乎不摆五后卫。对手当前的打法和阵型在赛前和比赛中都看得到。',
     '后腰偏防守、多抢断；前腰偏进攻、更容易进球和助攻。阵型改变的是打法，不改变总实力。'])}
   ${sec('只属于你的加成',['中场可以训话一次：鼓舞（下半场进攻 +3）、冷静（防守 +3），或者怒吼赌一把（成功进攻 +5、防守 +2，失败攻防各 −2；教练声望越高越容易成功）。',
     `比赛第 75 分钟后落后，会触发「绝境爆发」：进攻提升（主场 +${DESPAIR.home}、客场 +${DESPAIR.away}）。`,
@@ -301,8 +300,8 @@ function vRules(){
 // the next opponent's expected XI on a pitch, with their bench and who is missing. tactics and the weak spot
 // come from the scout report (scout department level 3+)
 function vOppXI(){
-  const f=nextFix(),opp=S.teams[f.opp],ob=bestForm(opp,!f.home),xi=onPitch(opp,ob.ids).filter(Boolean);
-  const ms=strength(my(),S.lineup,S.tactic,f.home,S.boost>0?BOOST:0,S.formation),tac=tacFor(ob.r,rating(ms));
+  const f=nextFix(),opp=S.teams[f.opp],ms=strength(my(),S.lineup,S.tactic,f.home,S.boost>0?BOOST:0,S.formation),ob=bestForm(opp,!f.home,rating(ms)),xi=onPitch(opp,ob.ids).filter(Boolean);
+  const tac=tacFor(ob.r,rating(ms));
   const field=pitchSpots(ob.ids,ob.form,opp).map(x=>x.p?tok(x.p,{style:`left:${x.x}%;top:${x.y}%`,role:x.role,static:true}):'').join('');
   const bench=opp.players.filter(p=>!ob.ids.includes(p.id)&&!unavail(p)).sort((a,b)=>b.ovr-a.ovr),out=opp.players.filter(unavail);
   const avg=Math.round(xi.reduce((s,p)=>s+p.ovr,0)/xi.length),cond=Math.round(xi.reduce((s,p)=>s+p.cond,0)/xi.length);

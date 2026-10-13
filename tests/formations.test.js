@@ -27,5 +27,10 @@ ffToMatch();S.event=null;S.offer=null;startMatch();skipMatch();render();ok(M.don
 // five at the back: 豪门 hardly ever, 强队 now and then, the rest as their squads suit
 const five=rep=>{let n=0;for(let i=0;i<150;i++){const t={id:900+i,rep,str:strFromRep(rep),players:makeSquad(strFromRep(rep))};if(FORMS[bestForm(t,true).form].DF===5)n++}return n/150};
 const big=five(88),strong=five(72),weak=five(30);
-ok(big<=.05&&strong<=.15&&weak>strong,'five at the back: 豪门 '+Math.round(big*100)+'%, 强队 '+Math.round(strong*100)+'%, 弱旅 '+Math.round(weak*100)+'%');
+ok(big<=.05&&strong<=.15&&weak>=strong,'five at the back: 豪门 '+Math.round(big*100)+'%, 强队 '+Math.round(strong*100)+'%, 弱旅 '+Math.round(weak*100)+'%');
+// the matchup: the same squads sit deeper as underdogs away, and push up as favourites at home
+const shapes=(rep,gap,home)=>{let five=0,three=0;for(let i=0;i<120;i++){const t={id:700+i,rep,str:strFromRep(rep),players:makeSquad(strFromRep(rep))};
+  const r=bestForm(t,home).r,f=FORMS[bestForm(t,home,r-gap).form];if(f.DF===5)five++;if(f.FW>=3)three++}return {five:five/120,three:three/120}};
+const under=shapes(40,-8,false),fav=shapes(40,8,true);
+ok(under.five>fav.five+.2&&fav.three>under.three+.2,'弱旅 as underdogs away: five at the back '+Math.round(under.five*100)+'%; as favourites at home: three up front '+Math.round(fav.three*100)+'%');
 `);

@@ -454,11 +454,19 @@ function targets(weak,form,tac){
 // AI clubs line up in a formation that rates best with the players they have. any within half a point of the best
 // will do, and each club has its own order of favourites among those, so the league isn't all 4-4-2.
 // deterministic, so the opponent preview shows the formation the match will use
-function bestForm(team,home){
+function bestForm(team,home,oppR){
   const keys=Object.keys(FORMS),all=keys.map(form=>{const ids=autoPick(team,form),s=strength(team,ids,'bal',home,0,form);
     return {form,ids,v:(s.atk+s.def)/2-(FORMS[form].DF===5&&FIVE_BACK_COST[tierOf(team.rep)]||0),r:rating(s)}});
+  if(oppR!=null){const gap=Math.max(...all.map(x=>x.r))-oppR-(home?0:FORM_AWAY);all.forEach(x=>x.v+=formLean(x.form,gap))}
   const top=Math.max(...all.map(x=>x.v)),fav=f=>(keys.indexOf(f)+team.id*3)%keys.length;
   return all.filter(x=>x.v>=top-.5).sort((a,b)=>fav(a.form)-fav(b.form))[0];
+}
+// how much a shape suits a matchup, gap = our rating minus theirs: underdogs sit deep, favourites go for it
+function formLean(form,gap){
+  const f=FORMS[form];
+  if(gap<-FORM_GAP)return f.DF===5?FORM_LEAN:f.FW===1?FORM_LEAN/2:0;
+  if(gap>FORM_GAP)return f.FW>=3?FORM_LEAN:f.am?FORM_LEAN/2:0;
+  return 0;
 }
 // and pick a tactic from how they compare: clearly stronger go for it, clearly weaker sit deep
 const tacFor=(mine,theirs)=>mine>theirs+3?'att':mine<theirs-3?'def':'bal';
@@ -469,7 +477,7 @@ function quickSim(h,a,comp='lg'){
 }
 function simMatch(h,a){
   aiRecover(S.teams[h]);aiRecover(S.teams[a]);
-  const H=S.teams[h],A=S.teams[a],bh=bestForm(H,true),ba=bestForm(A,false),th=tacFor(bh.r,ba.r),ta=tacFor(ba.r,bh.r);
+  const H=S.teams[h],A=S.teams[a],bh0=bestForm(H,true),ba0=bestForm(A,false),bh=bestForm(H,true,ba0.r),ba=bestForm(A,false,bh0.r),th=tacFor(bh.r,ba.r),ta=tacFor(ba.r,bh.r);
   const hx=[...bh.ids],ax=[...ba.ids],hi=[...hx],ai=[...ax],yc={},ev={},used={h:0,a:0},on={},off={},shots={h:0,a:0};
   let minute=0;
   const e=id=>ev[id]||(ev[id]={}),book=b=>{if(b){e(b.p.id)[b.red?'red':'yc']=1;if(b.red)off[b.p.id]=minute}};
