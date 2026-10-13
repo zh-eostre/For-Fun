@@ -205,6 +205,39 @@ function aiOneClubNews(farewells){
   if(farewells.length>2)news(`🏟 一个时代的落幕：${farewells.map(({p,t})=>`${t.short}的${p.name}`).join('、')}同时挂靴，一人一城的传说就此封存。`);
   else farewells.forEach(({p,t,n})=>news(`🏟 ${t.name} 的 ${p.name} 挂靴了。${n} 个赛季，一人一城——他的球衣号码从此高悬于球场上空。`));
 }
+// before a big match one of the club's retired legends comes to the dressing room: a cup or 冠军杯 final or
+// semi-final, a title, promotion or relegation fight in the last LEGEND_TALK_ROUNDS rounds (within 3 points of the
+// line), a 宿敌之战 or a 冠军杯 quarter-final. which legend and which words follow the day, so a replay says the same
+function keyMatch(f){
+  if(f.friendly)return null;
+  if(f.cup){const n=cupFmt().names.length,k=S.cup.stage;return k===n-1?'final':k===n-2?'semi':f.derby?'derby':null}
+  if(f.intl){const k=S.intl.stage,n=INTL_STAGES.length;return k===n-1?'final':k===n-2?'semi':k===n-3?'ko':f.derby?'derby':null}
+  const div=my().div,T=table(div),i=T.findIndex(r=>r.id===S.my),pts=T[i].pts,n=T.length;
+  if(rounds()-S.round<=LEGEND_TALK_ROUNDS){
+    const near=r=>r&&Math.abs(r.pts-pts)<=3;
+    if(i<=1&&near(T[i===0?1:0]))return 'title';
+    if(div>0&&i<=SWAP&&(i<SWAP?near(T[SWAP]):near(T[SWAP-1])))return 'promo';
+    if(div<DIVS.length-1&&i>=n-SWAP-1&&(i>=n-SWAP?near(T[n-SWAP-1]):near(T[n-SWAP])))return 'drop';
+  }
+  return f.derby?'derby':null;
+}
+const LEGEND_TALK_ROUNDS=3;
+const LEGEND_TALK={
+  final:[(l,c)=>`决赛不是用来参加的，是用来赢的。把奖杯带回${c}——我在看台上等着。`,(l,c)=>`当年我在这片草皮上流过的汗，今天要你们用奖杯来回答。`],
+  semi:[()=>`离决赛只差一步。这一步我也走过——别回头，往前冲。`,()=>`半决赛输了，没有人会记得你。赢了，你们就是传说的开始。`],
+  ko:[(l,c)=>`去告诉整个大陆，${c}是谁！`,()=>`八强？我当年也站在这里。今天，替我走得更远。`],
+  title:[()=>`冠军就在眼前。别让它从指缝里溜走。`,(l,c)=>`我为${c}拼了 ${l.seasons||'这么多'} 个赛季。今天，把王冠戴上。`],
+  promo:[(l,c)=>`上面的世界在等着${c}。冲上去，别让我失望！`,()=>`升级的门就在那里。一脚，把它踹开！`],
+  drop:[(l,c)=>`这座城，绝不属于下一级。给我守住它！`,()=>`我在这里踢了一辈子，从没让球队掉下去过。今天，也不会。`],
+  derby:[(l,c,o)=>`${o}？我当年让他们的球迷哭着回家。你们也可以。`,()=>`宿敌之战，没有第二名。要么赢，要么永远别抬头。`]
+};
+function legendTalk(f,opp){
+  const kind=keyMatch(f),ours=S.legends.filter(l=>!l.club||l.club===my().name);
+  if(!kind||!ours.length)return null;
+  const pool=ours.filter(l=>l.oneClub).length?ours.filter(l=>l.oneClub).concat(ours):ours,k=S.day+S.season*7;
+  const l=pool[k%pool.length],say=LEGEND_TALK[kind][k%LEGEND_TALK[kind].length](l,my().short,opp.short);
+  return {name:l.name,say,who:`${l.oneClub?'一人一城':'传奇'} ${l.name}`};
+}
 // we sold one of our 一人一城: the fans don't forgive it easily
 function soldOneClub(p){
   S.mgr.rep=Math.max(0,S.mgr.rep-ONE_CLUB_SALE_REP);

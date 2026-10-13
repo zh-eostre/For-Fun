@@ -234,6 +234,9 @@ function vBoard(){
 // another club's squad: tap a name for details, or buy straight away at their asking price
 function vTeamPage(tid){
   const t=S.teams[tid],rk=t.foreign?0:table(t.div).findIndex(r=>r.id===tid)+1,b=bestForm(t,true);
+  // their strength: the average of their usual XI, and of each line in it, beside ours
+  const xi=onPitch(t,b.ids).filter(Boolean),avgOf=ps=>ps.length?Math.round(ps.reduce((s,p)=>s+p.ovr,0)/ps.length):0,me=Math.round(xiLevel(my()));
+  const lines=['FW','MF','DF','GK'].map(pos=>`${POS[pos]} ${avgOf(xi.filter(p=>p.pos===pos))}`).join(' · ');
   const rows=PO.map(pos=>`<div class="group-h">${POS[pos]}</div><div class="mlist">`+t.players.filter(p=>p.pos===pos).sort((a,b)=>b.ovr-a.ovr).map(p=>{
     const why=buyBlock(p,t);
     return `<div class="mrow"><div style="min-width:0"><div class="pname"><button class="link" data-act="player" data-arg="${p.id}">${p.name}</button>${oneClub(p,t)?' <span class="tag2 oneclub" title="青训出身、只为这支球队效力的传奇，不会转会">一人一城</span>':loyal(p,t)?' <span class="tag2 loyal" title="这支球队青训出身，效力多年，不会转会">忠诚</span>':''}${p.sig?` <span class="sig" style="display:inline">「${p.sig}」</span>`:''}</div>
@@ -241,7 +244,8 @@ function vTeamPage(tid){
       <div><div class="ovr num">${p.ovr}</div><div class="potl">${p.age>23?`潜力 ${p.pot}`:'潜力 ?'}</div></div>
       <button class="btn small primary" data-act="bid" data-arg="${p.id}" ${why?`disabled title="${why}"`:''}>${money(askPrice(p,t))}</button></div>`}).join('')+'</div>').join('');
   return `<section class="panel" style="border-left:6px solid ${t.color}"><h2>${t.name}</h2>
-  <p class="muted" style="margin:-4px 0 0;font-size:14px">${t.foreign?`海外俱乐部 · ${INTL_NAME}`:`${DIVS[t.div]}第 ${rk} 名`} · 底蕴 ${t.rep}（${tierOf(t.rep)}）· 常用阵型 ${b.form} · ${t.players.length} 人${tid===S.rival?' · 宿敌（要价贵 30%）':''}</p></section>
+  <p class="muted" style="margin:-4px 0 0;font-size:14px">${t.foreign?`海外俱乐部 · ${INTL_NAME}`:`${DIVS[t.div]}第 ${rk} 名`} · 底蕴 ${t.rep}（${tierOf(t.rep)}）· 常用阵型 ${b.form} · ${t.players.length} 人${tid===S.rival?' · 宿敌（要价贵 30%）':''}</p>
+  ${tid===S.my?'':`<p class="team-power">首发平均能力 <b class="num">${avgOf(xi)}</b><span class="muted">（我方 ${me}）</span> <span class="muted">${lines}</span></p>`}</section>
   <section class="panel" style="padding:4px 10px"><p class="muted" style="font-size:13px;margin:8px 0">按钮上是对方要价：主力和核心球员要价更高。阵容不足 16 人或门将只剩 2 个时对方不卖。</p>${rows}</section>`;
 }
 // one player in detail, ours or another club's

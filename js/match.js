@@ -27,6 +27,8 @@ function startMatch(){
   const hn=S.teams[M.h].name,an=S.teams[M.a].name;
   M.feed.unshift({min:0,cls:'sys',t:f.friendly?(f.warm?LINE.warmKick(hn,an):LINE.friendlyKick(hn,an)):f.cup?LINE.cupKick(hn,an,stageName(M.stage)):f.intl?LINE.intlKick(hn,an,INTL_STAGES[M.stage],M.stage>=6):f.derby?LINE.derbyKick(hn,an):LINE.kickoff(hn,an)});
   sfx('kickoff');
+  const talk=legendTalk(f,opp);
+  if(talk){M.feed.unshift({min:0,cls:'legend',t:`📣 ${talk.who}来到更衣室：「${talk.say}」`});news(`📣 ${talk.who}赛前来到更衣室：「${talk.say}」`);notice('legend',`📣 ${talk.who}来到更衣室`,`「${talk.say}」`,6000);M.hold=Date.now()+3500}  // a moment to read it before kick-off
   M.feed.unshift({min:0,cls:'sys',t:`${opp.short}开场打法：${TACT[M.aiTac]}。`});
   UI.view='match';render();M.timer=setTimeout(loop,600);
 }

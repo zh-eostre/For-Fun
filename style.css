@@ -171,6 +171,7 @@ tr.down td:first-child{box-shadow:inset 4px 0 var(--red)}
 .feed li.goal.mine{background:var(--pitch-soft)}
 .feed li.goal.theirs{background:color-mix(in srgb,var(--red) 12%,transparent)}
 .feed li.sys{color:var(--muted)}
+.feed li.legend{font-weight:600;box-shadow:inset 3px 0 0 var(--amber)}
 .feed li.red{color:var(--red);font-weight:700}
 .ht{border:2px solid var(--amber);border-radius:10px;padding:14px;margin:12px 0;background:var(--card)}
 .cheat{border:1.5px dashed var(--amber)}
@@ -455,6 +456,8 @@ dialog.modal::backdrop{background:rgba(10,15,12,.55)}
 .trophy.got .num{color:var(--amber-text)}
 .fixture .t{color:var(--ink);display:inline-block;border-bottom:3px solid var(--tc,var(--line));padding-bottom:2px}
 .bench .tc{background:#56635A}
+.team-power{margin:6px 0 0;font-size:14px;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.team-power b{font-size:18px}
 .tier{font-size:10px;font-weight:700;padding:0 5px;border-radius:3px;vertical-align:1px;white-space:nowrap}
 .tier.t-big{background:var(--amber);color:#3a2a00}
 .tier.t-strong{border:1px solid var(--line);color:var(--muted)}
@@ -715,7 +718,7 @@ button.xi-tok{cursor:pointer}
   box-shadow:0 6px 18px rgba(0,0,0,.35);border-left:6px solid #4FA36F;transition:opacity .35s,transform .35s}
 .bn b{font-size:15px}.bn span{font-size:13px;opacity:.9}
 .bn.sub{border-left-color:#4FA36F}.bn.inj{border-left-color:#F5B841}.bn.red{border-left-color:#E0503A}
-.bn.against{border-left-color:#8A96A3}.bn.hot{border-left-color:#FF7A45}
+.bn.against{border-left-color:#8A96A3}.bn.legend{border-left-color:#F5B841;max-width:min(520px,92vw)}.bn.hot{border-left-color:#FF7A45}
 .bn.out{opacity:0;transform:translateY(-8px)}
 @media (prefers-reduced-motion:no-preference){.bn{animation:bnin .3s ease-out}@keyframes bnin{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}}
 

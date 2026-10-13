@@ -30,11 +30,11 @@ function celebrate(big,small,kind){
 }
 // a short card at the top for something that matters during a match (a change, an injury, a red card, a goal
 // against); several stack. the match holds for a moment (see M.hold in match.js)
-function notice(kind,title,sub){
+function notice(kind,title,sub,ms=2400){
   const box=document.getElementById('banner');if(!box||!box.appendChild)return;
   const el=document.createElement('div');el.className='bn '+kind;el.innerHTML=`<b>${title}</b>${sub?`<span>${sub}</span>`:''}`;
   while(box.children.length>=3)box.firstChild.remove();  // at most three at a time: the oldest goes
-  box.appendChild(el);setTimeout(()=>el.classList.add('out'),2400);setTimeout(()=>el.remove(),2800);
+  box.appendChild(el);setTimeout(()=>el.classList.add('out'),ms);setTimeout(()=>el.remove(),ms+400);
 }
 function toast(t){
   const el=document.getElementById('toast');el.textContent=t;el.hidden=false;
