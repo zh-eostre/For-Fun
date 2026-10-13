@@ -122,7 +122,7 @@ function vFixtures(){
   rows.push({day:end+1,kind:'赛季结束',note:'颁奖、升降级'});
   rows.sort((a,b)=>a.day-b.day);const next=rows.find(x=>x.opp!=null&&!x.r&&x.day>=S.day);
   const played=S.round,left=rounds()-S.round;
-  const sum=`第 ${Math.min(played+1,rounds())}/${rounds()} 轮 · 还剩 ${left} 轮联赛 · 赛季在${dayLabel(end)}结束（还有 ${Math.max(0,end-S.day)} 天）`;
+  const sum=`还剩 ${left} 轮 · ${dayLabel(end)}结束`;
   return `<details class="fold fixtures" data-fold="fixtures"><summary><span><b>全赛季赛程</b> <span class="muted">${sum}</span></span></summary>
   <div class="fx-prog" aria-hidden="true"><i style="width:${Math.round(played/rounds()*100)}%"></i></div>
   <div class="fx-list">${rows.map(x=>`<div class="fx-row ${x===next?'next':''} ${x.r?'done':''} ${x.opp==null?'evt':''}"><span class="fx-d">${dayLabel(x.day)}</span><span class="fx-k">${x.kind}</span>
@@ -162,17 +162,17 @@ function vCalendar(){
   };
   // four weeks ahead (swipe sideways), up to the last round
   const strip=Array.from({length:28},(_,i)=>S.day+i).filter(d=>d<=seasonEndDay()).map(cell).join('');
-  const xi=S.lineup.map(id=>id!=null&&findP(id)).filter(Boolean),avg=xi.length?Math.round(xi.reduce((s,p)=>s+p.cond,0)/xi.length):0;
+  const xi=S.lineup.map(id=>id!=null&&findP(id)).filter(Boolean);
   const tired=xi.filter(p=>p.cond<80).sort((a,b)=>a.cond-b.cond).slice(0,3);
   const L=UI.dayLog,left=nextMatchDay()-S.day;
-  return `<section class="panel"><h2>日程 <span class="muted" style="font-weight:400;font-size:14px">${dayLabel(S.day)}，今天${played?'的比赛已结束（进入下一天开始休息）':today==='match'?'是比赛日':today==='rest'?'休息（进入下一天时恢复）':`训练（${T}，进入下一天时生效）`}</span></h2>
+  return `<section class="panel"><h2>日程 <span class="muted" style="font-weight:400;font-size:14px">${dayLabel(S.day)} · 今天：${played?'比赛已结束':today==='match'?'比赛日':today==='rest'?'休息':T}</span></h2>
   <div class="days" tabindex="0" aria-label="接下来四周的日程，可以左右滑动">${strip}</div>
   ${vFixtures()}
   ${L?`<p class="daylog">过了 ${L.days} 天：全队体能共 ${L.cond>=0?'+':''}${L.cond}${L.trained.length?`；训练中进步：${[...new Set(L.trained)].map(p=>{const n=L.trained.filter(x=>x===p).length;return `${p.name}（${p.ovr}${n>1?`，+${n}`:''}）`}).join('、')}`:'；训练中没有人进步'}${L.healed.length?`；伤愈复出：${L.healed.map(p=>p.name).join('、')}`:''}。</p>`:''}
   ${L&&L.surprises?L.surprises.map(t=>`<p class="surprise">✨ ${t}</p>`).join(''):''}
-  <p class="muted" style="margin:8px 0 0;font-size:14px">首发平均体能 <b>${avg}</b>${tired.length?`，偏低：${tired.map(p=>`${p.name} ${p.cond}`).join('、')}`:'，全员状态良好'}。</p>
+  ${tired.length?`<p class="muted" style="margin:8px 0 0;font-size:14px">体能偏低：${tired.map(p=>`${p.name} ${p.cond}`).join('、')}</p>`:''}
   ${windowOpen()&&S.pre!=null?`<p class="window open" style="margin:8px 0 0">${windowName()}开放中，还剩 ${windowLeft()} 天</p>`:''}
-  <div class="cal-train"><span class="muted">训练</span><div class="seg sm">${Object.entries(TRAIN).map(([k,v])=>`<button data-act="train" data-arg="${k}" aria-pressed="${S.training===k}" title="${v[1]}">${v[0]}</button>`).join('')}</div><span class="muted cal-hint">${TRAIN[S.training][1]}</span></div>
+  <div class="cal-train"><span class="muted">训练</span><div class="seg sm">${Object.entries(TRAIN).map(([k,v])=>`<button data-act="train" data-arg="${k}" aria-pressed="${S.training===k}" title="${v[1]}">${v[0]}</button>`).join('')}</div></div>
   ${today==='match'&&!played?'':`<div class="go" style="justify-content:flex-start;margin-top:10px"><button class="btn" data-act="nextDay">进入下一天</button><button class="btn primary" data-act="ff">快进到比赛日（${left} 天）</button></div>`}</section>`;
 }
 // a cup final in the last week: who won, at the top of the club page
@@ -211,7 +211,7 @@ function vHome(){
   <div class="fixture"><div><div class="t disp" style="--tc:${H.color}">${H.name}</div><div class="str">综合实力 <span class="num">${hs}</span></div></div>
   <div class="vs num">VS</div>
   <div><div class="t disp" style="--tc:${A.color}">${A.name}</div><div class="str">综合实力 <span class="num">${as}</span></div></div></div>
-  ${(()=>{const t=tacFor(ob.r,rating(ms));return `<p class="opptac-line">对手预计打法 <b class="opptac">${TACT[t]}</b>${t==='att'&&S.tactic!=='def'?'<span class="muted"> · 他们会压上进攻，防守反击能多守住一些，还有反击加成</span>':t==='def'&&S.tactic==='def'?'<span class="muted"> · 双方都缩在后面，可能是一场闷战</span>':''}</p>`})()}
+  ${(()=>{const t=tacFor(ob.r,rating(ms));return `<p class="opptac-line">对手预计打法 <b class="opptac">${TACT[t]}</b>${t==='att'&&S.tactic!=='def'?'<span class="muted"> · 防守反击有反击加成</span>':t==='def'&&S.tactic==='def'?'<span class="muted"> · 双方都缩在后面，可能是一场闷战</span>':''}</p>`})()}
   ${vOppReport(opp,ob,tacFor(ob.r,rating(ms)))}
   <div class="go"><span class="muted" style="font-size:14px">阵型 ${S.formation}，战术${TACT[S.tactic]}</span>
   <button class="btn" data-act="oppXI">查看对手阵容</button><button class="btn" data-act="tab" data-arg="squad">调整阵容</button>
@@ -293,6 +293,7 @@ function vRules(){
   ${sec('成长与老化',['训练和比赛都会让球员进步，越年轻、离潜力越远进步越快；训练场等级越高进步越快。',
     '33 岁起能力可能下滑，也可能退役（能力越高越能坚持），40 岁一定退役。在队效力够久或帮球队夺冠的退役球员会进入传奇名单。'])}
   ${sec('转会与俱乐部',[`一线队最多 ${SQUAD_MAX} 人，至少保留 14 人；${LOAN_AGE} 岁及以下的球员可以外租（新赛季长一岁后再算），租借期间不占名额。`,
+    '想买其他球队的球员，在积分榜点球队名进入球队页。',
     '球探部、理疗室、训练场、球场可以升级；青训营每个赛季会送来一批少年。董事会目标完成有奖金，教练声望够高会收到其他球队的执教邀请。',
     `每个赛季可以发动一次${CHEAT_CARD}。`])}
   </div></section>`;
@@ -343,8 +344,8 @@ function vSavePanel(){
   const dirOK=canPickDir(),F=UI.saveFiles;
   return `<details class="panel fold" data-fold="${F?'saves-list':'saves'}" ${F?'open':''}><summary><h2>存档文件</h2></summary>
   <p class="muted" style="margin:0 0 10px;font-size:14px">${dirOK
-    ?`已自动保存在这个浏览器里。导出会写进你选的存档文件夹${UI.dirName?`（现在是「${esc(UI.dirName)}」）`:'（第一次导出时选一次，例如项目里的 saves 文件夹）'}。`
-    :'已自动保存在这个浏览器里。这个浏览器只能把导出文件下载到默认的下载文件夹（Chrome 或 Edge 可以直接存进指定文件夹）。'}</p>
+    ?`已自动保存。导出会写进${UI.dirName?`「${esc(UI.dirName)}」文件夹`:'你选的文件夹（第一次导出时选）'}。`
+    :'已自动保存。'}</p>
   <div class="go" style="justify-content:flex-start;margin-top:0">
     <button class="btn" data-act="exportSave">${dirOK?'导出到存档文件夹':'导出存档文件'}</button>
     ${dirOK?'<button class="btn" data-act="listSaves">从存档文件夹读取</button><button class="btn small" data-act="pickDir">更换文件夹</button>':''}
@@ -394,7 +395,7 @@ function vLoans(){
 // what the chosen formation's midfield does, for the ones with holding or attacking midfielders
 function formNote(form){
   const f=FORMS[form],bits=[f.dm&&`${f.dm} 名后腰偏防守、多抢断`,f.am&&`${f.am} 名前腰更容易进球和助攻`].filter(Boolean);
-  return bits.length?`中场里 ${bits.join('，')}（由中场球员担任）`:'阵型决定 11 个位置，球场上按位置排';
+  return bits.length?`中场里 ${bits.join('，')}（由中场球员担任）`:'';
 }
 // the set-piece dialog: for penalties and free kicks, an order of up to TAKER_MAX; every first-team player with his
 // chances (a penalty against an average keeper, a direct free kick), best first
@@ -439,7 +440,7 @@ function vSquad(){
   ${iss.length?`<span class="warn">${iss[0]}</span>`:`<span class="muted" style="font-size:14px">${formNote(S.formation)}</span>`}
   </div></section>
   <div class="cols squad"><div class="col">${vPitch()}</div>
-  <div class="col"><section class="panel" style="padding:4px 6px"><h2 style="margin:10px 10px 0">一线队 <span class="muted" style="font-weight:400;font-size:14px">${squadSize()}/${SQUAD_MAX} · 点名字看详情</span></h2>${rows}</section>
+  <div class="col"><section class="panel" style="padding:4px 6px"><h2 style="margin:10px 10px 0">一线队 <span class="muted" style="font-weight:400;font-size:14px">${squadSize()}/${SQUAD_MAX}</span></h2>${rows}</section>
   ${vLoans()}</div></div>`;
 }
 // the XI drawn on a pitch, attacking upwards. every slot of the formation gets a spot, so the shape always matches
@@ -490,7 +491,7 @@ function vPitch(){
   const inner=pitchSpots(S.lineup,S.formation).map(s=>s.p
     ?tok(s.p,{style:`left:${s.x}%;top:${s.y}%`,act:'slot',arg:s.slot,role:s.role,cls:sel===s.slot?'sel':''})
     :emptySlot(s,'slot',sel===s.slot)).join('');
-  const hint=sel==null?'点位置选中，再点另一个位置互换，或点替补换上。'
+  const hint=sel==null?'点两个位置互换，点替补换上。'
     :selP?`已选中 ${selP.name}：点另一个位置互换、点替补换上，再点他一次移出首发。`
     :`已选中${POS[roles[sel]]}空位：点替补换上。`;
   const oop=outOfPos();
@@ -619,7 +620,7 @@ function vMarket(){
   const seg=(key,opts)=>`<div class="seg sm">${opts.map(([v,l])=>`<button data-act="mf" data-arg="${key}:${v}" aria-pressed="${F[key]===v}">${l}</button>`).join('')}</div>`;
   return vReveal()+`<section class="panel"><h2>转会市场</h2>
   <p class="window ${open?'open':'shut'}">${open?(windowLeft()==null?'转会窗口开放中':`${windowName()}开放中，还剩 ${windowLeft()} 天`):windowShut()+'。名单可以先看，球探也可以先派。'}</p>
-  <p class="muted" style="margin-top:6px;font-size:14px">本赛季名单 · 一线队 ${squadSize()}/${SQUAD_MAX}${my().players.length>squadSize()?`（另有 ${my().players.length-squadSize()} 人租借在外）`:''} · 绿条是能力，金条是球探估计的潜力 · 想买其他球队的人，在积分榜点球队名</p>
+  <p class="muted" style="margin-top:6px;font-size:14px">一线队 ${squadSize()}/${SQUAD_MAX}${my().players.length>squadSize()?`（另有 ${my().players.length-squadSize()} 人租借在外）`:''} · 绿条能力，金条潜力（球探估计）</p>
   ${(()=>{const ex=S.market.filter(p=>p.ex);return ex.length?`<p class="muted" style="margin-top:4px;font-size:14px">${ex[0].ex}挂牌的老部下：${ex.map(p=>`${p.name}（${POS[p.pos]} ${p.ovr}）`).join('、')}</p>`:''})()}
   <div class="filters">
    <div><label>位置</label>${seg('pos',[['all','全部'],['GK','门将'],['DF','后卫'],['MF','中场'],['FW','前锋']])}</div>
@@ -704,7 +705,7 @@ function vShootout(){
     <div class="mctl" style="margin-top:8px"><button class="btn" data-act="skip">直接看结果</button></div></div>`;
 }
 // the opponent's current tactic and average stamina
-const oppLine=()=>`对手 <b class="opptac">${TACT[M.aiTac]}</b> · 平均体能 ${oppAvgCond()}`;
+const oppLine=()=>`对手 <b class="opptac">${TACT[M.aiTac]}</b> · 平均体能 ${oppAvgCond()}${M.aiTac==='att'&&M.tac!=='def'?' · 防守反击有反击加成':''}`;
 // stamina while the match runs: our players on the pitch (lowest first) and the opponents' average
 const oppAvgCond=()=>{const s=mySide()==='h'?'a':'h',ps=onPitch(S.teams[s==='h'?M.h:M.a],M[s+'Ids']).filter(Boolean);return Math.round(ps.reduce((t,p)=>t+p.cond,0)/ps.length)};
 const autoSubBtn=()=>`<button class="btn small" data-act="autoSub" aria-pressed="${S.autoSub!==false}">自动换下体力不支的球员：${S.autoSub!==false?'开':'关'}</button>`;
@@ -758,7 +759,6 @@ function vMatch(){
       :`<span class="tok empty gone" style="left:${x.x}%;top:${x.y}%"><span class="tc">✕</span><span class="tn">罚下</span></span>`).join('');
     ctl=`<div class="ht">${M.ht?'<b>中场·作战会议</b><p style="margin:4px 0 10px;font-size:14px">下半场，要改变命运的走向吗？</p>':`<b>暂停·调整（${M.min}'）</b><p style="margin:4px 0 10px;font-size:14px">换人或改变战术，然后继续比赛。</p>`}
     <p style="margin:0 0 10px;font-size:13px">${autoSubBtn()} <span class="muted">${oppLine()}</span></p>
-    ${M.aiTac==='att'&&M.tac!=='def'?'<p class="muted" style="margin:-4px 0 10px;font-size:12px">对手全力进攻，防守反击能多守住一些，还有反击加成。</p>':''}
     ${M.ht?(M.talk?`<p class="talk-done">训话「${TALK[M.talk][0]}」${M.talk==='roar'?(M.talkOK?'奏效了！进攻 +5、防守 +2':'适得其反，攻防各 −2'):`：${TALK[M.talk][2]}`}</p>`
       :`<div class="talk"><div class="subh">更衣室训话 <span class="muted" style="font-weight:400">（每场一次）</span></div>${Object.entries(TALK).map(([k,[n,line,fx]])=>`<button class="talk-opt" data-act="talk" data-arg="${k}"><b>${n}</b><span>${line}</span><small>${fx}</small></button>`).join('')}</div>`):''}
     <div class="seg" style="margin-bottom:4px">${Object.entries(TACT).map(([k,v])=>`<button data-act="tac" data-arg="${k}" aria-pressed="${M.tac===k}">${v}</button>`).join('')}</div>
@@ -1047,7 +1047,7 @@ function vHonours(){
     return `<section class="panel"><h2>个人奖项${won.length?` <span class="muted" style="font-weight:400;font-size:13px">${won.length} 项</span>`:''}</h2>${won.length?'<div class="scrollbox">'+won.reverse().map(x=>`<div class="res" style="grid-template-columns:1fr auto"><span style="text-align:left">第 ${x.r.season} 季${DIVS[x.d]}${AWARDS[x.k]||'最佳阵容'}：${x.w.name}</span><span class="muted">${x.w.stat}</span></div>`).join('')+'</div>':'<p class="muted" style="margin:0">还没有球员拿过个人奖项。</p>'}</section>`})()}
   ${vClubBoards()}
   ${vOneClub()}
-  <section class="panel"><h2>传奇退役${S.legends.length?` <span class="muted" style="font-weight:400;font-size:13px">${S.legends.length} 人</span>`:''}</h2>${S.legends.length?'<div class="scrollbox">'+[...S.legends].reverse().map(l=>`<div class="res" style="grid-template-columns:1fr auto"><span style="text-align:left">${l.name}${l.oneClub?' <span class="tag2 oneclub">一人一城</span>':''} <span class="muted">${POS[l.pos]}，第 ${l.season} 季${l.club&&l.club!==my().name?`于${l.club}`:''}退役${l.seasons?`，效力 ${l.seasons} 季`:''}${l.titles&&l.titles.length?`<br>🏆 ${trophyCount(l.titles)}`:''}</span></span><span class="muted">${l.peak?`巅峰 <b class="num">${l.peak}</b> · `:''}${l.apps} 场 ${l.goals} 球</span></div>`).join('')+'</div>':`<p class="muted" style="margin:0">在队效力 ${LEGEND_TITLE_SEASONS} 季以上并帮球队夺冠，或效力 ${LEGEND_SEASONS} 季以上的球员，在队退役后会记在这里。</p>`}</section>
+  <section class="panel"><h2>传奇退役${S.legends.length?` <span class="muted" style="font-weight:400;font-size:13px">${S.legends.length} 人</span>`:''}</h2>${S.legends.length?'<div class="scrollbox">'+[...S.legends].reverse().map(l=>`<div class="res" style="grid-template-columns:1fr auto"><span style="text-align:left">${l.name}${l.oneClub?' <span class="tag2 oneclub">一人一城</span>':''} <span class="muted">${POS[l.pos]}，第 ${l.season} 季${l.club&&l.club!==my().name?`于${l.club}`:''}退役${l.seasons?`，效力 ${l.seasons} 季`:''}${l.titles&&l.titles.length?`<br>🏆 ${trophyCount(l.titles)}`:''}</span></span><span class="muted">${l.peak?`巅峰 <b class="num">${l.peak}</b> · `:''}${l.apps} 场 ${l.goals} 球</span></div>`).join('')+'</div>':`<p class="muted" style="margin:0">效力 ${LEGEND_TITLE_SEASONS} 季以上并夺冠、或效力 ${LEGEND_SEASONS} 季以上的球员，退役后载入史册。</p>`}</section>
   ${vCareer()}
   <section class="panel"><h2>历届冠军</h2>${R.length?`<div class="tw scrollbox"><table class="sticky-head"><thead><tr><th>季</th>${DIVS.map(dn=>`<th>${dn}</th>`).join('')}<th>${CUP_NAME}</th><th>本队</th></tr></thead>
   <tbody>${R.slice().reverse().map(r=>`<tr><td>${r.season}</td>${DIVS.map((_,d)=>`<td>${r.champs[d]||'—'}</td>`).join('')}<td>${r.cup||'—'}</td><td>${DIVS[r.div]}第 ${r.rank}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted" style="margin:0">打完第一个赛季后，这里会记录每季的冠军。</p>'}</section></div></div>`;

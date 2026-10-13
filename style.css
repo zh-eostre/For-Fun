@@ -363,7 +363,6 @@ details.fold[open]>summary{margin-bottom:10px}
 .fold-sum h2{margin:0}
 /* training controls inside the calendar */
 .cal-train{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;font-size:13px}
-.cal-hint{font-size:12px}
 /* squad list rows: one line of facts, smaller controls */
 .prow{padding:5px 8px;grid-template-columns:28px minmax(0,1fr) 54px 78px auto;gap:8px}
 .prow .ovr{font-size:24px}
@@ -384,7 +383,6 @@ details.fold[open]>summary{margin-bottom:10px}
   .prow{grid-template-columns:24px minmax(0,1fr) 46px 58px;row-gap:2px}
   .prow .act{grid-column:2/-1}
   .barlbl{display:none}
-  .cal-hint{display:none}
 }
 @media (max-width:560px){
   /* one line per player: selling lives on the player page (tap the name) */
