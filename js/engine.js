@@ -456,7 +456,7 @@ function targets(weak,form,tac){
 // deterministic, so the opponent preview shows the formation the match will use
 function bestForm(team,home){
   const keys=Object.keys(FORMS),all=keys.map(form=>{const ids=autoPick(team,form),s=strength(team,ids,'bal',home,0,form);
-    return {form,ids,v:(s.atk+s.def)/2,r:rating(s)}});
+    return {form,ids,v:(s.atk+s.def)/2-(FORMS[form].DF===5&&FIVE_BACK_COST[tierOf(team.rep)]||0),r:rating(s)}});
   const top=Math.max(...all.map(x=>x.v)),fav=f=>(keys.indexOf(f)+team.id*3)%keys.length;
   return all.filter(x=>x.v>=top-.5).sort((a,b)=>fav(a.form)-fav(b.form))[0];
 }

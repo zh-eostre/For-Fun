@@ -46,6 +46,8 @@ const FORMS={'4-4-2':{GK:1,DF:4,MF:4,FW:2},'4-3-3':{GK:1,DF:4,MF:3,FW:3},'4-2-3-
   '4-1-4-1':{GK:1,DF:4,MF:5,FW:1,dm:1},'4-5-1':{GK:1,DF:4,MF:5,FW:1},'4-3-1-2':{GK:1,DF:4,MF:4,FW:2,am:1},
   '3-5-2':{GK:1,DF:3,MF:5,FW:2},'3-4-3':{GK:1,DF:3,MF:4,FW:3},'3-4-2-1':{GK:1,DF:3,MF:6,FW:1,am:2},
   '5-3-2':{GK:1,DF:5,MF:3,FW:2},'5-4-1':{GK:1,DF:5,MF:4,FW:1}};
+// a five-man back line, to an AI club, is worth this much less than it plays by its tier (豪门 hardly ever, 强队 now and then)
+const FIVE_BACK_COST={豪门:1,强队:.7};
 const LINE_NAME={DM:'后腰',AM:'前腰'};
 const TACT={def:'防守反击',bal:'平衡',att:'全力进攻'};
 // match pace: ms per minute of play, plus ms for each new line of commentary so there's time to read it
