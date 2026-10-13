@@ -85,7 +85,11 @@ const MIGRATE={
   21:d=>d.teams.forEach(t=>t.players.forEach(p=>{if(p.since!=null)return;const c=t.id===d.my&&d.club&&d.club[p.id];
     p.since=c?d.season-(c.seasons||0):d.season;if(t.id===d.my?p.youth:p.age<=21)p.home=t.id})),
   // only the academy makes a club's own: the players we bought young lose the mark (ours from the start keep it)
-  22:d=>d.teams[d.my].players.forEach(p=>{if(p.home===d.my&&!p.youth&&p.since!==1)delete p.home})
+  22:d=>d.teams[d.my].players.forEach(p=>{if(p.home===d.my&&!p.youth&&p.since!==1)delete p.home}),
+  // promotions now count toward a legend: our players get the ones from seasons they finished with us
+  23:d=>{const ups=(d.history||[]).filter(h=>h.div>0&&h.rank<=SWAP);
+    d.teams[d.my].players.forEach(p=>{const c=d.club&&d.club[p.id];if(!c||c.ups)return;const was=new Set((p.hist||[]).map(h=>h.s));
+      const mine=ups.filter(h=>was.has(h.season)).map(h=>`第 ${h.season} 季升入${DIVS[h.div-1]}`);if(mine.length)c.ups=mine})}
 };
 // a save can come from anywhere (a shared file, an edited one), and its text ends up in the page's HTML, so
 // every string in it loses the characters that could form markup before the game touches it

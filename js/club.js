@@ -175,24 +175,28 @@ function recordSeason(div,rank){
   // trophies won this season; a player shares in one if he made TITLE_APPS appearances
   const won=[rank===1?`第 ${S.season} 季${DIVS[div]}冠军`:'',S.cup.winner===S.my?`第 ${S.season} 季${CUP_NAME}冠军`:'',
     S.intl&&S.intl.winner===S.my?`第 ${S.season} 季${INTL_NAME}冠军`:''].filter(Boolean);
+  const up=zone(div,rank)==='up'?`第 ${S.season} 季升入${DIVS[div-1]}`:'';  // promotions are shared the same way
   my().players.forEach(p=>{
     const apps=p.apps;bankPlayer(p);
     const c=S.club[p.id];c.seasons=(c.seasons||0)+1;c.titles=c.titles||[];
-    if(apps>=TITLE_APPS)c.titles=c.titles.concat(won);
+    if(apps>=TITLE_APPS){c.titles=c.titles.concat(won);if(up)c.ups=(c.ups||[]).concat(up)}
   });
   if(div===0&&rank===1){unlock('champ');if(S.cup.winner===S.my)unlock('double');if(S.cup.winner===S.my&&S.intl&&S.intl.winner===S.my)unlock('treble')}
   const row=table(div).find(r=>r.id===S.my);if(row&&row.p&&row.l===0)unlock('unbeaten');
   if(S.records.length>=3&&S.records.slice(-3).every(r=>r.div===0&&r.rank===1&&(r.my??S.my)===S.my))unlock('dynasty');
   if(awards[div].boot&&awards[div].boot.tid===S.my)unlock('boot');
 }
-// club legends retire with us after LEGEND_TITLE_SEASONS seasons and at least one trophy, or after LEGEND_SEASONS seasons.
-// called after recordSeason has banked the season, so the totals are complete
-const TITLE_APPS=5,LEGEND_TITLE_SEASONS=3,LEGEND_SEASONS=8;
-const isLegend=c=>!!c&&((c.seasons||0)>=LEGEND_SEASONS||((c.seasons||0)>=LEGEND_TITLE_SEASONS&&(c.titles||[]).length>0));
+// club legends retire with us: a long servant (LEGEND_SEASONS seasons, LEGEND_APPS matches), or a key man of a great
+// time (LEGEND_HONOUR_SEASONS seasons, LEGEND_HONOUR_APPS matches, and a 甲级 title, a cup, the 冠军杯 or a promotion
+// he played his part in). a 一人一城 always is. called after recordSeason has banked the season, so the totals are complete
+const TITLE_APPS=5,LEGEND_SEASONS=8,LEGEND_APPS=200,LEGEND_HONOUR_SEASONS=5,LEGEND_HONOUR_APPS=120;
+const bigTitle=t=>!/[乙丙]级冠军$/.test(t);  // a lower division's title is a promotion, counted as one
+const isLegend=c=>!!c&&((c.seasons||0)>=LEGEND_SEASONS&&(c.apps||0)>=LEGEND_APPS
+  ||(c.seasons||0)>=LEGEND_HONOUR_SEASONS&&(c.apps||0)>=LEGEND_HONOUR_APPS&&((c.titles||[]).some(bigTitle)||(c.ups||[]).length>0));
 function retireLegend(p){
   const c=S.club[p.id],one=oneClub(p,my());
   if(isLegend(c)||one)unlock('legend');
-  if(isLegend(c)||one)S.legends.push({name:p.name,pos:p.pos,goals:c.goals,apps:c.apps,seasons:c.seasons,titles:c.titles||[],season:S.season,club:my().name,oneClub:one||undefined,
+  if(isLegend(c)||one)S.legends.push({name:p.name,pos:p.pos,goals:c.goals,apps:c.apps,seasons:c.seasons,titles:c.titles||[],ups:(c.ups||[]).length||undefined,season:S.season,club:my().name,oneClub:one||undefined,
     peak:Math.max(p.ovr,...(p.hist||[]).map(h=>h.o))});  // his best, from the season-end record (and now)
   if(one){news(`🏟 告别赛：${p.name} 挂靴了。${seasonsAt(p)} 个赛季，一人一城——今天全场起立，为他送上最后的掌声。`);(UI.sigQueue||(UI.sigQueue=[])).push({farewell:true,name:p.name,seasons:seasonsAt(p)})}
 }
