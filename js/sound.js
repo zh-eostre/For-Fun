@@ -3,7 +3,7 @@
    when our keeper saves, a long roar for a title or a 绝杀. the rest is made on the spot with the Web Audio API: whistles, card beeps, a whoosh
    for a signature move, a fanfare. on unless switched off (the setting is kept on this device). nothing plays while
    a match is skipped, or where the browser has no audio */
-const SAMPLES={goal:['sounds/goal.wav',.75],concede:['sounds/concede.wav',.8],roar:['sounds/roar.wav',.8],save:['sounds/save.wav',.85]};
+const SAMPLES={goal:['sounds/goal.wav',.75],concede:['sounds/concede.wav',.8],roar:['sounds/roar.wav',.8],save:['sounds/save.wav',.7]};
 // a recording through an <audio> element (works for a page opened from a file, and in the desktop app); false if
 // it can't be played, so the synthesised version stands in. the crowd is one voice: a new cheer or groan cuts off the
 // one still playing (goals in quick succession restart it rather than piling up)
