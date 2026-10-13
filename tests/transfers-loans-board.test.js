@@ -19,7 +19,9 @@ while(other.players.length>15)other.players.pop();const t15=other.players[0];ok(
 ACT.back();ok(!UI.pages.length,'back returns to the tabs');
 // loans
 const kid=my().players.filter(p=>p.age<=LOAN_AGE&&!unavail(p)).sort((a,b)=>a.ovr-b.ovr)[0]||(()=>{const k=S.academy.intake[0];ACT.ysign(String(k.id));return findP(k.id)})();
-ACT.player(String(kid.id));ok(/外租/.test(els.app.innerHTML),'young player page offers a loan');
+ACT.player(String(kid.id));ok(/data-act="loan"/.test(els.app.innerHTML),'young player page offers a loan');UI.modal=null;
+const vet=my().players.find(x=>x.age>LOAN_AGE);ACT.player(String(vet.id));ok(/disabled title="只有 [0-9]+ 岁及以下/.test(els.app.innerHTML)&&!/data-act="loan"/.test(els.app.innerHTML),'an older player: the loan button is greyed out, saying why');UI.modal=null;
+ACT.player(String(kid.id));
 twice('loan',String(kid.id));ok(kid.loan&&unavail(kid)&&!S.lineup.includes(kid.id)&&typeof kid.loan.club==="string","loaned to "+loanLabel(kid));
 UI.pages=[];
 let played=0;while(S.round<6){ffToMatch();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);if(!nextFix().cup&&!nextFix().intl&&!nextFix().friendly)played++;startMatch();if(!M){console.log("STUCK: "+els.toast.textContent+" | day "+S.day+" next "+nextMatchDay()+" round "+S.round+" | issues "+lineupIssues().join(";")+" | squad "+squadSize()+" | GKs: "+my().players.filter(p=>p.pos==="GK").map(p=>p.name+"(inj "+p.inj+" ban "+p.ban+" away "+p.away+" loan "+!!p.loan+")").join(",")+" | available "+my().players.filter(p=>!unavail(p)).length);throw "stuck"}skipMatch();M=null;UI.view="main"}

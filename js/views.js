@@ -293,7 +293,7 @@ function vRules(){
     '赛季末颁发最佳球员、最佳新秀、最佳门将、金靴、助攻王，并选出年度最佳阵容。最佳球员按「比同位置的人好多少」来评，所以各个位置都有机会。'])}
   ${sec('成长与老化',['训练和比赛都会让球员进步，越年轻、离潜力越远进步越快；训练场等级越高进步越快。',
     '33 岁起能力可能下滑，也可能退役（能力越高越能坚持），40 岁一定退役。在队效力够久或帮球队夺冠的退役球员会进入传奇名单。'])}
-  ${sec('转会与俱乐部',[`一线队最多 ${SQUAD_MAX} 人，至少保留 14 人；${LOAN_AGE} 岁以下的球员可以外租，租借期间不占名额。`,
+  ${sec('转会与俱乐部',[`一线队最多 ${SQUAD_MAX} 人，至少保留 14 人；${LOAN_AGE} 岁及以下的球员可以外租（新赛季长一岁后再算），租借期间不占名额。`,
     '球探部、理疗室、训练场、球场可以升级；青训营每个赛季会送来一批少年。董事会目标完成有奖金，教练声望够高会收到其他球队的执教邀请。',
     `每个赛季可以发动一次${CHEAT_CARD}。`])}
   </div></section>`;
@@ -324,7 +324,7 @@ function vPlayer(id){
   const tk=k=>takerList(k).indexOf(p.id),TK={pen:'点球',fk:'任意球'};
   const actions=mine
     ?`${Object.entries(TK).map(([k,l])=>`<button class="btn small" data-act="taker" data-arg="${k}:${p.id}" aria-pressed="${tk(k)>=0}">${tk(k)>=0?`✓ ${l}第 ${tk(k)+1} 顺位（点击移出）`:`加入${l}人选`}</button>`).join('')}<button class="btn small" data-act="takers">定位球设置</button>
-      ${p.loan?`<button class="btn small" data-act="recall" data-arg="${p.id}">召回</button>`:p.age<=LOAN_AGE?`<button class="btn small" data-act="loan" data-arg="${p.id}">外租（赛季结束回归）</button>`:''}
+      ${p.loan?`<button class="btn small" data-act="recall" data-arg="${p.id}">召回</button>`:p.age<=LOAN_AGE?`<button class="btn small" data-act="loan" data-arg="${p.id}">外租（赛季结束回归）</button>`:`<button class="btn small" disabled title="只有 ${LOAN_AGE} 岁及以下的球员可以外租">外租（${LOAN_AGE} 岁及以下）</button>`}
       <button class="btn small" data-act="list" data-arg="${p.id}" aria-pressed="${!!p.listed}" title="挂牌后，转会窗口期间球队会专门为他报价（约身价的 ${LIST_RANGE[0]}–${LIST_RANGE[1]} 倍）">${p.listed?'✓ 挂牌中（点击撤下）':'挂牌出售'}</button>
       <button class="btn small danger" data-act="sell" data-arg="${p.id}" ${windowOpen()?'':`disabled title="${windowShut()}"`}>直接出售 ${money(sellPrice(p))}</button>`
     :(()=>{const why=buyBlock(p,t);return `<button class="btn small primary" data-act="bid" data-arg="${p.id}" ${why?'disabled':''}>以 ${money(askPrice(p,t))} 签下</button>${why?`<span class="muted" style="font-size:13px">${why}</span>`:''}`})();
