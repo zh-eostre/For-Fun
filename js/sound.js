@@ -1,9 +1,9 @@
 /* ---------- sound effects ----------
-   the crowd is recorded (sounds/, see sounds/CREDITS.md): a cheer for our goals, a stadium's "oh" for theirs, a
-   long roar for a title or a 绝杀. the rest is made on the spot with the Web Audio API: whistles, card beeps, a whoosh
+   the crowd is recorded (sounds/, see sounds/CREDITS.md): a cheer for our goals, a stadium's "oh" for theirs, applause
+   when our keeper saves, a long roar for a title or a 绝杀. the rest is made on the spot with the Web Audio API: whistles, card beeps, a whoosh
    for a signature move, a fanfare. on unless switched off (the setting is kept on this device). nothing plays while
    a match is skipped, or where the browser has no audio */
-const SAMPLES={goal:['sounds/goal.wav',.75],concede:['sounds/concede.wav',.8],roar:['sounds/roar.wav',.8]};
+const SAMPLES={goal:['sounds/goal.wav',.75],concede:['sounds/concede.wav',.8],roar:['sounds/roar.wav',.8],save:['sounds/save.wav',.55]};
 // a recording through an <audio> element (works for a page opened from a file, and in the desktop app); false if
 // it can't be played, so the synthesised version stands in. the crowd is one voice: a new cheer or groan cuts off the
 // one still playing (goals in quick succession restart it rather than piling up)
@@ -60,6 +60,7 @@ const SFX={
   card:c=>tone(c,880,0,.12,'square',.06),
   red:c=>{tone(c,[220,150],0,.45,'sawtooth',.08);tone(c,[110,80],0,.5,'sine',.12)},
   sig:c=>{noise(c,0,.5,[300,4000],.1);tone(c,1568,.32,.5,'triangle',.12);tone(c,2093,.42,.6,'triangle',.08)},
+  save:c=>{for(let i=0;i<45;i++)noise(c,Math.random()*1.4,.035,[1400,2600],.05*(1-i/60))},  // applause: many quick claps
   fanfare:c=>{[[523,0],[659,.14],[784,.28],[1047,.42],[784,.62],[1047,.76]].forEach(([f,at],i)=>tone(c,f,at,i===5?1:.22,'triangle',.17));noise(c,.4,1.4,[800,1800],.08)}
 };
 function sfx(kind){

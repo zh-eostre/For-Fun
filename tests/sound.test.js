@@ -26,4 +26,14 @@ ACT.sound();ok(soundOn(),'and back on');
 S.friendlies.forEach(f=>f.res={hg:0,ag:0});ffToMatch();S.event=null;S.offer=null;n=made.osc;startMatch();clearTimeout(M.timer);
 ok(made.osc>n,'kickoff whistle');render();ok(/class="mctl"><button class="btn small" data-act="sound"/.test(els.app.innerHTML),'the match controls have the switch too');
 n=made.osc;skipMatch();ok(made.osc===n,'a skipped match is silent');
+// our keeper saves: applause (theirs saving our shot: none); a shootout save by our keeper too
+ACT.matchDone();S.friendlies.forEach(f=>f.res={hg:0,ag:0});ffToMatch();S.event=null;S.offers=[];startMatch();clearTimeout(M.timer);M.skip=false;
+const them=M.h===S.my?'a':'h',us=M.h===S.my?'h':'a',keep=rng;
+let a0=made.audio.length;for(let i=0;i<300&&!made.audio.slice(a0).includes('sounds/save.wav');i++)side(them,.9);
+ok(made.audio.slice(a0).includes('sounds/save.wav'),'our keeper saves: the crowd applauds');
+a0=made.audio.length;for(let i=0;i<200;i++)side(us,.9);
+ok(!made.audio.slice(a0).includes('sounds/save.wav'),'their keeper saving our shots brings no applause');
+a0=made.audio.length;M.pk={kicks:[{s:them,ok:false,sv:true,line:'x'},{s:us,ok:false,sv:true,line:'y'}],i:0,hp:0,ap:0};pkStep();
+ok(made.audio.slice(a0).filter(x=>x==='sounds/save.wav').length===1,'a shootout save by our keeper: applause');
+
 `,{window:{scrollTo(){},AudioContext:FakeAudio},Audio:FakeAudioEl,extra:{made}});

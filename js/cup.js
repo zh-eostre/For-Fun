@@ -23,10 +23,10 @@ const cupAlive=()=>{const C=S.cup;if(C.skipped)return false;if(C.winner!=null)re
 function shootout(H,hi,A,ai,log){
   const takers=(t,ids)=>ids.map(id=>t.players.find(p=>p.id===id)).filter(Boolean).sort((x,y)=>y.ovr-x.ovr);
   const ht=takers(H,hi),at=takers(A,ai),hk=keeper(H,hi),ak=keeper(A,ai);
-  // kicks: every kick in order ({s: 'h'/'a', ok, line}) so a live match can reveal them one at a time
+  // kicks: every kick in order ({s: 'h'/'a', ok, sv: saved by the keeper, line}) so a live match can reveal them one at a time
   const kicks=[],kick=(t,list,k,i,side)=>{
-    const p=list[i%list.length],ok=rng()<.76,line=ok?LINE.penIn(p.name,t.short):LINE.penMiss(p.name,k&&rng()<.6?k.name:null);
-    if(log)log(line);kicks.push({s:side,ok,line});return ok;
+    const p=list[i%list.length],ok=rng()<.76,sv=!ok&&!!k&&rng()<.6,line=ok?LINE.penIn(p.name,t.short):LINE.penMiss(p.name,sv?k.name:null);
+    if(log)log(line);kicks.push({s:side,ok,sv,line});return ok;
   };
   let hp=0,ap=0;
   for(let i=0;i<30;i++){

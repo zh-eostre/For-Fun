@@ -109,7 +109,7 @@ function tick(skipping){
 // the next kick of a shootout; after the last one the shootout is over and the match finishes
 function pkStep(){
   const P=M.pk,k=P.kicks[P.i++];
-  if(k){if(k.ok)P[k.s+'p']++;M.hp=P.hp;M.ap=P.ap;M.feed.unshift({min:'PK',cls:k.ok?'':'',t:k.line});announce(`点球 ${P.hp} 比 ${P.ap}`)}
+  if(k){if(k.ok)P[k.s+'p']++;M.hp=P.hp;M.ap=P.ap;M.feed.unshift({min:'PK',cls:k.ok?'':'',t:k.line});announce(`点球 ${P.hp} 比 ${P.ap}`);if(k.sv&&(k.s==='h'?M.h:M.a)!==S.my)sfx('save')}
   if(P.i>=P.kicks.length){
     const H=S.teams[M.h],A=S.teams[M.a];M.pk=null;
     M.feed.unshift({min:'PK',cls:'sys',t:LINE.pensEnd(M.hp,M.ap,(M.hp>M.ap?H:A).name)});finish();
@@ -118,7 +118,7 @@ function pkStep(){
 function side(s,p){
   const team=S.teams[s==='h'?M.h:M.a],ids=s==='h'?M.hIds:M.aIds,form=M[s+'Form'],mine=team.id===S.my,r=rng();
   const opp=S.teams[s==='h'?M.a:M.h],gk=keeper(opp,s==='h'?M.aIds:M.hIds);
-  const ev=id=>M.ev[id]||(M.ev[id]={}),st=M.st[s];
+  const ev=id=>M.ev[id]||(M.ev[id]={}),st=M.st[s],applaud=()=>{if(!mine)sfx('save')};  // our keeper (or a defender) denies them: the crowd applauds
   // a signature move that decides something: a cut-in banner first, and the match holds for it
   const sigShow=(p,t)=>{if(M.skip)return false;M.hold=Math.max(M.hold||0,Date.now()+1400);cutIn(p.name,p.sig,t.color);return true};
   // goal: sig marks a signature goal; by = a midfielder whose signature pass made it (he gets the assist)
@@ -151,7 +151,7 @@ function side(s,p){
     M.feed.unshift({min:M.min,cls:'sys',t:LINE.penAward(team.short,victim.name)});
     if(rng()<penOdds(tk,gk)){st.sh--;goal(tk,LINE.penGoal(tk.name),false,null,true);return}
     const saved=gk&&rng()<.6;ev(tk.id).miss=(ev(tk.id).miss||0)+1;
-    if(saved){ev(gk.id).sv=(ev(gk.id).sv||0)+1;st.on++}
+    if(saved){ev(gk.id).sv=(ev(gk.id).sv||0)+1;st.on++;applaud()}
     M.feed.unshift({min:M.min,cls:saved?'save':'',t:saved?LINE.penSaved(tk.name,gk.name):LINE.penMiss(tk.name)});
     if(!M.skip&&(mine||saved))notice(mine?'against':'sub',mine?`点球未进 ${M.min}'`:`点球被扑出 ${M.min}'`,saved?`${gk.name} 扑出 ${tk.name} 的点球`:`${tk.name} 罚丢`);
   };
@@ -159,15 +159,15 @@ function side(s,p){
     const tk=taker(team,ids,'fk');st.sh++;
     M.feed.unshift({min:M.min,cls:'sys',t:LINE.fkAward(team.short,tk.name)});
     if(rng()<fkOdds(tk,gk)){st.sh--;goal(tk,LINE.fkGoal(tk.name),false,null,true);return}
-    const saved=gk&&rng()<.5;if(saved){ev(gk.id).sv=(ev(gk.id).sv||0)+1;st.on++}
+    const saved=gk&&rng()<.5;if(saved){ev(gk.id).sv=(ev(gk.id).sv||0)+1;st.on++;applaud()}
     M.feed.unshift({min:M.min,cls:saved?'save':'',t:saved?LINE.fkSaved(tk.name,gk.name):LINE.fkMiss(tk.name)});
   };
   if(r<p&&rng()<PEN_SHARE)penalty();
   else if(r<p){
     const sc=scorer(team,ids,form);
     // a defender with a signature move can throw himself in front of a sure goal; a keeper with one can deny it
-    if(blocker&&rng()<.05){M.feed.unshift({min:M.min,cls:'save',t:LINE.sigBlock(blocker.name,blocker.sig,sc.name)});ev(blocker.id).blk=(ev(blocker.id).blk||0)+1;st.sh++;sigShow(blocker,opp)}
-    else if(gk&&gk.sig&&rng()<.08){M.feed.unshift({min:M.min,cls:'save',t:LINE.sigSave(gk.name,gk.sig,sc.name)});ev(gk.id).sv=(ev(gk.id).sv||0)+1;st.sh++;st.on++;sigShow(gk,opp)}
+    if(blocker&&rng()<.05){M.feed.unshift({min:M.min,cls:'save',t:LINE.sigBlock(blocker.name,blocker.sig,sc.name)});ev(blocker.id).blk=(ev(blocker.id).blk||0)+1;st.sh++;sigShow(blocker,opp);applaud()}
+    else if(gk&&gk.sig&&rng()<.08){M.feed.unshift({min:M.min,cls:'save',t:LINE.sigSave(gk.name,gk.sig,sc.name)});ev(gk.id).sv=(ev(gk.id).sv||0)+1;st.sh++;st.on++;sigShow(gk,opp);applaud()}
     else{const sig=sc.sig&&rng()<.4;goal(sc,sig?LINE.sigGoal(sc.name,sc.sig):pick(GOAL)(sc.name),sig)}
   }else if(r<p*2.2&&rng()<FK_SHARE)freeKick();
   else if(r<p*2.2){
@@ -177,7 +177,7 @@ function side(s,p){
     // or a midfielder with one plays the pass that makes it a sure thing
     else if(maker&&rng()<.04)goal(sc,LINE.sigPass(maker.name,maker.sig,sc.name),false,maker);
     // otherwise half of the near-misses are saves, credited to the opposing keeper if he's still on the pitch
-    else if(gk&&rng()<.5){M.feed.unshift({min:M.min,cls:'',t:gk.sig&&rng()<.5?LINE.sigSave(gk.name,gk.sig,sc.name):pick(SAVE)(sc.name,gk.name)});ev(gk.id).sv=(ev(gk.id).sv||0)+1;st.sh++;st.on++}
+    else if(gk&&rng()<.5){M.feed.unshift({min:M.min,cls:'',t:gk.sig&&rng()<.5?LINE.sigSave(gk.name,gk.sig,sc.name):pick(SAVE)(sc.name,gk.name)});ev(gk.id).sv=(ev(gk.id).sv||0)+1;st.sh++;st.on++;applaud()}
     else{M.feed.unshift({min:M.min,cls:'',t:pick(MISS)(sc.name)});ev(sc.id).miss=(ev(sc.id).miss||0)+1;st.sh++}
   }else if(rng()<p*3.5)st.sh++;  // speculative efforts that never make the commentary
   if(!M.friendly&&rng()<CARD){
