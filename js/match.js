@@ -307,7 +307,7 @@ function finish(){
   S.budget+=income;
   if(S.boost>0)S.boost--;
   if(M.derby&&w==='胜'){S.boost=2;unlock('derby')}
-  S.streak=w==='胜'?(S.streak||0)+1:0;
+  S.streak=w==='胜'?(S.streak||0)+1:0;S.clean=og===0?(S.clean||0)+1:0;
   // ratings for both sides; the man of the match is the best of everyone
   matchActs();
   M.rh=rateSide(S.teams[M.h],M.hXI,M.role,M.ev,M.hg,M.ag,M.mins,false,M.act);M.ra=rateSide(S.teams[M.a],M.aXI,M.role,M.ev,M.ag,M.hg,M.mins,false,M.act);
@@ -322,6 +322,12 @@ function finish(){
   if(Object.entries(M.goals).some(([id,n])=>n>=3&&findP(+id)))unlock('hat');
   if(my().players.some(p=>p.youth&&p.ovr>=75))unlock('academy');
   if(S.streak>=5)unlock('streak');
+  if(S.streak>=10)unlock('streak10');
+  if(S.clean>=3)unlock('clean');
+  if(mg>=6)unlock('fest');
+  if(w==='胜'&&Object.entries(M.ev).some(([id,e])=>e.red&&findP(+id)))unlock('tenmen');
+  if(w==='胜'&&M.intl&&S.teams[oppId].foreign)unlock('slayer');
+  achCheck();
   if(mg-og>=5)unlock('rout');
   if(pens&&w==='胜')unlock('pens');
   if(w==='胜'&&M.trailed){unlock('comeback');news('逆转！落后的情况下拿下了比赛。')}

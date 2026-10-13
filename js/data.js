@@ -178,6 +178,7 @@ const LIST_CHANCE=.45,LIST_RANGE=[.95,1.3],LIST_ABROAD=1/3;  // and this share o
 const FIT_BELOW=12,FIT_BELOW_INTL=8,FIT_ABOVE=10,MINOR_RANGE=[.85,1.15];
 const EVENT_CHANCE=.2;   // chance after each match of a random event
 
+const ACH_RICH=3000;  // 富可敌国: the budget it takes
 const ACH={
   hat:['三重奏的支配者','有球员在一场比赛中独进 3 球'],
   streak:['不败神话·序章','各项赛事 5 连胜'],
@@ -197,7 +198,22 @@ const ACH={
   comeback:['逆转之王','落后的情况下逆转取胜'],
   late:['读秒杀手','在第 85 分钟以后打进绝杀球'],
   oneclub:['城之守望者','培养出第一位「一人一城」的球员'],
-  intl:['大陆之王','夺得天际冠军杯']
+  intl:['大陆之王','夺得天际冠军杯'],
+  clean:['铁壁·不落之城','各项赛事连续 3 场零封对手'],
+  streak10:['不败神话·终章','各项赛事 10 连胜'],
+  fest:['火力全开','单场打进 6 球'],
+  tenmen:['残阵之魂','有球员被罚下，仍然赢下比赛'],
+  slayer:['弑神者','在天际冠军杯中击败海外球队'],
+  unbeaten:['无敌之师','联赛整个赛季不败'],
+  treble:['三冠王',`同一赛季夺得甲级冠军、${CUP_NAME}和天际冠军杯`],
+  dynasty:['王朝','带领同一支球队甲级联赛三连冠'],
+  boot:['王者之靴','有球员获得联赛金靴'],
+  legend:['传奇缔造者','第一位球员载入「传奇退役」'],
+  vet10:['活着的传说','执教满 10 个赛季'],
+  star90:['神之领域','拥有能力 90 以上的球员'],
+  rich:['富可敌国',`资金达到 RM ${ACH_RICH} 万`],
+  builder:['基建狂魔','球探部、理疗室、训练场和球场全部升到满级'],
+  wander:['流浪的指挥家','执教第二家俱乐部']
 };
 // halftime team talk (once a match): [name, what the manager says, what it does]
 const TALK={

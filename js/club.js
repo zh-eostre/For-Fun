@@ -2,6 +2,13 @@
 function pickRival(){return pick(S.teams.filter(t=>t.div===my().div&&t.id!==S.my)).id}
 
 /* ---------- achievements ---------- */
+// titles that are about how things stand, checked after each match and at the season's start
+function achCheck(){
+  if(my().players.some(p=>p.ovr>=90))unlock('star90');
+  if(S.budget>=ACH_RICH)unlock('rich');
+  if(Object.keys(FAC).every(k=>facLv(k)>=5))unlock('builder');
+  if(S.history.length>=10)unlock('vet10');
+}
 function unlock(k){
   if(S.ach[k])return;
   S.ach[k]=S.season;
@@ -173,7 +180,10 @@ function recordSeason(div,rank){
     const c=S.club[p.id];c.seasons=(c.seasons||0)+1;c.titles=c.titles||[];
     if(apps>=TITLE_APPS)c.titles=c.titles.concat(won);
   });
-  if(div===0&&rank===1){unlock('champ');if(S.cup.winner===S.my)unlock('double')}
+  if(div===0&&rank===1){unlock('champ');if(S.cup.winner===S.my)unlock('double');if(S.cup.winner===S.my&&S.intl&&S.intl.winner===S.my)unlock('treble')}
+  const row=table(div).find(r=>r.id===S.my);if(row&&row.p&&row.l===0)unlock('unbeaten');
+  if(S.records.length>=3&&S.records.slice(-3).every(r=>r.div===0&&r.rank===1&&(r.my??S.my)===S.my))unlock('dynasty');
+  if(awards[div].boot&&awards[div].boot.tid===S.my)unlock('boot');
 }
 // club legends retire with us after LEGEND_TITLE_SEASONS seasons and at least one trophy, or after LEGEND_SEASONS seasons.
 // called after recordSeason has banked the season, so the totals are complete
@@ -181,6 +191,7 @@ const TITLE_APPS=5,LEGEND_TITLE_SEASONS=3,LEGEND_SEASONS=8;
 const isLegend=c=>!!c&&((c.seasons||0)>=LEGEND_SEASONS||((c.seasons||0)>=LEGEND_TITLE_SEASONS&&(c.titles||[]).length>0));
 function retireLegend(p){
   const c=S.club[p.id],one=oneClub(p,my());
+  if(isLegend(c)||one)unlock('legend');
   if(isLegend(c)||one)S.legends.push({name:p.name,pos:p.pos,goals:c.goals,apps:c.apps,seasons:c.seasons,titles:c.titles||[],season:S.season,club:my().name,oneClub:one||undefined,
     peak:Math.max(p.ovr,...(p.hist||[]).map(h=>h.o))});  // his best, from the season-end record (and now)
   if(one){news(`🏟 告别赛：${p.name} 挂靴了。${seasonsAt(p)} 个赛季，一人一城——今天全场起立，为他送上最后的掌声。`);(UI.sigQueue||(UI.sigQueue=[])).push({farewell:true,name:p.name,seasons:seasonsAt(p)})}
@@ -613,7 +624,7 @@ function releaseSurplus(t){
 function switchClub(o){
   const old=my(),t=S.teams[o.club],lv=clamp(1+Math.floor(t.rep/25),1,5);
   old.players.forEach(p=>{if(p.loan)p.loan=null});
-  S.my=t.id;S.budget=o.budget;
+  S.my=t.id;S.budget=o.budget;unlock('wander');
   S.fac={scout:lv,physio:lv,ground:lv,stadium:lv};S.academy={lv,intake:[]};
   S.offers=[];S.event=null;S.boost=0;S.streak=0;S.rival=pickRival();UI.selSlot=null;
   S.club={};  // the club records (all-time boards, legend status) start afresh at the new club

@@ -815,6 +815,7 @@ function newSeason(moveTo){
   if(my().players.some(p=>p.youth&&p.ovr>=75))unlock('academy');
   if(mz&&mz.z==='up')unlock('promo');
   if(S.history.length>=5)unlock('vet');
+  achCheck();
   save();UI.tab='home';render();
 }
 

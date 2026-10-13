@@ -1037,9 +1037,11 @@ function vHonours(){
   const trophies=[...DIVS.map((dn,d)=>[`${dn}冠军`,count(h=>(h.div||0)===d&&h.rank===1)]),[`${CUP_NAME}`,cups],[INTL_NAME,intls],['升级',count(h=>(h.div||0)>0&&h.rank<=SWAP)],['青训出身（现役）',my().players.filter(p=>p.youth).length]];
   return `<div class="cols"><div class="col">${vHistoryCharts()}<section class="panel"><h2>奖杯柜</h2><div class="trophies">${trophies.map(([l,n])=>`<div class="trophy ${n?'got':''}"><div class="num">${n}</div><div>${l}</div></div>`).join('')}</div></section>
   <section class="panel"><h2>称号 <span class="muted" style="font-weight:400;font-size:14px">${Object.keys(S.ach).length}/${Object.keys(ACH).length}</span></h2>
-  <div class="achs">${Object.entries(ACH).map(([k,[n,d]])=>S.ach[k]
-    ?`<div class="ach got"><b>「${n}」</b><span>${d}</span><small>第 ${S.ach[k]} 赛季解锁</small></div>`
-    :`<div class="ach"><b>「？？？」</b><span>${d}</span></div>`).join('')}</div></section>
+  ${(()=>{const all=Object.entries(ACH),got=all.filter(([k])=>S.ach[k]).sort(([a],[b])=>S.ach[b]-S.ach[a]),left=all.filter(([k])=>!S.ach[k]);
+    return (got.length?`<div class="achs">${got.map(([k,[n,d]])=>`<div class="ach got"><b>「${n}」</b><span>${d}</span><small>第 ${S.ach[k]} 赛季解锁</small></div>`).join('')}</div>`
+      :'<p class="muted" style="margin:0">还没有解锁任何称号。</p>')
+    +(left.length?`<details class="fold" data-fold="ach" style="margin-top:10px"><summary><span><b>未解锁</b> <span class="muted">${left.length} 个</span></span></summary>
+      <div class="achs" style="margin-top:8px">${left.map(([k,[,d]])=>`<div class="ach"><b>「？？？」</b><span>${d}</span></div>`).join('')}</div></details>`:'')})()}</section>
   </div><div class="col">
   ${(()=>{const won=R.flatMap(r=>(r.awards||[]).flatMap((a,d)=>Object.entries(a).filter(([k,w])=>w&&w.tid===(r.my??S.my)).map(([k,w])=>({r,d,k,w})))
       .concat((r.xi||[]).flatMap((l,d)=>l.filter(w=>w.tid===(r.my??S.my)).map(w=>({r,d,k:'xi',w})))));
