@@ -180,7 +180,8 @@ const TITLE_APPS=5,LEGEND_TITLE_SEASONS=3,LEGEND_SEASONS=8;
 const isLegend=c=>!!c&&((c.seasons||0)>=LEGEND_SEASONS||((c.seasons||0)>=LEGEND_TITLE_SEASONS&&(c.titles||[]).length>0));
 function retireLegend(p){
   const c=S.club[p.id],one=oneClub(p,my());
-  if(isLegend(c)||one)S.legends.push({name:p.name,pos:p.pos,goals:c.goals,apps:c.apps,seasons:c.seasons,titles:c.titles||[],season:S.season,club:my().name,oneClub:one||undefined});
+  if(isLegend(c)||one)S.legends.push({name:p.name,pos:p.pos,goals:c.goals,apps:c.apps,seasons:c.seasons,titles:c.titles||[],season:S.season,club:my().name,oneClub:one||undefined,
+    peak:Math.max(p.ovr,...(p.hist||[]).map(h=>h.o))});  // his best, from the season-end record (and now)
   if(one){news(`🏟 告别赛：${p.name} 挂靴了。${seasonsAt(p)} 个赛季，一人一城——今天全场起立，为他送上最后的掌声。`);(UI.sigQueue||(UI.sigQueue=[])).push({farewell:true,name:p.name,seasons:seasonsAt(p)})}
 }
 // the stories of the AI clubs' 一人一城: those who became one this summer, and those who retired as one

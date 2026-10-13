@@ -32,7 +32,8 @@ skipMatch();ACT.matchDone();
 S.mgr.rep=20;const r0=S.mgr.rep;S.day=1;const btn={dataset:{},textContent:'',isConnected:true};ACT.sell(String(q.id),btn);ACT.sell(String(q.id),btn);
 ok(!findP(q.id)&&S.mgr.rep===r0-ONE_CLUB_SALE_REP&&S.news.some(n=>/球迷愤怒/.test(n.t)),'selling a 一人一城: the fans are angry, reputation -'+ONE_CLUB_SALE_REP);
 // retiring: a farewell, and he joins the legends as one
-retireLegend(p);const L=S.legends[S.legends.length-1];
+p.hist=[{s:3,o:88},{s:4,o:86}];retireLegend(p);const L=S.legends[S.legends.length-1];
+ok(L.peak===88,'his peak ability is kept: '+L.peak);UI.tab='honours';render();ok(/巅峰 <b class="num">88<\\/b>/.test(els.app.innerHTML),'and shown among the legends');
 ok(L&&L.name===p.name&&L.oneClub&&S.news.some(n=>/告别赛/.test(n.t)),'his retirement: a farewell, and a place among the legends');
 // bought, however young: never one, even after years
 const y=makePlayer('DF',82,19);joinClub(y,my(),false,1);my().players.push(y);ok(!loyal(y,my())&&!oneClub(y,my()),'bought at 19 and stayed: never one');
