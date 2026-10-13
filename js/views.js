@@ -261,7 +261,7 @@ function vRules(){
   return `<section class="panel"><div class="mhead"><h2 id="mtitle">规则说明</h2><button class="btn small mclose" data-act="closeModal" aria-label="关闭">✕</button></div>
   <div class="rules">
   <p style="margin:0 0 10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" data-act="guide" data-arg="again">重看新手引导</button><button class="btn small" data-act="sound">音效：${soundOn()?'开':'关'}</button></p>
-  <p class="muted" style="font-size:12px;margin:0 0 10px">音效：进球与夺冠的欢呼声来自 Gregor Quendel《Free Crowd Cheering Sounds》（CC BY 4.0，已剪辑），失球时全场的「噢——」和扑救后的掌声来自 itmightgetloud 在圣保利 Millerntor 球场的录音（Sound Of Sankt Pauli，CC0）。</p>
+  <p class="muted" style="font-size:12px;margin:0 0 10px">音效：进球与夺冠的欢呼声来自 Gregor Quendel《Free Crowd Cheering Sounds》（CC BY 4.0，已剪辑），失球时全场的「噢——」来自 itmightgetloud 在圣保利 Millerntor 球场的录音（Sound Of Sankt Pauli，CC0），扑救后的掌声来自 treytatum3 在辛辛那提网球公开赛的录音（CC0）。</p>
   <p class="rule-diff">本档难度：<b>${diff().name}</b>（${diff().note}）。开局预算 ×${diff().budget}，比赛收入 ×${diff().income}，AI 球队水平 ${diff().ai>0?'+':''}${diff().ai}，我方伤病几率 ×${diff().inj}。</p>
   ${sec('赛季与日程',[`联赛是金字塔：${DIVS.map((dn,d)=>`${dn} ${DIV_SIZES[d]} 队`).join('、')}，各自主客场双循环（${DIVS.map((dn,d)=>`${dn} ${2*(DIV_SIZES[d]-1)} 轮`).join('、')}）。每级前 ${SWAP} 名升级、后 ${SWAP} 名降级。`,
     `一个赛季 ${weeks()} 周，联赛在周六进行，三个级别在同一天结束。甲级只有 18 轮，有 4 个周末轮空（在${INTL_NAME}周）；乙级每周六一轮；丙级 26 轮，有 4 轮放在周二（避开杯赛周）。`,

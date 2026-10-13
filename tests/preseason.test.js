@@ -4,8 +4,8 @@ const btn=()=>({dataset:{},textContent:'',isConnected:true});
 // moves to a day, playing any match met on the way
 const toDay=n=>{let g=0;while(S.day<n&&g++<50){const log={days:0,cond:0,trained:[],healed:[]};if(!advanceDay(log)){S.event=null;startMatch();if(!M)throw 'stuck '+lineupIssues();skipMatch();M=null;UI.view='main'}}};
 newGame(3,teamNames());S.budget=3000;S.event=null;
-ok(S.pre===7&&windowOpen()&&S.friendlies.length===2&&S.market.length===36,'new game: 7-day window, 2 friendlies, 36-player list');
-ok(S.friendlies.every(f=>S.teams[f.opp].div!==my().div),'friendlies are against the other division');
+ok(S.pre===7&&windowOpen()&&S.friendlies.filter(f=>!f.warm).length===2&&S.market.length===36,'new game: 7-day window, 2 friendlies, 36-player list');
+ok(S.friendlies.filter(f=>!f.warm).every(f=>S.teams[f.opp].div!==my().div),'friendlies are against the other division');
 UI.tab='home';render();{const o=S.teams[S.friendlies[0].opp];ok(els.app.innerHTML.includes('对手'+DIVS[o.div])&&els.app.innerHTML.includes('友谊赛 · '+DIVS[o.div]),'the opponent\u2019s division is shown ('+DIVS[o.div]+')')}
 ok(leagueDay(0)===12&&S.friendlies[0].day===2&&S.friendlies[1].day===5,'friendlies Wed and Sat, league starts '+dayLabel(leagueDay(0)));
 // AI clubs do business during the week
@@ -14,7 +14,7 @@ let offers=0;const seen=new Set();
 toDay(6);
 ok(S.news.some(n=>/其他球队转会动态/.test(n.t)),'AI clubs signed players during the window');
 // friendlies played without table, apps, cards or season ratings
-ok(S.friendlies.every(f=>f.res)&&S.results.every(r=>r.length===0),'both friendlies played, league table untouched');
+ok(S.friendlies.filter(f=>!f.warm).every(f=>f.res)&&S.results.every(r=>r.length===0),'both friendlies played, league table untouched');
 ok(my().players.every(p=>p.apps===0&&!p.rn&&!p.yc),'no appearances, ratings or bookings from friendlies');
 // buy in the window: fine
 const m0=S.market.length,p=S.market.find(x=>x.price<S.budget);ACT.buy(String(p.id));UI.reveal=null;ok(S.market.length===m0-1&&findP(p.id),'buying in the window works');

@@ -657,7 +657,7 @@ function newGame(id,names,difficulty='normal'){
   S.pre=PRESEASON;refreshMarket();planFriendlies();
   news(`你正式成为${my().name}的主教练。董事会给了你 ${money(S.budget)} 的预算。季前一周转会窗口开放，还有两场友谊赛。`);
   news(`宿敌：${S.teams[S.rival].name}。与他们的对决，收入翻倍，赢了全队士气高涨。`);
-  newIntake();setGoals();
+  newIntake();setGoals();planWarmups();
   save();UI={tab:'home',view:'main',mf:{...MF0}};
   try{if(!localStorage.getItem(GUIDE_KEY))UI.guide=0}catch(e){}  // first game on this device: the guide
   render();
@@ -812,7 +812,7 @@ function newSeason(moveTo){
   // at the market, then the player sees a fresh list
   S.pre=PRESEASON;S.day=0;aiPoach();refreshMarket();planFriendlies();
   if(left)releaseSurplus(left);
-  S.intl=newIntl(intlHome);
+  S.intl=newIntl(intlHome);planWarmups();
   S.lineup=autoPick(my(),S.formation);S.autoXI=true;
   news(`升级：${names('up')}。降级：${names('down')}。`);
   prestigeNotes.forEach(t=>news(t+'。'));

@@ -7,6 +7,10 @@ const step=()=>{if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ffToMatch();S
 const ids=TEAMS.map((t,i)=>[t,i]).filter(([t])=>t.div===0).sort((a,b)=>b[0].rep-a[0].rep).map(x=>x[1]);
 newGame(ids[ids.length-1],teamNames());
 ok(S.cal===3&&weeks()===22&&!intlIn(),'a new game is on the 22-week calendar; this club is not in the 冠军杯');
+ok(S.friendlies.filter(f=>f.warm).length===4,'the warm-ups are planned from the start, so the fixture list has no empty week ('+S.friendlies.filter(f=>f.warm).map(f=>dayLabel(f.day)).join(' ')+')');
+ok(S.news.some(n=>/安排了一场热身赛/.test(n.t)),'the news announces them at the start');
+{const keep=JSON.stringify(S);S.friendlies.filter(f=>!f.warm).forEach(f=>f.res={hg:0,ag:0});
+  ok(!nextFix().friendly&&/联赛第 1 轮/.test(fixLabel(nextFix())),'with warm-ups weeks ahead, the next match is still the league\u2019s first round');S=JSON.parse(keep)}
 const played=[];
 while(!seasonDone()){step();played.push(S.lastMatchDay)}
 const warm=S.friendlies.filter(f=>f.warm).length;
@@ -15,7 +19,7 @@ ok(empty.length===0,'a match every week of the season'+(empty.length?' (empty: '
 ok(warm===4,'four warm-up friendlies, one for each weekend 甲级 sits out ('+warm+')');
 const W=S.friendlies.filter(f=>f.warm);
 ok(W.every(f=>f.day%7===5&&S.teams[f.opp].foreign&&f.res),'warm-ups are on Saturdays against clubs from abroad, and were played');
-ok(S.news.some(n=>/安排了一场热身赛/.test(n.t))&&S.news.some(n=>/^热身赛：/.test(n.t)),'the news announces and reports them');
+ok(S.news.some(n=>/^热身赛：/.test(n.t)),'the news reports them');
 ok(S.results[0].length===rounds(0)&&S.round===rounds(),'warm-ups take no league round');
 // a warm-up shows as one in the season list
 UI.view='main';S.round--;UI.tab='home';render();ok(/热身赛 · 海外/.test(els.app.innerHTML),'the season list shows 热身赛 · 海外');S.round++;
