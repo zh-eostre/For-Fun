@@ -20,7 +20,7 @@ const n=S.legends.length;S.round=rounds();newSeason();
 const names=S.legends.slice(n).map(l=>l.name);
 ok(names.length===4&&[a,b,c,e].every(p=>names.includes(p.name))&&!names.includes(d.name),'legends: a, b, c, e retired as legends; d (6 seasons, no title) did not');
 const la=S.legends.find(l=>l.name===a.name);ok(la.seasons>=3&&la.titles.length>=1,'record keeps seasons ('+la.seasons+') and trophies ('+la.titles.length+')');
-UI.tab='honours';render();ok(/传奇退役/.test(els.app.innerHTML)&&/座冠军/.test(els.app.innerHTML)&&!bad(els.app.innerHTML),'honours room shows seasons and trophies');
+UI.tab='honours';render();ok(/传奇退役/.test(els.app.innerHTML)&&/🏆 [^<]*冠军/.test(els.app.innerHTML)&&!bad(els.app.innerHTML),'honours room shows seasons and trophies');
 // player page shows seasons with the club and when he qualifies
 const f=my().players[0];S.club[f.id]={name:f.name,pos:f.pos,goals:3,apps:40,seasons:8,titles:['第 1 季甲级冠军']};
 ACT.player(String(f.id));ok(/效力赛季/.test(els.app.innerHTML)&&/已达到传奇标准/.test(els.app.innerHTML)&&!bad(els.app.innerHTML),'player page: seasons, trophies, legend status');
