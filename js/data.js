@@ -24,7 +24,7 @@ const TEAMS=[
   {div:2,color:'#556B2F',rep:7},{div:2,color:'#CD5C5C',rep:5}
 ].map(t=>({...t,str:strFromRep(t.rep)}));
 const SWAP=2;           // clubs promoted from / relegated to the division below, each season, between every pair
-// season prize money by final place, per division (RM 万)
+// season prize money by final place, per division (万)
 const PRIZES=[[500,400,320,260,220,190,165,145,130,120],[240,200,170,140,120,105,95,85,78,70,64,58],
   [120,100,85,72,62,55,50,45,41,38,35,32,30,28]];
 const DIV_INCOME=[1,.6,.4];  // lower divisions' gates and bonuses are smaller
@@ -211,7 +211,7 @@ const ACH={
   legend:['传奇缔造者','第一位球员载入「传奇退役」'],
   vet10:['活着的传说','执教满 10 个赛季'],
   star90:['神之领域','拥有能力 90 以上的球员'],
-  rich:['富可敌国',`资金达到 RM ${ACH_RICH} 万`],
+  rich:['富可敌国',`资金达到 ${ACH_RICH} 万`],
   builder:['基建狂魔','球探部、理疗室、训练场和球场全部升到满级'],
   wander:['流浪的指挥家','执教第二家俱乐部']
 };
@@ -349,4 +349,4 @@ const ri=(a,b)=>Math.floor(rnd(a,b+1));
 const pick=a=>a[Math.floor(rng()*a.length)];
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
-const money=x=>'RM '+(Math.abs(x)>=100?Math.round(x):(Math.round(x*10)/10))+' 万';
+const money=x=>(Math.abs(x)>=100?Math.round(x):(Math.round(x*10)/10))+' 万';
