@@ -166,7 +166,8 @@ function recordSeason(div,rank){
   awards.forEach((a,d)=>Object.entries(a).forEach(([k,w])=>{if(w&&w.tid===S.my)news(`${w.name} 获得${DIVS[d]}${AWARDS[k]}（${w.stat}）！`)}));
   xi.forEach((l,d)=>{const m=l.filter(w=>w.tid===S.my);if(m.length)news(`${m.map(w=>w.name).join('、')} 入选${DIVS[d]}年度最佳阵容！`)});
   // trophies won this season; a player shares in one if he made TITLE_APPS appearances
-  const won=[rank===1?`第 ${S.season} 季${DIVS[div]}冠军`:'',S.cup.winner===S.my?`第 ${S.season} 季${CUP_NAME}冠军`:''].filter(Boolean);
+  const won=[rank===1?`第 ${S.season} 季${DIVS[div]}冠军`:'',S.cup.winner===S.my?`第 ${S.season} 季${CUP_NAME}冠军`:'',
+    S.intl&&S.intl.winner===S.my?`第 ${S.season} 季${INTL_NAME}冠军`:''].filter(Boolean);
   my().players.forEach(p=>{
     const apps=p.apps;bankPlayer(p);
     const c=S.club[p.id];c.seasons=(c.seasons||0)+1;c.titles=c.titles||[];
