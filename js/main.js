@@ -67,20 +67,21 @@ async function saveDir(pickNew){
   UI.dirName=h.name;
   return h;
 }
-const saveName=()=>`绿茵经理-${my().short}-第${S.season}季第${Math.min(S.round+1,rounds())}轮.json`;
+// the club's save file, overwritten by each export; snap: a copy named for the round, kept alongside
+const saveName=snap=>snap?`绿茵经理-${my().short}-第${S.season}季第${Math.min(S.round+1,rounds())}轮.json`:`绿茵经理-${my().short}.json`;
 function downloadSave(){
   const url=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));
-  const a=document.createElement('a');a.href=url;a.download=saveName();
+  const a=document.createElement('a');a.href=url;a.download=saveName(true);  // a download can't replace a file, so it's named for the round
   document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
   toast('存档文件已下载');
 }
-async function exportSave(pickNew){
+async function exportSave(pickNew,snap){
   if(!canPickDir()){downloadSave();return}
   try{
-    const dir=await saveDir(pickNew),fh=await dir.getFileHandle(saveName(),{create:true}),w=await fh.createWritable();
+    const dir=await saveDir(pickNew),name=saveName(snap),fh=await dir.getFileHandle(name,{create:true}),w=await fh.createWritable();
     await w.write(JSON.stringify(S));await w.close();
-    toast(`已存到「${dir.name}」：${saveName()}`);  // toast uses textContent, so names are safe hereUI.saveFiles=null;render();
+    toast(`${snap?'已另存':'已保存（覆盖旧档）'}到「${dir.name}」：${name}`);  // toast uses textContent, so names are safe hereUI.saveFiles=null;render();
   }catch(e){if(e.name!=='AbortError')toast('没能写进文件夹，请重新选择存档文件夹')}
 }
 function loadSaveText(t){
@@ -142,6 +143,7 @@ const ACT={
   reroll:()=>{UI.draft=teamNames();render()},
   continue:()=>{S=load();if(S)enterGame()},
   exportSave:()=>exportSave(false),
+  exportSnap:()=>exportSave(false,true),
   pickDir:()=>exportSave(true),
   listSaves:()=>listSaves(),
   loadDir:(a,b)=>{if((S||load())&&!arm(b,'再点一次读取（会覆盖当前进度）'))return;loadFromDir(a)},

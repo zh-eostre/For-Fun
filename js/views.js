@@ -348,10 +348,11 @@ function vSavePanel(){
   const dirOK=canPickDir(),F=UI.saveFiles;
   return `<details class="panel fold" data-fold="${F?'saves-list':'saves'}" ${F?'open':''}><summary><h2>存档文件</h2></summary>
   <p class="muted" style="margin:0 0 10px;font-size:14px">${dirOK
-    ?`已自动保存。导出会写进${UI.dirName?`「${esc(UI.dirName)}」文件夹`:'你选的文件夹（第一次导出时选）'}。`
+    ?`已自动保存。导出会写进${UI.dirName?`「${esc(UI.dirName)}」文件夹`:'你选的文件夹（第一次导出时选）'}的「${esc(saveName())}」，每次覆盖；想留下这一轮的存档就「另存一份」。`
     :'已自动保存。'}</p>
   <div class="go" style="justify-content:flex-start;margin-top:0">
-    <button class="btn" data-act="exportSave">${dirOK?'导出到存档文件夹':'导出存档文件'}</button>
+    <button class="btn" data-act="exportSave" ${dirOK?`title="写进 ${esc(saveName())}，覆盖上一次导出的"`:''}>${dirOK?'导出到存档文件夹':'导出存档文件'}</button>
+    ${dirOK?`<button class="btn small" data-act="exportSnap" title="另存为 ${esc(saveName(true))}，不覆盖">另存一份（本轮）</button>`:''}
     ${dirOK?'<button class="btn" data-act="listSaves">从存档文件夹读取</button><button class="btn small" data-act="pickDir">更换文件夹</button>':''}
     <button class="btn${dirOK?' small':''}" data-act="importSave">从其他位置选择文件</button></div>
   ${F?vSaveList():''}</details>`;
