@@ -48,23 +48,24 @@ function nextFloor(){
 function startCombat(type){
   let group=type==='boss'?[pick(BOSSES)]:type==='elite'?pick(ELITES):S.floor<=2&&S.loop===0?pick(EASY):pick(NORMAL);
   C={type,enemies:group.map(makeEnemy),draw:shuffle(S.deck.map(c=>({...c}))),hand:[],discard:[],exhaust:[],energy:0,turn:0,
-     p:{block:0,str:0,weak:0,vuln:0,poison:0,metal:0,fumes:0,demon:0,barricade:0,inspire:0,thorns:0,embers:0,toxin:0,devour:0,pack:0},pets:[],atkCount:0,target:null,busy:false};
+     p:{block:0,str:0,weak:0,vuln:0,poison:0,metal:0,fumes:0,demon:0,barricade:0,inspire:0,thorns:0,embers:0,toxin:0,devour:0,pack:0,flow:0,accuracy:0,bladedance:0,laststand:0,agony:0},pets:[],atkCount:0,target:null,busy:false};
   C.enemies.forEach(e=>{e.next=EN[e.k].ai(e,0)});
   if(has('whet'))C.p.str+=1;
   if(has('sac'))C.enemies.forEach(e=>e.poison+=3);
-  if(has('whistle'))summon('wolf',4);
+  if(has('whistle'))summon('wolf',3);
   S.screen='combat';FX=[];HIT={};
   startTurn();
 }
 function alive(){return C.enemies.filter(e=>e.hp>0)}
 function curTarget(){let t=C.enemies.find(e=>e.uid===C.target&&e.hp>0);if(!t){t=alive()[0];if(t)C.target=t.uid}return t}
-function pDmg(base,e,mul=1){let d=base+C.p.str*mul;if(C.p.weak>0)d*=.75;if(e&&e.vuln>0)d*=1.5;return Math.max(0,Math.floor(d))}
+function pDmg(base,e,mul=1){let d=base+C.p.str*mul;if(C.p.weak>0)d*=.75;if(C.p.laststand&&S.hp*2<=S.maxHp)d*=1.5;if(e&&e.vuln>0)d*=1.5;return Math.max(0,Math.floor(d))}
 function eDmg(e,a){let d=Math.round(a*e.dm)+e.str;if(e.weak>0)d*=.75;if(C.p.vuln>0)d*=1.5;return Math.max(0,Math.floor(d))}
 function hitEnemy(e,base,mul=1){
   if(!e||e.hp<=0)return;
   let d=pDmg(base,e,mul);const b=Math.min(e.block,d);e.block-=b;d-=b;e.hp-=d;
   fx('e'+e.uid,d>0?'-'+d:'格挡',d>0?'dmg':'blk');HIT['e'+e.uid]=performance.now();
   if(e.hp<=0){e.hp=0;if(has('fang'))heal(3)}
+  return d;
 }
 // damage that isn't an attack (thorns, poison, the censer): no strength, weakness or vulnerability; block stops it unless it pierces
 function harm(e,n,pierce){
@@ -93,18 +94,21 @@ const HAND_ORDER={atk:0,skl:1,pow:2};
 const byHand=(a,b)=>HAND_ORDER[CARDS[a.id].t]-HAND_ORDER[CARDS[b.id].t]||costOf(a)-costOf(b)||a.id.localeCompare(b.id)||b.up-a.up;
 function draw(n){for(let i=0;i<n;i++){if(C.hand.length>=10)break;if(!C.draw.length){if(!C.discard.length)break;C.draw=shuffle(C.discard);C.discard=[]}C.hand.push(C.draw.pop())}C.hand.sort(byHand)}
 function heal(n){const h=Math.min(n,S.maxHp-S.hp);if(h>0){S.hp+=h;if(C)fx('p','+'+h,'heal')}}
-function loseHp(n){S.hp-=n;if(C){fx('p','-'+n,'dmg');HIT.p=performance.now()}}
+function loseHp(n){S.hp-=n;if(C){fx('p','-'+n,'dmg');HIT.p=performance.now();if(C.p.agony&&!C.busy){C.p.str+=C.p.agony;fx('p',`力量 +${C.p.agony}`,'st')}}}
+// cards made in a fight (飞刀) go to the hand, or to the discard pile when the hand is full
+function addHand(id,n,up=false){for(let i=0;i<n;i++)(C.hand.length<10?C.hand:C.discard).push({uid:nid(),id,up});C.hand.sort(byHand)}
 function hitPlayer(d){const b=Math.min(C.p.block,d);C.p.block-=b;d-=b;S.hp-=d;fx('p',d>0?'-'+d:'格挡',d>0?'dmg':'blk');HIT.p=performance.now()}
 
 function startTurn(){
-  C.turn++;C.atkCount=0;C.tomeUsed=false;
+  C.turn++;C.atkCount=0;C.played=0;C.tomeUsed=false;
   if(!C.p.barricade)C.p.block=0;
   if(C.p.poison>0){loseHp(C.p.poison);C.p.poison--;if(S.hp<=0)return die()}
-  C.energy=3+(has('core')?1:0)+(C.turn===1&&has('lantern')?1:0);
+  C.energy=3+(has('core')?1:0)+(C.turn===1&&has('lantern')?1:0)+(has('scar')&&S.hp*2<=S.maxHp?1:0);
   if(C.turn===1&&has('anchor'))gainBlock(7);
   if(C.p.demon){C.p.str+=C.p.demon;fx('p',`力量 +${C.p.demon}`,'st')}
   if(C.p.fumes)alive().forEach(e=>applyE(e,'poison',C.p.fumes));
   draw(5+C.p.inspire+(has('crown')?1:0)+(C.turn===1&&has('ring')?2:0));
+  if(C.p.bladedance)addHand('shiv',C.p.bladedance);
   C.busy=false;render();
 }
 function playCard(uid){
@@ -119,6 +123,9 @@ function playCard(uid){
   if(d.t==='atk'){C.atkCount++;if(C.atkCount===3&&has('drum')){C.p.str++;fx('p','力量 +1','st')}
     if(C.atkCount===1&&has('viper')&&t0.hp>0)applyE(t0,'poison',3)}
   if(d.t!=='pow'){if(exOf(c))exhaust(c);else C.discard.push(c)}
+  C.played++;
+  if(C.played===4&&C.p.flow)draw(C.p.flow);
+  if(C.played===6&&has('bracelet')){C.energy++;fx('p','能量 +1','st')}
   if(S.hp<=0)return die();
   render();checkWin();
 }

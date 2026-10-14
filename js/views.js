@@ -47,7 +47,7 @@ function vTitle(){
   <p class="credits">图标：game-icons.net（Lorc、Delapouite、Sbed，CC BY 3.0；Zeromancer，CC0）· 像素怪物：Dungeon Crawl Stone Soup（CC0）</p></div></div>`;
 }
 function vPick(){
-  return `<div class="wrap"><h2 class="disp" style="text-align:center;font-size:30px;margin:12px 0 4px">选择你的英雄</h2>
+  return `<div class="wrap wide"><h2 class="disp" style="text-align:center;font-size:30px;margin:12px 0 4px">选择你的英雄</h2>
   <p class="muted" style="text-align:center;margin:0 0 14px;font-size:14px">每个英雄的生命、起始牌组和起始遗物都不一样，之后遇到的卡牌也会偏向各自擅长的流派。</p>
   <div class="heroes">${Object.entries(HEROES).map(([k,H])=>{const R=RELICS[H.relic];
     return `<section class="heropick"><div class="portrait">${sprite(H.img)}</div><h3 class="disp">${H.n}</h3><p class="tag">${H.t}</p>
@@ -95,9 +95,14 @@ const ST={
   embers:{n:'余烬',k:'能力',d:v=>`每消耗一张牌，获得 ${v} 点格挡`},
   toxin:{n:'剧毒',k:'能力',d:v=>`每次施加中毒时，额外施加 ${v} 层`},
   devour:{n:'吞噬',k:'能力',d:v=>`每消耗一张牌，抽 ${v} 张牌`},
-  pack:{n:'兽群之力',k:'能力',d:v=>`你的宠物造成的伤害、格挡和中毒 +${v}`}
+  pack:{n:'兽群之力',k:'能力',d:v=>`你的宠物造成的伤害、格挡和中毒 +${v}`},
+  flow:{n:'流水',k:'能力',d:v=>`每回合打出第 4 张牌时，抽 ${v} 张牌`},
+  accuracy:{n:'精准',k:'能力',d:v=>`飞刀的伤害 +${v}`},
+  bladedance:{n:'刀锋舞',k:'能力',d:v=>`每回合开始时，把 ${v} 张飞刀放进手牌`},
+  laststand:{n:'背水一战',k:'能力',d:()=>'生命不高于一半时，你的攻击伤害 +50%'},
+  agony:{n:'以痛为力',k:'能力',d:v=>`每当你在自己的回合失去生命，获得 ${v} 点力量`}
 };
-const CHIP={str:v=>ico('i-buff')+v,poison:v=>ico('i-poison','po')+v,demon:v=>`恶魔 ${v}`,barricade:()=>'壁垒',thorns:v=>`荆棘 ${v}`,pack:v=>`兽群 ${v}`};
+const CHIP={str:v=>ico('i-buff')+v,poison:v=>ico('i-poison','po')+v,demon:v=>`恶魔 ${v}`,barricade:()=>'壁垒',laststand:()=>'背水',bladedance:v=>`刀舞 ${v}`,thorns:v=>`荆棘 ${v}`,pack:v=>`兽群 ${v}`};
 function chips(o){
   const me=!!C&&o===C.p;
   return `<div class="chips">${Object.keys(ST).filter(k=>o[k]).map(k=>{const s=ST[k],v=o[k];

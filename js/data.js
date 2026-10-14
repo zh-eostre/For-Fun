@@ -61,8 +61,25 @@ const CARDS={
   raven:{n:'召唤渡鸦',c:1,t:'skl',r:'unc',d:u=>`召唤一只渡鸦：每回合结束时对随机敌人造成 ${u?4:3} 点伤害 2 次`,f:u=>summon('raven',u?4:3)},
   pack:{n:'兽群之力',c:1,t:'pow',r:'unc',d:u=>`你的宠物造成的伤害、格挡和中毒 +${u?3:2}`,f:u=>C.p.pack+=u?3:2},
   wildcall:{n:'野性呼唤',c:3,cu:2,t:'skl',r:'rare',ex:1,d:u=>`召唤战狼、石龟和毒蛙各一只。消耗`,f:u=>{summon('wolf',4);summon('turtle',3);summon('toad',2)}},
-  bloodpact:{n:'血契',c:1,t:'atk',r:'rare',d:u=>`你每有一只宠物，就造成一次 ${DM(u?10:7)} 点伤害${C?`（现在 ${C.pets.length} 次）`:''}`,f:u=>atk(u?10:7,C.pets.length)}
+  bloodpact:{n:'血契',c:1,t:'atk',r:'rare',d:u=>`你每有一只宠物，就造成一次 ${DM(u?10:7)} 点伤害${C?`（现在 ${C.pets.length} 次）`:''}`,f:u=>atk(u?10:7,C.pets.length)},
+  // combo: 飞刀 is made in a fight, never found; the rest grow with the cards played this turn (C.played)
+  shiv:{n:'飞刀',c:0,t:'atk',r:'token',ex:1,d:u=>`造成 ${DM((u?6:4)+(C?C.p.accuracy:0))} 点伤害。消耗`,f:u=>atk((u?6:4)+C.p.accuracy)},
+  blades:{n:'飞刀雨',c:1,t:'skl',r:'com',d:u=>`把 ${u?4:3} 张飞刀放进手牌（0 费，4 点伤害，消耗）`,f:u=>addHand('shiv',u?4:3)},
+  quickblade:{n:'快刀',c:0,t:'atk',r:'com',d:u=>`造成 ${DM(u?6:4)} 点伤害。本回合已打出 3 张以上的牌时，再造成一次`,f:u=>atk(u?6:4,C.played>=3?2:1)},
+  thousand:{n:'千刃',c:1,t:'atk',r:'unc',d:u=>`本回合你每打出过一张牌，就造成一次 ${DM(u?4:3)} 点伤害${C?`（现在 ${C.played} 次）`:''}`,f:u=>atk(u?4:3,C.played)},
+  flow:{n:'流水',c:1,t:'pow',r:'unc',d:u=>`每回合打出第 4 张牌时，抽 ${u?3:2} 张牌`,f:u=>C.p.flow+=u?3:2},
+  accuracy:{n:'精准',c:1,t:'pow',r:'unc',d:u=>`飞刀的伤害 +${u?4:3}`,f:u=>C.p.accuracy+=u?4:3},
+  bladedance:{n:'刀锋舞',c:2,cu:1,t:'pow',r:'rare',d:u=>`每回合开始时，把 2 张飞刀放进手牌`,f:u=>C.p.bladedance+=2},
+  // berserk: pay with your own blood, and be strongest when you have little left
+  reckless:{n:'鲁莽打击',c:1,t:'atk',r:'com',d:u=>`造成 ${DM(u?16:12)} 点伤害，失去 2 点生命`,f:u=>{atk(u?16:12);loseHp(2)}},
+  bloodrage:{n:'血怒',c:0,t:'skl',r:'com',d:u=>`失去 2 点生命，获得 ${u?2:1} 点力量`,f:u=>{loseHp(2);C.p.str+=u?2:1;fx('p',`力量 +${u?2:1}`,'st')}},
+  drain:{n:'饮血',c:2,t:'atk',r:'rare',ex:1,d:u=>`造成 ${DM(u?14:10)} 点伤害，回复其中一半的生命。消耗`,f:u=>heal(Math.floor(hitEnemy(curTarget(),u?14:10)/2))},
+  laststand:{n:'背水一战',c:1,cu:0,t:'pow',r:'unc',d:u=>`生命不高于一半时，你的攻击伤害 +50%`,f:u=>C.p.laststand=1},
+  agony:{n:'以痛为力',c:1,t:'pow',r:'rare',d:u=>`每当你在自己的回合失去生命，获得 ${u?2:1} 点力量`,f:u=>C.p.agony+=u?2:1},
+  bloodfeast:{n:'鲜血狂欢',c:2,t:'atk',r:'rare',d:u=>`造成等同于你已损失生命 ${u?70:50}% 的伤害（${DM(lostHp(u))}）`,f:u=>atk(lostHp(u))}
 };
+// 鲜血狂欢's damage: a share of the HP you are missing
+const lostHp=u=>Math.floor((S.maxHp-S.hp)*(u?.7:.5));
 const POOL=r=>Object.keys(CARDS).filter(k=>CARDS[k].r===r);
 const costOf=c=>{const d=CARDS[c.id];return c.up&&d.cu!==undefined?d.cu:d.c};
 const exOf=c=>{const d=CARDS[c.id];return typeof d.ex==='function'?d.ex(c.up):!!d.ex};
@@ -91,10 +108,16 @@ const HEROES={
     like:['twin','cleave','shrug','heavy','rampage','entrench','inflame','metal','whirl','ironfist','thorns','demon','barricade','limit','frenzy','slam']},
   assassin:{n:'刺客',img:'assassin',hp:72,relic:'viper',deck:{strike:4,defend:4,venom:1,jab:1},t:'中毒与快攻',
     d:'刀上淬着毒的刺客。血薄，但每回合第一刀都会让毒更深一层。',
-    like:['venom','darts','haze','jab','anger','sunder','twin','catal','fumes','rupture','toxin','frenzy','adren','scare']},
+    like:['venom','darts','haze','jab','anger','sunder','twin','catal','fumes','rupture','toxin','frenzy','adren','scare','blades','quickblade','thousand','flow','accuracy','bladedance']},
   pyro:{n:'灰烬术士',img:'pyro',hp:72,relic:'tome',deck:{strike:4,defend:4,shout:1,scare:1},t:'消耗',
     d:'以牌为薪的术士。烧掉一张牌，就从灰烬里取回一点能量。',
-    like:['shout','scare','shock','adren','catal','embers','devour','hellfire','offering','limit','inspire','haze']}
+    like:['shout','scare','shock','adren','catal','embers','devour','hellfire','offering','limit','inspire','haze']},
+  berserker:{n:'狂战士',img:'berserker',hp:80,relic:'scar',deck:{strike:4,defend:4,reckless:1,bloodrage:1},t:'以血换力',
+    d:'越伤越狂的战士。越接近死亡，出手越多。',
+    like:['reckless','bloodrage','drain','laststand','agony','bloodfeast','offering','heavy','inflame','limit','rampage','anger','ironfist','whirl']},
+  beastmaster:{n:'驯兽师',img:'beastmaster',hp:66,relic:'whistle',deck:{strike:4,defend:4,wolfcall:1,command:1},t:'宠物',
+    d:'带着狼群出征的驯兽师。每场战斗都有战狼相随。',
+    like:['wolfcall','turtle','command','toad','raven','pack','wildcall','bloodpact','shrug','metal','inspire','haze','jab']}
 };
 const hero=()=>HEROES[S.hero||'knight'];
 
@@ -113,7 +136,9 @@ const RELICS={
   fang:{n:'吸血牙',d:'每击杀一个敌人，回复 3 点生命'},
   lantern:{n:'灯笼',d:'每场战斗第一回合多 1 点能量'},
   censer:{n:'焚香炉',d:'每消耗一张牌，对所有敌人造成 3 点伤害'},
-  whistle:{n:'骨哨',d:'每场战斗开始时，召唤一只战狼（每回合造成 4 点伤害）'},
+  whistle:{n:'骨哨',d:'每场战斗开始时，召唤一只战狼（每回合造成 3 点伤害）',start:1},
+  scar:{n:'战痕',d:'生命不高于一半时，每回合多 1 点能量',start:1},
+  bracelet:{n:'疾风手环',d:'每回合打出第 6 张牌时，获得 1 点能量'},
   core:{n:'能量核心',d:'每回合多 1 点能量',boss:1},
   crown:{n:'王冠',d:'每回合多抽 1 张牌',boss:1},
   heart:{n:'巨人之心',d:'最大生命 +30',boss:1}

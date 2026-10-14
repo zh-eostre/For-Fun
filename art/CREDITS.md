@@ -56,6 +56,19 @@
 | icons/c-pack.svg | game-icons.net `lorc/paw-print` |
 | icons/c-wildcall.svg | game-icons.net `lorc/beast-eye` |
 | icons/c-bloodpact.svg | game-icons.net `lorc/paw-heart` |
+| icons/c-shiv.svg | game-icons.net `lorc/thrown-knife` |
+| icons/c-blades.svg | game-icons.net `lorc/thrown-daggers` |
+| icons/c-quickblade.svg | game-icons.net `lorc/knife-thrust` |
+| icons/c-thousand.svg | game-icons.net `lorc/spinning-blades` |
+| icons/c-flow.svg | game-icons.net `lorc/windy-stripes` |
+| icons/c-accuracy.svg | game-icons.net `lorc/archery-target` |
+| icons/c-bladedance.svg | game-icons.net `lorc/shuriken` |
+| icons/c-reckless.svg | game-icons.net `lorc/axe-swing` |
+| icons/c-bloodrage.svg | game-icons.net `lorc/bleeding-wound` |
+| icons/c-drain.svg | game-icons.net `delapouite/vampire-dracula` |
+| icons/c-laststand.svg | game-icons.net `lorc/battered-axe` |
+| icons/c-agony.svg | game-icons.net `lorc/back-pain` |
+| icons/c-bloodfeast.svg | game-icons.net `lorc/bloody-sword` |
 | icons/r-blood.svg | game-icons.net `lorc/heart-drop` |
 | icons/r-anchor.svg | game-icons.net `lorc/anchor` |
 | icons/r-whet.svg | game-icons.net `lorc/rune-stone` |
@@ -72,6 +85,8 @@
 | icons/r-viper.svg | game-icons.net `lorc/snake-bite` |
 | icons/r-tome.svg | game-icons.net `lorc/burning-book` |
 | icons/r-whistle.svg | game-icons.net `delapouite/whistle` |
+| icons/r-scar.svg | game-icons.net `lorc/scar-wound` |
+| icons/r-bracelet.svg | game-icons.net `lorc/fast-arrow` |
 | icons/r-censer.svg | game-icons.net `lorc/incense` |
 | icons/n-fight.svg | game-icons.net `lorc/crossed-swords` |
 | icons/n-elite.svg | game-icons.net `lorc/horned-skull` |
@@ -122,6 +137,8 @@
 | monsters/pet-turtle.png | Dungeon Crawl Stone Soup `monster/animals/snapping_turtle_new.png` |
 | monsters/pet-toad.png | Dungeon Crawl Stone Soup `monster/animals/giant_toad.png` |
 | monsters/pet-raven.png | Dungeon Crawl Stone Soup `monster/raven.png` |
+| monsters/berserker.png | Dungeon Crawl Stone Soup `monster/deep_dwarf_berserker.png` |
+| monsters/beastmaster.png | Dungeon Crawl Stone Soup `monster/centaur.png` |
 | monsters/hero.png | Dungeon Crawl Stone Soup `monster/deep_elf_knight_new.png` |
 | scenes/a-wall.png, a-floor.png | Dungeon Crawl Stone Soup `dungeon/wall/stone_brick_*`, `dungeon/floor/grey_dirt_*_new` (tiled by `tools/build-scenes.py`) |
 | scenes/b-wall.png, b-floor.png | Dungeon Crawl Stone Soup `dungeon/wall/brick_dark_*`, `dungeon/floor/rect_gray_*_new` |

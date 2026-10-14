@@ -1,6 +1,6 @@
 # 深渊之塔
 
-A card-battler roguelike in the browser: pick one of three heroes (骑士, 刺客, 灰烬术士), each with their own HP,
+A card-battler roguelike in the browser: pick one of five heroes (骑士, 刺客, 灰烬术士, 狂战士, 驯兽师), each with their own HP,
 starting deck and relic, and climb a 13-floor tower with a deck of cards, pick your path on the map
 (fights, elites, campfires, shops, events), collect relics, and beat the boss at the top. Beat it and the tower
 grows taller and deadlier.

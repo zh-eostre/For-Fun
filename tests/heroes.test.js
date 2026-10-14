@@ -1,6 +1,6 @@
 // Choosing a hero: the picker, each hero's start, and the starting relics that only they have.
 require('./harness').run(`
-render();A.new();ok(UI.pick&&!S&&/选择你的英雄/.test(els.app.innerHTML)&&(els.app.innerHTML.match(/data-act="start"/g)||[]).length===3&&!bad(els.app.innerHTML),'starting an adventure first asks for a hero');
+render();A.new();ok(UI.pick&&!S&&/选择你的英雄/.test(els.app.innerHTML)&&(els.app.innerHTML.match(/data-act="start"/g)||[]).length===Object.keys(HEROES).length&&!bad(els.app.innerHTML),'starting an adventure first asks for a hero');
 A.home();ok(!UI.pick&&/开始冒险/.test(els.app.innerHTML),'and you can go back');
 for(const [k,H] of Object.entries(HEROES)){
   A.new();A.start(k);const n=Object.values(H.deck).reduce((a,b)=>a+b,0);

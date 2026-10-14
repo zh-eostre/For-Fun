@@ -10,6 +10,6 @@ play('raven');ok(C.pets.length===3&&C.pets[0].k==='turtle','a fourth pet sends t
 hp=e.hp;C.p.pack=0;play('command');ok(e.hp<hp,'号令: the pets act at once');
 hp=e.hp;C.energy=9;play('bloodpact');ok(e.hp===hp-21||e.hp===0,'血契: 7 damage for each of three pets');
 fight(['cultist']);play('wildcall');ok(C.pets.map(p=>p.k).join()==='wolf,turtle,toad','野性呼唤: a wolf, a turtle and a toad');
-fight(['bat']);S.relics.push('whistle');startCombat('fight');ok(C.pets.length===1&&C.pets[0].k==='wolf'&&C.pets[0].p===4,'骨哨: every fight starts with a wolf');
+fight(['bat']);S.relics.push('whistle');startCombat('fight');ok(C.pets.length===1&&C.pets[0].k==='wolf'&&C.pets[0].p===3,'骨哨: every fight starts with a wolf');
 const m=Object.keys(PETS).filter(k=>!png('pet-'+k));ok(!m.length,'every pet has a sprite');
 `,{png:k=>require('fs').existsSync(require('path').join(__dirname,'../art/monsters',k+'.png'))});
