@@ -23,6 +23,7 @@ fight costs, and how much each card and relic is worth (runs that start with it 
 ```
 node tools/balance.js 1000 overall fights      # quick: difficulty, every encounter
 node tools/balance.js 1000 cards relics        # slow: every card and relic, a thousand runs each
+node tools/balance.js 1000 cards toad raven     # only the cards (or relics) named
 ```
 
 The bot plays sensibly but not like a person, so read the numbers as comparisons between cards, fights and rounds,

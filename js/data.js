@@ -53,7 +53,15 @@ const CARDS={
   limit:{n:'极限突破',c:1,t:'skl',r:'rare',ex:u=>!u,d:u=>`力量翻倍。${u?'':'消耗'}`,f:u=>{const g=C.p.str;C.p.str*=2;if(g>0)fx('p',`力量 +${g}`,'st')}},
   toxin:{n:'剧毒',c:1,t:'pow',r:'rare',d:u=>`每次施加中毒时，额外施加 ${u?2:1} 层`,f:u=>C.p.toxin+=u?2:1},
   devour:{n:'吞噬',c:2,cu:1,t:'pow',r:'rare',d:u=>`每消耗一张牌，抽 1 张牌`,f:u=>C.p.devour+=1},
-  hellfire:{n:'业火焚身',c:2,t:'atk',r:'rare',ex:1,d:u=>`消耗所有手牌，每消耗 1 张造成 ${DM(u?10:7)} 点伤害。消耗`,f:u=>C.hand.splice(0).forEach(c=>{exhaust(c);atk(u?10:7)})}
+  hellfire:{n:'业火焚身',c:2,t:'atk',r:'rare',ex:1,d:u=>`消耗所有手牌，每消耗 1 张造成 ${DM(u?10:7)} 点伤害。消耗`,f:u=>C.hand.splice(0).forEach(c=>{exhaust(c);atk(u?10:7)})},
+  wolfcall:{n:'召唤战狼',c:1,t:'skl',r:'com',d:u=>`召唤一只战狼：每回合结束时对目标造成 ${u?7:5} 点伤害`,f:u=>summon('wolf',u?7:5)},
+  turtle:{n:'召唤石龟',c:1,t:'skl',r:'com',d:u=>`召唤一只石龟：每回合结束时为你提供 ${u?5:3} 点格挡`,f:u=>summon('turtle',u?5:3)},
+  command:{n:'号令',c:0,t:'skl',r:'com',d:u=>`所有宠物立即行动一次${u?'，抽 1 张牌':''}`,f:u=>{C.pets.forEach(petAct);if(u)draw(1)}},
+  toad:{n:'召唤毒蛙',c:1,t:'skl',r:'unc',d:u=>`召唤一只毒蛙：每回合结束时让所有敌人获得 ${u?3:2} 层中毒`,f:u=>summon('toad',u?3:2)},
+  raven:{n:'召唤渡鸦',c:1,t:'skl',r:'unc',d:u=>`召唤一只渡鸦：每回合结束时对随机敌人造成 ${u?4:3} 点伤害 2 次`,f:u=>summon('raven',u?4:3)},
+  pack:{n:'兽群之力',c:1,t:'pow',r:'unc',d:u=>`你的宠物造成的伤害、格挡和中毒 +${u?3:2}`,f:u=>C.p.pack+=u?3:2},
+  wildcall:{n:'野性呼唤',c:3,cu:2,t:'skl',r:'rare',ex:1,d:u=>`召唤战狼、石龟和毒蛙各一只。消耗`,f:u=>{summon('wolf',4);summon('turtle',3);summon('toad',2)}},
+  bloodpact:{n:'血契',c:1,t:'atk',r:'rare',d:u=>`你每有一只宠物，就造成一次 ${DM(u?10:7)} 点伤害${C?`（现在 ${C.pets.length} 次）`:''}`,f:u=>atk(u?10:7,C.pets.length)}
 };
 const POOL=r=>Object.keys(CARDS).filter(k=>CARDS[k].r===r);
 const costOf=c=>{const d=CARDS[c.id];return c.up&&d.cu!==undefined?d.cu:d.c};
@@ -64,6 +72,16 @@ function rollCard(elite){
   return pick(fav.length&&Math.random()<.4?fav:pool);
 }
 function rollCards(n,elite){const s=new Set();let g=0;while(s.size<n&&g++<50)s.add(rollCard(elite));return [...s]}
+
+/* ---------- pets ---------- */
+// a pet acts at the end of each of your turns, before the enemies move; it lasts the fight. p is its power, b the 兽群之力 bonus
+const PETS={
+  wolf:{n:'战狼',d:(p,b)=>`每回合对目标造成 ${p+b} 点伤害`},
+  turtle:{n:'石龟',d:(p,b)=>`每回合为你提供 ${p+b} 点格挡`},
+  toad:{n:'毒蛙',d:(p,b)=>`每回合让所有敌人获得 ${p+b} 层中毒`},
+  raven:{n:'渡鸦',d:(p,b)=>`每回合对随机敌人造成 ${p+b} 点伤害 2 次`}
+};
+const MAXPETS=3;
 
 /* ---------- heroes ---------- */
 // each starts with its own HP, deck and relic (found nowhere else), and card rewards lean toward the cards it likes
@@ -95,6 +113,7 @@ const RELICS={
   fang:{n:'吸血牙',d:'每击杀一个敌人，回复 3 点生命'},
   lantern:{n:'灯笼',d:'每场战斗第一回合多 1 点能量'},
   censer:{n:'焚香炉',d:'每消耗一张牌，对所有敌人造成 3 点伤害'},
+  whistle:{n:'骨哨',d:'每场战斗开始时，召唤一只战狼（每回合造成 4 点伤害）'},
   core:{n:'能量核心',d:'每回合多 1 点能量',boss:1},
   crown:{n:'王冠',d:'每回合多抽 1 张牌',boss:1},
   heart:{n:'巨人之心',d:'最大生命 +30',boss:1}

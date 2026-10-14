@@ -48,6 +48,14 @@
 | icons/c-toxin.svg | game-icons.net `lorc/acid-blob` |
 | icons/c-devour.svg | game-icons.net `lorc/carnivore-mouth` |
 | icons/c-hellfire.svg | game-icons.net `delapouite/card-burn` |
+| icons/c-wolfcall.svg | game-icons.net `lorc/wolf-howl` |
+| icons/c-turtle.svg | game-icons.net `lorc/turtle` |
+| icons/c-toad.svg | game-icons.net `lorc/frog` |
+| icons/c-raven.svg | game-icons.net `lorc/raven` |
+| icons/c-command.svg | game-icons.net `lorc/hunting-horn` |
+| icons/c-pack.svg | game-icons.net `lorc/paw-print` |
+| icons/c-wildcall.svg | game-icons.net `lorc/beast-eye` |
+| icons/c-bloodpact.svg | game-icons.net `lorc/paw-heart` |
 | icons/r-blood.svg | game-icons.net `lorc/heart-drop` |
 | icons/r-anchor.svg | game-icons.net `lorc/anchor` |
 | icons/r-whet.svg | game-icons.net `lorc/rune-stone` |
@@ -63,6 +71,7 @@
 | icons/r-heart.svg | game-icons.net `lorc/heart-organ` |
 | icons/r-viper.svg | game-icons.net `lorc/snake-bite` |
 | icons/r-tome.svg | game-icons.net `lorc/burning-book` |
+| icons/r-whistle.svg | game-icons.net `delapouite/whistle` |
 | icons/r-censer.svg | game-icons.net `lorc/incense` |
 | icons/n-fight.svg | game-icons.net `lorc/crossed-swords` |
 | icons/n-elite.svg | game-icons.net `lorc/horned-skull` |
@@ -109,4 +118,8 @@
 | monsters/lich.png | Dungeon Crawl Stone Soup `monster/undead/lich.png` |
 | monsters/assassin.png | Dungeon Crawl Stone Soup `monster/deep_elf_master_archer.png` |
 | monsters/pyro.png | Dungeon Crawl Stone Soup `monster/deep_elf_sorcerer.png` |
+| monsters/pet-wolf.png | Dungeon Crawl Stone Soup `monster/animals/wolf.png` |
+| monsters/pet-turtle.png | Dungeon Crawl Stone Soup `monster/animals/snapping_turtle_new.png` |
+| monsters/pet-toad.png | Dungeon Crawl Stone Soup `monster/animals/giant_toad.png` |
+| monsters/pet-raven.png | Dungeon Crawl Stone Soup `monster/raven.png` |
 | monsters/hero.png | Dungeon Crawl Stone Soup `monster/deep_elf_knight_new.png` |

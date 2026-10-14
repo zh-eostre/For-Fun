@@ -1,9 +1,10 @@
 // Balance testing: a bot that plays sensibly (in a fight it tries every card on every target and keeps the play that
 // leaves the best position) climbs the tower many times, and reports how far runs get, what each fight costs, and
 // how much each card and relic is worth: a run that starts with it, against runs that start without.
-//   node tools/balance.js [runs per test, default 300] [overall|fights|heroes|cards|relics ...]
+//   node tools/balance.js [runs per test, default 300] [overall|fights|heroes|cards|relics ...] [card or relic ids, to test only those]
 // The fights, cards and relics are measured with the knight; heroes compares the three.
-const N=+process.argv[2]||300,parts=process.argv.slice(3).filter(x=>isNaN(x));
+const N=+process.argv[2]||300,args=process.argv.slice(3).filter(x=>isNaN(x)),PARTS=['overall','fights','heroes','cards','relics'];
+const parts=args.filter(a=>PARTS.includes(a)),only=args.filter(a=>!PARTS.includes(a));
 const want=p=>!parts.length||parts.includes(p);
 const out=[];
 require('../tests/harness').run(`
@@ -11,7 +12,8 @@ render=()=>{};renderOver=()=>{};fx=()=>{};toast=()=>{};
 // how much the bot wants a card in its deck (its own judgement: it only steers picks, shops and upgrades)
 const TIER={strike:0,defend:0,bash:3,twin:5,cleave:6,jab:4,sunder:5,venom:5,slam:3,anger:4,shrug:6,shout:5,scare:4,haze:6,
   heavy:5,rampage:6,entrench:3,adren:6,catal:4,shock:6,whirl:6,inflame:7,metal:6,fumes:6,frenzy:7,execute:4,demon:8,
-  barricade:4,inspire:7,offering:6,limit:4,darts:6,ironfist:6,rupture:4,thorns:5,embers:5,toxin:5,devour:4,hellfire:6};
+  barricade:4,inspire:7,offering:6,limit:4,darts:6,ironfist:6,rupture:4,thorns:5,embers:5,toxin:5,devour:4,hellfire:6,
+  wolfcall:5,turtle:5,command:3,toad:5,raven:5,pack:4,wildcall:6,bloodpact:4};
 const tier=id=>TIER[id]??5;
 const incoming=()=>alive().reduce((s,e)=>s+(e.next&&e.next.a?eDmg(e,e.next.a)*(e.next.n||1):0),0);
 function worth(hp0){
@@ -23,6 +25,7 @@ function worth(hp0){
   const p=C.p,lethal=inc-p.block>=S.hp;
   v+=Math.min(p.block,inc)*(lethal?3:1.1)+Math.max(0,p.block-inc)*(p.barricade?.6:.05);
   v+=p.str*5+p.metal*3+p.demon*9+p.fumes*6+p.barricade*10+p.inspire*7+p.thorns*2.5+p.embers*2+p.devour*5+p.toxin*6;
+  v+=C.pets.reduce((s,x)=>s+(x.p+p.pack)*({wolf:2.5,turtle:1.8,toad:4,raven:4.5})[x.k],0)+p.pack*2;
   v+=C.hand.length*1.5+C.energy*.5-(hp0-S.hp)*1.5-p.weak*2-p.vuln*2;
   return v;
 }
@@ -102,13 +105,13 @@ if(${JSON.stringify(want('heroes'))}){
   report('heroes',r);
 }
 if(${JSON.stringify(want('cards'))}){
-  const r={};for(const id of Object.keys(CARDS)){if(CARDS[id].r==='basic')continue;
+  const r={};for(const id of Object.keys(CARDS)){if(CARDS[id].r==='basic'||${JSON.stringify(only)}.length&&!${JSON.stringify(only)}.includes(id))continue;
     const a=await runs(${N},S=>{S.deck[S.deck.findIndex(c=>c.id==='strike')]={uid:nid(),id,up:false}});
     r[id]={depth:depth(a),boss1:pct(a,l=>l.floor>=13)}}
   report('cards',r);
 }
 if(${JSON.stringify(want('relics'))}){
-  const r={};for(const k of Object.keys(RELICS)){if(k==='blood')continue;const a=await runs(${N},S=>gainRelic(k));r[k]={depth:depth(a),boss1:pct(a,l=>l.floor>=13)}}
+  const r={};for(const k of Object.keys(RELICS)){if(RELICS[k].start||${JSON.stringify(only)}.length&&!${JSON.stringify(only)}.includes(k))continue;const a=await runs(${N},S=>gainRelic(k));r[k]={depth:depth(a),boss1:pct(a,l=>l.floor>=13)}}
   report('relics',r);
 }
 `,{report:(k,v)=>out.push([k,v])});

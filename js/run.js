@@ -48,10 +48,11 @@ function nextFloor(){
 function startCombat(type){
   let group=type==='boss'?[pick(BOSSES)]:type==='elite'?pick(ELITES):S.floor<=2&&S.loop===0?pick(EASY):pick(NORMAL);
   C={type,enemies:group.map(makeEnemy),draw:shuffle(S.deck.map(c=>({...c}))),hand:[],discard:[],exhaust:[],energy:0,turn:0,
-     p:{block:0,str:0,weak:0,vuln:0,poison:0,metal:0,fumes:0,demon:0,barricade:0,inspire:0,thorns:0,embers:0,toxin:0,devour:0},atkCount:0,target:null,busy:false};
+     p:{block:0,str:0,weak:0,vuln:0,poison:0,metal:0,fumes:0,demon:0,barricade:0,inspire:0,thorns:0,embers:0,toxin:0,devour:0,pack:0},pets:[],atkCount:0,target:null,busy:false};
   C.enemies.forEach(e=>{e.next=EN[e.k].ai(e,0)});
   if(has('whet'))C.p.str+=1;
   if(has('sac'))C.enemies.forEach(e=>e.poison+=3);
+  if(has('whistle'))summon('wolf',4);
   S.screen='combat';FX=[];HIT={};
   startTurn();
 }
@@ -73,6 +74,15 @@ function harm(e,n,pierce){
   if(e.hp<=0){e.hp=0;if(has('fang'))heal(3)}
 }
 function exhaust(c){C.exhaust.push(c);if(has('tome')&&!C.tomeUsed){C.tomeUsed=true;C.energy++;fx('p','能量 +1','st')}if(C.p.embers)gainBlock(C.p.embers);if(C.p.devour)draw(C.p.devour);if(has('censer'))alive().forEach(e=>harm(e,3))}
+// pets: up to three; a fourth sends the oldest away
+function summon(k,p){if(C.pets.length>=MAXPETS)C.pets.shift();C.pets.push({uid:nid(),k,p});fx('p','召唤'+PETS[k].n,'st')}
+function petAct(pet){
+  const v=pet.p+C.p.pack;
+  if(pet.k==='wolf')harm(curTarget(),v);
+  if(pet.k==='turtle')gainBlock(v);
+  if(pet.k==='toad')alive().forEach(e=>applyE(e,'poison',v));
+  if(pet.k==='raven')for(let i=0;i<2;i++){const a=alive();if(a.length)harm(pick(a),v)}
+}
 function atk(base,n=1,mul=1){for(let i=0;i<n;i++){const t=curTarget();if(!t)break;hitEnemy(t,base,mul)}}
 function atkAll(base,n=1){for(let i=0;i<n;i++)alive().forEach(e=>hitEnemy(e,base))}
 function gainBlock(n){if(n<=0)return;C.p.block+=n;fx('p','+'+n+' 格挡','blk')}
@@ -132,6 +142,7 @@ async function endTurn(){
   if(C.p.metal)gainBlock(C.p.metal);
   if(has('ori')&&C.p.block===0)gainBlock(3);
   render();
+  if(C.pets.length){await sleep(250);if(!C)return;C.pets.forEach(petAct);render()}
   for(const e of C.enemies){
     if(e.hp<=0)continue;
     await sleep(430);if(!C)return;
