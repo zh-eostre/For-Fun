@@ -7,7 +7,7 @@ const A={
   go:i=>enterNode(+i),
   deck:()=>{UI.over={mode:'deck'};renderOver()},
   close:()=>{UI.over=null;renderOver()},
-  relic:k=>toast(`${RELICS[k].n}：${RELICS[k].d}`),
+  relic:k=>{const n=relicCount(k);toast(`${RELICS[k].n}${n>1?` ×${n}`:''}：${RELICS[k].d}`)},
   target:u=>{if(C){C.target=+u;render()}},
   // on touch, a crowded hand's cards overlap: the first tap lifts a card to read it, a second tap plays it
   play:u=>{if(UI.touch&&handCrowded()&&UI.lift!==+u){UI.lift=+u;render();return}UI.lift=null;playCard(+u)},

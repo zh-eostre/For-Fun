@@ -30,6 +30,9 @@ S.floor=0;S.reward={gold:100,goldTaken:false,cards:['twin'],cardTaken:false,reli
 A.nextloop();ok(S.loop===0&&S.screen==='reward','the next tower waits until a boss relic is chosen');
 A.rboss('core');A.nextloop();ok(S.loop===1&&has('core'),'then the climb goes on');
 S.loop=0;S.floor=1;S.map=genMap();S.screen='map';S.relics=['blood'];
+S.relics=['blood','heart','anchor','heart','heart'];render();
+ok((els.app.innerHTML.match(/data-act="relic"/g)||[]).length===3&&/巨人之心 ×3/.test(els.app.innerHTML)&&/class="cnt">3</.test(els.app.innerHTML),'the same relic three times shows once, marked ×3');
+S.relics=['blood'];
 // the other rooms
 S.map[1]=['rest','shop','event'];A.go('0');ok(S.screen==='rest'&&/篝火/.test(els.app.innerHTML),'a campfire');
 S.hp=40;A.rheal();ok(S.hp>40&&S.rest.done,'resting heals');A.next();

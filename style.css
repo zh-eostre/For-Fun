@@ -44,7 +44,8 @@ button{font:inherit;color:inherit}
 .stat{display:flex;align-items:center;gap:5px;font-size:15px}
 .stat b{font-family:"Cinzel",serif;font-size:16px}
 .relics{display:flex;gap:4px;flex-wrap:wrap}
-.relic{border:1px solid var(--line);background:var(--bg);color:var(--gold);border-radius:50%;width:32px;height:32px;font-size:19px;cursor:pointer;display:grid;place-items:center;padding:0}
+.relic{border:1px solid var(--line);background:var(--bg);color:var(--gold);border-radius:50%;width:32px;height:32px;font-size:19px;cursor:pointer;display:grid;place-items:center;padding:0;position:relative}
+.relic .cnt{position:absolute;right:-5px;bottom:-4px;min-width:16px;height:16px;border-radius:8px;background:var(--accent);color:#fff;font:700 11px/16px "Cinzel",serif;padding:0 3px;box-shadow:0 0 0 1.5px var(--surface)}
 .bar .grow{flex:1}
 
 /* title */

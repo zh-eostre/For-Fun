@@ -16,13 +16,16 @@ function cardHtml(c,o={}){
 <span class="face">  <span class="cost ${o.vs&&cost<costOf(o.vs)?'cheaper':''}">${cost}</span><span class="cname">${d.n}${c.up?'+':''}</span>
   <span class="art">${ico('c-'+c.id)}</span><span class="ctype">${TYPE[d.t]}</span><span class="cdesc"><span>${desc}</span></span></span></button>`;
 }
+// the same relic taken more than once shows once, with a count
+const relicCount=k=>S.relics.filter(x=>x===k).length;
 function topbar(){
   return `<header class="bar"><div class="wrap">
   <span class="stat">${ico('u-hp','hp')}<b>${S.hp}</b>/${S.maxHp}</span>
   <span class="stat">${ico('u-gold','gold')}<b>${S.gold}</b></span>
   <span class="stat">${ico('u-tower')}第 <b>${S.loop+1}</b> 轮 第 <b>${Math.min(S.floor+1,13)}</b> 层</span>
   <span class="grow"></span>
-  <span class="relics">${S.relics.map(k=>`<button class="relic" data-act="relic" data-arg="${k}" title="${RELICS[k].n}：${RELICS[k].d}" aria-label="${RELICS[k].n}">${ico('r-'+k)}</button>`).join('')}</span>
+  <span class="relics">${[...new Set(S.relics)].map(k=>{const n=relicCount(k),x=n>1?` ×${n}`:'';
+    return `<button class="relic" data-act="relic" data-arg="${k}" title="${RELICS[k].n}${x}：${RELICS[k].d}" aria-label="${RELICS[k].n}${x}">${ico('r-'+k)}${n>1?`<span class="cnt">${n}</span>`:''}</button>`}).join('')}</span>
   <button class="btn sm" data-act="deck">牌组 ${S.deck.length}</button>
   </div></header>`;
 }
