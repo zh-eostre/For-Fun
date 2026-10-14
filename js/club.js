@@ -303,6 +303,7 @@ function upgradeAcademy(){
   if(lv>=ACADEMY_COST.length){toast('青训营已是最高等级');return}
   if(S.budget<c){toast('资金不够');return}
   S.budget-=c;S.academy.lv++;
+  if(S.academy.lv>=ACADEMY_COST.length){maxedOut('academy','青训营',c);return}
   news(`青训营升级到 ${S.academy.lv} 级，花费 ${money(c)}。`);toast(`青训营升到 ${S.academy.lv} 级！`);
 }
 
@@ -336,7 +337,21 @@ function upgradeFac(k){
   if(L>=facCost(k).length){toast(`${FAC[k].name}已是最高等级`);return}
   if(S.budget<c){toast('资金不够');return}
   S.budget-=c;S.fac[k]=L+1;
+  if(L+1>=facCost(k).length){maxedOut(k,FAC[k].name,c);return}
   news(`${FAC[k].name}升级到 ${L+1} 级，花费 ${money(c)}。`);toast(`${FAC[k].name}升到 ${L+1} 级！`);
+}
+// a facility (or the academy) at its top level: a line in the news and a celebration with confetti and a fanfare
+const MAXED={
+  scout:['千里眼开启','这片大陆上，再没有能瞒过我们的天才。'],
+  physio:['不死之身','伤痛，从此只是暂时的。'],
+  ground:['神之训练场','汗水在这里，会加倍化作力量。'],
+  stadium:['圣殿落成','每一个主场之夜，都将座无虚席。'],
+  academy:['传奇的摇篮','下一个传奇，正在这里长大。']
+};
+function maxedOut(k,name,cost){
+  const [title,line]=MAXED[k];
+  news(`🏗 ${title}！${name}升至满级（花费 ${money(cost)}）——${line}`);
+  celebrate(`${name}满级！`,`「${title}」${line}`,'build');
 }
 
 /* ---------- buying from other clubs ---------- */

@@ -23,10 +23,10 @@ function playSigQueue(){
 }
 function celebrate(big,small,kind){
   const el=document.getElementById('fx');if(!el||!el.classList)return;
-  const bits=kind==='party'?Array.from({length:70},(_,i)=>`<i style="left:${Math.random()*100}%;animation-delay:${(Math.random()*1.2).toFixed(2)}s;background:${['#F5B841','#4FA36F','#C6402F','#3567A6','#fff'][i%5]}"></i>`).join(''):'';
+  const bits=kind==='party'||kind==='build'?Array.from({length:70},(_,i)=>`<i style="left:${Math.random()*100}%;animation-delay:${(Math.random()*1.2).toFixed(2)}s;background:${['#F5B841','#4FA36F','#C6402F','#3567A6','#fff'][i%5]}"></i>`).join(''):'';
   el.className='';el.innerHTML=`<div class="fx-box"><b class="disp">${big}</b>${small?`<span>${small}</span>`:''}</div>${bits}`;
-  void el.offsetWidth;el.className='show '+kind;if(kind==='party')sfx('roar');
-  clearTimeout(celebrate.t);celebrate.t=setTimeout(()=>{el.className='';el.innerHTML=''},kind==='party'?4500:2800);
+  void el.offsetWidth;el.className='show '+(kind==='build'?'party build':kind);if(kind==='party')sfx('roar');if(kind==='build')sfx('fanfare');
+  clearTimeout(celebrate.t);celebrate.t=setTimeout(()=>{el.className='';el.innerHTML=''},kind==='party'||kind==='build'?4500:2800);
 }
 // a short card at the top for something that matters during a match (a change, an injury, a red card, a goal
 // against); several stack. the match holds for a moment (see M.hold in match.js)

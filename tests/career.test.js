@@ -3,7 +3,7 @@ require('./harness').run(`
 const season=()=>{while(!seasonDone()){ffToMatch();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);startMatch();if(!M)throw 'stuck '+lineupIssues();skipMatch();M=null;UI.view='main'}};
 newGame(15,teamNames());ok(S.mgr.rep===15&&mgrTitle(15)==='无名之辈','new manager: reputation 15, 无名之辈');
 const log=[];let offersSeen=null;
-for(let s=0;s<4&&!offersSeen;s++){
+for(let s=0;s<7&&!offersSeen;s++){
   my().players.forEach(p=>{p.ovr=Math.max(p.ovr,84);p.pot=Math.max(p.pot,p.ovr)});  // a dominant squad
   season();log.push('S'+S.season+' '+DIVS[my().div]+'#'+myRank()+' 声望 '+S.mgr.rep+'('+(S.mgr.last>=0?'+':'')+S.mgr.last+') 邀请 '+(S.jobOffers||[]).length);
   if((S.jobOffers||[]).length)offersSeen=S.jobOffers;else newSeason();

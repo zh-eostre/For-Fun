@@ -621,6 +621,7 @@ dialog.modal.wide{max-width:860px}
 #fx.brace .fx-box b{color:#FF7A45}
 #fx.party .fx-box b{font-size:clamp(40px,10vw,84px)}
 #fx.party{background:rgba(10,15,12,.35)}
+#fx.build .fx-box span{max-width:min(560px,90vw)}
 #fx i{position:absolute;top:-12px;width:8px;height:14px;border-radius:2px;animation:fall 3.2s linear forwards}
 @keyframes fall{to{transform:translateY(105vh) rotate(720deg)}}
 @media (prefers-reduced-motion:no-preference){#fx.show .fx-box{animation:fxpop 2.8s ease-out forwards}#fx.party .fx-box{animation:fxpop 4.5s ease-out forwards}}
