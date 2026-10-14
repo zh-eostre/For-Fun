@@ -63,7 +63,8 @@ document.addEventListener('pointermove',e=>{
   else if(Math.hypot(e.clientX-TIP.sx,e.clientY-TIP.sy)>10)clearTimeout(TIP.timer);
 });
 document.addEventListener('pointerout',e=>{if(!e.relatedTarget){TIP.x=-1;hideTip()}});
-function handCrowded(){const c=document.querySelectorAll('.hand .card');return c.length>1&&c[1].offsetLeft-c[0].offsetLeft<c[0].offsetWidth*.5}
+// crowded: neighbouring cards show less than half of each other
+function handCrowded(){const c=document.querySelectorAll('.hand .card');if(c.length<2)return false;const a=c[0].getBoundingClientRect(),b=c[1].getBoundingClientRect();return b.left+b.right-a.left-a.right<c[0].offsetWidth}
 document.addEventListener('pointerdown',e=>{
   UI.touch=e.pointerType!=='mouse';
   if(e.pointerType==='mouse')return;

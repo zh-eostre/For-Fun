@@ -70,7 +70,7 @@ button{font:inherit;color:inherit}
 .floor.now{padding:10px 0;border-top:2px dashed var(--accent);border-bottom:2px dashed var(--accent)}
 
 /* arena */
-.arena{background:radial-gradient(ellipse at 50% 30%,var(--arena2),var(--arena) 70%);color:#EDE5DA;min-height:calc(100vh - 54px);max-height:none;display:flex;flex-direction:column}
+.arena{background:radial-gradient(ellipse at 50% 30%,var(--arena2),var(--arena) 70%);color:#EDE5DA;min-height:calc(100vh - 54px);max-height:none;display:flex;flex-direction:column;overflow:hidden}
 .foes{display:flex;justify-content:center;align-items:center;gap:14px;flex-wrap:wrap;padding:22px 12px 8px;flex:1;min-height:260px}
 .enemy{position:relative;background:none;border:0;padding:6px 6px 8px;border-radius:14px;cursor:pointer;width:150px;display:flex;flex-direction:column;align-items:center;gap:4px;color:#EDE5DA}
 .enemy.tgt{background:rgba(255,255,255,.06);box-shadow:0 0 0 2px var(--energy)}
@@ -117,27 +117,30 @@ button{font:inherit;color:inherit}
 .piles{display:flex;gap:10px;font-size:13px;opacity:.8}
 .endturn{background:#C9822B;border:0;color:#2A1600;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;font-size:15px}
 .endturn:disabled{opacity:.4;cursor:wait}
-.hand{--w:118px;--gap:8px;--gg:14px;display:flex;justify-content:center;align-items:flex-end;padding:22px 34px 18px;min-height:204px}
-.hand .card{flex:none;transform-origin:50% 100%;transform:translateY(var(--y)) rotate(var(--r));transition:transform .15s,margin .15s;
-  margin-left:min(var(--gap),calc((100% - var(--n)*var(--w) - var(--g)*var(--gg))/(var(--n) - 1)))}
-.hand .card.gs{margin-left:calc(min(var(--gap),calc((100% - var(--n)*var(--w) - var(--g)*var(--gg))/(var(--n) - 1))) + var(--gg))}
-.hand .card:first-child{margin-left:0}
-.arena .hand .card:hover,.arena .hand .card.lift{transform:translateY(-26px) scale(1.08);z-index:5}
-@media (hover:none){.arena .hand .card:hover:not(.lift){transform:translateY(var(--y)) rotate(var(--r))}}
+.hand{--w:118px;--R:900px;--S:4.6deg;--max:36deg;--lift:-34px;position:relative;height:216px;flex:none}
+.hand>.empty{position:absolute;inset:0;display:grid;place-items:center;margin:0;opacity:.6}
+.hand .card{position:absolute;left:calc(50% - var(--w)/2);bottom:10px;transform-origin:50% calc(100% + var(--R));
+  transform:rotate(calc(var(--p)*min(var(--S),var(--max)/var(--u))));transition:transform .2s}
+.hand .card .face{box-shadow:-4px 3px 12px rgba(0,0,0,.5)}
+.arena .hand .card:hover:not(:disabled) .face,.arena .hand .card.lift .face{transform:translateY(var(--lift)) scale(1.12)}
+.arena .hand .card:hover,.arena .hand .card.lift{z-index:20}
+@media (hover:none){.arena .hand .card:hover:not(.lift){z-index:auto}.arena .hand .card:hover:not(.lift) .face{transform:none}}
 
 /* card */
-.card{position:relative;width:118px;height:166px;border-radius:10px;border:2px solid #5C4A3A;background:var(--parch);color:var(--parch-ink);padding:0;cursor:pointer;
-  display:flex;flex-direction:column;align-items:center;text-align:center;overflow:hidden;box-shadow:0 4px 10px rgba(0,0,0,.35);transition:transform .12s}
-.card::before{content:"";position:absolute;left:0;right:0;top:0;height:30px;background:var(--tc)}
+/* the button keeps its place (and the pointer's hover); the face inside is what you see, and what lifts */
+.card{position:relative;width:118px;height:166px;padding:0;border:0;background:none;color:var(--parch-ink);cursor:pointer;text-align:center}
+.card .face{position:absolute;inset:0;border-radius:10px;border:2px solid #5C4A3A;background:var(--parch);
+  display:flex;flex-direction:column;align-items:center;overflow:hidden;box-shadow:0 4px 10px rgba(0,0,0,.35);transition:transform .15s}
+.card .face::before{content:"";position:absolute;left:0;right:0;top:0;height:30px;background:var(--tc)}
 .card.t-atk{--tc:var(--t-atk)}.card.t-skl{--tc:var(--t-skl)}.card.t-pow{--tc:var(--t-pow)}
-.card.r-unc{border-color:#4E7FA0}
-.card.r-rare{border-color:#D9A93A;box-shadow:0 0 0 1px #F5D27A,0 4px 12px rgba(217,169,58,.45)}
-.card:hover:not(:disabled){transform:translateY(-6px)}
+.card.r-unc .face{border-color:#4E7FA0}
+.card.r-rare .face{border-color:#D9A93A;box-shadow:0 0 0 1px #F5D27A,0 4px 12px rgba(217,169,58,.45)}
+.card:hover:not(:disabled) .face{transform:translateY(-6px)}
 .card .cost{position:absolute;left:4px;top:3px;width:24px;height:24px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FFE2A3,var(--energy) 60%,#8A4D0D);color:#2A1600;font-family:"Cinzel",serif;font-size:14px;line-height:24px;z-index:1;box-shadow:0 0 0 1.5px #2A1600}
 .card .cname{position:relative;z-index:1;color:#fff;font-family:"ZCOOL XiaoWei",serif;font-size:15px;line-height:30px;padding-left:18px;white-space:nowrap}
 .card.up .cname{color:#BFF29E}
 .card .cost.cheaper{box-shadow:0 0 0 2px #3E8E2B,0 0 8px #7CD65A}
-.card.up::after{content:"+";position:absolute;right:5px;top:35px;width:20px;height:20px;border-radius:50%;background:#3E8E2B;color:#fff;font:700 16px/20px "Cinzel",serif;box-shadow:0 0 0 1.5px #1C3F12}
+.card.up .face::after{content:"+";position:absolute;right:5px;top:35px;width:20px;height:20px;border-radius:50%;background:#3E8E2B;color:#fff;font:700 16px/20px "Cinzel",serif;box-shadow:0 0 0 1.5px #1C3F12}
 .card .art{font-size:36px;line-height:1;margin:8px 0 2px;color:var(--tc);display:flex}
 .card .ctype{font-size:10px;color:#7A6A5A;letter-spacing:.1em}
 .card .cdesc{font-size:12px;line-height:1.4;padding:3px 7px 6px;flex:1;display:flex;align-items:center}
@@ -145,7 +148,7 @@ button{font:inherit;color:inherit}
 .card .cdesc b.up{color:#2E7D1E}
 .card .cdesc b.down{color:#B33A2B}
 .card.nope{filter:saturate(.4) brightness(.8)}
-.card.nope:hover{transform:none}
+.card.nope:hover .face{transform:none}
 .card:disabled{cursor:default}
 
 /* panels */
@@ -188,7 +191,7 @@ button{font:inherit;color:inherit}
   .card .cdesc{font-size:11px;padding:2px 5px 5px}
   .enemy{width:118px}
   .sprite{width:64px;height:64px}.enemy.elite .sprite{width:96px;height:96px}.enemy.boss .sprite{width:128px;height:128px}
-  .hand{--w:96px;--gg:8px;min-height:178px;padding:22px 22px 16px}
+  .hand{--w:96px;--R:700px;--max:22deg;--lift:-30px;height:192px}
   .hero{min-width:0}
   .hero .sprite{width:64px;height:64px}
   .floor{grid-template-columns:40px 1fr}
