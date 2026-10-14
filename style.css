@@ -758,7 +758,7 @@ button.xi-tok{cursor:pointer}
 @media (max-width:560px){.rgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:3px 6px}.rrow{padding:3px 4px;gap:4px}.rname{font-size:12.5px}}
 .rrow{display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:8px;border:1px solid transparent;min-width:0}
 .rrow.best{border-color:#F5B841;background:color-mix(in srgb,#F5B841 10%,transparent)}
-.rpos{flex:none;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff}
+.rpos{flex:none;min-width:20px;height:20px;padding:0 4px;border-radius:10px;display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff}
 .rpos.pos-GK{background:#D99A1E;color:#2B1D00}.rpos.pos-DF{background:#3567A6}.rpos.pos-MF{background:#2C6E49}.rpos.pos-FW{background:#B9412F}
 .rname{flex:1;min-width:0;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rrow .rating{flex:none}

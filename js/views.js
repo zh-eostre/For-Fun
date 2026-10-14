@@ -516,6 +516,8 @@ function vBoards(div,boards){
   const sw=`<div class="seg sm lb-switch">${boards.map(([k,l])=>`<button data-act="lb" data-arg="${div}:${k}" aria-pressed="${k===cur[0]}">${l}</button>`).join('')}</div>`;
   return cur[2]().replace('</h2>','</h2>'+sw)||`<section class="panel">${sw}<p class="muted" style="margin:0">还没有数据。</p></section>`;
 }
+// where a player played in a match: his own line, or "中→后" when he was moved out of it (a change of shape, a gap)
+const roleTag=x=>x.role!==x.p.pos?`${POS[x.p.pos][0]}→${POS[x.role][0]}`:POS[x.role][0];
 function vLeaders(title,note,rows,scale){
   if(!rows.length)return '';
   const top=Math.max(...rows.map(r=>scale(r.v)),.01);
@@ -657,7 +659,7 @@ function statTable(list){
   const pct=a=>a.pas?Math.round(a.ok/a.pas*100)+'%':'—';
   return `<div class="tw"><table class="stat-t"><thead><tr><th>球员</th><th>评分</th><th>传球</th><th>关键传球</th><th>抢断</th><th>拦截</th><th>过人</th><th>扑救</th><th>进/助</th></tr></thead>
   <tbody>${list.map(x=>{const a=x.a||{pas:0,ok:0,kp:0,tkl:0,int:0,drb:0},e=(M.ev||{})[x.p.id]||{};
-    return `<tr><td>${POS[x.role][0]} ${pName(x.p)}${subMark(x.p.id)}</td><td>${rtag(x.r)}</td><td>${a.ok}/${a.pas} <small class="muted">${pct(a)}</small></td><td>${a.kp}</td><td>${a.tkl}</td><td>${a.int}</td><td>${a.drb}</td><td>${x.role==='GK'?e.sv||0:'—'}</td><td>${e.g||0}/${e.a||0}</td></tr>`}).join('')}</tbody></table></div>`;
+    return `<tr><td>${roleTag(x)} ${pName(x.p)}${subMark(x.p.id)}</td><td>${rtag(x.r)}</td><td>${a.ok}/${a.pas} <small class="muted">${pct(a)}</small></td><td>${a.kp}</td><td>${a.tkl}</td><td>${a.int}</td><td>${a.drb}</td><td>${x.role==='GK'?e.sv||0:'—'}</td><td>${e.g||0}/${e.a||0}</td></tr>`}).join('')}</tbody></table></div>`;
 }
 const rcls=r=>r>=8?'r-hi':r>=7?'r-ok':r<6?'r-lo':'';
 const rtag=r=>`<span class="rating ${rcls(r)}">${r.toFixed(1)}</span>`;
@@ -690,7 +692,7 @@ function vMatchStats(){
   ${mv?`<div class="motm ${mvT.id===S.my?'mine':''}" style="--c:${mvT.color}"><small>全场最佳</small><div class="motm-r num">${mv.r.toFixed(1)}</div>
     <b>${mv.p.name}</b><span>${mvT.short} · ${POS[mv.role]}</span>${standout(mv)?`<em>${standout(mv)}</em>`:''}</div>`:''}</div>
   <div class="subh" style="margin:12px 0 6px">我方评分</div>
-  <div class="rgrid">${mine.map(x=>`<div class="rrow ${x===mv?'best':''}"><span class="rpos pos-${x.role}">${POS[x.role][0]}</span><span class="rname">${pName(x.p)}${subMark(x.p.id)}</span>${rtag(x.r)}</div>`).join('')}</div>
+  <div class="rgrid">${mine.map(x=>`<div class="rrow ${x===mv?'best':''}"><span class="rpos pos-${x.role}" title="${x.role!==x.p.pos?`${POS[x.p.pos]}，这场踢${POS[x.role]}`:POS[x.role]}">${roleTag(x)}</span><span class="rname">${pName(x.p)}${subMark(x.p.id)}</span>${rtag(x.r)}</div>`).join('')}</div>
   ${vSubLog()}
   <details class="fold mstat-fold" data-fold="mstats"><summary><b>详细数据</b></summary>${statTable(mine)}</details>`;
 }
@@ -929,11 +931,14 @@ function vCup(){
   const sw=S.intl?`<div class="seg cup-switch" role="group" aria-label="杯赛">${[['dom',CUP_NAME],['intl',INTL_NAME]].map(([v,l])=>`<button data-act="cupv" data-arg="${v}" aria-pressed="${k===v}">${l}</button>`).join('')}</div>`:'';
   return sw+(isWide()?`<div class="cols"><div class="col">${page.head}${page.main}</div><div class="col">${page.honours}${page.prize}</div></div>`:page.head+page.honours+page.main+page.prize);
 }
-// a cup's scorers this season (assists break ties); once the cup is won, its top scorer is named
+// a cup's scorers and assists this season (the other count breaks ties), behind a switch; once the cup is won,
+// its top scorer and its top provider are named
 function cupScorers(c,name,teams,won){
   const G=p=>compStat(p,'goals',c),A=p=>compStat(p,'ast',c);
-  const rows=teams.flatMap(t=>t.players.filter(p=>G(p)>0).map(p=>({p,t}))).sort((a,b)=>G(b.p)-G(a.p)||A(b.p)-A(a.p)).slice(0,8);
-  return vLeaders(`${name}射手榜`,won&&rows[0]?`🥇 本届最佳射手：${rows[0].p.name}`:'本赛季',rows.map(x=>({p:x.p,t:x.t,v:G(x.p),label:String(G(x.p)),sub:`${A(x.p)} 助攻`})),v=>v);
+  const top=(f,g)=>teams.flatMap(t=>t.players.filter(p=>f(p)>0).map(p=>({p,t}))).sort((a,b)=>f(b.p)-f(a.p)||g(b.p)-g(a.p)).slice(0,8);
+  const board=(f,g,title,best,unit)=>()=>{const rows=top(f,g);
+    return vLeaders(`${name}${title}`,won&&rows[0]?`🥇 ${best}：${rows[0].p.name}`:'本赛季',rows.map(x=>({p:x.p,t:x.t,v:f(x.p),label:String(f(x.p)),sub:`${g(x.p)} ${unit}`})),v=>v)};
+  return vBoards(c,[['goals','射手',board(G,A,'射手榜','本届最佳射手','助攻')],['ast','助攻',board(A,G,'助攻榜','本届助攻王','球')]]);
 }
 function vDomCup(){
   const C=S.cup,F=cupFmt(C),n=domestic().length,last=F.names.length-1;

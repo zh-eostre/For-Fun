@@ -216,7 +216,7 @@ function substitute(outId,inId,s=mySide(),line,why){
   if(M[key]>=SUBS||!po||!pi||!ids.includes(outId)||xi.includes(inId)||unavail(pi))return false;
   const slot=ids.indexOf(outId);ids[slot]=inId;xi.push(inId);M[key]++;if(key==='subs')M.sel=null;
   M.off[outId]=M.min;M.on[inId]=M.min;
-  M.role[inId]=slotRoles(M[s+'Form'])[slot];M.line[inId]=slotLines(M[s+'Form'])[slot];
+  setRole(inId,slotRoles(M[s+'Form'])[slot],slotLines(M[s+'Form'])[slot]);
   const feed={min:M.min,cls:'sys',t:line||LINE.sub(po.name,pi.name)};M.feed.unshift(feed);
   // stop: which halftime / pause it was made in (changes made while play runs have none)
   (M.subLog||(M.subLog=[])).push({s,min:M.min,out:outId,in:inId,why,feed,stop:M.paused?M.stop:null});
@@ -224,7 +224,21 @@ function substitute(outId,inId,s=mySide(),line,why){
   return true;
 }
 // during a stop our players can change places: swap two slots, or move into a slot left empty by a red card
-function placeOnPitch(id,slot,s=mySide()){M.role[id]=slotRoles(M[s+'Form'])[slot];M.line[id]=slotLines(M[s+'Form'])[slot]}
+function placeOnPitch(id,slot,s=mySide()){setRole(id,slotRoles(M[s+'Form'])[slot],slotLines(M[s+'Form'])[slot])}
+// a player's place on the pitch. the minutes he spends in each line are kept (M.rmin), so his match is rated, and
+// shown, by where he played longest (mainRoles): a midfielder moved to the back late on is still a midfielder
+function setRole(id,role,line){
+  const rmin=M.rmin||(M.rmin={}),since=M.rsince||(M.rsince={}),old=M.role[id];
+  if(old&&old!==role){const m=rmin[id]||(rmin[id]={});m[old]=(m[old]||0)+M.min-(since[id]??0);since[id]=M.min}
+  else if(!old)since[id]=M.min;
+  M.role[id]=role;M.line[id]=line;
+}
+function mainRoles(){
+  const out={};
+  for(const id in M.role){const m={...((M.rmin||{})[id]||{})},r=M.role[id];m[r]=(m[r]||0)+Math.max(0,(M.off[id]??90)-((M.rsince||{})[id]??0));
+    out[id]=Object.entries(m).sort((a,b)=>b[1]-a[1])[0][0]}
+  return out;
+}
 function swapSlots(a,b,s=mySide()){
   const ids=M[s+'Ids'];[ids[a],ids[b]]=[ids[b],ids[a]];[a,b].forEach(i=>{if(ids[i]!=null)placeOnPitch(ids[i],i,s)});
 }
@@ -249,7 +263,7 @@ function resub(outId,inId,s=mySide()){
   }else{
     if(xi.includes(inId)||unavail(pi)){xi.push(outId);M.on[outId]=e.min;return false}
     ids[slot]=inId;xi.push(inId);M.on[inId]=e.min;e.in=inId;
-    M.role[inId]=slotRoles(M[s+'Form'])[slot];M.line[inId]=slotLines(M[s+'Form'])[slot];
+    setRole(inId,slotRoles(M[s+'Form'])[slot],slotLines(M[s+'Form'])[slot]);
     e.feed.t=LINE.sub(team.players.find(x=>x.id===e.out).name,pi.name);
   }
   M.sel=null;return true;
@@ -312,7 +326,7 @@ function finish(){
   S.streak=w==='胜'?(S.streak||0)+1:0;S.clean=og===0?(S.clean||0)+1:0;
   // ratings for both sides; the man of the match is the best of everyone
   matchActs();
-  M.rh=rateSide(S.teams[M.h],M.hXI,M.role,M.ev,M.hg,M.ag,M.mins,false,M.act);M.ra=rateSide(S.teams[M.a],M.aXI,M.role,M.ev,M.ag,M.hg,M.mins,false,M.act);
+  const roles=mainRoles();M.rh=rateSide(S.teams[M.h],M.hXI,roles,M.ev,M.hg,M.ag,M.mins,false,M.act);M.ra=rateSide(S.teams[M.a],M.aXI,roles,M.ev,M.ag,M.hg,M.mins,false,M.act);
   M.mvp=[...M.rh,...M.ra].sort((a,b)=>b.r-a.r)[0];
   M.summary={w,mg,og,mp,op,pens,income,grown,awoken,banned:susp,banComp:M.comp,late:M.late||null};
   news(`${w} ${mg}:${og}${pens?`（点球 ${mp}:${op}）`:''} 对阵${S.teams[oppId].name}${M.derby?'（宿敌之战）':''}。比赛收入 ${money(income)}。`);
@@ -357,7 +371,7 @@ function finishFriendly(){
   M.myInjuries=M.injuries.filter(p=>findP(p.id));
   const mg=home?M.hg:M.ag,og=home?M.ag:M.hg,w=mg>og?'胜':mg<og?'负':'平';
   matchActs();
-  M.rh=rateSide(S.teams[M.h],M.hXI,M.role,M.ev,M.hg,M.ag,M.mins,true,M.act);M.ra=rateSide(S.teams[M.a],M.aXI,M.role,M.ev,M.ag,M.hg,M.mins,true,M.act);
+  const roles=mainRoles();M.rh=rateSide(S.teams[M.h],M.hXI,roles,M.ev,M.hg,M.ag,M.mins,true,M.act);M.ra=rateSide(S.teams[M.a],M.aXI,roles,M.ev,M.ag,M.hg,M.mins,true,M.act);
   M.mvp=[...M.rh,...M.ra].sort((a,b)=>b.r-a.r)[0];
   M.summary={w,mg,og,income:0,grown,awoken,banned:[],pens:false,late:M.late||null};
   S.friendlies[M.fIdx].res={hg:M.hg,ag:M.ag};

@@ -14,6 +14,7 @@ const q=my().players.find(x=>x.pos==='MF');q.goals=9;q.cupG={cup:9};
 UI.tab='table';render();{const h=els.app.innerHTML,i=h.indexOf('射手榜'),lb=h.slice(i,h.indexOf('</ol>',i));ok(i>0&&!lb.includes(q.name),'his 9 cup goals are not on the league\u2019s board')}
 ok(/射手榜 <span class="muted"[^>]*>只算联赛/.test(els.app.innerHTML),'the league boards say they count the league alone');
 UI.tab='cup';UI.cupv='dom';render();ok(new RegExp(CUP_NAME+'射手榜').test(els.app.innerHTML)&&els.app.innerHTML.includes(q.name),'the cup page has the cup\\u2019s scorers, with him');
+q.cupA={cup:4};q.ast=4;ACT.lb('cup:ast');ok(new RegExp(CUP_NAME+'助攻榜').test(els.app.innerHTML)&&els.app.innerHTML.includes(q.name)&&/data-arg="cup:goals"/.test(els.app.innerHTML),'and, behind a switch, its assists');ACT.lb('cup:goals');
 // awards: the golden boot is the league's
 const b=seasonAwards(my().div).boot;ok(!b||b.name!==q.name||compStat(q,'goals','lg')>0,'the golden boot ignores cup goals'+(b?' ('+b.name+' '+b.stat+')':''));
 // his page splits them
