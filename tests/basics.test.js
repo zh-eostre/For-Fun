@@ -9,6 +9,11 @@ ok(S.screen==='combat'&&C&&C.hand.length===5&&C.energy===3&&alive().length>=1,'a
 ok(!bad(els.app.innerHTML)&&/结束回合/.test(els.app.innerHTML),'the arena renders');
 const e0=alive()[0],hp0=e0.hp,strike=C.hand.find(c=>c.id==='strike');
 if(strike){A.play(String(strike.uid));ok(e0.hp<hp0||e0.block>0,'a strike hurts the enemy ('+hp0+' → '+e0.hp+')')}
+// statuses, powers and intents explain themselves in a tooltip
+C.p.fumes=2;C.p.weak=1;e0.next={a:6,n:2,po:3};render();
+ok(/class="chip pow" data-tip="毒气 2 · 能力&#10;每回合开始时，所有敌人获得 2 层中毒"/.test(els.app.innerHTML),'a power shows as a power, with what it does');
+ok(/data-tip="虚弱 1 · 负面&#10;/.test(els.app.innerHTML)&&/data-tip="下回合的行动&#10;攻击：造成 \\d+ 点伤害，共 2 次&#10;下毒：让你获得 3 层中毒"/.test(els.app.innerHTML),'a debuff and an intent have tooltips');
+C.p.fumes=0;C.p.weak=0;
 const php=S.hp;A.end();await flush();
 ok(C&&C.turn===2&&C.hand.length===5&&C.energy===3,'the enemies act and a new turn begins');
 // win the fight outright

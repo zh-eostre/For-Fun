@@ -25,7 +25,7 @@ function render(){
   if(!S){app.innerHTML=vTitle();renderOver();return}
   const v={map:vMap,combat:vCombat,reward:vReward,shop:vShop,rest:vRest,event:vEvent,dead:vDead}[S.screen];
   app.innerHTML=(S.screen==='dead'?'':topbar())+v();
-  renderOver();
+  renderOver();syncTip();
 }
 function vTitle(){
   const sv=load(),b=getBest();
@@ -46,32 +46,48 @@ function vMap(){
       return `<${tag} class="node n-${t} ${f<S.floor&&S.path[f]===i?'took':''}"><span class="ni">${ico('n-'+t)}</span>${NODE[t]}</${tag.split(' ')[0]}>`}).join('')}</div></div>`}).join('')}
   </div></div>`;
 }
+// a tooltip's text, shown on hover or a long press (main.js); its first line is the heading
+const tipAttr=t=>` data-tip="${t.replace(/"/g,'&quot;').replace(/\n/g,'&#10;')}"`;
 function intentHtml(e){
   const m=e.next,p=[],tip=[];
-  if(m.a){p.push(`${ico('i-attack','atk')}<b>${eDmg(e,m.a)}</b>${m.n>1?'×'+m.n:''}`);tip.push('攻击')}
-  if(m.b){p.push(ico('i-block'));tip.push('防御')}
-  if(m.s){p.push(ico('i-buff'));tip.push('增强力量')}
-  if(m.w||m.vu){p.push(ico('i-debuff'));tip.push('施加负面状态')}
-  if(m.po){p.push(ico('i-poison','po'));tip.push('施加中毒')}
-  return `<div class="intent" title="下回合：${tip.join('、')}">${p.join(' ')}</div>`;
+  if(m.a){p.push(`${ico('i-attack','atk')}<b>${eDmg(e,m.a)}</b>${m.n>1?'×'+m.n:''}`);tip.push(`攻击：造成 ${eDmg(e,m.a)} 点伤害${m.n>1?`，共 ${m.n} 次`:''}`)}
+  if(m.b){p.push(ico('i-block'));tip.push(`防御：获得 ${Math.round(m.b*e.bm)} 点格挡`)}
+  if(m.s){p.push(ico('i-buff'));tip.push(`增强：获得 ${m.s} 点力量`)}
+  if(m.w||m.vu){p.push(ico('i-debuff'));tip.push(`削弱：让你获得 ${[m.w&&m.w+' 层虚弱',m.vu&&m.vu+' 层易伤'].filter(Boolean).join('和')}`)}
+  if(m.po){p.push(ico('i-poison','po'));tip.push(`下毒：让你获得 ${m.po} 层中毒`)}
+  return `<div class="intent"${tipAttr('下回合的行动\n'+tip.join('\n'))}>${p.join(' ')}</div>`;
 }
+// statuses on the hero and the enemies, in the order their chips show; k is the kind: a buff, a debuff, or a power
+const ST={
+  str:{n:'力量',k:'增益',d:(v,me)=>`${me?'攻击牌':'攻击'}每次的伤害 +${v}`},
+  weak:{n:'虚弱',k:'负面',d:v=>`造成的攻击伤害减少 25%，还剩 ${v} 回合`},
+  vuln:{n:'易伤',k:'负面',d:v=>`受到的攻击伤害增加 50%，还剩 ${v} 回合`},
+  poison:{n:'中毒',k:'负面',d:v=>`每回合失去 ${v} 点生命，之后层数减 1`},
+  metal:{n:'金属化',k:'能力',d:v=>`每回合结束时获得 ${v} 点格挡`},
+  demon:{n:'恶魔形态',k:'能力',d:v=>`每回合开始时获得 ${v} 点力量`},
+  fumes:{n:'毒气',k:'能力',d:v=>`每回合开始时，所有敌人获得 ${v} 层中毒`},
+  barricade:{n:'壁垒',k:'能力',d:()=>'格挡不再在回合开始时消失'},
+  inspire:{n:'灵感',k:'能力',d:v=>`每回合多抽 ${v} 张牌`}
+};
+const CHIP={str:v=>ico('i-buff')+v,poison:v=>ico('i-poison','po')+v,demon:v=>`恶魔 ${v}`,barricade:()=>'壁垒'};
 function chips(o){
-  const a=[];if(o.str)a.push(`${ico('i-buff')}${o.str}`);if(o.weak)a.push(`虚弱 ${o.weak}`);if(o.vuln)a.push(`易伤 ${o.vuln}`);if(o.poison)a.push(`${ico('i-poison','po')}${o.poison}`);
-  if(o.metal)a.push(`金属化 ${o.metal}`);if(o.demon)a.push(`恶魔 ${o.demon}`);if(o.fumes)a.push(`毒气 ${o.fumes}`);if(o.barricade)a.push('壁垒');if(o.inspire)a.push(`灵感 ${o.inspire}`);
-  return `<div class="chips">${a.map(x=>`<span class="chip">${x}</span>`).join('')}</div>`;
+  const me=!!C&&o===C.p;
+  return `<div class="chips">${Object.keys(ST).filter(k=>o[k]).map(k=>{const s=ST[k],v=o[k];
+    return `<span class="chip ${s.k==='能力'?'pow':''}"${tipAttr(`${s.n}${k==='barricade'?'':' '+v} · ${s.k}\n${s.d(v,me)}`)}>${CHIP[k]?CHIP[k](v):`${s.n} ${v}`}</span>`}).join('')}</div>`;
 }
+const blockTip=(n,me)=>tipAttr(`格挡 ${n}\n受到攻击时先扣格挡，${me?C.p.barricade?'有壁垒，不会清空':'下回合开始时清空':'它下次行动时清空'}`);
 function vCombat(){
   if(!C)return '';
   const tgt=curTarget();
   const foes=C.enemies.filter(e=>e.hp>0).map(e=>{const d=EN[e.k];return `<button class="enemy ${d.elite?'elite':''} ${d.boss?'boss':''} ${tgt&&tgt.uid===e.uid&&alive().length>1?'tgt':''} ${hitCls('e'+e.uid)}" data-act="target" data-arg="${e.uid}" aria-label="${e.name}，生命 ${e.hp}">
     ${intentHtml(e)}<div class="token">${sprite(e.k)}</div><div class="ename disp">${e.name}</div>
-    <div class="hpbar ${e.block?'shield':''}"><i style="width:${e.hp/e.max*100}%"></i><span>${e.hp}/${e.max}</span>${e.block?`<em class="bk">${ico('i-block')}${e.block}</em>`:''}</div>
+    <div class="hpbar ${e.block?'shield':''}"><i style="width:${e.hp/e.max*100}%"></i><span>${e.hp}/${e.max}</span>${e.block?`<em class="bk"${blockTip(e.block)}>${ico('i-block')}${e.block}</em>`:''}</div>
     ${chips(e)}${fxHtml('e'+e.uid)}</button>`}).join('');
   const maxE=3+(has('core')?1:0);
   return `<main class="arena"><div class="foes">${foes}</div>
   <div class="me">
    <div class="hero ${hitCls('p')}"><div class="token">${sprite('hero')}</div><div class="info">
-    <div class="hpbar ${C.p.block?'shield':''}"><i style="width:${S.hp/S.maxHp*100}%"></i><span>${S.hp}/${S.maxHp}</span>${C.p.block?`<em class="bk">${ico('i-block')}${C.p.block}</em>`:''}</div>
+    <div class="hpbar ${C.p.block?'shield':''}"><i style="width:${S.hp/S.maxHp*100}%"></i><span>${S.hp}/${S.maxHp}</span>${C.p.block?`<em class="bk"${blockTip(C.p.block,1)}>${ico('i-block')}${C.p.block}</em>`:''}</div>
     ${chips(C.p)}</div>${fxHtml('p')}</div>
    <div class="orb ${C.energy?'':'empty'}"><div><b>${C.energy}</b><small>/${maxE}</small></div></div>
    <div class="piles"><span>抽牌 ${C.draw.length}</span><span>弃牌 ${C.discard.length}</span>${C.exhaust.length?`<span>消耗 ${C.exhaust.length}</span>`:''}</div>

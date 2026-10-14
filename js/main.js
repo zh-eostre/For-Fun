@@ -36,6 +36,38 @@ const A={
     UI.over=null;save();render();
   }
 };
+/* ---------- tooltips: hover with a mouse, long-press on touch ---------- */
+const TIP={el:null,x:-1,y:-1,sx:0,sy:0,timer:0,swallow:false};
+function showTip(el){
+  const t=document.getElementById('tip'),[h,...b]=el.dataset.tip.split('\n');
+  t.innerHTML=`<b>${h}</b>${b.map(x=>`<span>${x}</span>`).join('')}`;t.hidden=false;
+  const r=el.getBoundingClientRect(),w=t.offsetWidth,th=t.offsetHeight;
+  t.style.left=clamp(r.left+r.width/2-w/2,8,innerWidth-w-8)+'px';
+  t.style.top=(r.top-th-8>=8?r.top-th-8:r.bottom+8)+'px';
+  TIP.el=el;
+}
+function hideTip(){const t=document.getElementById('tip');if(t)t.hidden=true;TIP.el=null}
+const tipAt=(x,y)=>{const el=document.elementFromPoint(x,y);return el&&el.closest('[data-tip]')};
+// the page re-renders under a still mouse (the enemies acting, numbers floating up): follow what is under it now
+function syncTip(){if(TIP.x<0)return;const d=tipAt(TIP.x,TIP.y);d?showTip(d):hideTip()}
+document.addEventListener('pointermove',e=>{
+  if(e.pointerType==='mouse'){TIP.x=e.clientX;TIP.y=e.clientY;const d=e.target.closest('[data-tip]');if(d!==TIP.el)d?showTip(d):hideTip()}
+  else if(Math.hypot(e.clientX-TIP.sx,e.clientY-TIP.sy)>10)clearTimeout(TIP.timer);
+});
+document.addEventListener('pointerout',e=>{if(!e.relatedTarget){TIP.x=-1;hideTip()}});
+document.addEventListener('pointerdown',e=>{
+  if(e.pointerType==='mouse')return;
+  hideTip();clearTimeout(TIP.timer);TIP.swallow=false;
+  if(!e.target.closest('[data-tip]'))return;
+  TIP.sx=e.clientX;TIP.sy=e.clientY;
+  TIP.timer=setTimeout(()=>{const d=tipAt(TIP.sx,TIP.sy);if(d){showTip(d);TIP.swallow=true}},450);
+});
+['pointerup','pointercancel'].forEach(t=>document.addEventListener(t,()=>clearTimeout(TIP.timer)));
+// a long press only shows the tip: it doesn't also pick the enemy or play anything
+document.addEventListener('click',e=>{if(TIP.swallow){TIP.swallow=false;e.stopPropagation();e.preventDefault()}},true);
+document.addEventListener('contextmenu',e=>{if(e.target.closest('[data-tip]'))e.preventDefault()});
+document.addEventListener('scroll',hideTip,true);
+
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const f=A[b.dataset.act];if(f)f(b.dataset.arg)});
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&UI.over&&(UI.over.mode==='deck'||UI.over.from!=='event')){UI.over=null;renderOver()}
