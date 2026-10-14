@@ -66,8 +66,9 @@ const CARD=.013;   // chance per team per minute of a booking (about 1.2 per tea
 // chance to retire at the end of a season by age (33-39; 40+ always retires), scaled by ability below
 const RETIRE_AGE={33:.08,34:.2,35:.4,36:.6,37:.75,38:.85,39:.95};
 // auto lineup rotation: a starter under ROTATE_AT stamina sits out for a fitter man in his position at most
-// ROTATE_GAP points worse (and ROTATE_FRESH stamina fresher)
-const ROTATE_AT=70,ROTATE_GAP=5,ROTATE_FRESH=15;
+// ROTATE_GAP points worse, a point more for every ROTATE_TIRED of stamina he is below ROTATE_AT (and ROTATE_FRESH
+// stamina fresher)
+const ROTATE_AT=75,ROTATE_GAP=8,ROTATE_TIRED=2,ROTATE_FRESH=12;
 // set pieces: the share of goal chances that are a foul in the box (a penalty, scored by the taker about three times
 // in four) and of near misses that win a free kick in range (struck at goal, in about one in eight)
 const PEN_SHARE=.11,FK_SHARE=.08;

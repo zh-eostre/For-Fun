@@ -285,7 +285,7 @@ function vRules(){
     `比赛中会有点球和禁区前的直接任意球。在阵容页或球员详情的「定位球设置」里，点球和任意球各可以排 ${TAKER_MAX} 个人选：由排在前面、而且在场上的人主罚；都不在场时，由场上最合适的人主罚（点球优先前锋，任意球优先中场，有必杀技的更优先）。`,
     `忠诚与一人一城：青训出身（开局时的年轻球员也算）、一直留在队里满 ${ONE_CLUB} 季的球员是「忠诚」球员，一半的球队挖角会被他们回绝。忠诚球员能力达到 ${ONE_CLUB_OVR} 即成为「一人一城」，称号终身保留：他们在主场上场时全队士气小幅提升（每人 +${ONE_CLUB_AURA}，最多 +${ONE_CLUB_AURA_MAX}），卖掉他们会让教练声望 -${ONE_CLUB_SALE_REP}。买来的球员不管多年轻都不算。AI 球队青训出身的球员里约三分之一会成为忠诚或一人一城，他们不会被挖走，你也买不到。`,
     `转会：直接出售只拿到身价的 85%；AI 球队主动报价通常是身价的 1.05–1.6 倍，但看中谁是随机的，大多在窗口的头几天，报价只保留到第二天（快进时收到报价会停下来）。在球员详情里「挂牌出售」，窗口期间就会常有球队专门为他报价（约身价的 ${LIST_RANGE[0]}–${LIST_RANGE[1]} 倍）。`,
-    `首发设为自动时，阵容每天按体能更新；打开「自动轮换」，体能低于 ${ROTATE_AT} 的首发会让给同位置、能力最多低 ${ROTATE_GAP}、体能好得多的替补。`,
+    `首发设为自动时，阵容每天按体能更新；打开「自动轮换」，体能低于 ${ROTATE_AT} 的首发会让给同位置、体能好得多的替补：替补能力最多可以低 ${ROTATE_GAP}，首发越累，可以低得越多（体能每低 ${ROTATE_TIRED} 再多 1）。`,
     `中场休息时，我方球员会恢复一点体能。每场最多换 ${SUBS} 人；自动换人从第 60 分钟起，把体能低于 ${TIRED}、而且替补更强的人换下；体能跌破 ${SPENT} 的球员不管能力多高都会被换下（受伤风险太大）。可以关掉自己来换。`,
     '同一次暂停里的换人在继续比赛前都可以改或撤销。',
     `赛后第一天是休息日（体能 +${DAY_REST}）；之后看训练安排：恢复训练 +${TRAIN_DAY.rest.cond}，常规训练 +${TRAIN_DAY.normal.cond}，高强度加练 +${TRAIN_DAY.hard.cond}（进步最快，但更容易受伤）。`])}
@@ -440,7 +440,7 @@ function vSquad(){
   <div class="count">首发 <span class="num">${lineupCount()}</span>/11</div>
   <button class="btn" data-act="auto">按 ${S.formation} 自动选人</button>
   <span class="xi-mode ${S.autoXI!==false?'auto':''}" title="${S.autoXI!==false?'每场赛后都按最佳阵容重新安排，伤愈的主力会自动回到首发':'保留你的安排，只在有人缺阵时自动补位；点「自动选人」恢复自动'}">${S.autoXI!==false?'首发：自动':'首发：手动'}</span>
-  <button class="btn small" data-act="rotate" aria-pressed="${S.rotate!==false}" title="自动首发时：体能低于 ${ROTATE_AT} 的首发，换上同位置、能力最多低 ${ROTATE_GAP}、体能更好的替补">自动轮换：${S.rotate!==false?'开':'关'}</button>
+  <button class="btn small" data-act="rotate" aria-pressed="${S.rotate!==false}" title="自动首发时：体能低于 ${ROTATE_AT} 的首发，换上同位置、体能更好的替补（能力最多低 ${ROTATE_GAP}，越累可以差得越多）">自动轮换：${S.rotate!==false?'开':'关'}</button>
   <button class="btn small" data-act="takers" title="点球和任意球由谁主罚">定位球设置</button>
   ${iss.length?`<span class="warn">${iss[0]}</span>`:`<span class="muted" style="font-size:14px">${formNote(S.formation)}</span>`}
   </div></section>

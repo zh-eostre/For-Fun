@@ -726,12 +726,13 @@ function kickoffCond(p){
 }
 // the auto XI with rotation (on unless switched off): the most worn starters (by their stamina at kickoff) first,
 // each swapped for the best man of his position who qualifies
+const rotateGap=c=>ROTATE_GAP+Math.floor(Math.max(0,ROTATE_AT-c)/ROTATE_TIRED);  // the more worn, the more we give up
 function rotate(ids,form){
   if(S.rotate===false||seasonDone())return ids;
   const roles=slotRoles(form),out=[...ids],kc=new Map(my().players.map(p=>[p.id,kickoffCond(p)]));
   const worn=out.map((id,i)=>({p:id!=null&&findP(id),i})).filter(x=>x.p&&kc.get(x.p.id)<ROTATE_AT).sort((a,b)=>kc.get(a.p.id)-kc.get(b.p.id));
   for(const {p,i} of worn){
-    const sub=my().players.filter(q=>q.pos===roles[i]&&!unavail(q)&&!out.includes(q.id)&&kc.get(q.id)>=kc.get(p.id)+ROTATE_FRESH&&q.ovr>=p.ovr-ROTATE_GAP)
+    const sub=my().players.filter(q=>q.pos===roles[i]&&!unavail(q)&&!out.includes(q.id)&&kc.get(q.id)>=kc.get(p.id)+ROTATE_FRESH&&q.ovr>=p.ovr-rotateGap(kc.get(p.id)))
       .sort((a,b)=>b.ovr-a.ovr)[0];
     if(sub)out[i]=sub.id;
   }

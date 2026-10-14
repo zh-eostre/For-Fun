@@ -26,7 +26,8 @@ star.cond=100;ACT.auto();ok(S.autoXI===true&&S.lineup[fwSlot]===star.id,'自动�
   S.lineup.forEach((id,j)=>{if(roles[j]==='MF'&&j!==i)findP(id).ovr=star.ovr+5});  // the other midfielders stay ahead of the sub
   S.training='hard';star.cond=50;star.cond=ROTATE_AT-5-(kickoffCond(star)-50);fixLineup();  // under ROTATE_AT at kickoff
   ok(!S.lineup.includes(star.id)&&S.lineup.some(id=>findP(id).pos==='MF'&&findP(id).ovr===star.ovr-3),'a starter on '+star.cond+' stamina is rested for a midfielder 3 points worse');
-  sub.ovr=star.ovr-ROTATE_GAP-2;fixLineup();ok(S.lineup.includes(star.id),'not for one '+(ROTATE_GAP+2)+' points worse');
+  {const g=rotateGap(kickoffCond(star));sub.ovr=star.ovr-g-1;fixLineup();ok(S.lineup.includes(star.id),'not for one '+(g+1)+' points worse (he may give up '+g+' on '+kickoffCond(star)+' stamina)');
+  const k0=star.cond;star.cond=k0-12;const g2=rotateGap(kickoffCond(star));sub.ovr=star.ovr-g2;fixLineup();ok(g2>g&&!S.lineup.includes(star.id),'more worn, a weaker man will do: '+g2+' points on '+kickoffCond(star));star.cond=k0}
   sub.ovr=star.ovr-3;S.rotate=false;fixLineup();ok(S.lineup.includes(star.id),'and not with rotation switched off');
   S.rotate=true;star.cond=ROTATE_AT+5;fixLineup();  // (already above it before the days' recovery)ok(S.lineup.includes(star.id),'above '+ROTATE_AT+' he plays');
   UI.tab='squad';render();ok(/data-act="rotate"/.test(els.app.innerHTML)&&/自动轮换：开/.test(els.app.innerHTML),'the squad page has the switch');
