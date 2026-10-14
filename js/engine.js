@@ -170,6 +170,11 @@ const sellPrice=p=>Math.round(marketValue(p)*.85);
 // where a player is and since when: since, the season he joined his club; home, the club he came up at (or joined at
 // 20 or under), which he loses for good once he leaves it
 function joinClub(p,t,home,season=S.season){p.since=season;if(home)p.home=t.id;else delete p.home}
+// goals and assists: p.goals and p.ast count every competition; the cups' share is kept apart (p.cupG, p.cupA:
+// {cup, intl}) so the league's boards and awards count the league alone
+const CUP_KEY={goals:'cupG',ast:'cupA'};
+function countStat(p,k){p[k]=(p[k]||0)+1;if(COMP&&COMP!=='lg'){const o=p[CUP_KEY[k]]||(p[CUP_KEY[k]]={});o[COMP]=(o[COMP]||0)+1}}
+const compStat=(p,k,c)=>{const o=p[CUP_KEY[k]]||{};return c==='lg'?(p[k]||0)-(o.cup||0)-(o.intl||0):o[c]||0};
 const seasonsAt=p=>p.since==null?0:S.season-p.since+1;
 // at an AI club, whether a player has it in him to stay is fixed by who he is (his id), so a save needs nothing new
 const loyalKind=p=>(Math.imul(p.id,2654435761)>>>0)%1000<AI_LOYAL*1000;
@@ -496,9 +501,9 @@ function simMatch(h,a){
     const ph=xgMin(sh,sa),pa=xgMin(sa,sh);
     // about as many saves as the live match credits to a keeper
     const stop=(T,ids)=>{const k=keeper(T,ids);if(k)e(k.id).sv=(e(k.id).sv||0)+1};
-    const assist=(T,ids,form,p)=>{const a=assister(T,ids,form,p);if(a){a.ast=(a.ast||0)+1;e(a.id).a=(e(a.id).a||0)+1}};
+    const assist=(T,ids,form,p)=>{const a=assister(T,ids,form,p);if(a){countStat(a,'ast');e(a.id).a=(e(a.id).a||0)+1}};
     // a goal chance (a tenth of them a penalty), else maybe a save or a shot; now and then a free kick in range
-    const score=(T,ids,form,p,k,solo)=>{if(k==='h')hg++;else ag++;shots[k]++;p.goals++;e(p.id).g=(e(p.id).g||0)+1;if(!solo)assist(T,ids,form,p)};
+    const score=(T,ids,form,p,k,solo)=>{if(k==='h')hg++;else ag++;shots[k]++;countStat(p,'goals');e(p.id).g=(e(p.id).g||0)+1;if(!solo)assist(T,ids,form,p)};
     const chance=(T,ids,form,O,oids,k,pr)=>{
       if(rng()<pr){
         if(rng()<PEN_SHARE){const t=taker(T,ids,'pen'),gk=keeper(O,oids);if(rng()<penOdds(t,gk))score(T,ids,form,t,k,true);else{shots[k]++;if(gk&&rng()<.6)stop(O,oids)}}
@@ -787,7 +792,7 @@ function newSeason(moveTo){
       else if(p.age<=34)p.ovr-=ri(1,3);
       else p.ovr-=ri(2,5);
       p.ovr=clamp(p.ovr,35,95);p.pot=p.age>=33?p.ovr:Math.max(p.pot,p.ovr);  // 95 is potential's ceiling too; past 33 the decline is for good
-      t.condDay=0;t.lastDay=-9;p.cond=100;p.inj=0;p.bans={};p.away=0;p.ycc={};p.ycs=0;p.rcs=0;p.goals=0;p.ast=0;p.ss=null;p.apps=0;p.lapps=0;p.rs=0;p.rn=0;delete p.bk;p.gain=p.ovr-old;
+      t.condDay=0;t.lastDay=-9;p.cond=100;p.inj=0;p.bans={};p.away=0;p.ycc={};p.ycs=0;p.rcs=0;p.goals=0;p.ast=0;delete p.cupG;delete p.cupA;p.ss=null;p.apps=0;p.lapps=0;p.rs=0;p.rn=0;delete p.bk;p.gain=p.ovr-old;
       if(p.sig&&p.age>=SIG_FADE){if(t.id===S.my)news(`${p.name} 年满 ${p.age} 岁，必杀技「${p.sig}」渐渐生疏了。`);delete p.sig}
       else learnSig(p);
     });

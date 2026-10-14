@@ -150,10 +150,11 @@ function seasonAwards(div){
     norm[pos]=[m,(Math.sqrt(r.reduce((a,b)=>a+(b-m)**2,0)/(r.length||1))||1)*Math.log(Math.max(r.length,2))**.25]});
   const z=x=>(avgRating(x.p)-norm[x.p.pos][0])/norm[x.p.pos][1];
   const sc=x=>z(x)*AWARD_W[x.p.pos],best=f=>q.filter(f).sort((a,b)=>sc(b)-sc(a))[0];
-  const boot=ps.filter(x=>x.p.goals>0).sort((a,b)=>b.p.goals-a.p.goals)[0],ast=ps.filter(x=>x.p.ast>0).sort((a,b)=>b.p.ast-a.p.ast||b.p.goals-a.p.goals)[0];
+  const lg=(p,k)=>compStat(p,k,'lg');  // the golden boot and the assists award are the league's
+  const boot=ps.filter(x=>lg(x.p,'goals')>0).sort((a,b)=>lg(b.p,'goals')-lg(a.p,'goals'))[0],ast=ps.filter(x=>lg(x.p,'ast')>0).sort((a,b)=>lg(b.p,'ast')-lg(a.p,'ast')||lg(b.p,'goals')-lg(a.p,'goals'))[0];
   const out=(x,stat)=>x&&{name:x.p.name,pos:x.p.pos,team:x.t.name,tid:x.t.id,stat};
   const rated=x=>out(x,x&&avgRating(x.p).toFixed(2));
-  return {mvp:rated(best(()=>true)),young:rated(best(x=>x.p.age<=21)),gk:rated(best(x=>x.p.pos==='GK')),boot:out(boot,boot&&boot.p.goals+' 球'),ast:out(ast,ast&&ast.p.ast+' 次助攻')};
+  return {mvp:rated(best(()=>true)),young:rated(best(x=>x.p.age<=21)),gk:rated(best(x=>x.p.pos==='GK')),boot:out(boot,boot&&lg(boot.p,'goals')+' 球'),ast:out(ast,ast&&lg(ast.p,'ast')+' 次助攻')};
 }
 // team of the season, 1-4-3-3 by average rating (8+ matches)
 const XI_SHAPE={GK:1,DF:4,MF:3,FW:3};

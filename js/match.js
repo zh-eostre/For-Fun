@@ -125,9 +125,9 @@ function side(s,p){
   // solo: a set piece, no assist
   const goal=(sc,t,sig,by,solo)=>{
     // goals and assists in friendlies show in the match but don't count toward season tallies
-    if(!M.friendly)sc.goals++;
+    if(!M.friendly)countStat(sc,'goals');
     M.goals[sc.id]=(M.goals[sc.id]||0)+1;ev(sc.id).g=(ev(sc.id).g||0)+1;if(sig)ev(sc.id).sig=(ev(sc.id).sig||0)+1;st.sh++;st.on++;
-    const a=by||(solo?null:assister(team,ids,form,sc));if(a){ev(a.id).a=(ev(a.id).a||0)+1;if(!M.friendly)a.ast=(a.ast||0)+1}
+    const a=by||(solo?null:assister(team,ids,form,sc));if(a){ev(a.id).a=(ev(a.id).a||0)+1;if(!M.friendly)countStat(a,'ast')}
     if(by)ev(by.id).sig=(ev(by.id).sig||0)+1;
     if(s==='h')M.hg++;else M.ag++;
     if(!M.skip)sfx(mine?'goal':'concede');
