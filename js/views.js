@@ -105,23 +105,34 @@ function chips(o){
 }
 const blockTip=(n,me)=>tipAttr(`格挡 ${n}\n受到攻击时先扣格挡，${me?C.p.barricade?'有壁垒，不会清空':'下回合开始时清空':'它下次行动时清空'}`);
 const petsHtml=()=>C.pets.length?`<div class="pets">${C.pets.map(p=>`<div class="pet"${tipAttr(`${PETS[p.k].n} · 宠物\n${PETS[p.k].d(p.p,C.p.pack)}`)}>${sprite('pet-'+p.k)}<span class="pv">${p.p+C.p.pack}</span></div>`).join('')}</div>`:'';
+// the battle is staged like a monster-catching game: the enemies stand far off, top right, the hero near, bottom left,
+// each on a patch of the floor of this part of the tower
+const zone=()=>C.type==='boss'?'boss':S.floor<4?'a':S.floor<8?'b':'c';
 function vCombat(){
   if(!C)return '';
   const tgt=curTarget();
   const foes=C.enemies.filter(e=>e.hp>0).map(e=>{const d=EN[e.k];return `<button class="enemy ${d.elite?'elite':''} ${d.boss?'boss':''} ${tgt&&tgt.uid===e.uid&&alive().length>1?'tgt':''} ${hitCls('e'+e.uid)}" data-act="target" data-arg="${e.uid}" aria-label="${e.name}，生命 ${e.hp}">
-    ${intentHtml(e)}<div class="token">${sprite(e.k)}</div><div class="ename disp">${e.name}</div>
+    ${intentHtml(e)}<div class="token">${sprite(e.k)}</div>
+    <div class="plate"><div class="ename disp">${e.name}</div>
     <div class="hpbar ${e.block?'shield':''}"><i style="width:${e.hp/e.max*100}%"></i><span>${e.hp}/${e.max}</span>${e.block?`<em class="bk"${blockTip(e.block)}>${ico('i-block')}${e.block}</em>`:''}</div>
-    ${chips(e)}${fxHtml('e'+e.uid)}</button>`}).join('');
+    ${chips(e)}</div>${fxHtml('e'+e.uid)}</button>`}).join('');
   const maxE=3+(has('core')?1:0);
-  return `<main class="arena"><div class="foes">${foes}</div>
-  <div class="me">
-   <div class="hero ${hitCls('p')}"><div class="token">${sprite(hero().img)}</div><div class="info">
-    <div class="hpbar ${C.p.block?'shield':''}"><i style="width:${S.hp/S.maxHp*100}%"></i><span>${S.hp}/${S.maxHp}</span>${C.p.block?`<em class="bk"${blockTip(C.p.block,1)}>${ico('i-block')}${C.p.block}</em>`:''}</div>
-    ${chips(C.p)}</div>${fxHtml('p')}</div>
-   ${petsHtml()}
-   <div class="orb ${C.energy?'':'empty'}"><div><b>${C.energy}</b><small>/${maxE}</small></div></div>
-   <div class="piles"><span>抽牌 ${C.draw.length}</span><span>弃牌 ${C.discard.length}</span>${C.exhaust.length?`<span>消耗 ${C.exhaust.length}</span>`:''}</div>
-   <button class="endturn" data-act="end" ${C.busy?'disabled':''}>${C.busy?'敌人行动中…':'结束回合'}</button>
+  return `<main class="arena zone-${zone()} ${C.type}" style="--loop:${S.loop}">
+  <div class="scene" aria-hidden="true"><div class="floor"></div><div class="wall"></div><img class="torch l" src="art/scenes/torch.png" alt=""><img class="torch r" src="art/scenes/torch.png" alt=""></div>
+  <div class="field">
+   <div class="foes">${foes}</div>
+   <div class="ally">
+    <div class="hero ${hitCls('p')}"><div class="token">${sprite(hero().img)}</div>${fxHtml('p')}</div>
+    ${petsHtml()}
+    <div class="plate me-plate"><div class="ename disp">${hero().n}</div>
+     <div class="hpbar ${C.p.block?'shield':''}"><i style="width:${S.hp/S.maxHp*100}%"></i><span>${S.hp}/${S.maxHp}</span>${C.p.block?`<em class="bk"${blockTip(C.p.block,1)}>${ico('i-block')}${C.p.block}</em>`:''}</div>
+     ${chips(C.p)}</div>
+   </div>
+   <div class="ctrl">
+    <div class="orb ${C.energy?'':'empty'}"><div><b>${C.energy}</b><small>/${maxE}</small></div></div>
+    <div class="piles"><span>抽牌 ${C.draw.length}</span><span>弃牌 ${C.discard.length}</span>${C.exhaust.length?`<span>消耗 ${C.exhaust.length}</span>`:''}</div>
+    <button class="endturn" data-act="end" ${C.busy?'disabled':''}>${C.busy?'敌人行动中…':'结束回合'}</button>
+   </div>
   </div>
   ${handHtml()}</main>`;
 }

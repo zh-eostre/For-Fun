@@ -123,3 +123,8 @@
 | monsters/pet-toad.png | Dungeon Crawl Stone Soup `monster/animals/giant_toad.png` |
 | monsters/pet-raven.png | Dungeon Crawl Stone Soup `monster/raven.png` |
 | monsters/hero.png | Dungeon Crawl Stone Soup `monster/deep_elf_knight_new.png` |
+| scenes/a-wall.png, a-floor.png | Dungeon Crawl Stone Soup `dungeon/wall/stone_brick_*`, `dungeon/floor/grey_dirt_*_new` (tiled by `tools/build-scenes.py`) |
+| scenes/b-wall.png, b-floor.png | Dungeon Crawl Stone Soup `dungeon/wall/brick_dark_*`, `dungeon/floor/rect_gray_*_new` |
+| scenes/c-wall.png, c-floor.png | Dungeon Crawl Stone Soup `dungeon/wall/brick_brown-vines_*`, `dungeon/floor/limestone_*` |
+| scenes/boss-wall.png, boss-floor.png | Dungeon Crawl Stone Soup `dungeon/wall/hell_*`, `dungeon/floor/cobble_blood_*_new` |
+| scenes/torch.png | Dungeon Crawl Stone Soup `dungeon/wall/torches/torch_0.png` |
