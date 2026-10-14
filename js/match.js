@@ -25,7 +25,7 @@ function startMatch(){
   M.role={...roleMap(M.hXI,M.hForm),...roleMap(M.aXI,M.aForm)};M.line={...lineMap(M.hXI,M.hForm),...lineMap(M.aXI,M.aForm)};M.ev={};M.st={h:{sh:0,on:0},a:{sh:0,on:0}};
   M.poss=possession(S.teams[M.h],M.hIds,M.hForm,M.h===S.my?M.tac:M.aiTac,S.teams[M.a],M.aIds,M.aForm,M.a===S.my?M.tac:M.aiTac);
   const hn=S.teams[M.h].name,an=S.teams[M.a].name;
-  M.feed.unshift({min:0,cls:'sys',t:f.friendly?(f.warm?LINE.warmKick(hn,an):LINE.friendlyKick(hn,an)):f.cup?LINE.cupKick(hn,an,stageName(M.stage)):f.intl?LINE.intlKick(hn,an,INTL_STAGES[M.stage],M.stage>=6):f.derby?LINE.derbyKick(hn,an):LINE.kickoff(hn,an)});
+  M.feed.unshift({min:0,cls:'sys',t:f.friendly?(f.warm?LINE.warmKick(hn,an):LINE.friendlyKick(hn,an)):f.cup?LINE.cupKick(hn,an,stageName(M.stage)):f.intl?LINE.intlKick(hn,an,intlStage(M.stage),M.stage>=INTL_GROUP_ROUNDS):f.derby?LINE.derbyKick(hn,an):LINE.kickoff(hn,an)});
   sfx('kickoff');
   const talk=legendTalk(f,opp);
   if(talk){M.feed.unshift({min:0,cls:'legend',t:`📣 ${talk.who}来到更衣室：「${talk.say}」`});news(`📣 ${talk.who}赛前来到更衣室：「${talk.say}」`);notice('legend',`📣 ${talk.who}来到更衣室`,`「${talk.say}」`,6000);M.hold=Date.now()+3500}  // a moment to read it before kick-off
@@ -286,12 +286,12 @@ function lateCheck(skipping){
   else notice('against',`被${word} ${g.min}'`,`${g.name}（${team.short}）`);
 }
 // a match that can't end level: a 天穹杯 tie or a 天际冠军杯 knockout tie
-const knockout=()=>M.cup||M.intl&&M.stage>=6;
+const knockout=()=>M.cup||M.intl&&M.stage>=INTL_GROUP_ROUNDS;
 function finish(){
   M.done=true;M.paused=false;clearTimeout(M.timer);
   if(M.friendly)return finishFriendly();
   if(M.cup)NEWS_TAG=`${CUP_NAME}${stageName(M.stage)}`;
-  if(M.intl)NEWS_TAG=`${INTL_NAME}${INTL_STAGES[M.stage]}`;
+  if(M.intl)NEWS_TAG=`${INTL_NAME}${intlStage(M.stage)}`;
   const res={h:M.h,a:M.a,hg:M.hg,ag:M.ag},home=M.h===S.my,myXI=home?M.hXI:M.aXI,oppId=home?M.a:M.h,oppXI=home?M.aXI:M.hXI;
   if(M.cup||M.intl){if(M.hp!==undefined){res.hp=M.hp;res.ap=M.ap}}
   else{const d=my().div;S.results[d].push(S.fixtures[d][S.round].map(([h,a])=>(h===S.my||a===S.my)?res:quickSim(h,a)))}

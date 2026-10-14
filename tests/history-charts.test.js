@@ -9,7 +9,7 @@ S.history.push({season:2,div:1,rank:3,pts:40,p:22,gf:35,ga:20,club:my().name},{s
 UI.tab='honours';render();const x=els.app.innerHTML;
 ok((x.match(/class="hchart"/g)||[]).length===2&&!bad(x),'two charts: position and points per match');
 ok((x.match(/class="hdot"/g)||[]).length===3&&(x.match(/class="hbar"/g)||[]).length===3,'a dot and a bar for each season');
-ok(/data-tip="第 3 季 · [^"]*甲级第 1 名 · 44 分（场均 2\\.44）"/.test(x),'tooltips name the season (an old record without its match count uses the division\\u2019s rounds)');
-ok(/甲级第 1<\\/text>/.test(x)&&/>2\\.44<\\/text>/.test(x),'the latest season is labelled on both');
+ok(/data-tip="第 3 季 · [^"]*甲级第 1 名 · 44 分（场均 2\\.00）"/.test(x),'tooltips name the season (an old record without its match count uses the division\\u2019s rounds)');
+ok(/甲级第 1<\\/text>/.test(x)&&/>2\\.00<\\/text>/.test(x),'the latest season is labelled on both');
 ok((x.match(/<tr><td>S\\d+<\\/td>/g)||[]).length===3&&/—<\\/td>/.test(x),'and a table (goals shown where they were kept)');
 `);

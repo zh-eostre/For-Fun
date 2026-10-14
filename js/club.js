@@ -216,12 +216,12 @@ function aiOneClubNews(farewells){
 function keyMatch(f){
   if(f.friendly)return null;
   if(f.cup){const n=cupFmt().names.length,k=S.cup.stage;return k===n-1?'final':k===n-2?'semi':f.derby?'derby':null}
-  if(f.intl){const k=S.intl.stage,n=INTL_STAGES.length;return k===n-1?'final':k===n-2?'semi':k===n-3?'ko':f.derby?'derby':null}
+  if(f.intl){const k=S.intl.stage,n=intlStages();return k===n-1?'final':k===n-2?'semi':k===n-3?'ko':f.derby?'derby':null}
   const div=my().div,T=table(div),i=T.findIndex(r=>r.id===S.my),pts=T[i].pts,n=T.length;
   if(rounds()-S.round<=LEGEND_TALK_ROUNDS){
     const near=r=>r&&Math.abs(r.pts-pts)<=3;
     if(i<=1&&near(T[i===0?1:0]))return 'title';
-    if(div>0&&i<=SWAP&&(i<SWAP?near(T[SWAP]):near(T[SWAP-1])))return 'promo';
+    const P=promoSlots(div);if(div>0&&i<=P&&(i<P?near(T[P]):near(T[P-1])))return 'promo';
     if(div<DIVS.length-1&&i>=n-SWAP-1&&(i>=n-SWAP?near(T[n-SWAP-1]):near(T[n-SWAP])))return 'drop';
   }
   return f.derby?'derby':null;
@@ -484,7 +484,7 @@ const MIN_GIANTS=2;
 const divSize=d=>S.teams.filter(t=>t.div===d).length;
 function prestigeDelta(div,rank,size){
   if(div===0)return rank===1?8:rank===2?6:rank===3?4:rank>size-SWAP?-6:rank<=size/2?1:-1;
-  return rank===1?5:rank<=SWAP?4:rank>size-3?-3:rank<=size/2?1:0;
+  return rank===1?5:rank<=promoSlots(div)?4:rank>size-3?-3:rank<=size/2?1:0;
 }
 // called with each division's final table (before promotion and relegation); returns lines for the news
 function updatePrestige(tables){
@@ -603,14 +603,14 @@ function planWarmups(){
   // planned as far ahead as we know: a week is free when it has no league round, no cup tie we may still play (a bye
   // is free) and no 冠军杯 match we may still play; a week freed later (knocked out) gets one when it comes
   const cupMay=k=>k===S.cup.stage?inCup():k>S.cup.stage&&cupAlive();
-  const I=S.intl,intlMay=k=>!!I&&intlIn()&&k>=I.stage&&(k===I.stage?intlMine():k<6||I.stage<6||(I.ties||[]).some(t=>t.includes(S.my)));
+  const I=S.intl,intlMay=k=>!!I&&intlIn()&&k>=I.stage&&(k===I.stage?intlMine():k<INTL_GROUP_ROUNDS||I.stage<INTL_GROUP_ROUNDS||(I.ties||[]).some(t=>t.includes(S.my)));
   const lastW=Math.floor((leagueDay(rounds()-1)-S.pre)/7),added=[];
   for(let w=Math.max(0,Math.floor((S.day-S.pre)/7));w<=Math.min(lastW,weeks()-1);w++){
     const a=S.pre+7*w,b=a+6,sat=a+5,inWeek=d=>d>=a&&d<=b;if(S.day>sat)continue;
     if(Array.from({length:rounds()-S.round},(_,i)=>leagueDay(S.round+i)).some(inWeek))continue;
     if((S.friendlies||[]).some(f=>inWeek(f.day)))continue;
     if(cupFmt().names.some((_,k)=>cupMay(k)&&inWeek(cupDay(k))))continue;
-    if(I&&INTL_STAGES.some((_,k)=>intlMay(k)&&inWeek(intlDay(k))))continue;
+    if(I&&intlStageNames().some((_,k)=>intlMay(k)&&inWeek(intlDay(k))))continue;
     const abroad=S.teams.filter(t=>t.foreign),opp=pick(abroad.length?abroad:S.teams.filter(t=>t.div!==my().div)).id;
     (S.friendlies=S.friendlies||[]).push({day:sat,opp,home:rng()<.5,warm:true});added.push({sat,opp});
   }
@@ -656,7 +656,7 @@ function careerSeasonEnd(){
   // reputation drifts a little toward 40, so it has to be kept up
   let d=clamp(expectedRank()-rank,-8,8);
   if(rank===1)d+=[12,5,3][div];
-  if(div>0&&rank<=SWAP)d+=5;
+  if(div>0&&rank<=promoSlots(div))d+=5;
   if(div<DIVS.length-1&&rank>size-SWAP)d-=div===0?10:6;
   if(S.cup.winner===S.my)d+=6;else if(!S.cup.skipped&&cupReached()>=cupFmt().names.length-1)d+=3;
   if(S.intl){const ko=S.intl.ko.filter(rs=>rs.some(r=>r.h===S.my||r.a===S.my)).length;d+=S.intl.winner===S.my?8:ko>=2?4:ko?2:0}

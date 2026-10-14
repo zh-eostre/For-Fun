@@ -1,22 +1,23 @@
-// 天际冠军杯: 16 clubs (甲级's top two, the 天穹杯 winner and 13 from abroad), four groups home and away, then
-// quarter-finals, semi-finals and a final. clubs from abroad stay out of the league, the 天穹杯 and transfers.
+// 天际冠军杯: 32 clubs (甲级's top two, the 天穹杯 winner and 29 from abroad), eight groups home and away, then
+// the last 16, quarter-finals, semi-finals and a final. clubs from abroad stay out of the league, the 天穹杯 and transfers.
 require('./harness').run(`
 const play=()=>{let n=0;while(!seasonDone()){if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ffToMatch();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);
   if(nextFix().intl)n++;startMatch();if(!M)throw 'stuck: '+lineupIssues();skipMatch();ACT.matchDone()}return n};
 const top=TEAMS.map((t,i)=>[t,i]).filter(([t])=>t.div===0).sort((a,b)=>b[0].rep-a[0].rep)[0][1];
 newGame(top,teamNames());
 const I=S.intl,away=S.teams.filter(t=>t.foreign);
-ok(I&&I.groups.length===4&&I.groups.every(g=>g.length===4)&&new Set(I.groups.flat()).size===16,'16 clubs in four groups of four');
+ok(I&&I.groups.length===8&&I.groups.every(g=>g.length===4)&&new Set(I.groups.flat()).size===32,'32 clubs in eight groups of four');
 ok(I.home.length===3&&I.home.includes(S.my)&&I.home.every(id=>S.teams[id].div===0),'three 甲级 clubs enter, us among them');
 ok(I.home.every(id=>I.groups.filter(g=>g.includes(id)).length===1)&&I.groups.every(g=>g.filter(id=>I.home.includes(id)).length<=1),'our clubs are drawn into different groups');
+ok(I.home.map(id=>I.groups.findIndex(g=>g.includes(id))).join()==='0,2,4','in groups A, C and E, so they can\u2019t meet in the last 16');
 ok(away.length===FOREIGN.length&&away.every(t=>t.div===-1&&t.players.length>=16),'the clubs from abroad have squads and no division');
 ok(away.every(t=>t.players.every(p=>!!p.sig===(p.ovr>=SIG_OVR&&p.age<SIG_FADE))),'their stars learn signature moves like everyone else');
 ok(!S.fixtures.flat(3).filter(x=>typeof x==='number').some(id=>S.teams[id].foreign),'no club from abroad in the league');
 ok(![...S.cup.ties.flat(),...(S.cup.byes||[])].some(id=>S.teams[id].foreign),'or in the 天穹杯');
-ok(DIVS.every((_,d)=>divSize(d)===DIV_SIZES[d])&&domestic().length===36,'the pyramid is still 10 / 12 / 14');
+ok(DIVS.every((_,d)=>divSize(d)===DIV_SIZES[d])&&domestic().length===42,'the pyramid is still 12 / 14 / 16');
 ok(/海外/.test(buyBlock(away[0].players[0],away[0])),'their players are not for sale');
 // the calendar: Wednesdays that never meet a 天穹杯 tie, all before the league ends
-const iDays=INTL_WEEKS.map((_,k)=>intlDay(k)),cDays=cupFmt().names.map((_,k)=>cupDay(k));
+const iDays=intlStageNames().map((_,k)=>intlDay(k)),cDays=cupFmt().names.map((_,k)=>cupDay(k));
 const last=leagueDay(rounds()-1);
 ok(iDays.every(d=>d%7===2&&!cDays.includes(d))&&iDays.slice(0,-1).every(d=>d<last),'every stage on a Wednesday, apart from 天穹杯 ties; all but the final before the last round');
 const wkOf=d=>Math.floor((d-S.pre)/7);
@@ -24,8 +25,8 @@ ok(wkOf(iDays[iDays.length-1])===wkOf(last)+1,'the 冠军杯 final comes the wee
 ok(wkOf(cDays[cDays.length-1])===wkOf(last)-1,'the 天穹杯 final is in the week before it');
 // screens
 UI.tab='home';render();ok(!bad(els.app.innerHTML)&&els.app.innerHTML.includes(INTL_NAME),'home: the season list shows our 冠军杯 matches');
-{const d0=S.day;S.day=S.pre+7*3;render();ok(/联赛轮空/.test(els.app.innerHTML),'甲级 off weekends are labelled on the strip');S.day=d0;render()}
-UI.tab='cup';UI.cupv='intl';render();ok(!bad(els.app.innerHTML)&&/A 组/.test(els.app.innerHTML)&&/D 组/.test(els.app.innerHTML),'cup tab: four group tables');
+ok(seasonDays(0).length===weeks(),'甲级 has a round every weekend, so no weekend off');
+UI.tab='cup';UI.cupv='intl';render();ok(!bad(els.app.innerHTML)&&/A 组/.test(els.app.innerHTML)&&/H 组/.test(els.app.innerHTML)&&/32 队 · 8 个小组/.test(els.app.innerHTML),'cup tab: eight group tables');
 UI.cupv='dom';render();ok(!bad(els.app.innerHTML)&&els.app.innerHTML.includes(CUP_NAME),'and the 天穹杯 behind the switch');
 ACT.team(String(away[0].id));render();ok(!bad(els.app.innerHTML)&&/海外俱乐部/.test(els.app.innerHTML),'a club from abroad has a team page');UI.pages=[];UI.tab='home';
 // a whole season
@@ -33,15 +34,16 @@ const before=S.budget,live=play();
 ok(I.winner!=null&&I.stage===intlStages()&&I.ties.length===0,'the cup is decided: '+S.teams[I.winner].name);
 ok(I.res.every(g=>g.length===6&&g.every(rd=>rd.length===2)),'six group rounds of two matches in each group');
 ok(I.res.every((g,gi)=>intlTable(gi).every(r=>r.p===6)),'everyone plays six group matches');
-ok(I.ko.map(r=>r.length).join()==='4,2,1'&&I.ko.flat().every(r=>r.w===r.h||r.w===r.a),'quarter-finals, semi-finals, final, each with a winner');
+ok(I.ko.map(r=>r.length).join()==='8,4,2,1'&&I.ko.flat().every(r=>r.w===r.h||r.w===r.a),'last 16, quarter-finals, semi-finals, final, each with a winner');
 ok(I.ko.flat().every(r=>r.hg!==r.ag||(r.hp!=null&&r.hp!==r.ap)),'a level knockout tie went to penalties');
-const qf=I.ko[0].flatMap(r=>[r.h,r.a]),ups=[0,1,2,3].flatMap(gi=>intlTable(gi).slice(0,2).map(r=>r.id));
-ok(qf.sort().join()===ups.sort().join(),'the quarter-finalists are the top two of each group');
+const qf=I.ko[0].flatMap(r=>[r.h,r.a]),ups=I.groups.flatMap((_,gi)=>intlTable(gi).slice(0,2).map(r=>r.id));
+ok(qf.sort().join()===ups.sort().join(),'the last 16 are the top two of each group');
+ok(I.ko[0].every(r=>I.groups.findIndex(g=>g.includes(r.h))!==I.groups.findIndex(g=>g.includes(r.a))),'no group\u2019s two meet in the last 16');
 const ourKO=I.ko.filter(rd=>rd.some(r=>r.h===S.my||r.a===S.my)).length;
 ok(live===6+ourKO,'we played our six group games and '+ourKO+' knockout ties live');
 ok(S.news.some(n=>n.t.includes(INTL_NAME)),'the news follows it');
 render();ok(els.app.innerHTML.includes(INTL_NAME),'the season-end screen mentions it');
-S.round--;UI.view='main';UI.tab='cup';UI.cupv='intl';render();ok(!bad(els.app.innerHTML)&&/八强/.test(els.app.innerHTML)&&/决赛/.test(els.app.innerHTML),'cup tab shows the knockout rounds');
+S.round--;UI.view='main';UI.tab='cup';UI.cupv='intl';render();ok(!bad(els.app.innerHTML)&&/十六强/.test(els.app.innerHTML)&&/八强/.test(els.app.innerHTML)&&/决赛/.test(els.app.innerHTML),'cup tab shows the knockout rounds');
 UI.tab='honours';render();ok(!bad(els.app.innerHTML)&&els.app.innerHTML.includes(INTL_NAME),'honours has a 冠军杯 trophy count');S.round++;
 // next season: a new draw from the final 甲级 table and the 天穹杯 winner
 // the 甲级 table marks next season's places: amber for the entrants (top two plus the cup winner or 3rd)
@@ -62,9 +64,9 @@ ok(S.teams.filter(t=>t.foreign).every(t=>aiGap(t)<=3),'and they renew their squa
 // an old save without the cup: plays on, and gets one next season
 delete S.intl;UI.tab='home';render();ok(!bad(els.app.innerHTML),'a save without the 冠军杯 renders');
 ok(nextFix()&&!nextFix().intl,'and plays its league');
-// the pool abroad: 28 clubs, drawn by standing, and their standing moves with their 冠军杯 runs
+// the pool abroad: 40 clubs, drawn by standing, and their standing moves with their 冠军杯 runs
 {newGame(TEAMS.findIndex(t=>t.div===2),teamNames());UI.guide=null;const F=S.teams.filter(t=>t.foreign);
-  ok(F.length===FOREIGN.length&&FOREIGN.length===28&&F.every(t=>t.base===t.rep),'28 clubs abroad, each starting at its own standing');
+  ok(F.length===FOREIGN.length&&FOREIGN.length===40&&F.every(t=>t.base===t.rep),'40 clubs abroad, each starting at its own standing');
   const top=F.reduce((a,b)=>a.rep>b.rep?a:b),low=F.reduce((a,b)=>a.rep<b.rep?a:b);let nt=0,nl=0;
   for(let k=0;k<300;k++){const d=drawAbroad(13);if(d.includes(top))nt++;if(d.includes(low))nl++}
   ok(nt>nl*2,'the draw favours the strong: '+top.short+' in '+nt+'/300, '+low.short+' in '+nl+'/300');
@@ -79,9 +81,9 @@ ok(nextFix()&&!nextFix().intl,'and plays its league');
   // an older save with the first 16 gets the rest
   const old=JSON.parse(JSON.stringify(S));const keep=new Set(FOREIGN.slice(0,16).map(f=>f[0]));
   old.teams=old.teams.filter(t=>!t.foreign||keep.has(t.name));old.teams.forEach((t,i)=>t.id=i);S=old;S.intl=null;
-  ensureForeign();ok(S.teams.filter(t=>t.foreign).length===28&&S.teams.every((t,i)=>t.id===i),'an older save gets the 12 new clubs, ids in order');}
+  ensureForeign();ok(S.teams.filter(t=>t.foreign).length===FOREIGN.length&&S.teams.every((t,i)=>t.id===i),'an older save gets the new clubs, ids in order');}
 // clubs abroad are held to their level too: one far above it loses its best players over the summer
 {newGame(TEAMS.findIndex(t=>t.div===2),teamNames());UI.guide=null;const t=S.teams.find(x=>x.foreign);
   [...t.players].sort((a,b)=>b.ovr-a.ovr).slice(0,8).forEach(p=>p.ovr=Math.min(95,p.ovr+25));const before=aiGap(t),top=Math.max(...t.players.map(p=>p.ovr));
-  const n0=t.players.length;freshenForeign();ok(before<-6&&aiGap(t)>before&&Math.max(...t.players.map(p=>p.ovr))<=top&&t.players.length===n0,'a club abroad far over its level (eight stars arrived): one moves on each summer ('+before+' → '+aiGap(t)+')');}
+  const star=[...t.players].sort((a,b)=>b.ovr-a.ovr)[0],n0=t.players.length;freshenForeign();ok(before<-6&&!t.players.includes(star)&&aiGap(t)>=before&&t.players.length===n0,'a club abroad far over its level (eight stars arrived): one moves on each summer ('+before+' → '+aiGap(t)+')');}
 `);

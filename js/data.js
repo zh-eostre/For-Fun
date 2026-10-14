@@ -5,32 +5,36 @@ const SAVE_V=24;         // bump when the save format changes, and add a step to
 function strFromRep(rep){return Math.round(50+rep*.35)}
 const TIERS=[[80,'豪门'],[65,'强队'],[45,'中游'],[0,'弱旅']];
 const tierOf=rep=>TIERS.find(([m])=>rep>=m)[1];
-// a pyramid of three divisions, fewer clubs at the top (like the real thing): 甲级 10, 乙级 12, 丙级 14.
-// each plays a double round robin, so 甲级 has 18 rounds, 乙级 22 and 丙级 26 (the extra ones midweek)
+// a pyramid of three divisions, fewer clubs at the top (like the real thing): 甲级 12, 乙级 14, 丙级 16.
+// each plays a double round robin, so 甲级 has 22 rounds (one every Saturday), 乙级 26 and 丙级 30 (the extra ones on
+// Tuesdays). a save from a smaller pyramid grows at the end of a season: more clubs go up, new ones join 丙级
+// (promoSlots in engine.js, growLeague in club.js)
 const DIVS=['甲级','乙级','丙级'];
-const DIV_SIZES=[10,12,14];
+const DIV_SIZES=[12,14,16];
 // club slots per division. rep (底蕴, 0-100) sets an AI club's target strength and how hard it strengthens;
 // it moves with results every season. each new game gives the slots random names from CITY + NICK
 const TEAMS=[
   {div:0,color:'#B23A2E',rep:92},{div:0,color:'#1F5F99',rep:86},{div:0,color:'#C9822B',rep:76},{div:0,color:'#2C6E49',rep:72},
   {div:0,color:'#7A5C2E',rep:68},{div:0,color:'#4B4B8F',rep:58},{div:0,color:'#8C2F5A',rep:54},{div:0,color:'#1E7F86',rep:50},
-  {div:0,color:'#2A8C8C',rep:40},{div:0,color:'#7B3F00',rep:34},
+  {div:0,color:'#2A8C8C',rep:40},{div:0,color:'#7B3F00',rep:34},{div:0,color:'#3E5C76',rep:74},{div:0,color:'#9E2A2B',rep:44},
   {div:1,color:'#5E7D2B',rep:56},{div:1,color:'#9C4A1A',rep:44},{div:1,color:'#3D6B8E',rep:40},{div:1,color:'#6B3F7A',rep:36},
   {div:1,color:'#A8862B',rep:32},{div:1,color:'#2F7F6A',rep:30},{div:1,color:'#8E3B46',rep:26},{div:1,color:'#5A4FCF',rep:22},
   {div:1,color:'#54606B',rep:18},{div:1,color:'#B5527A',rep:14},{div:1,color:'#3F7FBF',rep:48},{div:1,color:'#9A5B2E',rep:24},
+  {div:1,color:'#4F772D',rep:34},{div:1,color:'#B07D62',rep:16},
   {div:2,color:'#6E8B3D',rep:38},{div:2,color:'#A0522D',rep:34},{div:2,color:'#4682B4',rep:30},{div:2,color:'#8B4789',rep:27},
   {div:2,color:'#B8860B',rep:24},{div:2,color:'#2E8B57',rep:21},{div:2,color:'#A52A2A',rep:19},{div:2,color:'#6A5ACD',rep:17},
   {div:2,color:'#708090',rep:15},{div:2,color:'#C71585',rep:13},{div:2,color:'#5F9EA0',rep:11},{div:2,color:'#8B7355',rep:9},
-  {div:2,color:'#556B2F',rep:7},{div:2,color:'#CD5C5C',rep:5}
+  {div:2,color:'#556B2F',rep:7},{div:2,color:'#CD5C5C',rep:5},{div:2,color:'#7D8491',rep:10},{div:2,color:'#A26769',rep:3}
 ].map(t=>({...t,str:strFromRep(t.rep)}));
 const SWAP=2;           // clubs promoted from / relegated to the division below, each season, between every pair
 // season prize money by final place, per division (万)
-const PRIZES=[[500,400,320,260,220,190,165,145,130,120],[240,200,170,140,120,105,95,85,78,70,64,58],
-  [120,100,85,72,62,55,50,45,41,38,35,32,30,28]];
+const PRIZES=[[500,400,320,260,220,190,165,145,130,120,112,105],[240,200,170,140,120,105,95,85,78,70,64,58,54,50],
+  [120,100,85,72,62,55,50,45,41,38,35,32,30,28,26,24]];
 const DIV_INCOME=[1,.6,.4];  // lower divisions' gates and bonuses are smaller
 // fictional places for club names
 const CITY=['青岚','赤崖','白沙湾','雾港','星原','苍木','金穗','碧潭','风鸣','霜城','云岭','落日湾','铁砧','翠谷','银滩','烈风原','月牙泉','黑石','红树林','晨曦','潮汐镇','雷鸣谷','琥珀城','松涛','鹰嘴岩','蓝鲸湾','紫霞','白桦林',
-  '玉泉','沧澜','雪峰','枫叶港','砂石镇','灯塔湾','长风','暮云','石榴城','青石滩','火山口','珊瑚礁'];
+  '玉泉','沧澜','雪峰','枫叶港','砂石镇','灯塔湾','长风','暮云','石榴城','青石滩','火山口','珊瑚礁',
+  '芦苇荡','望海','铜陵','桃源','龙脊','寒江','绿洲','花岗'];
 // loan destinations outside our league pyramid: [league, club names]
 const LOAN_LEAGUES={
   low:['地区联赛',['柳溪竞技','石桥联队','枫林体育会','沙丘矿工','竹湾渔港','松坡青年队','鹿鸣竞技','蓝湖联队']],
@@ -38,7 +42,8 @@ const LOAN_LEAGUES={
   abroad:['海外联赛',['北境皇家','南洋星辰','西陆白狼','极光城','暮光港','翡翠海岸']]
 };
 const NICK=['流星','铁骑','海鹰','石狮','古城','南风','浪潮','犀鸟','猛虎','黑豹','雷霆','飞马','巨鳄','金鹰','烈火','白鲨','野牛','红隼','战象','疾风','银狼','火凤','苍龙','赤狐','冰熊','钢鹰','夜枭','狂狮',
-  '游隼','黑熊','雪豹','蓝鲸','角马','灰狼','金狮','铁甲','麒麟','闪电','巨浪','山鹰'];
+  '游隼','黑熊','雪豹','蓝鲸','角马','灰狼','金狮','铁甲','麒麟','闪电','巨浪','山鹰',
+  '白鹭','猎豹','青蛟','骏马','怒涛','锦鲤','玄鸟','狂澜'];
 const POS={GK:'门将',DF:'后卫',MF:'中场',FW:'前锋'};
 const PO=['GK','DF','MF','FW'];
 // players per role; dm / am: how many of the midfielders play as holding (后腰) or attacking (前腰) midfielders
@@ -95,9 +100,9 @@ const ONE_CLUB_OVR=80,ONE_CLUB=6,ONE_CLUB_AURA=.5,ONE_CLUB_AURA_MAX=1,ONE_CLUB_R
 const LATE_MIN=85;  // from this minute a goal that wins or levels the match can be a 绝杀 / 绝平
 const YC_BAN=3;   // yellow cards in one competition that add up to a one-match ban in it
 // player name parts; genName in engine.js combines them
-// calendar 3: a season of SEASON_WEEKS weeks, league rounds on Saturdays. 甲级 (18 rounds) sits 4 weekends out, on
-// 冠军杯 weeks; 乙级 (22) plays every Saturday; 丙级 (26) adds 4 rounds on Tuesdays of weeks without a cup tie
-// (see seasonDays in engine.js). cup ties and 冠军杯 matches on Wednesdays: the 天穹杯 final in the week before the
+// calendar 3: a season of SEASON_WEEKS weeks, league rounds on Saturdays. 甲级 (22 rounds) plays every Saturday;
+// 乙级 (26) and 丙级 (30) add their extra rounds on Tuesdays of weeks without a cup tie (see seasonDays in engine.js;
+// on the old 10-club 甲级, 18 rounds, it sat 4 weekends out, on 冠军杯 weeks). cup ties and 冠军杯 matches on Wednesdays: the 天穹杯 final in the week before the
 // last league round, the 冠军杯 final in the week after it. a week in which we'd have no match gets a warm-up
 // friendly on the Saturday (planWarmups in club.js).
 // the day after any of our matches is a rest day, every other day is a training day.
@@ -115,19 +120,23 @@ const TRAIN_DAY={rest:{cond:10,grow:0},normal:{cond:4,grow:.028},hard:{cond:1,gr
 const MATCH_GROW=.1;    // chance per match that a player who played improves by 1
 const YOUTH_PROVEN=5;   // academy players need this many first-team matches before buyers value their potential
 
-// knockout cup for all 16 clubs, slotted between league rounds
+// knockout cup for all our clubs, slotted between league rounds
 const CUP_NAME='天穹杯';
-// the international cup: 甲级's top two and the 天穹杯 winner (甲级 3rd if the winner is already in) against 13 clubs
-// from abroad. four groups of four (home and away), the top two of each to the quarter-finals, then semis and a final,
-// all on the Wednesdays of weeks without a 天穹杯 tie
+// the international cup: 甲级's top two and the 天穹杯 winner (甲级 3rd if the winner is already in) against 29 clubs
+// from abroad. eight groups of four (home and away), the top two of each to the last 16, then quarter-finals, semis and
+// a final, all on the Wednesdays of weeks without a 天穹杯 tie. a cup that began as four groups of 16 clubs (an older
+// save) finishes that way: the format follows from the number of groups (intlKO)
 const INTL_NAME='天际冠军杯';
 // each competition keeps its own bookings and bans: league, 天穹杯, 冠军杯 (friendlies have neither)
 const COMPS={lg:'联赛',cup:CUP_NAME,intl:INTL_NAME};
-const INTL_WEEKS=[3,4,7,8,10,11,14,18,22];   // six group rounds, quarter-finals, semi-finals, final (after the league)
+const INTL_GROUPS=8,INTL_GROUP_ROUNDS=6;
+const INTL_WEEKS=[1,3,4,7,8,10,11,14,18,22];  // six group rounds, last 16, quarters, semis, final (after the league)
+const INTL_WEEKS4=[3,4,7,8,10,11,14,18,22];   // the four-group cup on the 22-week calendar
 const INTL_WEEKS_V2=[3,4,7,8,11,12,16,19,23];  // on the 26-week calendar
 const INTL_WEEKS_V1=[2,3,5,6,8,9,11,12,15];  // on the first, shorter calendar
-const INTL_STAGES=['小组赛第 1 轮','小组赛第 2 轮','小组赛第 3 轮','小组赛第 4 轮','小组赛第 5 轮','小组赛第 6 轮','八强','半决赛','决赛'];
-const INTL_PRIZE={win:30,draw:10,ko:[60,120,200],champion:450};  // per group result; for reaching the quarters / semis / final; winning
+const INTL_KO_NAMES=['十六强','八强','半决赛','决赛'];
+// per group result; for reaching the last 16 / quarters / semis / final (a four-group cup uses the last three); winning
+const INTL_PRIZE={win:30,draw:10,ko:[30,60,120,200],champion:450};
 // clubs from abroad (they only play in the international cup): name, short name, colour, 底蕴
 const FOREIGN=[['霜岭皇家','皇家','#2B3A67',86],['赤道星辰','星辰','#C9A227',82],['苍原白狼','白狼','#8D99AE',80],['冰原极光','极光','#3FA7D6',78],
   ['暮色湾联合','暮色','#6D597A',76],['碧波海岸','碧波','#2A9D8F',74],['东瀛蓝武士','武士','#1D3557',73],['月港联合','月港','#B56576',71],
@@ -135,9 +144,12 @@ const FOREIGN=[['霜岭皇家','皇家','#2B3A67',86],['赤道星辰','星辰','
   ['烈阳城','烈阳','#F4A261',64],['雾都皇冠','皇冠','#5C677D',63],['极北之星','北星','#4361EE',62],['银河体育会','银河','#7209B7',60],
   ['铁原竞技','铁原','#6B705C',75],['碧海联合','碧海','#0096C7',72],['金沙城','金沙','#D4A373',70],['苍穹之鹰','苍穹','#3A86FF',68],
   ['凛风港','凛风','#8ECAE6',66],['赤岩体育会','赤岩','#9D0208',65],['白昼骑士','白昼','#E9C46A',63],['星河联','星河','#5A189A',62],
-  ['云端城竞技','云端','#48CAE4',61],['深蓝港','深蓝','#023E8A',59],['风暴角','风暴','#495867',58],['玄武联合','玄武','#2D6A4F',57]];
-// how a club abroad's standing moves after a 冠军杯, by how far it went (group 4th, 3rd, quarter-finals, semis, final,
-// winner); a club more than FOREIGN_PULL away from where it started is pulled a point back each year, and one not in
+  ['云端城竞技','云端','#48CAE4',61],['深蓝港','深蓝','#023E8A',59],['风暴角','风暴','#495867',58],['玄武联合','玄武','#2D6A4F',57],
+  ['狮心王城','狮心','#9B2226',72],['翡翠高原','翡翠','#40916C',70],['黄金海岸','黄金','#E9B949',68],['夜莺城','夜莺','#3C096C',66],
+  ['红杉联合','红杉','#AE2012',65],['蓝冰竞技','蓝冰','#90E0EF',63],['橡树港','橡树','#7F5539',62],['北极熊联','北熊','#CAD2C5',60],
+  ['天狼星','天狼','#22223B',59],['火烈鸟','火鸟','#FF6B6B',57],['孤岛联合','孤岛','#577590',56],['山岚体育会','山岚','#84A98C',55]];
+// how a club abroad's standing moves after a 冠军杯, by how far it went (group 4th, 3rd, out in the first knockout
+// round, the next, the next, winner); a club more than FOREIGN_PULL away from where it started is pulled a point back each year, and one not in
 // the cup drifts a point back. kept within FOREIGN_REP
 const FOREIGN_FORM=[-2,-1,0,1,2,3],FOREIGN_PULL=6,FOREIGN_REP=[55,90];
 // a cup's format is stored with the cup (S.cup.fmt), so a save made under the 16-club format finishes its cup as it began

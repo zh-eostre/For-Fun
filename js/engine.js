@@ -620,7 +620,7 @@ function seasonDays(d=my().div){
   if(!(S.cal>=2))return seasonDaysV1(d);
   const W=weeks(),R=S.fixtures[d].length,pre=S.pre||0;
   let off=W-R;const out=new Set(),mid=w=>w>0&&w<W-1&&!out.has(w);
-  const intlW=d===0?(S.intl&&S.intl.weeks)||(S.cal>=3?INTL_WEEKS:INTL_WEEKS_V2):[],cupW=S.cup&&!S.cup.skipped?cupFmt().at:[];
+  const intlW=d===0?(S.intl&&S.intl.weeks)||(S.cal>=3?INTL_WEEKS4:INTL_WEEKS_V2):[],cupW=S.cup&&!S.cup.skipped?cupFmt().at:[];
   for(const pool of [intlW,cupW,Array.from({length:W},(_,w)=>w)]){
     const take=spread(pool.filter(mid),off);take.forEach(w=>out.add(w));off-=take.length;
   }
@@ -680,8 +680,16 @@ function table(div=my().div){
   return T.sort((x,y)=>y.pts-x.pts||(y.gf-y.ga)-(x.gf-x.ga)||y.gf-x.gf);
 }
 const myRank=()=>table().findIndex(t=>t.id===S.my)+1;
+// how many clubs go up from a division this season: SWAP, or more in the season the pyramid grows to DIV_SIZES
+// (each division still sends SWAP down; the extra places are filled from below, new clubs join the bottom)
+function promoSlots(div){
+  const n=DIVS.map((_,d)=>divSize(d));
+  if(div<=0||n.some(x=>!x)||n.every((x,d)=>x===DIV_SIZES[d]))return SWAP;
+  let up=0;for(let d=0;d<div;d++)up=DIV_SIZES[d]-n[d]+up+SWAP-(d>0?SWAP:0);
+  return clamp(up,SWAP,n[div]-SWAP);
+}
 // 'up', 'down' or '' for a finishing position in a division
-const zone=(div,rank)=>div>0&&rank<=SWAP?'up':div<DIVS.length-1&&rank>divSize(div)-SWAP?'down':'';
+const zone=(div,rank)=>div>0&&rank<=promoSlots(div)?'up':div<DIVS.length-1&&rank>divSize(div)-SWAP?'down':'';
 // the next match: a cup tie when one is due and we're still in it, otherwise the league round
 function nextFix(){
   const fr=nextFriendly();
@@ -693,7 +701,7 @@ function nextFix(){
   return {h:m[0],a:m[1],home:m[0]===S.my,opp,cup,intl,derby:!intl&&opp===S.rival};
 }
 const divName=t=>t.foreign?'海外':DIVS[t.div];
-const fixLabel=f=>f.friendly?(f.warm?`热身赛（对手${divName(S.teams[f.opp])}）`:`季前友谊赛 ${f.idx+1}/2（对手${divName(S.teams[f.opp])}）`):f.cup?`${CUP_NAME}·${stageName(S.cup.stage)}`:f.intl?`${INTL_NAME}·${INTL_STAGES[S.intl.stage]}`:`联赛第 ${S.round+1} 轮`;
+const fixLabel=f=>f.friendly?(f.warm?`热身赛（对手${divName(S.teams[f.opp])}）`:`季前友谊赛 ${f.idx+1}/2（对手${divName(S.teams[f.opp])}）`):f.cup?`${CUP_NAME}·${stageName(S.cup.stage)}`:f.intl?`${INTL_NAME}·${intlStage(S.intl.stage)}`:`联赛第 ${S.round+1} 轮`;
 function lineupIssues(){
   const ps=S.lineup.map(id=>id==null?null:findP(id)),n=ps.filter(Boolean).length,iss=[];
   // fewer than 11 is only allowed when nobody else is fit to play, and never below the 7 the rules require
@@ -771,7 +779,7 @@ function newSeason(moveTo){
   finishIntl();
   const move=moveTo!=null&&(S.jobOffers||[]).find(o=>o.club===moveTo);
   const div=my().div,rank=myRank(),prize=prizeFor(div,rank);
-  {const r=table()[rank-1];S.history.push({season:S.season,div,rank,pts:r.pts,p:r.p,gf:r.gf,ga:r.ga,club:my().name})}
+  {const r=table()[rank-1];S.history.push({season:S.season,div,rank,pts:r.pts,p:r.p,gf:r.gf,ga:r.ga,club:my().name,up:zone(div,rank)==='up'||undefined})}
   S.budget+=prize;
   recordSeason(div,rank);
   payGoals(div);

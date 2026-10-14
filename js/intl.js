@@ -1,7 +1,7 @@
 /* ---------- 天际冠军杯: the international cup ----------
-   16 clubs: our three entrants (甲级's top two and the 天穹杯 winner) and 13 from abroad. four groups of four play home
-   and away (six Wednesdays), the top two of each go to single-match quarter-finals, semi-finals and a final (a draw
-   goes to penalties). the clubs from abroad live in S.teams so the match engine can use them, marked foreign with
+   32 clubs: our three entrants (甲级's top two and the 天穹杯 winner) and 29 from abroad. eight groups of four play
+   home and away (six Wednesdays), the top two of each go to single-match rounds: the last 16, quarter-finals,
+   semi-finals and a final (a draw goes to penalties). a cup begun as four groups (an older save) has no last 16. the clubs from abroad live in S.teams so the match engine can use them, marked foreign with
    div -1, and take no part in anything else (league, 天穹杯, transfers, job offers) */
 const domestic=()=>S.teams.filter(t=>!t.foreign);
 // the clubs from abroad: any of FOREIGN not yet in the game join it (a save from before the pool grew gets the new
@@ -19,14 +19,14 @@ function foreignForm(I){
   if(!I||I.winner==null)return;
   const went={};
   I.groups.forEach((g,gi)=>intlTable(gi).forEach((r,i)=>went[r.id]=i===3?0:i===2?1:2));  // group 4th, 3rd, through
-  I.ko.forEach((rd,j)=>rd.forEach(r=>went[r.w]=j+3));  // won a quarter-final, a semi, the final
+  const K=intlKO(I);I.ko.forEach((rd,j)=>rd.forEach(r=>went[r.w]=Math.max(2,5-(K-1-j))));  // won a knockout round: the final is 5
   S.teams.filter(t=>t.foreign).forEach(t=>{
     const off=t.rep-(t.base??t.rep),back=-Math.sign(off);
     const d=went[t.id]!=null?FOREIGN_FORM[went[t.id]]+(Math.abs(off)>FOREIGN_PULL?back:0):back;
     t.rep=clamp(t.rep+d,...FOREIGN_REP);t.str=strFromRep(t.rep);
   });
 }
-// thirteen clubs from abroad for a 冠军杯, drawn by standing: the stronger a club, the likelier it's in
+// the clubs from abroad for a 冠军杯, drawn by standing: the stronger a club, the likelier it's in
 function drawAbroad(n){
   const pool=S.teams.filter(t=>t.foreign),out=[];
   while(out.length<n&&pool.length){
@@ -70,17 +70,23 @@ function intlEntrants(top,cupWinner){
   ids.push(cupWinner!=null&&!ids.includes(cupWinner)&&!S.teams[cupWinner].foreign?cupWinner:top[2]);
   return ids;
 }
-// the draw: our clubs go to different groups; the 13 from abroad fill the smallest group first, strongest first
+// the draw: our clubs go to groups that can't meet before the quarter-finals (A, C, E); the rest from abroad fill
+// the smallest group first, strongest first
 function newIntl(home){
   if(S.intl)foreignForm(S.intl);  // last season's cup moves the clubs abroad up or down
   ensureForeign();freshenForeign();
-  const away=drawAbroad(13).sort((a,b)=>b.rep-a.rep).map(t=>t.id);
-  const groups=[[],[],[],[]];home.forEach((id,i)=>groups[i].push(id));
+  const away=drawAbroad(4*INTL_GROUPS-home.length).sort((a,b)=>b.rep-a.rep).map(t=>t.id);
+  const groups=Array.from({length:INTL_GROUPS},()=>[]);home.forEach((id,i)=>groups[i*INTL_GROUPS/4].push(id));
   away.forEach(id=>{const g=groups.map((x,i)=>[x.length,i]).sort((a,b)=>a[0]-b[0]||a[1]-b[1])[0][1];groups[g].push(id)});
   news(`${INTL_NAME}抽签：${home.map(id=>S.teams[id].name).join('、')}代表本国出战。`);
   return {season:S.season,weeks:INTL_WEEKS,home,groups,fix:groups.map(g=>genFixtures(g)),res:groups.map(()=>[]),stage:0,ties:[],ko:[],winner:null};
 }
-const intlStages=()=>INTL_STAGES.length;
+// the cup's stages: six group rounds, then the knockout rounds (four after eight groups, three after four)
+const intlKO=(I=S.intl)=>I&&I.groups.length>=8?4:3;
+const intlStageNames=(I=S.intl)=>[...Array.from({length:INTL_GROUP_ROUNDS},(_,i)=>`小组赛第 ${i+1} 轮`),...INTL_KO_NAMES.slice(-intlKO(I))];
+const intlStage=k=>intlStageNames()[k];
+const intlStages=()=>intlStageNames().length;
+const intlKoPrize=j=>INTL_PRIZE.ko.slice(-intlKO())[j];  // for reaching knockout round j (0: the first)
 // a group's table from its results so far: points, then goal difference, then goals
 function intlTable(gi){
   const I=S.intl,rows=I.groups[gi].map(id=>({id,p:0,w:0,d:0,l:0,gf:0,ga:0,pts:0})),by={};rows.forEach(r=>by[r.id]=r);
@@ -88,8 +94,8 @@ function intlTable(gi){
     if(m.hg>m.ag){h.w++;h.pts+=3;a.l++}else if(m.hg<m.ag){a.w++;a.pts+=3;h.l++}else{h.d++;a.d++;h.pts++;a.pts++}});
   return rows.sort((x,y)=>y.pts-x.pts||(y.gf-y.ga)-(x.gf-x.ga)||y.gf-x.gf);
 }
-// this stage's matches: a group round across all four groups, or the knockout ties
-const intlMatches=()=>{const I=S.intl;return I.stage<6?I.fix.flatMap(f=>f[I.stage]):I.ties};
+// this stage's matches: a group round across all the groups, or the knockout ties
+const intlMatches=()=>{const I=S.intl;return I.stage<INTL_GROUP_ROUNDS?I.fix.flatMap(f=>f[I.stage]):I.ties};
 // we're still in it and have a match in the current stage
 const intlMine=()=>!!(S.intl&&S.intl.stage<intlStages()&&intlMatches().some(m=>m.includes(S.my)));
 // the current stage comes before our next league match
@@ -97,7 +103,7 @@ const intlDue=()=>!!(S.intl&&S.intl.stage<intlStages()&&intlDay(S.intl.stage)<le
 const intlIn=()=>!!(S.intl&&S.intl.groups.flat().includes(S.my));
 // plays the current stage (myRes: our live result, or null when we have no match in it)
 function playIntl(myRes){
-  const I=S.intl,k=I.stage,ko=k>=6;
+  const I=S.intl,k=I.stage,ko=k>=INTL_GROUP_ROUNDS;
   intlMatches().flat().forEach(id=>abroadForm(S.teams[id]));
   const res=intlMatches().map(([h,a])=>{
     const r=myRes&&(h===S.my||a===S.my)?myRes:quickSim(h,a,'intl');
@@ -110,21 +116,22 @@ function playIntl(myRes){
     if(mine){const f=mine.h===S.my?mine.hg:mine.ag,o=mine.h===S.my?mine.ag:mine.hg,p=f>o?INTL_PRIZE.win:f===o?INTL_PRIZE.draw:0;if(p)S.budget+=p}
   }else I.ko.push(res);
   I.stage++;
-  if(I.stage===6){
-    // the top two of each group: A1-B2, B1-A2, C1-D2, D1-C2
-    const t=[0,1,2,3].map(intlTable);
-    I.ties=[[t[0][0].id,t[1][1].id],[t[1][0].id,t[0][1].id],[t[2][0].id,t[3][1].id],[t[3][0].id,t[2][1].id]];
-    if(intlIn()){const through=I.ties.flat().includes(S.my);
-      if(through){S.budget+=INTL_PRIZE.ko[0];news(`${INTL_NAME}小组出线，挺进八强！奖金 ${money(INTL_PRIZE.ko[0])}。`)}
+  if(I.stage===INTL_GROUP_ROUNDS){
+    // the top two of each group, paired group by group: A1-B2, B1-A2, C1-D2, D1-C2, …
+    const t=I.groups.map((_,gi)=>intlTable(gi));I.ties=[];
+    for(let g=0;g<t.length;g+=2)I.ties.push([t[g][0].id,t[g+1][1].id],[t[g+1][0].id,t[g][1].id]);
+    if(intlIn()){const through=I.ties.flat().includes(S.my),p=intlKoPrize(0);
+      if(through){S.budget+=p;news(`${INTL_NAME}小组出线，挺进${intlStage(INTL_GROUP_ROUNDS)}！奖金 ${money(p)}。`)}
       else if(my()&&I.groups.flat().includes(S.my))news(`${INTL_NAME}小组赛出局。`)}
   }else if(ko){
     const w=res.map(r=>r.w);
-    if(I.stage<intlStages()){I.ties=I.stage===7?[[w[0],w[2]],[w[1],w[3]]]:[[w[0],w[1]]];
-      if(mine&&mine.w===S.my){const p=INTL_PRIZE.ko[I.stage-6];S.budget+=p;news(`${INTL_NAME}晋级${INTL_STAGES[I.stage]}！奖金 ${money(p)}。`)}}
+    // winners meet the winner from the other half of the round's list, so a group's two never meet again early
+    if(I.stage<intlStages()){const h=w.length/2;I.ties=w.slice(0,h).map((x,i)=>[x,w[i+h]]);
+      if(mine&&mine.w===S.my){const p=intlKoPrize(I.stage-INTL_GROUP_ROUNDS);S.budget+=p;news(`${INTL_NAME}晋级${intlStage(I.stage)}！奖金 ${money(p)}。`)}}
     else{I.ties=[];I.winner=w[0];cupHeadline(INTL_NAME,res[0]);
       if(I.winner===S.my){S.budget+=INTL_PRIZE.champion;news(`捧起${INTL_NAME}！大陆之巅，奖金 ${money(INTL_PRIZE.champion)}。`);unlock('intl')}
 }
-    if(mine&&mine.w!==S.my)news(`${INTL_NAME}止步${INTL_STAGES[k]}，被 ${S.teams[mine.h===S.my?mine.a:mine.h].name} 淘汰。`);
+    if(mine&&mine.w!==S.my)news(`${INTL_NAME}止步${intlStage(k)}，被 ${S.teams[mine.h===S.my?mine.a:mine.h].name} 淘汰。`);
   }
 }
 // whatever is left once the season is over (the final, after the league, when we're not in it; any stage a test or
