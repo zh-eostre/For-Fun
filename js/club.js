@@ -178,7 +178,7 @@ function recordSeason(div,rank){
     S.intl&&S.intl.winner===S.my?`第 ${S.season} 季${INTL_NAME}冠军`:''].filter(Boolean);
   const up=zone(div,rank)==='up'?`第 ${S.season} 季升入${DIVS[div-1]}`:'';  // promotions are shared the same way
   my().players.forEach(p=>{
-    const apps=p.apps;bankPlayer(p);
+    const apps=unbanked(p,'apps');bankPlayer(p);  // his appearances for us (not for a club he left mid-season)
     const c=S.club[p.id];c.seasons=(c.seasons||0)+1;c.titles=c.titles||[];
     if(apps>=TITLE_APPS){c.titles=c.titles.concat(won);if(up)c.ups=(c.ups||[]).concat(up)}
   });

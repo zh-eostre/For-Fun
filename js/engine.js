@@ -169,7 +169,9 @@ const marketValue=p=>unproven(p)?clamp(Math.round((p.ovr-35)*1.2),5,40):value(p)
 const sellPrice=p=>Math.round(marketValue(p)*.85);
 // where a player is and since when: since, the season he joined his club; home, the club he came up at (or joined at
 // 20 or under), which he loses for good once he leaves it
-function joinClub(p,t,home,season=S.season){p.since=season;if(home)p.home=t.id;else delete p.home}
+function joinClub(p,t,home,season=S.season){p.since=season;if(home)p.home=t.id;else delete p.home;
+  // joining us mid-season: what he did for his old club this season stays his, but isn't banked as ours
+  if(t.id===S.my)p.bk=Object.fromEntries(SEASON_KEYS.map(k=>[k,p[k]||0]))}
 // goals and assists: p.goals and p.ast count every competition; the cups' share is kept apart (p.cupG, p.cupA:
 // {cup, intl}) so the league's boards and awards count the league alone
 const CUP_KEY={goals:'cupG',ast:'cupA'};
