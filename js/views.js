@@ -31,7 +31,7 @@ function topbar(){
 }
 function render(){
   const app=document.getElementById('app');
-  if(!S){app.innerHTML=vTitle();renderOver();return}
+  if(!S){app.innerHTML=UI.pick?vPick():vTitle();renderOver();return}
   const v={map:vMap,combat:vCombat,reward:vReward,shop:vShop,rest:vRest,event:vEvent,dead:vDead}[S.screen];
   app.innerHTML=(S.screen==='dead'?'':topbar())+v();
   renderOver();syncTip();
@@ -44,6 +44,18 @@ function vTitle(){
   ${b?`<p class="muted" style="margin-top:22px;font-size:14px">最佳纪录：第 ${b.loop+1} 轮第 ${Math.min(b.floor+1,13)} 层</p>`:''}
   <p class="muted" style="font-size:13px;max-width:420px;margin:18px auto 0">玩法：点卡牌出牌，点敌人切换目标。敌人头顶的图标会告诉你它下一步要做什么。</p>
   <p class="credits">图标：game-icons.net（Lorc、Delapouite、Sbed，CC BY 3.0；Zeromancer，CC0）· 像素怪物：Dungeon Crawl Stone Soup（CC0）</p></div></div>`;
+}
+function vPick(){
+  return `<div class="wrap"><h2 class="disp" style="text-align:center;font-size:30px;margin:12px 0 4px">选择你的英雄</h2>
+  <p class="muted" style="text-align:center;margin:0 0 14px;font-size:14px">每个英雄的生命、起始牌组和起始遗物都不一样，之后遇到的卡牌也会偏向各自擅长的流派。</p>
+  <div class="heroes">${Object.entries(HEROES).map(([k,H])=>{const R=RELICS[H.relic];
+    return `<section class="heropick"><div class="portrait">${sprite(H.img)}</div><h3 class="disp">${H.n}</h3><p class="tag">${H.t}</p>
+    <p class="hd">${H.d}</p>
+    <div class="facts"><span>${ico('u-hp','hp')}<b>${H.hp}</b> 生命</span></div>
+    <div class="start-relic">${ico('r-'+H.relic)}<span><b>${R.n}</b><br>${R.d}</span></div>
+    <p class="start-deck"><b>起始牌组</b>：${Object.entries(H.deck).map(([id,n])=>CARDS[id].n+(n>1?' ×'+n:'')).join('、')}</p>
+    <button class="btn primary" data-act="start" data-arg="${k}">选择${H.n}</button></section>`}).join('')}</div>
+  <div style="text-align:center;margin-top:14px"><button class="btn" data-act="home">返回</button></div></div>`;
 }
 function vMap(){
   return `<div class="wrap"><h2 class="disp" style="text-align:center;font-size:28px;margin:4px 0">选择下一站</h2>
@@ -100,7 +112,7 @@ function vCombat(){
   const maxE=3+(has('core')?1:0);
   return `<main class="arena"><div class="foes">${foes}</div>
   <div class="me">
-   <div class="hero ${hitCls('p')}"><div class="token">${sprite('hero')}</div><div class="info">
+   <div class="hero ${hitCls('p')}"><div class="token">${sprite(hero().img)}</div><div class="info">
     <div class="hpbar ${C.p.block?'shield':''}"><i style="width:${S.hp/S.maxHp*100}%"></i><span>${S.hp}/${S.maxHp}</span>${C.p.block?`<em class="bk"${blockTip(C.p.block,1)}>${ico('i-block')}${C.p.block}</em>`:''}</div>
     ${chips(C.p)}</div>${fxHtml('p')}</div>
    <div class="orb ${C.energy?'':'empty'}"><div><b>${C.energy}</b><small>/${maxE}</small></div></div>

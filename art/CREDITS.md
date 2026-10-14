@@ -61,6 +61,8 @@
 | icons/r-core.svg | game-icons.net `lorc/concentration-orb` |
 | icons/r-crown.svg | game-icons.net `lorc/crown` |
 | icons/r-heart.svg | game-icons.net `lorc/heart-organ` |
+| icons/r-viper.svg | game-icons.net `lorc/snake-bite` |
+| icons/r-tome.svg | game-icons.net `lorc/burning-book` |
 | icons/r-censer.svg | game-icons.net `lorc/incense` |
 | icons/n-fight.svg | game-icons.net `lorc/crossed-swords` |
 | icons/n-elite.svg | game-icons.net `lorc/horned-skull` |
@@ -105,4 +107,6 @@
 | monsters/troll.png | Dungeon Crawl Stone Soup `monster/troll.png` |
 | monsters/naga.png | Dungeon Crawl Stone Soup `monster/greater_naga.png` |
 | monsters/lich.png | Dungeon Crawl Stone Soup `monster/undead/lich.png` |
+| monsters/assassin.png | Dungeon Crawl Stone Soup `monster/deep_elf_master_archer.png` |
+| monsters/pyro.png | Dungeon Crawl Stone Soup `monster/deep_elf_sorcerer.png` |
 | monsters/hero.png | Dungeon Crawl Stone Soup `monster/deep_elf_knight_new.png` |

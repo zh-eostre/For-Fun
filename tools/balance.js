@@ -1,7 +1,8 @@
 // Balance testing: a bot that plays sensibly (in a fight it tries every card on every target and keeps the play that
 // leaves the best position) climbs the tower many times, and reports how far runs get, what each fight costs, and
 // how much each card and relic is worth: a run that starts with it, against runs that start without.
-//   node tools/balance.js [runs per test, default 300] [overall|fights|cards|relics ...]
+//   node tools/balance.js [runs per test, default 300] [overall|fights|heroes|cards|relics ...]
+// The fights, cards and relics are measured with the knight; heroes compares the three.
 const N=+process.argv[2]||300,parts=process.argv.slice(3).filter(x=>isNaN(x));
 const want=p=>!parts.length||parts.includes(p);
 const out=[];
@@ -57,8 +58,8 @@ function chooseNode(){
 const deckWorth=()=>S.deck.reduce((s,c)=>s+tier(c.id),0)/S.deck.length;
 function pickCard(ids){const b=ids.reduce((a,x)=>tier(x)>tier(a)?x:a,ids[0]);return tier(b)+rnd()>deckWorth()+1?b:null}
 function upgradeTarget(){return S.deck.filter(c=>!c.up).sort((a,b)=>tier(b.id)-tier(a.id)+(b.id==='bash')-(a.id==='bash'))[0]}
-async function play(start){
-  A.new();start(S);const log={fights:[],floor:0,loop:0};
+async function play(start,k='knight'){
+  A.new(k);start(S);const log={fights:[],floor:0,loop:0};
   for(let guard=0;guard<500&&S.screen!=='dead'&&S.loop<3;guard++){
     if(UI.over){
       if(UI.over.mode==='upgrade'){const c=upgradeTarget();if(!UI.over.sel&&c)A.pick(String(c.uid));else if(UI.over.sel)A.upgrade();else A.close();continue}
@@ -85,7 +86,7 @@ async function play(start){
   log.floor=S.loop*13+Math.min(S.floor,12)+(S.screen==='dead'?0:1);log.loop=S.loop;log.deck=S.deck.map(c=>c.id);
   return log;
 }
-const runs=async(n,start=()=>{})=>{const a=[];for(let i=0;i<n;i++)a.push(await play(start));return a};
+const runs=async(n,start=()=>{},k)=>{const a=[];for(let i=0;i<n;i++)a.push(await play(start,k));return a};
 const depth=a=>a.reduce((s,l)=>s+l.floor,0)/a.length;
 const pct=(a,f)=>Math.round(100*a.filter(f).length/a.length);
 const T0=Date.now();
@@ -95,6 +96,10 @@ report('overall',{runs:base.length,depth:depth(base),boss1:pct(base,l=>l.floor>=
 if(${JSON.stringify(want('fights'))}){
   const g={};base.forEach(l=>l.fights.forEach(f=>{const k=f.type+' '+f.group+(f.loop?' · 第'+(f.loop+1)+'轮':'');const x=g[k]||(g[k]={n:0,lost:0,died:0,turns:0,floor:0});x.n++;x.lost+=f.lost;x.died+=f.died;x.turns+=f.turns;x.floor+=f.floor+13*f.loop}));
   report('fights',Object.entries(g).map(([k,x])=>({k,n:x.n,lost:x.lost/x.n,died:100*x.died/x.n,turns:x.turns/x.n,floor:x.floor/x.n})));
+}
+if(${JSON.stringify(want('heroes'))}){
+  const r={};for(const k of Object.keys(HEROES)){const a=await runs(${N},()=>{},k);r[k]={depth:depth(a),boss1:pct(a,l=>l.floor>=13),boss2:pct(a,l=>l.floor>=26)}}
+  report('heroes',r);
 }
 if(${JSON.stringify(want('cards'))}){
   const r={};for(const id of Object.keys(CARDS)){if(CARDS[id].r==='basic')continue;
@@ -113,12 +118,13 @@ process.on('exit',()=>{
       console.log('最常死在：'+v.deaths.map(([f,n])=>f+' '+n).join('，'))}
     if(k==='fights'){console.log('\n== 遭遇（平均掉血、死亡率、回合数、平均层数）==');
       v.sort((a,b)=>a.k.localeCompare(b.k)).forEach(x=>console.log(`${x.k.padEnd(30)} ${String(x.n).padStart(5)} 场  掉血 ${x.lost.toFixed(1).padStart(5)}  死亡 ${x.died.toFixed(1).padStart(4)}%  ${x.turns.toFixed(1)} 回合  ${x.floor.toFixed(1)} 层`))}
+    if(k==='heroes'){console.log('\n== 英雄 ==');Object.entries(v).forEach(([h,x])=>console.log(`${HEROES_N[h].padEnd(6,'　')} 平均 ${x.depth.toFixed(1)} 层   打倒第 1 轮首领 ${x.boss1}%   第 2 轮 ${x.boss2}%`))}
     if(k==='cards'||k==='relics'){const base=out.find(o=>o[0]==='overall')[1].depth;
       console.log(`\n== ${k==='cards'?'卡牌：开局牌组换掉一张打击，加入这张':'遗物：开局就带着'}（基准 ${base.toFixed(1)} 层）==`);
       Object.entries(v).sort((a,b)=>b[1].depth-a[1].depth).forEach(([id,x])=>console.log(`${(k==='cards'?CARDS_N[id]:RELICS_N[id]).padEnd(8,'　')} ${(x.depth-base>=0?'+':'')+(x.depth-base).toFixed(1).padStart(5)} 层   首领 ${x.boss1}%`))}
   }
 });
-const CARDS_N={},RELICS_N={};
+const CARDS_N={},RELICS_N={},HEROES_N={};
 {const vm=require('vm'),fs=require('fs'),path=require('path'),ctx={};vm.createContext(ctx);
- vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/data.js'),'utf8')+';this.C2=CARDS;this.R2=RELICS',ctx);
- for(const k in ctx.C2)CARDS_N[k]=ctx.C2[k].n;for(const k in ctx.R2)RELICS_N[k]=ctx.R2[k].n}
+ vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/data.js'),'utf8')+';this.C2=CARDS;this.R2=RELICS;this.H2=HEROES',ctx);
+ for(const k in ctx.C2)CARDS_N[k]=ctx.C2[k].n;for(const k in ctx.R2)RELICS_N[k]=ctx.R2[k].n;for(const k in ctx.H2)HEROES_N[k]=ctx.H2[k].n}

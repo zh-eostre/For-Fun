@@ -3,7 +3,7 @@
 require('./harness').run(`
 const sane=()=>[S.hp,S.maxHp,S.gold,S.floor].every(Number.isFinite)&&S.hp<=S.maxHp&&S.deck.every(c=>CARDS[c.id])&&S.relics.every(k=>RELICS[k]);
 let runs=0,floors=0,broken=0,loops=0,wins=0;
-for(let r=0;r<6;r++){A.new();runs++;let guard=0;
+for(let r=0;r<6;r++){A.new('knight');runs++;let guard=0;
   while(S.screen!=='dead'&&guard++<400&&S.loop<2){
     if(!sane()||bad(els.app.innerHTML)){broken++;console.log('  broken at',S.screen,S.floor,els.app.innerHTML.match(/.{40}(undefined|NaN).{20}/));break}
     if(UI.over&&UI.over.sel){A.upgrade();continue}

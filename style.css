@@ -56,6 +56,21 @@ button{font:inherit;color:inherit}
 .tower{font-size:72px;line-height:1;margin-bottom:12px;color:var(--accent)}
 .credits{font-size:11px;color:var(--muted);opacity:.8;max-width:420px;margin:14px auto 0}
 
+/* hero pick */
+.heroes{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.heropick{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.heropick .portrait{background:radial-gradient(ellipse at 50% 40%,var(--arena2),var(--arena) 75%);border-radius:10px;display:grid;place-items:center;padding:10px 0;filter:drop-shadow(0 4px 6px rgba(0,0,0,.25))}
+.heropick .portrait .sprite{width:128px;height:128px}
+.heropick h3{margin:2px 0 0;font-size:26px;line-height:1.1}
+.heropick .tag{margin:0;color:var(--accent);font-size:13px;font-weight:700;letter-spacing:.05em}
+.heropick .hd{margin:0;font-size:14px;color:var(--muted)}
+.heropick .facts{display:flex;gap:12px;font-size:14px}.heropick .facts b{font-family:"Cinzel",serif;margin:0 2px}
+.heropick .facts .hp{color:var(--hp)}
+.start-relic{display:flex;gap:10px;align-items:center;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;line-height:1.4}
+.start-relic .ico{font-size:28px;color:var(--gold)}
+.start-deck{margin:0;font-size:13px;flex:1}
+.heropick .btn{align-self:stretch}
+
 /* map */
 .mapgrid{display:flex;flex-direction:column-reverse;gap:10px;max-width:560px;margin:8px auto}
 .floor{display:grid;grid-template-columns:54px 1fr;align-items:center;gap:10px}

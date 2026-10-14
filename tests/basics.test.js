@@ -1,7 +1,7 @@
 // A run from the title screen: the map, a fight played card by card, the enemies' turn, the reward, and the other rooms.
 require('./harness').run(`
 render();ok(/深渊之塔/.test(els.app.innerHTML)&&/开始冒险/.test(els.app.innerHTML),'title screen');
-A.new();ok(S&&S.deck.length===10&&S.hp===80&&S.map.length===13&&S.screen==='map','a new run: 10 cards, 80 HP, a 13-floor map');
+A.new('knight');ok(S&&S.deck.length===10&&S.hp===80&&S.map.length===13&&S.screen==='map','a new run: 10 cards, 80 HP, a 13-floor map');
 ok(/选择下一站/.test(els.app.innerHTML)&&!bad(els.app.innerHTML),'the map renders');
 // a fight
 S.map[0]=['fight','fight','event'];A.go('0');

@@ -1,9 +1,10 @@
 /* ---------- actions ---------- */
 function toast(t){const el=document.getElementById('toast');el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2200)}
 const A={
-  new:()=>{UI.over=null;newRun()},
+  new:k=>{UI.over=null;if(k&&HEROES[k]){UI.pick=false;newRun(k)}else{UI.pick=true;S=null;render()}},
+  start:k=>A.new(k),
   cont:()=>{S=load();if(S.screen==='combat')S.screen='map';render()},
-  home:()=>{S=null;render()},
+  home:()=>{S=null;UI.pick=false;render()},
   go:i=>enterNode(+i),
   deck:()=>{UI.over={mode:'deck'};renderOver()},
   close:()=>{UI.over=null;renderOver()},

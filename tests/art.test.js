@@ -9,5 +9,5 @@ ok(Object.keys(ICONS).sort().join()===svgs,'js/icons.js matches art/icons ('+Obj
   const m=miss(p,Object.keys(o));ok(!m.length,'every one of the '+n+' has an icon'+(m.length?' (missing: '+m+')':''))});
 const ui=['u-hp','u-gold','u-tower','u-tomb','u-remove','u-sleep','u-forge','i-attack','i-block','i-buff','i-debuff','i-poison'].filter(k=>!ICONS[k]);
 ok(!ui.length,'the screens and intents have their icons'+(ui.length?' (missing: '+ui+')':''));
-const m=[...Object.keys(EN),'hero'].filter(k=>!png(k));ok(!m.length,'every enemy and the hero has a sprite'+(m.length?' (missing: '+m+')':''));
+const m=[...Object.keys(EN),...Object.values(HEROES).map(h=>h.img)].filter(k=>!png(k));ok(!m.length,'every enemy and every hero has a sprite'+(m.length?' (missing: '+m+')':''));
 `,{svgs,png:k=>fs.existsSync(path.join(root,'art/monsters',k+'.png'))});

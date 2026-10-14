@@ -19,9 +19,10 @@ function genMap(){
   m.push(['boss']);
   return m;
 }
-function newRun(){
-  S={v:1,uid:1,hp:80,maxHp:80,gold:99,relics:['blood'],loop:0,floor:0,removeCost:75,path:[],screen:'map'};
-  S.deck=[...Array(5).fill('strike'),...Array(4).fill('defend'),'bash'].map(id=>({uid:nid(),id,up:false}));
+function newRun(k){
+  const H=HEROES[k];
+  S={v:1,uid:1,hero:k,hp:H.hp,maxHp:H.hp,gold:99,relics:[H.relic],loop:0,floor:0,removeCost:75,path:[],screen:'map'};
+  S.deck=Object.entries(H.deck).flatMap(([id,n])=>Array(n).fill(id)).map(id=>({uid:nid(),id,up:false}));
   S.map=genMap();save();render();
 }
 const NODE={fight:'战斗',elite:'精英',rest:'篝火',shop:'商店',event:'事件',boss:'首领'};
@@ -65,7 +66,7 @@ function harm(e,n,pierce){
   fx('e'+e.uid,d>0?'-'+d:'格挡',d>0?'dmg':'blk');HIT['e'+e.uid]=performance.now();
   if(e.hp<=0){e.hp=0;if(has('fang'))heal(3)}
 }
-function exhaust(c){C.exhaust.push(c);if(C.p.embers)gainBlock(C.p.embers);if(C.p.devour)draw(C.p.devour);if(has('censer'))alive().forEach(e=>harm(e,3))}
+function exhaust(c){C.exhaust.push(c);if(has('tome')&&!C.tomeUsed){C.tomeUsed=true;C.energy++;fx('p','能量 +1','st')}if(C.p.embers)gainBlock(C.p.embers);if(C.p.devour)draw(C.p.devour);if(has('censer'))alive().forEach(e=>harm(e,3))}
 function atk(base,n=1,mul=1){for(let i=0;i<n;i++){const t=curTarget();if(!t)break;hitEnemy(t,base,mul)}}
 function atkAll(base,n=1){for(let i=0;i<n;i++)alive().forEach(e=>hitEnemy(e,base))}
 function gainBlock(n){if(n<=0)return;C.p.block+=n;fx('p','+'+n+' 格挡','blk')}
@@ -80,7 +81,7 @@ function loseHp(n){S.hp-=n;if(C){fx('p','-'+n,'dmg');HIT.p=performance.now()}}
 function hitPlayer(d){const b=Math.min(C.p.block,d);C.p.block-=b;d-=b;S.hp-=d;fx('p',d>0?'-'+d:'格挡',d>0?'dmg':'blk');HIT.p=performance.now()}
 
 function startTurn(){
-  C.turn++;C.atkCount=0;
+  C.turn++;C.atkCount=0;C.tomeUsed=false;
   if(!C.p.barricade)C.p.block=0;
   if(C.p.poison>0){loseHp(C.p.poison);C.p.poison--;if(S.hp<=0)return die()}
   C.energy=3+(has('core')?1:0)+(C.turn===1&&has('lantern')?1:0);
@@ -97,8 +98,10 @@ function playCard(uid){
   if(cost>C.energy){toast('能量不足');return}
   if(d.t==='atk'&&!curTarget())return;
   C.energy-=cost;C.hand.splice(i,1);
+  const t0=d.t==='atk'?curTarget():null;
   d.f(c.up,c);
-  if(d.t==='atk'){C.atkCount++;if(C.atkCount===3&&has('drum')){C.p.str++;fx('p','力量 +1','st')}}
+  if(d.t==='atk'){C.atkCount++;if(C.atkCount===3&&has('drum')){C.p.str++;fx('p','力量 +1','st')}
+    if(C.atkCount===1&&has('viper')&&t0.hp>0)applyE(t0,'poison',3)}
   if(d.t!=='pow'){if(exOf(c))exhaust(c);else C.discard.push(c)}
   if(S.hp<=0)return die();
   render();checkWin();

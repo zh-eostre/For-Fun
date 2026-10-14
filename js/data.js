@@ -58,12 +58,33 @@ const CARDS={
 const POOL=r=>Object.keys(CARDS).filter(k=>CARDS[k].r===r);
 const costOf=c=>{const d=CARDS[c.id];return c.up&&d.cu!==undefined?d.cu:d.c};
 const exOf=c=>{const d=CARDS[c.id];return typeof d.ex==='function'?d.ex(c.up):!!d.ex};
-function rollCard(elite){const x=Math.random()*100,w=elite?[45,40]:[60,32];return pick(POOL(x<w[0]?'com':x<w[0]+w[1]?'unc':'rare'))}
+// rewards lean toward the cards that suit the hero: four times in ten, the card comes from those it likes
+function rollCard(elite){
+  const x=Math.random()*100,w=elite?[45,40]:[60,32],pool=POOL(x<w[0]?'com':x<w[0]+w[1]?'unc':'rare'),fav=pool.filter(id=>hero().like.includes(id));
+  return pick(fav.length&&Math.random()<.4?fav:pool);
+}
 function rollCards(n,elite){const s=new Set();let g=0;while(s.size<n&&g++<50)s.add(rollCard(elite));return [...s]}
+
+/* ---------- heroes ---------- */
+// each starts with its own HP, deck and relic (found nowhere else), and card rewards lean toward the cards it likes
+const HEROES={
+  knight:{n:'骑士',img:'hero',hp:80,relic:'blood',deck:{strike:5,defend:4,bash:1},t:'力量与格挡',
+    d:'身经百战的骑士。血厚，每场战斗后都能回一口气。',
+    like:['twin','cleave','shrug','heavy','rampage','entrench','inflame','metal','whirl','ironfist','thorns','demon','barricade','limit','frenzy','slam']},
+  assassin:{n:'刺客',img:'assassin',hp:72,relic:'viper',deck:{strike:4,defend:4,venom:1,jab:1},t:'中毒与快攻',
+    d:'刀上淬着毒的刺客。血薄，但每回合第一刀都会让毒更深一层。',
+    like:['venom','darts','haze','jab','anger','sunder','twin','catal','fumes','rupture','toxin','frenzy','adren','scare']},
+  pyro:{n:'灰烬术士',img:'pyro',hp:72,relic:'tome',deck:{strike:4,defend:4,shout:1,scare:1},t:'消耗',
+    d:'以牌为薪的术士。烧掉一张牌，就从灰烬里取回一点能量。',
+    like:['shout','scare','shock','adren','catal','embers','devour','hellfire','offering','limit','inspire','haze']}
+};
+const hero=()=>HEROES[S.hero||'knight'];
 
 /* ---------- relics ---------- */
 const RELICS={
-  blood:{n:'燃烧之血',d:'战斗胜利后回复 6 点生命'},
+  blood:{n:'燃烧之血',d:'战斗胜利后回复 6 点生命',start:1},
+  viper:{n:'蛇牙',d:'每回合打出的第一张攻击牌，额外施加 3 层中毒',start:1},
+  tome:{n:'灰烬法典',d:'每回合第一次消耗牌时，获得 1 点能量',start:1},
   anchor:{n:'船锚',d:'每场战斗第一回合获得 7 点格挡'},
   whet:{n:'磨刀石',d:'战斗开始时获得 1 点力量'},
   ring:{n:'蛇眼戒指',d:'每场战斗第一回合多抽 2 张牌'},
@@ -80,7 +101,7 @@ const RELICS={
 };
 const has=k=>S.relics.includes(k);
 function gainRelic(k){if(!k)return;S.relics.push(k);if(k==='heart'){S.maxHp+=30;S.hp+=30}}
-const freeRelics=boss=>Object.keys(RELICS).filter(k=>!!RELICS[k].boss===!!boss&&k!=='blood'&&(!S.relics.includes(k)||k==='heart'));
+const freeRelics=boss=>Object.keys(RELICS).filter(k=>!!RELICS[k].boss===!!boss&&!RELICS[k].start&&(!S.relics.includes(k)||k==='heart'));
 
 /* ---------- enemies ---------- */
 const EN={

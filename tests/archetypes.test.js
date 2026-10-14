@@ -1,6 +1,6 @@
 // The cards and relic that round out the poison, block and exhaust decks: each does what its text says.
 require('./harness').run(`
-const fight=(...ks)=>{A.new();S.map[0]=['fight','fight','fight'];A.go('0');C.enemies=ks.map(makeEnemy);C.enemies.forEach(e=>{e.next={a:5}});C.target=C.enemies[0].uid;C.energy=9};
+const fight=(...ks)=>{A.new('knight');S.map[0]=['fight','fight','fight'];A.go('0');C.enemies=ks.map(makeEnemy);C.enemies.forEach(e=>{e.next={a:5}});C.target=C.enemies[0].uid;C.energy=9};
 const play=(id,up=false)=>{const c={uid:nid(),id,up};C.hand.push(c);A.play(String(c.uid))};
 // poison
 fight('cultist');const e=C.enemies[0];play('darts');ok(e.poison===3&&e.hp===e.max-6,'淬毒飞镖: 2 damage three times, a poison each hit');
