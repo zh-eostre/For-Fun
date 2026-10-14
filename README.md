@@ -5,3 +5,11 @@ A card-battler roguelike in the browser: climb a 13-floor tower with a deck of c
 grows taller and deadlier.
 
 Open `abyss-tower.html` in a browser to play. The run saves itself in the browser.
+
+## Development
+
+The page loads `style.css` and the scripts in `js/` (data, run, views, main). Tests run with Node:
+
+```
+for f in tests/*.test.js; do node $f; done
+```
