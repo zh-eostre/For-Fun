@@ -291,7 +291,7 @@ function finish(){
   M.done=true;M.paused=false;clearTimeout(M.timer);
   if(M.friendly)return finishFriendly();
   if(M.cup)NEWS_TAG=`${CUP_NAME}${stageName(M.stage)}`;
-  if(M.intl)NEWS_TAG=`${INTL_NAME}${intlStage(M.stage)}`;
+  if(M.intl)NEWS_TAG=`冠军杯${M.stage<INTL_GROUP_ROUNDS?`小组 ${M.stage+1}`:intlStage(M.stage)}`;  // short, for the news column
   const res={h:M.h,a:M.a,hg:M.hg,ag:M.ag},home=M.h===S.my,myXI=home?M.hXI:M.aXI,oppId=home?M.a:M.h,oppXI=home?M.aXI:M.hXI;
   if(M.cup||M.intl){if(M.hp!==undefined){res.hp=M.hp;res.ap=M.ap}}
   else{const d=my().div;S.results[d].push(S.fixtures[d][S.round].map(([h,a])=>(h===S.my||a===S.my)?res:quickSim(h,a)))}
