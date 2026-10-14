@@ -113,7 +113,7 @@ function playIntl(myRes){
   const mine=res.find(r=>r.h===S.my||r.a===S.my);
   if(!ko){
     I.groups.forEach((g,gi)=>I.res[gi].push(res.filter(r=>g.includes(r.h))));
-    if(mine){const f=mine.h===S.my?mine.hg:mine.ag,o=mine.h===S.my?mine.ag:mine.hg,p=f>o?INTL_PRIZE.win:f===o?INTL_PRIZE.draw:0;if(p)S.budget+=p}
+    if(mine){const f=mine.h===S.my?mine.hg:mine.ag,o=mine.h===S.my?mine.ag:mine.hg,p=f>o?INTL_PRIZE.win:f===o?INTL_PRIZE.draw:0;if(p)I.owed=(I.owed||0)+p}
   }else I.ko.push(res);
   I.stage++;
   if(I.stage===INTL_GROUP_ROUNDS){
@@ -121,15 +121,16 @@ function playIntl(myRes){
     const t=I.groups.map((_,gi)=>intlTable(gi));I.ties=[];
     for(let g=0;g<t.length;g+=2)I.ties.push([t[g][0].id,t[g+1][1].id],[t[g+1][0].id,t[g][1].id]);
     if(intlIn()){const through=I.ties.flat().includes(S.my),p=intlKoPrize(0);
-      if(through){S.budget+=p;news(`${INTL_NAME}小组出线，挺进${intlStage(INTL_GROUP_ROUNDS)}！奖金 ${money(p)}。`)}
+      if(through){I.owed=(I.owed||0)+p;news(`${INTL_NAME}小组出线，挺进${intlStage(INTL_GROUP_ROUNDS)}！`)}
       else if(my()&&I.groups.flat().includes(S.my))news(`${INTL_NAME}小组赛出局。`)}
   }else if(ko){
     const w=res.map(r=>r.w);
     // winners meet the winner from the other half of the round's list, so a group's two never meet again early
     if(I.stage<intlStages()){const h=w.length/2;I.ties=w.slice(0,h).map((x,i)=>[x,w[i+h]]);
-      if(mine&&mine.w===S.my){const p=intlKoPrize(I.stage-INTL_GROUP_ROUNDS);S.budget+=p;news(`${INTL_NAME}晋级${intlStage(I.stage)}！奖金 ${money(p)}。`)}}
+      if(mine&&mine.w===S.my){I.owed=(I.owed||0)+intlKoPrize(I.stage-INTL_GROUP_ROUNDS);news(`${INTL_NAME}晋级${intlStage(I.stage)}！`)}}
     else{I.ties=[];I.winner=w[0];cupHeadline(INTL_NAME,res[0]);
-      if(I.winner===S.my){S.budget+=INTL_PRIZE.champion;news(`捧起${INTL_NAME}！大陆之巅，奖金 ${money(INTL_PRIZE.champion)}。`);unlock('intl')}
+      if(I.winner===S.my){I.owed=(I.owed||0)+INTL_PRIZE.champion;news(`捧起${INTL_NAME}！大陆之巅！`);unlock('intl')}
+      payCup(I,INTL_NAME);
 }
     if(mine&&mine.w!==S.my)news(`${INTL_NAME}止步${intlStage(k)}，被 ${S.teams[mine.h===S.my?mine.a:mine.h].name} 淘汰。`);
   }

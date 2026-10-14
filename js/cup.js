@@ -69,12 +69,18 @@ function playCupStage(myRes){
     if(mine.w===S.my){
       if(my().div>opp.div)unlock('giant');
       const P=cupFmt(C).prize;
-      if(C.winner===S.my){S.budget+=P[k+1];news(`捧起${CUP_NAME}！奖金 ${money(P[k+1])}。`);unlock('cup')}
+      if(C.winner===S.my){C.owed=P[k+1];news(`捧起${CUP_NAME}！`);unlock('cup')}
       else news(`${CUP_NAME}晋级${stageName(C.stage)}！`);
     }else{
-      const P=cupFmt(C).prize;S.budget+=P[k];
-      news(`${CUP_NAME}止步${stageName(k)}，被 ${opp.name} 淘汰。${P[k]?`奖金 ${money(P[k])}。`:''}`);
+      const P=cupFmt(C).prize;C.owed=P[k];
+      news(`${CUP_NAME}止步${stageName(k)}，被 ${opp.name} 淘汰。${P[k]?`奖金 ${money(P[k])} 在决赛后发放。`:''}`);
     }
   }
   if(C.winner!==null&&C.winner!==S.my)news(`${CUP_NAME}冠军：${S.teams[C.winner].name}。`);
+  if(C.winner!==null)payCup(C,CUP_NAME);
+}
+// a cup's prize money is paid when its final has been played: what we earned on the way (C.owed), all at once
+function payCup(C,name){
+  if(!C.owed)return;
+  S.budget+=C.owed;news(`💰 ${name}落幕，本队奖金 ${money(C.owed)} 入账。`);C.owed=0;
 }
