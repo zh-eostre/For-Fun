@@ -36,12 +36,13 @@ function render(){
   app.innerHTML=(S.screen==='dead'?'':topbar())+v();
   renderOver();syncTip();
 }
+const bestText=b=>`第 ${b.loop+1} 轮第 ${Math.min(b.floor+1,13)} 层`;
 function vTitle(){
-  const sv=load(),b=getBest();
+  const sv=load(),b=Object.keys(HEROES).filter(getBest);
   return `<div class="title"><div><div class="tower">${ico('u-tower')}</div><h1 class="disp">深渊之塔</h1>
   <p class="sub">用一副牌爬上 13 层，打倒塔顶的首领。<br>打赢之后，塔会变得更高、更危险。</p>
-  <div class="row">${sv?`<button class="btn primary" data-act="cont">继续冒险（第 ${sv.loop+1} 轮第 ${Math.min(sv.floor+1,13)} 层）</button><button class="btn" data-act="new">重新开始</button>`:`<button class="btn primary" data-act="new">开始冒险</button>`}</div>
-  ${b?`<p class="muted" style="margin-top:22px;font-size:14px">最佳纪录：第 ${b.loop+1} 轮第 ${Math.min(b.floor+1,13)} 层</p>`:''}
+  <div class="row">${sv?`<button class="btn primary" data-act="cont">继续冒险（${HEROES[sv.hero||'knight'].n}，第 ${sv.loop+1} 轮第 ${Math.min(sv.floor+1,13)} 层）</button><button class="btn" data-act="new">重新开始</button>`:`<button class="btn primary" data-act="new">开始冒险</button>`}</div>
+  ${b.length?`<p class="muted" style="margin-top:22px;font-size:14px">最佳纪录：${b.map(k=>`${HEROES[k].n} ${bestText(getBest(k))}`).join(' · ')}</p>`:''}
   <p class="muted" style="font-size:13px;max-width:420px;margin:18px auto 0">玩法：点卡牌出牌，点敌人切换目标。敌人头顶的图标会告诉你它下一步要做什么。</p>
   <p class="credits">图标：game-icons.net（Lorc、Delapouite、Sbed，CC BY 3.0；Zeromancer，CC0）· 像素怪物：Dungeon Crawl Stone Soup（CC0）</p></div></div>`;
 }
@@ -51,7 +52,7 @@ function vPick(){
   <div class="heroes">${Object.entries(HEROES).map(([k,H])=>{const R=RELICS[H.relic];
     return `<section class="heropick"><div class="portrait">${sprite(H.img)}</div><h3 class="disp">${H.n}</h3><p class="tag">${H.t}</p>
     <p class="hd">${H.d}</p>
-    <div class="facts"><span>${ico('u-hp','hp')}<b>${H.hp}</b> 生命</span></div>
+    <div class="facts"><span>${ico('u-hp','hp')}<b>${H.hp}</b> 生命</span><span class="best">${ico('u-tower')}${getBest(k)?'最佳 '+bestText(getBest(k)):'还没有纪录'}</span></div>
     <div class="start-relic">${ico('r-'+H.relic)}<span><b>${R.n}</b><br>${R.d}</span></div>
     <p class="start-deck"><b>起始牌组</b>：${Object.entries(H.deck).map(([id,n])=>CARDS[id].n+(n>1?' ×'+n:'')).join('、')}</p>
     <button class="btn primary" data-act="start" data-arg="${k}">选择${H.n}</button></section>`}).join('')}</div>
@@ -166,7 +167,8 @@ function vEvent(){
 }
 function vDead(){
   return `<div class="wrap"><div class="bigmsg"><div class="tomb">${ico('u-tomb')}</div><h2 class="disp">冒险结束</h2>
-  <p>你倒在了第 ${S.loop+1} 轮的第 ${S.floor+1} 层。</p>
+  <p>${hero().n}倒在了第 ${S.loop+1} 轮的第 ${S.floor+1} 层。</p>
+  ${S.newBest?`<p class="newbest disp">新纪录！</p>`:getBest(S.hero||'knight')?`<p class="muted" style="font-size:14px">${hero().n}的最佳纪录：${bestText(getBest(S.hero||'knight'))}</p>`:''}
   <p class="muted" style="font-size:14px">牌组 ${S.deck.length} 张，遗物 ${S.relics.length} 件。</p>
   <div style="display:flex;gap:10px;justify-content:center;margin-top:16px"><button class="btn primary" data-act="new">再来一次</button><button class="btn" data-act="home">回到标题</button></div></div>
   <section class="panel"><h3 class="disp" style="margin:0 0 6px;font-size:20px">你最后的牌组</h3><div class="cardrow">${sortDeck(S.deck).map(c=>cardHtml(c,{dis:1})).join('')}</div></section></div>`;

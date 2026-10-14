@@ -18,6 +18,14 @@ play('shout');ok(C.energy===4,'灰烬法典: exhausting a card gives an energy')
 S.hero='assassin';let liked=0;for(let i=0;i<2000;i++)if(HEROES.assassin.like.includes(rollCard(false)))liked++;
 S.hero='knight';let liked2=0;for(let i=0;i<2000;i++)if(HEROES.assassin.like.includes(rollCard(false)))liked2++;
 ok(liked>liked2*1.3,'card rewards lean toward the hero ('+liked+' of 2000 a 刺客 card for the 刺客, '+liked2+' for the 骑士)');
+// each hero keeps their own best; a record from before heroes is the knight's
+store[BEST]=JSON.stringify({sc:15,loop:1,floor:2});ok(getBest('knight').sc===15&&!getBest('assassin'),"an old best record becomes the knight's");
+A.start('assassin');S.floor=4;ok(setBest()===true&&getBest('assassin').floor===4&&getBest('knight').sc===15,"a 刺客 record is kept apart from the 骑士's");
+S.floor=3;ok(setBest()===false&&getBest('assassin').floor===4,'and only a higher climb replaces it');
+S=null;UI.pick=false;render();ok(/最佳纪录：骑士 第 2 轮第 3 层 · 刺客 第 1 轮第 5 层/.test(els.app.innerHTML),"the title screen lists each hero's best");
+A.new();ok(/最佳 第 2 轮第 3 层/.test(els.app.innerHTML)&&/还没有纪录/.test(els.app.innerHTML),"and so does each hero's card");
+A.start('pyro');S.floor=2;S.map[2]=['fight','fight','fight'];A.go('0');S.hp=1;C.p.block=0;alive().forEach(e=>e.next={a:99});A.end();await flush();
+ok(S.screen==='dead'&&/新纪录！/.test(els.app.innerHTML)&&/灰烬术士倒在了/.test(els.app.innerHTML),'a first death sets a new record, and says so');
 // an old save, from before heroes, is a knight
 const old=JSON.parse(JSON.stringify(S));delete old.hero;S=old;ok(hero()===HEROES.knight,'a save from before heroes plays as the knight');
 `);

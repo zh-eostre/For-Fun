@@ -3,8 +3,14 @@ const nid=()=>S.uid++;
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function load(){try{const t=localStorage.getItem(KEY);if(t){const d=JSON.parse(t);if(d&&d.v===1)return d}}catch(e){}return null}
 function clearSave(){try{localStorage.removeItem(KEY)}catch(e){}}
-function getBest(){try{return JSON.parse(localStorage.getItem(BEST))||null}catch(e){return null}}
-function setBest(){const b=getBest(),sc=S.loop*13+S.floor;if(!b||sc>b.sc){try{localStorage.setItem(BEST,JSON.stringify({sc,loop:S.loop,floor:S.floor}))}catch(e){}}}
+// each hero keeps their own best: {knight:{sc,loop,floor},...}; a record from before heroes ({sc,loop,floor}) was the knight's
+function bests(){try{const b=JSON.parse(localStorage.getItem(BEST))||{};return 'sc' in b?{knight:b}:b}catch(e){return {}}}
+const getBest=k=>bests()[k]||null;
+// keeps the run's height if it is this hero's best; says whether it was
+function setBest(){
+  const all=bests(),k=S.hero||'knight',b=all[k],sc=S.loop*13+S.floor;if(b&&sc<=b.sc)return false;
+  all[k]={sc,loop:S.loop,floor:S.floor};try{localStorage.setItem(BEST,JSON.stringify(all))}catch(e){}return true;
+}
 
 function genMap(){
   const m=[];
@@ -150,7 +156,7 @@ async function endTurn(){
   await sleep(300);if(!C)return;
   startTurn();
 }
-function die(){S.hp=0;C&&(C.busy=true);setBest();setTimeout(()=>{C=null;S.screen='dead';clearSave();render();window.scrollTo(0,0)},700)}
+function die(){S.hp=0;C&&(C.busy=true);S.newBest=setBest();setTimeout(()=>{C=null;S.screen='dead';clearSave();render();window.scrollTo(0,0)},700)}
 
 /* ---------- shop / events ---------- */
 function genShop(){
