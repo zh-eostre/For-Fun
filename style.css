@@ -248,7 +248,8 @@ button{font:inherit;color:inherit}
 .tip[hidden]{display:none}
 .tip b{display:block;color:#F2C46B;margin-bottom:2px}
 .tip span{display:block}
-[data-tip]{cursor:help;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+[data-tip]:not(.card){cursor:help}
+[data-tip]{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:14px;z-index:40;max-width:90vw;text-align:center}
 
 /* a short window: a lower wall, and everyone a size smaller, so the field never runs under the hand */
