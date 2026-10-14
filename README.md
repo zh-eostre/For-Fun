@@ -8,7 +8,9 @@ Open `abyss-tower.html` in a browser to play. The run saves itself in the browse
 
 ## Development
 
-The page loads `style.css` and the scripts in `js/` (data, run, views, main). Tests run with Node:
+The page loads `style.css` and the scripts in `js/` (data, icons, run, views, main). The art lives in `art/`
+(sources and licences in `art/CREDITS.md`): monster sprites are loaded as images, and the icons are built into
+`js/icons.js` with `node tools/build-icons.js` whenever an SVG in `art/icons` is added or changed. Tests run with Node:
 
 ```
 for f in tests/*.test.js; do node $f; done

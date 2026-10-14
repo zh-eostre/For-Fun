@@ -24,7 +24,7 @@ function newRun(){
   S.deck=[...Array(5).fill('strike'),...Array(4).fill('defend'),'bash'].map(id=>({uid:nid(),id,up:false}));
   S.map=genMap();save();render();
 }
-const NODE={fight:['⚔️','战斗'],elite:['👹','精英'],rest:['🔥','篝火'],shop:['🛒','商店'],event:['❓','事件'],boss:['🐉','首领']};
+const NODE={fight:'战斗',elite:'精英',rest:'篝火',shop:'商店',event:'事件',boss:'首领'};
 
 function enterNode(i){
   const type=S.map[S.floor][i];S.path[S.floor]=i;
@@ -145,20 +145,20 @@ function genShop(){
 }
 function rollPool(r,n){return shuffle(POOL(r)).slice(0,n)}
 const EVENTS={
-  altar:{e:'⛩️',n:'神秘祭坛',t:'石台上刻着古老的文字：献出鲜血者，将得到力量。',
+  altar:{n:'神秘祭坛',t:'石台上刻着古老的文字：献出鲜血者，将得到力量。',
     opts:()=>[['献上鲜血：失去 8 点生命，获得一张稀有卡','a'],['转身离开','x']],
     run:o=>{if(o==='a'){S.hp=Math.max(1,S.hp-8);const id=pick(POOL('rare'));addCard(id);return `你感到一阵晕眩。手中多了一张「${CARDS[id].n}」。`}return '你没有碰那座祭坛。'}},
-  chest:{e:'📦',n:'古老宝箱',t:'宝箱上布满了奇怪的符文，旁边还散落着一些金币。',
+  chest:{n:'古老宝箱',t:'宝箱上布满了奇怪的符文，旁边还散落着一些金币。',
     opts:()=>[['打开宝箱：获得一件随机遗物，最大生命 -5','a'],['只捡金币：获得 60 金币','b']],
     run:o=>{if(o==='a'){const k=pick(freeRelics(false));S.maxHp-=5;S.hp=Math.min(S.hp,S.maxHp);if(k){gainRelic(k);return `你得到了「${RELICS[k].n}」：${RELICS[k].d}。`}return '宝箱是空的。'}S.gold+=60;return '你捡起了 60 金币。'}},
-  spring:{e:'⛲',n:'治愈之泉',t:'清澈的泉水闪着微光。',
+  spring:{n:'治愈之泉',t:'清澈的泉水闪着微光。',
     opts:()=>[['喝下泉水：回复 25 点生命','a'],['洗净自己：删除一张牌','b']],
     run:o=>{if(o==='a'){heal(25);return '伤口慢慢愈合了。'}UI.over={mode:'remove',from:'event'};return null}},
-  smith:{e:'⚒️',n:'流浪铁匠',t:'一个背着铁砧的老人向你招手。',
+  smith:{n:'流浪铁匠',t:'一个背着铁砧的老人向你招手。',
     opts:()=>[['请他帮忙：随机升级 1 张牌','a'],[S.gold>=40?'加钱加急：花 40 金币，随机升级 3 张牌':'加钱加急（金币不够）','b']],
     run:o=>{if(o==='b'&&S.gold<40)return false;if(o==='b')S.gold-=40;const n=o==='a'?1:3;const c=shuffle(S.deck.filter(x=>!x.up)).slice(0,n);c.forEach(x=>x.up=true);
       return c.length?`升级了：${c.map(x=>CARDS[x.id].n+'+').join('、')}。`:'你的牌都已经升级过了。'}},
-  gambler:{e:'🎲',n:'地下赌徒',t:'「敢不敢赌一把？赢了翻倍，输了归我。」',req:()=>S.gold>=50,
+  gambler:{n:'地下赌徒',t:'「敢不敢赌一把？赢了翻倍，输了归我。」',req:()=>S.gold>=50,
     opts:()=>[['赌 50 金币','a'],['不赌','x']],
     run:o=>{if(o==='a'){if(Math.random()<.5){S.gold+=50;return '你赢了！金币 +50。'}S.gold-=50;return '你输了 50 金币。赌徒笑着走开了。'}return '你摇摇头离开了。'}}
 };
