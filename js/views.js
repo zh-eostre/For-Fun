@@ -73,9 +73,13 @@ const ST={
   demon:{n:'恶魔形态',k:'能力',d:v=>`每回合开始时获得 ${v} 点力量`},
   fumes:{n:'毒气',k:'能力',d:v=>`每回合开始时，所有敌人获得 ${v} 层中毒`},
   barricade:{n:'壁垒',k:'能力',d:()=>'格挡不再在回合开始时消失'},
-  inspire:{n:'灵感',k:'能力',d:v=>`每回合多抽 ${v} 张牌`}
+  inspire:{n:'灵感',k:'能力',d:v=>`每回合多抽 ${v} 张牌`},
+  thorns:{n:'荆棘护甲',k:'能力',d:v=>`每次受到攻击时，对攻击者造成 ${v} 点伤害`},
+  embers:{n:'余烬',k:'能力',d:v=>`每消耗一张牌，获得 ${v} 点格挡`},
+  toxin:{n:'剧毒',k:'能力',d:v=>`每次施加中毒时，额外施加 ${v} 层`},
+  devour:{n:'吞噬',k:'能力',d:v=>`每消耗一张牌，抽 ${v} 张牌`}
 };
-const CHIP={str:v=>ico('i-buff')+v,poison:v=>ico('i-poison','po')+v,demon:v=>`恶魔 ${v}`,barricade:()=>'壁垒'};
+const CHIP={str:v=>ico('i-buff')+v,poison:v=>ico('i-poison','po')+v,demon:v=>`恶魔 ${v}`,barricade:()=>'壁垒',thorns:v=>`荆棘 ${v}`};
 function chips(o){
   const me=!!C&&o===C.p;
   return `<div class="chips">${Object.keys(ST).filter(k=>o[k]).map(k=>{const s=ST[k],v=o[k];

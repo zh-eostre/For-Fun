@@ -41,7 +41,7 @@ function nextFloor(){
 function startCombat(type){
   let group=type==='boss'?[pick(['dragon','titan'])]:type==='elite'?pick(ELITES):S.floor<=2&&S.loop===0?pick(EASY):pick(NORMAL);
   C={type,enemies:group.map(makeEnemy),draw:shuffle(S.deck.map(c=>({...c}))),hand:[],discard:[],exhaust:[],energy:0,turn:0,
-     p:{block:0,str:0,weak:0,vuln:0,poison:0,metal:0,fumes:0,demon:0,barricade:0,inspire:0},atkCount:0,target:null,busy:false};
+     p:{block:0,str:0,weak:0,vuln:0,poison:0,metal:0,fumes:0,demon:0,barricade:0,inspire:0,thorns:0,embers:0,toxin:0,devour:0},atkCount:0,target:null,busy:false};
   C.enemies.forEach(e=>{e.next=EN[e.k].ai(e,0)});
   if(has('whet'))C.p.str+=1;
   if(has('sac'))C.enemies.forEach(e=>e.poison+=3);
@@ -58,11 +58,19 @@ function hitEnemy(e,base,mul=1){
   fx('e'+e.uid,d>0?'-'+d:'格挡',d>0?'dmg':'blk');HIT['e'+e.uid]=performance.now();
   if(e.hp<=0){e.hp=0;if(has('fang'))heal(4)}
 }
+// damage that isn't an attack (thorns, poison, the censer): no strength, weakness or vulnerability; block stops it unless it pierces
+function harm(e,n,pierce){
+  if(!e||e.hp<=0||n<=0)return;
+  let d=n;if(!pierce){const b=Math.min(e.block,d);e.block-=b;d-=b}e.hp-=d;
+  fx('e'+e.uid,d>0?'-'+d:'格挡',d>0?'dmg':'blk');HIT['e'+e.uid]=performance.now();
+  if(e.hp<=0){e.hp=0;if(has('fang'))heal(4)}
+}
+function exhaust(c){C.exhaust.push(c);if(C.p.embers)gainBlock(C.p.embers);if(C.p.devour)draw(C.p.devour);if(has('censer'))alive().forEach(e=>harm(e,3))}
 function atk(base,n=1,mul=1){for(let i=0;i<n;i++){const t=curTarget();if(!t)break;hitEnemy(t,base,mul)}}
 function atkAll(base,n=1){for(let i=0;i<n;i++)alive().forEach(e=>hitEnemy(e,base))}
 function gainBlock(n){if(n<=0)return;C.p.block+=n;fx('p','+'+n+' 格挡','blk')}
 const LBL={weak:'虚弱',vuln:'易伤',poison:'中毒',str:'力量'};
-function applyE(e,k,n){if(!e||n<=0)return;e[k]=(e[k]||0)+n;fx('e'+e.uid,`${LBL[k]} +${n}`,'st')}
+function applyE(e,k,n){if(!e||n<=0)return;if(k==='poison')n+=C.p.toxin;e[k]=(e[k]||0)+n;fx('e'+e.uid,`${LBL[k]} +${n}`,'st')}
 function draw(n){for(let i=0;i<n;i++){if(C.hand.length>=10)break;if(!C.draw.length){if(!C.discard.length)break;C.draw=shuffle(C.discard);C.discard=[]}C.hand.push(C.draw.pop())}}
 function heal(n){const h=Math.min(n,S.maxHp-S.hp);if(h>0){S.hp+=h;if(C)fx('p','+'+h,'heal')}}
 function loseHp(n){S.hp-=n;if(C){fx('p','-'+n,'dmg');HIT.p=performance.now()}}
@@ -75,7 +83,7 @@ function startTurn(){
   C.energy=3+(has('core')?1:0)+(C.turn===1&&has('lantern')?1:0);
   if(C.turn===1&&has('anchor'))gainBlock(10);
   if(C.p.demon){C.p.str+=C.p.demon;fx('p',`力量 +${C.p.demon}`,'st')}
-  if(C.p.fumes)alive().forEach(e=>e.poison+=C.p.fumes);
+  if(C.p.fumes)alive().forEach(e=>applyE(e,'poison',C.p.fumes));
   draw(5+C.p.inspire+(has('crown')?1:0)+(C.turn===1&&has('ring')?2:0));
   C.busy=false;render();
 }
@@ -88,7 +96,7 @@ function playCard(uid){
   C.energy-=cost;C.hand.splice(i,1);
   d.f(c.up,c);
   if(d.t==='atk'){C.atkCount++;if(C.atkCount===3&&has('drum')){C.p.str++;fx('p','力量 +1','st')}}
-  if(d.t!=='pow'){if(exOf(c))C.exhaust.push(c);else C.discard.push(c)}
+  if(d.t!=='pow'){if(exOf(c))exhaust(c);else C.discard.push(c)}
   if(S.hp<=0)return die();
   render();checkWin();
 }
@@ -116,12 +124,13 @@ async function endTurn(){
     if(e.hp<=0)continue;
     await sleep(430);if(!C)return;
     e.block=0;
-    if(e.poison>0){e.hp-=e.poison;fx('e'+e.uid,'-'+e.poison,'dmg');HIT['e'+e.uid]=performance.now();e.poison--;
-      if(e.hp<=0){e.hp=0;if(has('fang'))heal(4);render();continue}}
+    if(e.poison>0){harm(e,e.poison,true);e.poison--;if(e.hp<=0){render();continue}}
     const m=e.next;
     if(m.b){e.block+=Math.round(m.b*e.bm);fx('e'+e.uid,'+格挡','blk')}
     if(m.s){e.str+=m.s;fx('e'+e.uid,`力量 +${m.s}`,'st')}
-    if(m.a){for(let i=0;i<(m.n||1);i++)hitPlayer(eDmg(e,m.a))}
+    if(m.a){for(let i=0;i<(m.n||1);i++){hitPlayer(eDmg(e,m.a));if(C.p.thorns)harm(e,C.p.thorns);if(e.hp<=0||S.hp<=0)break}}
+    if(S.hp<=0){render();return die()}
+    if(e.hp<=0){render();continue}
     if(m.w)C.p.weak+=m.w;if(m.vu)C.p.vuln+=m.vu;if(m.po)C.p.poison+=m.po;
     if(m.w||m.vu||m.po)fx('p',[m.w&&'虚弱',m.vu&&'易伤',m.po&&'中毒'].filter(Boolean).join(' '),'st');
     e.t++;e.next=EN[e.k].ai(e,e.t);

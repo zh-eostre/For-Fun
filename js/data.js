@@ -29,6 +29,8 @@ const CARDS={
   shout:{n:'战吼',c:0,t:'skl',r:'com',ex:1,d:u=>`抽 ${u?3:2} 张牌。消耗`,f:u=>draw(u?3:2)},
   scare:{n:'恐吓',c:0,t:'skl',r:'com',ex:1,d:u=>`所有敌人获得 ${u?2:1} 层虚弱。消耗`,f:u=>alive().forEach(e=>applyE(e,'weak',u?2:1))},
   haze:{n:'毒雾',c:1,t:'skl',r:'com',d:u=>`所有敌人获得 ${u?6:4} 层中毒`,f:u=>alive().forEach(e=>applyE(e,'poison',u?6:4))},
+  darts:{n:'淬毒飞镖',c:1,t:'atk',r:'com',d:u=>`造成 ${DM(2)} 点伤害 ${u?4:3} 次，每次施加 1 层中毒`,f:u=>{for(let i=0;i<(u?4:3);i++){const t=curTarget();if(!t)break;hitEnemy(t,2);if(t.hp>0)applyE(t,'poison',1)}}},
+  ironfist:{n:'铁拳',c:1,t:'atk',r:'com',d:u=>`造成 ${DM(u?7:5)} 点伤害，获得 ${u?7:5} 点格挡`,f:u=>{atk(u?7:5);gainBlock(u?7:5)}},
   heavy:{n:'巨刃',c:2,t:'atk',r:'unc',d:u=>`造成 ${DM(14,u?5:3)} 点伤害，力量效果 ×${u?5:3}`,f:u=>atk(14,1,u?5:3)},
   rampage:{n:'狂怒',c:1,t:'atk',r:'unc',d:(u,c)=>`造成 ${DM(8+((c&&c.bonus)||0))} 点伤害，本场每次打出伤害 +${u?8:5}`,f:(u,c)=>{atk(8+(c.bonus||0));c.bonus=(c.bonus||0)+(u?8:5)}},
   entrench:{n:'堡垒',c:2,cu:1,t:'skl',r:'unc',d:u=>`你的格挡值翻倍`,f:u=>gainBlock(C.p.block)},
@@ -39,13 +41,19 @@ const CARDS={
   inflame:{n:'燃烧意志',c:1,t:'pow',r:'unc',d:u=>`获得 ${u?3:2} 点力量`,f:u=>{C.p.str+=u?3:2;fx('p',`力量 +${u?3:2}`,'st')}},
   metal:{n:'金属化',c:1,t:'pow',r:'unc',d:u=>`每回合结束时获得 ${u?4:3} 点格挡`,f:u=>C.p.metal+=u?4:3},
   fumes:{n:'毒气',c:1,t:'pow',r:'unc',d:u=>`每回合开始时，所有敌人获得 ${u?3:2} 层中毒`,f:u=>C.p.fumes+=u?3:2},
+  rupture:{n:'毒发',c:1,cu:0,t:'skl',r:'unc',d:u=>`目标立即失去等同于其中毒层数的生命${C&&curTarget()?`（<b>${curTarget().poison}</b>）`:''}`,f:u=>{const t=curTarget();if(t)harm(t,t.poison,true)}},
+  thorns:{n:'荆棘护甲',c:1,t:'pow',r:'unc',d:u=>`每次受到攻击时，对攻击者造成 ${u?5:3} 点伤害`,f:u=>C.p.thorns+=u?5:3},
+  embers:{n:'余烬',c:1,t:'pow',r:'unc',d:u=>`每消耗一张牌，获得 ${u?4:3} 点格挡`,f:u=>C.p.embers+=u?4:3},
   frenzy:{n:'狂乱',c:2,t:'atk',r:'rare',d:u=>`造成 ${DM(u?5:4)} 点伤害 ${u?5:4} 次`,f:u=>atk(u?5:4,u?5:4)},
   execute:{n:'处决',c:3,t:'atk',r:'rare',d:u=>`造成 ${DM(u?42:30)} 点伤害`,f:u=>atk(u?42:30)},
   demon:{n:'恶魔形态',c:3,t:'pow',r:'rare',d:u=>`每回合开始时获得 ${u?3:2} 点力量`,f:u=>C.p.demon+=u?3:2},
   barricade:{n:'壁垒',c:3,cu:2,t:'pow',r:'rare',d:u=>`格挡不再在回合开始时消失`,f:u=>C.p.barricade=1},
   inspire:{n:'灵感',c:1,cu:0,t:'pow',r:'rare',d:u=>`每回合多抽 1 张牌`,f:u=>C.p.inspire+=1},
   offering:{n:'献祭',c:0,t:'skl',r:'rare',ex:1,d:u=>`失去 6 点生命，获得 2 点能量，抽 ${u?5:3} 张牌。消耗`,f:u=>{loseHp(6);C.energy+=2;draw(u?5:3)}},
-  limit:{n:'极限突破',c:1,t:'skl',r:'rare',ex:u=>!u,d:u=>`力量翻倍。${u?'':'消耗'}`,f:u=>{const g=C.p.str;C.p.str*=2;if(g>0)fx('p',`力量 +${g}`,'st')}}
+  limit:{n:'极限突破',c:1,t:'skl',r:'rare',ex:u=>!u,d:u=>`力量翻倍。${u?'':'消耗'}`,f:u=>{const g=C.p.str;C.p.str*=2;if(g>0)fx('p',`力量 +${g}`,'st')}},
+  toxin:{n:'剧毒',c:1,t:'pow',r:'rare',d:u=>`每次施加中毒时，额外施加 ${u?2:1} 层`,f:u=>C.p.toxin+=u?2:1},
+  devour:{n:'吞噬',c:2,cu:1,t:'pow',r:'rare',d:u=>`每消耗一张牌，抽 1 张牌`,f:u=>C.p.devour+=1},
+  hellfire:{n:'业火焚身',c:2,t:'atk',r:'rare',ex:1,d:u=>`消耗所有手牌，每消耗 1 张造成 ${DM(u?10:7)} 点伤害。消耗`,f:u=>C.hand.splice(0).forEach(c=>{exhaust(c);atk(u?10:7)})}
 };
 const POOL=r=>Object.keys(CARDS).filter(k=>CARDS[k].r===r);
 const costOf=c=>{const d=CARDS[c.id];return c.up&&d.cu!==undefined?d.cu:d.c};
@@ -65,6 +73,7 @@ const RELICS={
   ori:{n:'山铜',d:'回合结束时若没有格挡，获得 6 点格挡'},
   fang:{n:'吸血牙',d:'每击杀一个敌人，回复 4 点生命'},
   lantern:{n:'灯笼',d:'每场战斗第一回合多 1 点能量'},
+  censer:{n:'焚香炉',d:'每消耗一张牌，对所有敌人造成 3 点伤害'},
   core:{n:'能量核心',d:'每回合多 1 点能量',boss:1},
   crown:{n:'王冠',d:'每回合多抽 1 张牌',boss:1},
   heart:{n:'巨人之心',d:'最大生命 +30',boss:1}

@@ -40,6 +40,14 @@
 | icons/c-inspire.svg | game-icons.net `lorc/open-book` |
 | icons/c-offering.svg | game-icons.net `lorc/sacrificial-dagger` |
 | icons/c-limit.svg | game-icons.net `lorc/muscle-up` |
+| icons/c-darts.svg | game-icons.net `delapouite/dart` |
+| icons/c-ironfist.svg | game-icons.net `lorc/mailed-fist` |
+| icons/c-rupture.svg | game-icons.net `lorc/goo-skull` |
+| icons/c-thorns.svg | game-icons.net `lorc/spiked-armor` |
+| icons/c-embers.svg | game-icons.net `lorc/burning-embers` |
+| icons/c-toxin.svg | game-icons.net `lorc/acid-blob` |
+| icons/c-devour.svg | game-icons.net `lorc/carnivore-mouth` |
+| icons/c-hellfire.svg | game-icons.net `delapouite/card-burn` |
 | icons/r-blood.svg | game-icons.net `lorc/heart-drop` |
 | icons/r-anchor.svg | game-icons.net `lorc/anchor` |
 | icons/r-whet.svg | game-icons.net `lorc/rune-stone` |
@@ -53,6 +61,7 @@
 | icons/r-core.svg | game-icons.net `lorc/concentration-orb` |
 | icons/r-crown.svg | game-icons.net `lorc/crown` |
 | icons/r-heart.svg | game-icons.net `lorc/heart-organ` |
+| icons/r-censer.svg | game-icons.net `lorc/incense` |
 | icons/n-fight.svg | game-icons.net `lorc/crossed-swords` |
 | icons/n-elite.svg | game-icons.net `lorc/horned-skull` |
 | icons/n-rest.svg | game-icons.net `lorc/campfire` |
