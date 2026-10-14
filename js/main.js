@@ -9,8 +9,9 @@ const A={
   close:()=>{UI.over=null;renderOver()},
   relic:k=>toast(`${RELICS[k].n}：${RELICS[k].d}`),
   target:u=>{if(C){C.target=+u;render()}},
-  play:u=>playCard(+u),
-  end:()=>endTurn(),
+  // on touch, a crowded hand's cards overlap: the first tap lifts a card to read it, a second tap plays it
+  play:u=>{if(UI.touch&&handCrowded()&&UI.lift!==+u){UI.lift=+u;render();return}UI.lift=null;playCard(+u)},
+  end:()=>{UI.lift=null;endTurn()},
   rgold:()=>{const r=S.reward;if(r.goldTaken)return;r.goldTaken=true;S.gold+=r.gold;save();render()},
   rrelic:()=>{const r=S.reward;if(r.relicTaken)return;r.relicTaken=true;gainRelic(r.relic);toast(`获得「${RELICS[r.relic].n}」`);save();render()},
   rboss:k=>{const r=S.reward;if(r.bossTaken)return;r.bossTaken=true;gainRelic(k);toast(`获得「${RELICS[k].n}」`);save();render()},
@@ -62,7 +63,9 @@ document.addEventListener('pointermove',e=>{
   else if(Math.hypot(e.clientX-TIP.sx,e.clientY-TIP.sy)>10)clearTimeout(TIP.timer);
 });
 document.addEventListener('pointerout',e=>{if(!e.relatedTarget){TIP.x=-1;hideTip()}});
+function handCrowded(){const c=document.querySelectorAll('.hand .card');return c.length>1&&c[1].offsetLeft-c[0].offsetLeft<c[0].offsetWidth*.5}
 document.addEventListener('pointerdown',e=>{
+  UI.touch=e.pointerType!=='mouse';
   if(e.pointerType==='mouse')return;
   hideTip();clearTimeout(TIP.timer);TIP.swallow=false;
   if(!e.target.closest('[data-tip]'))return;

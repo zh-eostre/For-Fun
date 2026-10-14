@@ -117,8 +117,13 @@ button{font:inherit;color:inherit}
 .piles{display:flex;gap:10px;font-size:13px;opacity:.8}
 .endturn{background:#C9822B;border:0;color:#2A1600;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;font-size:15px}
 .endturn:disabled{opacity:.4;cursor:wait}
-.hand{display:flex;justify-content:center;gap:8px;padding:10px 12px 16px;overflow-x:auto;min-height:182px}
-.hand .card{flex:none}
+.hand{--w:118px;--gap:8px;--gg:14px;display:flex;justify-content:center;align-items:flex-end;padding:22px 34px 18px;min-height:204px}
+.hand .card{flex:none;transform-origin:50% 100%;transform:translateY(var(--y)) rotate(var(--r));transition:transform .15s,margin .15s;
+  margin-left:min(var(--gap),calc((100% - var(--n)*var(--w) - var(--g)*var(--gg))/(var(--n) - 1)))}
+.hand .card.gs{margin-left:calc(min(var(--gap),calc((100% - var(--n)*var(--w) - var(--g)*var(--gg))/(var(--n) - 1))) + var(--gg))}
+.hand .card:first-child{margin-left:0}
+.arena .hand .card:hover,.arena .hand .card.lift{transform:translateY(-26px) scale(1.08);z-index:5}
+@media (hover:none){.arena .hand .card:hover:not(.lift){transform:translateY(var(--y)) rotate(var(--r))}}
 
 /* card */
 .card{position:relative;width:118px;height:166px;border-radius:10px;border:2px solid #5C4A3A;background:var(--parch);color:var(--parch-ink);padding:0;cursor:pointer;
@@ -183,7 +188,7 @@ button{font:inherit;color:inherit}
   .card .cdesc{font-size:11px;padding:2px 5px 5px}
   .enemy{width:118px}
   .sprite{width:64px;height:64px}.enemy.elite .sprite{width:96px;height:96px}.enemy.boss .sprite{width:128px;height:128px}
-  .hand{justify-content:flex-start;min-height:160px}
+  .hand{--w:96px;--gg:8px;min-height:178px;padding:22px 22px 16px}
   .hero{min-width:0}
   .hero .sprite{width:64px;height:64px}
   .floor{grid-template-columns:40px 1fr}

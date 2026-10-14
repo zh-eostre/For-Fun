@@ -71,7 +71,10 @@ function atkAll(base,n=1){for(let i=0;i<n;i++)alive().forEach(e=>hitEnemy(e,base
 function gainBlock(n){if(n<=0)return;C.p.block+=n;fx('p','+'+n+' 格挡','blk')}
 const LBL={weak:'虚弱',vuln:'易伤',poison:'中毒',str:'力量'};
 function applyE(e,k,n){if(!e||n<=0)return;if(k==='poison')n+=C.p.toxin;e[k]=(e[k]||0)+n;fx('e'+e.uid,`${LBL[k]} +${n}`,'st')}
-function draw(n){for(let i=0;i<n;i++){if(C.hand.length>=10)break;if(!C.draw.length){if(!C.discard.length)break;C.draw=shuffle(C.discard);C.discard=[]}C.hand.push(C.draw.pop())}}
+// the hand keeps itself sorted: attacks, then skills, then powers; cheaper first within each
+const HAND_ORDER={atk:0,skl:1,pow:2};
+const byHand=(a,b)=>HAND_ORDER[CARDS[a.id].t]-HAND_ORDER[CARDS[b.id].t]||costOf(a)-costOf(b)||a.id.localeCompare(b.id)||b.up-a.up;
+function draw(n){for(let i=0;i<n;i++){if(C.hand.length>=10)break;if(!C.draw.length){if(!C.discard.length)break;C.draw=shuffle(C.discard);C.discard=[]}C.hand.push(C.draw.pop())}C.hand.sort(byHand)}
 function heal(n){const h=Math.min(n,S.maxHp-S.hp);if(h>0){S.hp+=h;if(C)fx('p','+'+h,'heal')}}
 function loseHp(n){S.hp-=n;if(C){fx('p','-'+n,'dmg');HIT.p=performance.now()}}
 function hitPlayer(d){const b=Math.min(C.p.block,d);C.p.block-=b;d-=b;S.hp-=d;fx('p',d>0?'-'+d:'格挡',d>0?'dmg':'blk');HIT.p=performance.now()}

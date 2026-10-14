@@ -7,6 +7,7 @@ ok(/选择下一站/.test(els.app.innerHTML)&&!bad(els.app.innerHTML),'the map r
 S.map[0]=['fight','fight','event'];A.go('0');
 ok(S.screen==='combat'&&C&&C.hand.length===5&&C.energy===3&&alive().length>=1,'a fight: 5 cards in hand, 3 energy');
 ok(!bad(els.app.innerHTML)&&/结束回合/.test(els.app.innerHTML),'the arena renders');
+const order=C.hand.map(c=>({atk:0,skl:1,pow:2})[CARDS[c.id].t]);ok(order.every((t,i)=>!i||t>=order[i-1])&&/class="hand" style="--n:5;/.test(els.app.innerHTML),'the hand is fanned and sorted: attacks, then skills, then powers');
 const e0=alive()[0],hp0=e0.hp,strike=C.hand.find(c=>c.id==='strike');
 if(strike){A.play(String(strike.uid));ok(e0.hp<hp0||e0.block>0,'a strike hurts the enemy ('+hp0+' → '+e0.hp+')')}
 // statuses, powers and intents explain themselves in a tooltip

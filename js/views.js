@@ -12,7 +12,7 @@ function markChanges(before,after){
 }
 function cardHtml(c,o={}){
   const d=CARDS[c.id],cost=costOf(c),desc=o.vs?markChanges(d.d(o.vs.up,o.vs),d.d(c.up,c)):d.d(c.up,c);
-  return `<button class="card t-${d.t} r-${d.r} ${c.up?'up':''} ${o.cls||''}" ${o.act?`data-act="${o.act}" data-arg="${o.arg!==undefined?o.arg:c.uid}"`:''} ${o.dis?'disabled':''} aria-label="${d.n}${c.up?'+':''}，费用 ${cost}">
+  return `<button class="card t-${d.t} r-${d.r} ${c.up?'up':''} ${o.cls||''}" ${o.style?`style="${o.style}"`:''} ${o.act?`data-act="${o.act}" data-arg="${o.arg!==undefined?o.arg:c.uid}"`:''} ${o.dis?'disabled':''} aria-label="${d.n}${c.up?'+':''}，费用 ${cost}">
   <span class="cost ${o.vs&&cost<costOf(o.vs)?'cheaper':''}">${cost}</span><span class="cname">${d.n}${c.up?'+':''}</span>
   <span class="art">${ico('c-'+c.id)}</span><span class="ctype">${TYPE[d.t]}</span><span class="cdesc"><span>${desc}</span></span></button>`;
 }
@@ -103,7 +103,15 @@ function vCombat(){
    <div class="piles"><span>抽牌 ${C.draw.length}</span><span>弃牌 ${C.discard.length}</span>${C.exhaust.length?`<span>消耗 ${C.exhaust.length}</span>`:''}</div>
    <button class="endturn" data-act="end" ${C.busy?'disabled':''}>${C.busy?'敌人行动中…':'结束回合'}</button>
   </div>
-  <div class="hand">${C.hand.map(c=>cardHtml(c,{act:'play',cls:costOf(c)>C.energy||C.busy?'nope':''})).join('')||'<p style="opacity:.6;align-self:center">手牌已用完</p>'}</div></main>`;
+  ${handHtml()}</main>`;
+}
+// the hand fans out, and squeezes together when it is too wide to fit; a gap marks where each type of card begins
+function handHtml(){
+  const h=C.hand,n=h.length;
+  if(!n)return '<div class="hand"><p style="opacity:.6;align-self:center">手牌已用完</p></div>';
+  const mid=(n-1)/2,tilt=Math.min(3.5,20/n),gs=h.map((c,i)=>i>0&&CARDS[c.id].t!==CARDS[h[i-1].id].t);
+  return `<div class="hand" style="--n:${n};--g:${gs.filter(Boolean).length}">${h.map((c,i)=>{const o=i-mid;
+    return cardHtml(c,{act:'play',cls:`${costOf(c)>C.energy||C.busy?'nope':''} ${gs[i]?'gs':''} ${UI.lift===c.uid?'lift':''}`,style:`--r:${(o*tilt).toFixed(2)}deg;--y:${(o*o*tilt*.35).toFixed(1)}px`})}).join('')}</div>`;
 }
 function vReward(){
   const r=S.reward,boss=!!r.boss;
