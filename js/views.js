@@ -64,6 +64,7 @@ function intentHtml(e){
   if(m.s){p.push(ico('i-buff'));tip.push(`增强：获得 ${m.s} 点力量`)}
   if(m.w||m.vu){p.push(ico('i-debuff'));tip.push(`削弱：让你获得 ${[m.w&&m.w+' 层虚弱',m.vu&&m.vu+' 层易伤'].filter(Boolean).join('和')}`)}
   if(m.po){p.push(ico('i-poison','po'));tip.push(`下毒：让你获得 ${m.po} 层中毒`)}
+  if(m.h){p.push(ico('u-hp','heal'));tip.push(`治疗：${alive().length>1?'所有敌人':'自己'}回复 ${Math.round(m.h*e.bm)} 点生命`)}
   return `<div class="intent"${tipAttr('下回合的行动\n'+tip.join('\n'))}>${p.join(' ')}</div>`;
 }
 // statuses on the hero and the enemies, in the order their chips show; k is the kind: a buff, a debuff, or a power

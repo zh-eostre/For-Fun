@@ -81,6 +81,7 @@ button{font:inherit;color:inherit}
 .intent .ico{font-size:17px}
 .intent .atk{color:#FF8A73;margin-right:3px}
 .intent .po,.chip .po{color:#8EE07A}
+.intent .heal{color:#7FE0A0}
 .token{line-height:0;filter:drop-shadow(0 6px 8px rgba(0,0,0,.5))}
 .sprite{display:block;width:96px;height:96px;image-rendering:pixelated;image-rendering:crisp-edges;-webkit-user-select:none;user-select:none}
 .enemy.elite .sprite{width:128px;height:128px}

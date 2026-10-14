@@ -39,7 +39,7 @@ function nextFloor(){
 
 /* ---------- combat ---------- */
 function startCombat(type){
-  let group=type==='boss'?[pick(['dragon','titan'])]:type==='elite'?pick(ELITES):S.floor<=2&&S.loop===0?pick(EASY):pick(NORMAL);
+  let group=type==='boss'?[pick(BOSSES)]:type==='elite'?pick(ELITES):S.floor<=2&&S.loop===0?pick(EASY):pick(NORMAL);
   C={type,enemies:group.map(makeEnemy),draw:shuffle(S.deck.map(c=>({...c}))),hand:[],discard:[],exhaust:[],energy:0,turn:0,
      p:{block:0,str:0,weak:0,vuln:0,poison:0,metal:0,fumes:0,demon:0,barricade:0,inspire:0,thorns:0,embers:0,toxin:0,devour:0},atkCount:0,target:null,busy:false};
   C.enemies.forEach(e=>{e.next=EN[e.k].ai(e,0)});
@@ -131,6 +131,7 @@ async function endTurn(){
     const m=e.next;
     if(m.b){e.block+=Math.round(m.b*e.bm);fx('e'+e.uid,'+格挡','blk')}
     if(m.s){e.str+=m.s;fx('e'+e.uid,`力量 +${m.s}`,'st')}
+    if(m.h){const n=Math.round(m.h*e.bm);alive().forEach(x=>{const g=Math.min(n,x.max-x.hp);if(g>0){x.hp+=g;fx('e'+x.uid,'+'+g,'heal')}})}
     if(m.a){for(let i=0;i<(m.n||1);i++){hitPlayer(eDmg(e,m.a));if(C.p.thorns)harm(e,C.p.thorns);if(e.hp<=0||S.hp<=0)break}}
     if(S.hp<=0){render();return die()}
     if(e.hp<=0){render();continue}

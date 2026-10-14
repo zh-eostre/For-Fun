@@ -97,4 +97,12 @@
 | monsters/ogre.png | Dungeon Crawl Stone Soup `monster/two_headed_ogre_new.png` |
 | monsters/dragon.png | Dungeon Crawl Stone Soup `monster/dragons/shadow_dragon.png` |
 | monsters/titan.png | Dungeon Crawl Stone Soup `monster/nonliving/iron_golem.png` |
+| monsters/rat.png | Dungeon Crawl Stone Soup `monster/animals/rat.png` |
+| monsters/goblin.png | Dungeon Crawl Stone Soup `monster/goblin_new.png` |
+| monsters/spider.png | Dungeon Crawl Stone Soup `monster/animals/wolf_spider_new.png` |
+| monsters/ghoul.png | Dungeon Crawl Stone Soup `monster/undead/ghoul.png` |
+| monsters/priest.png | Dungeon Crawl Stone Soup `monster/orc_priest_new.png` |
+| monsters/troll.png | Dungeon Crawl Stone Soup `monster/troll.png` |
+| monsters/naga.png | Dungeon Crawl Stone Soup `monster/greater_naga.png` |
+| monsters/lich.png | Dungeon Crawl Stone Soup `monster/undead/lich.png` |
 | monsters/hero.png | Dungeon Crawl Stone Soup `monster/deep_elf_knight_new.png` |

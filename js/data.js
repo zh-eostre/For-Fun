@@ -91,15 +91,25 @@ const EN={
   shroom:{n:'毒蘑菇',hp:[14,18],ai:(e,t)=>t%2?{a:5}:{a:2,po:3}},
   bat:{n:'吸血蝠',hp:[10,13],ai:()=>({a:4})},
   snake:{n:'沙蛇',hp:[28,32],ai:(e,t)=>t%3===2?{vu:2,w:1}:{a:6}},
+  rat:{n:'巨鼠',hp:[12,15],ai:()=>pick([{a:5},{a:2,n:2}])},
+  goblin:{n:'哥布林',hp:[22,26],ai:(e,t)=>t%2?{a:9}:{a:4,n:2}},
+  spider:{n:'狼蛛',hp:[26,30],ai:(e,t)=>t%2?{a:7}:{a:4,po:2}},
+  ghoul:{n:'食尸鬼',hp:[36,42],ai:(e,t)=>[{a:5,vu:1},{a:4,n:2},{a:10}][t%3]},
+  priest:{n:'兽人祭司',hp:[24,28],ai:(e,t)=>[{h:8},{a:6},{a:3,w:1}][t%3]},
   golem:{n:'石像鬼',hp:[78,84],elite:1,ai:(e,t)=>[{b:12,a:7},{a:12},{s:2,b:8}][t%3]},
   knight:{n:'暗影骑士',hp:[68,74],elite:1,ai:(e,t)=>[{a:5,n:3},{vu:2,a:9},{a:16}][t%3]},
   ogre:{n:'双头食人魔',hp:[88,94],elite:1,ai:(e,t)=>[{a:11},{s:3,b:6},{a:6,n:2}][t%3]},
+  troll:{n:'巨魔',hp:[96,102],elite:1,ai:(e,t)=>[{a:13},{a:6,n:2},{h:12,b:8}][t%3]},
+  naga:{n:'娜迦女王',hp:[74,80],elite:1,ai:(e,t)=>[{w:2,vu:2},{a:7,po:4},{a:17}][t%3]},
   dragon:{n:'深渊巨龙',hp:[170,170],boss:1,ai:(e,t)=>[{a:6,n:3},{b:15,s:2},{w:2,vu:1},{a:20}][t%4]},
-  titan:{n:'机械泰坦',hp:[180,180],boss:1,ai:(e,t)=>[{b:12,a:8},{a:4,n:4},{s:2,po:3},{a:20}][t%4]}
+  titan:{n:'机械泰坦',hp:[180,180],boss:1,ai:(e,t)=>[{b:12,a:8},{a:4,n:4},{s:2,po:3},{a:20}][t%4]},
+  lich:{n:'不死巫妖',hp:[175,175],boss:1,ai:(e,t)=>[{a:6,n:3},{po:5,w:2},{h:15,b:12},{a:22}][t%4]}
 };
-const EASY=[['slime'],['wolf'],['bat','bat'],['shroom','bat']];
-const NORMAL=[['cultist'],['slime','slime','bat'],['archer','bat'],['shroom','shroom','bat'],['wolf','slime'],['snake'],['archer','archer'],['wolf','bat','bat']];
-const ELITES=[['golem'],['knight'],['ogre']];
+const EASY=[['slime'],['wolf'],['bat','bat'],['shroom','bat'],['rat','rat']];
+const NORMAL=[['cultist'],['slime','slime','bat'],['archer','bat'],['shroom','shroom','bat'],['wolf','slime'],['snake'],['archer','archer'],['wolf','bat','bat'],
+  ['goblin','goblin'],['spider'],['ghoul'],['goblin','priest'],['ghoul','priest'],['spider','rat']];
+const ELITES=[['golem'],['knight'],['ogre'],['troll'],['naga']];
+const BOSSES=['dragon','titan','lich'];
 function makeEnemy(k){
   const d=EN[k],fl=d.boss?0:S.floor,hm=1+.25*S.loop+.025*fl,dm=1+.2*S.loop+.012*fl,hp=Math.round(R(d.hp[0],d.hp[1])*hm);
   return {uid:nid(),k,name:d.n,hp,max:hp,block:0,str:0,weak:0,vuln:0,poison:0,t:0,dm,bm:hm,next:null};
