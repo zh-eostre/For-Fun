@@ -269,7 +269,7 @@ function vRules(){
     `哪一周你没有正式比赛（联赛轮空、杯赛已出局），那周六会自动安排一场热身赛，对手是海外球队，不计成绩、不吃牌。`,
     `季前一周：转会窗口开放，还有两场友谊赛（对手是本国其他级别的球队，不计成绩、不吃牌）。赛季过半后开 ${WINTER} 天冬窗，其余时间不能买卖球员。AI 球队大多在窗口最后几天才出手，所以想要的人最好早点下手；冬窗只是小修补，出手的球队不多。窗口结束前 3 天，会传出豪门盯上了哪位年轻天才，窗口最后一天他可能被签走（${diff().name}难度：${Math.round(diff().grab*100)}%）。`,
     `${CUP_NAME}是单场淘汰，平局直接点球大战。杯赛在周中，3 天后就是下一轮联赛。`,
-    `${INTL_NAME}：${4*INTL_GROUPS} 队参加，本国派出甲级前两名和${CUP_NAME}冠军（冠军已在前两名时由甲级第三名替补），其余 ${4*INTL_GROUPS-3} 队来自海外（每季从 ${FOREIGN.length} 支海外俱乐部里按实力抽签，强队更常出现；它们的底蕴会随冠军杯成绩升降）。${INTL_GROUPS} 个小组主客场双循环，前两名进十六强，之后单场淘汰。比赛在周三，收入 1.5 倍；小组赛胜 ${money(INTL_PRIZE.win)}、平 ${money(INTL_PRIZE.draw)}，进十六强 ${money(INTL_PRIZE.ko[0])}、八强 ${money(INTL_PRIZE.ko[1])}、四强 ${money(INTL_PRIZE.ko[2])}、决赛 ${money(INTL_PRIZE.ko[3])}，冠军 ${money(INTL_PRIZE.champion)}。海外球队不参加联赛和${CUP_NAME}，也不买卖球员。`])}
+    `${INTL_NAME}：${4*INTL_GROUPS} 队参加，本国派出甲级前 ${INTL_LEAGUE_PLACES} 名和${CUP_NAME}冠军（冠军已在前 ${INTL_LEAGUE_PLACES} 名时由甲级第 ${INTL_LEAGUE_PLACES+1} 名替补），其余 ${4*INTL_GROUPS-INTL_LEAGUE_PLACES-1} 队来自海外（每季从 ${FOREIGN.length} 支海外俱乐部里按实力抽签，强队更常出现；它们的底蕴会随冠军杯成绩升降）。${INTL_GROUPS} 个小组主客场双循环，前两名进十六强，之后单场淘汰。比赛在周三，收入 1.5 倍；小组赛胜 ${money(INTL_PRIZE.win)}、平 ${money(INTL_PRIZE.draw)}，进十六强 ${money(INTL_PRIZE.ko[0])}、八强 ${money(INTL_PRIZE.ko[1])}、四强 ${money(INTL_PRIZE.ko[2])}、决赛 ${money(INTL_PRIZE.ko[3])}，冠军 ${money(INTL_PRIZE.champion)}。海外球队不参加联赛和${CUP_NAME}，也不买卖球员。`])}
   ${sec('比赛怎么踢',['每分钟按双方「进攻对防守」的差距决定进球机会。实力强的一方机会更多，但强队也会输球，强队累了时弱队更有机会。',
     '进攻主要看前锋和中场，防守主要看后卫、门将和中场；主场略占优势。',
     `球员打非本职位置，能力打 ${Math.round(OOP*100)} 折；外场球员当门将（或门将踢外场）只剩一半。`,
@@ -530,15 +530,15 @@ function vLeaders(title,note,rows,scale){
 // 甲级's places in next season's 天际冠军杯: the top two, and the 天穹杯 winner, or 3rd when the cup winner is already
 // in the top two (until the cup is decided, 3rd is marked as a maybe)
 function intlPlaces(T){
-  const top=T.map(r=>r.id),cw=S.cup&&S.cup.winner,sure=new Set(top.slice(0,2));let maybe=null,cup=null;
-  if(cw==null)maybe=top[2];
-  else{const e=intlEntrants(top,cw);e.forEach(id=>sure.add(id));if(e[2]===cw&&!top.slice(0,2).includes(cw))cup=cw}
+  const L=INTL_LEAGUE_PLACES,top=T.map(r=>r.id),cw=S.cup&&S.cup.winner,sure=new Set(top.slice(0,L));let maybe=null,cup=null;
+  if(cw==null)maybe=top[L];
+  else{const e=intlEntrants(top,cw);e.forEach(id=>sure.add(id));if(e[L]===cw&&!top.slice(0,L).includes(cw))cup=cw}
   return {sure,maybe,cup};
 }
 function standings(div){
   const T=table(div),Q=div===0?intlPlaces(T):null,cupW=Q&&Q.cup!=null?S.teams[Q.cup]:null;
-  const legend=[Q?`<span class="zl intl">前 2 名获得下赛季${INTL_NAME}资格</span>`:'',
-    Q&&Q.maybe!=null?`<span class="zl maybe">第 3 名：${CUP_NAME}冠军已在前两名时递补</span>`:'',
+  const legend=[Q?`<span class="zl intl">前 ${INTL_LEAGUE_PLACES} 名获得下赛季${INTL_NAME}资格</span>`:'',
+    Q&&Q.maybe!=null?`<span class="zl maybe">第 ${INTL_LEAGUE_PLACES+1} 名：${CUP_NAME}冠军已在前 ${INTL_LEAGUE_PLACES} 名时递补</span>`:'',
     cupW&&cupW.div!==0?`<span class="zl intl">${CUP_NAME}冠军 ${cupW.name} 也获得资格</span>`:'',
     div>0?`<span class="zl up">前 ${promoSlots(div)} 名升级${promoSlots(div)>SWAP?'（联赛扩军，本季多升几队）':''}</span>`:'',div<DIVS.length-1?`<span class="zl down">后 ${SWAP} 名降级</span>`:''].join('');
   const qcls=id=>!Q?'':Q.sure.has(id)?'intl':Q.maybe===id?'intl-maybe':'';
@@ -873,7 +873,7 @@ function cupStatus(){
 // one line on our 天际冠军杯
 function intlStatus(){
   const I=S.intl;
-  if(!intlIn())return `本队没有参赛。甲级前两名和${CUP_NAME}冠军获得下赛季的参赛资格。`;
+  if(!intlIn())return `本队没有参赛。甲级前 ${INTL_LEAGUE_PLACES} 名和${CUP_NAME}冠军获得下赛季的参赛资格。`;
   if(I.winner===S.my)return '🏆 夺得冠军！';
   if(intlMine())return `仍在争夺，下一场是${intlStage(I.stage)}（${dayLabel(intlDay(I.stage))}）。`;
   const out=I.ko.findIndex(rd=>rd.some(r=>(r.h===S.my||r.a===S.my)&&r.w!==S.my));

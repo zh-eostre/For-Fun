@@ -658,7 +658,7 @@ function newGame(id,names,difficulty='normal'){
   S.teams.forEach(t=>t.players.forEach(p=>joinClub(p,t,p.age<=21,1)));  // the young ones count as the club's own
   S.fixtures=newFixtures();S.results=DIVS.map(()=>[]);S.cup=newCup();S.rival=pickRival();
   S.teams.forEach(t=>t.players.forEach(p=>learnSig(p,true)));
-  S.intl=newIntl(S.teams.filter(t=>t.div===0).sort((a,b)=>b.rep-a.rep).slice(0,3).map(t=>t.id));
+  S.intl=newIntl(S.teams.filter(t=>t.div===0).sort((a,b)=>b.rep-a.rep).slice(0,INTL_LEAGUE_PLACES+1).map(t=>t.id));
   S.budget=Math.round(startBudget(TEAMS[id])*diff().budget);
   S.lineup=autoPick(my(),S.formation);S.autoXI=true;
   S.pre=PRESEASON;refreshMarket();planFriendlies();

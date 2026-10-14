@@ -122,14 +122,14 @@ const YOUTH_PROVEN=5;   // academy players need this many first-team matches bef
 
 // knockout cup for all our clubs, slotted between league rounds
 const CUP_NAME='天穹杯';
-// the international cup: 甲级's top two and the 天穹杯 winner (甲级 3rd if the winner is already in) against 29 clubs
+// the international cup: 甲级's top three and the 天穹杯 winner (甲级 4th if the winner is already in) against 28 clubs
 // from abroad. eight groups of four (home and away), the top two of each to the last 16, then quarter-finals, semis and
 // a final, all on the Wednesdays of weeks without a 天穹杯 tie. a cup that began as four groups of 16 clubs (an older
 // save) finishes that way: the format follows from the number of groups (intlKO)
 const INTL_NAME='天际冠军杯';
 // each competition keeps its own bookings and bans: league, 天穹杯, 冠军杯 (friendlies have neither)
 const COMPS={lg:'联赛',cup:CUP_NAME,intl:INTL_NAME};
-const INTL_GROUPS=8,INTL_GROUP_ROUNDS=6;
+const INTL_GROUPS=8,INTL_GROUP_ROUNDS=6,INTL_LEAGUE_PLACES=3;  // 甲级's places (the 天穹杯 winner has one more)
 const INTL_WEEKS=[1,3,4,7,8,10,11,14,18,22];  // six group rounds, last 16, quarters, semis, final (after the league)
 const INTL_WEEKS4=[3,4,7,8,10,11,14,18,22];   // the four-group cup on the 22-week calendar
 const INTL_WEEKS_V2=[3,4,7,8,11,12,16,19,23];  // on the 26-week calendar

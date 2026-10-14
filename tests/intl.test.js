@@ -1,4 +1,4 @@
-// 天际冠军杯: 32 clubs (甲级's top two, the 天穹杯 winner and 29 from abroad), eight groups home and away, then
+// 天际冠军杯: 32 clubs (甲级's top three, the 天穹杯 winner and 28 from abroad), eight groups home and away, then
 // the last 16, quarter-finals, semi-finals and a final. clubs from abroad stay out of the league, the 天穹杯 and transfers.
 require('./harness').run(`
 const play=()=>{let n=0;while(!seasonDone()){if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ffToMatch();S.event=null;S.offer=null;S.lineup=autoPick(my(),S.formation);
@@ -7,9 +7,9 @@ const top=TEAMS.map((t,i)=>[t,i]).filter(([t])=>t.div===0).sort((a,b)=>b[0].rep-
 newGame(top,teamNames());
 const I=S.intl,away=S.teams.filter(t=>t.foreign);
 ok(I&&I.groups.length===8&&I.groups.every(g=>g.length===4)&&new Set(I.groups.flat()).size===32,'32 clubs in eight groups of four');
-ok(I.home.length===3&&I.home.includes(S.my)&&I.home.every(id=>S.teams[id].div===0),'three 甲级 clubs enter, us among them');
+ok(I.home.length===4&&I.home.includes(S.my)&&I.home.every(id=>S.teams[id].div===0),'four 甲级 clubs enter, us among them');
 ok(I.home.every(id=>I.groups.filter(g=>g.includes(id)).length===1)&&I.groups.every(g=>g.filter(id=>I.home.includes(id)).length<=1),'our clubs are drawn into different groups');
-ok(I.home.map(id=>I.groups.findIndex(g=>g.includes(id))).join()==='0,2,4','in groups A, C and E, so they can\u2019t meet in the last 16');
+ok(I.home.map(id=>I.groups.findIndex(g=>g.includes(id))).join()==='0,2,4,6','in groups A, C, E and G, so they can\u2019t meet in the last 16');
 ok(away.length===FOREIGN.length&&away.every(t=>t.div===-1&&t.players.length>=16),'the clubs from abroad have squads and no division');
 ok(away.every(t=>t.players.every(p=>!!p.sig===(p.ovr>=SIG_OVR&&p.age<SIG_FADE))),'their stars learn signature moves like everyone else');
 ok(!S.fixtures.flat(3).filter(x=>typeof x==='number').some(id=>S.teams[id].foreign),'no club from abroad in the league');
@@ -46,19 +46,19 @@ render();ok(els.app.innerHTML.includes(INTL_NAME),'the season-end screen mention
 S.round--;UI.view='main';UI.tab='cup';UI.cupv='intl';render();ok(!bad(els.app.innerHTML)&&/十六强/.test(els.app.innerHTML)&&/八强/.test(els.app.innerHTML)&&/决赛/.test(els.app.innerHTML),'cup tab shows the knockout rounds');
 UI.tab='honours';render();ok(!bad(els.app.innerHTML)&&els.app.innerHTML.includes(INTL_NAME),'honours has a 冠军杯 trophy count');S.round++;
 // next season: a new draw from the final 甲级 table and the 天穹杯 winner
-// the 甲级 table marks next season's places: amber for the entrants (top two plus the cup winner or 3rd)
+// the 甲级 table marks next season's places: amber for the entrants (top three plus the cup winner or 4th)
 {const rows=h=>(h.match(/<tr class="[^"]*"/g)||[]),T=table(0),E=intlEntrants(T.map(r=>r.id),S.cup.winner);
   S.round--;UI.view='main';UI.tab='table';UI.div=0;render();const r=rows(els.app.innerHTML);
   ok(T.every((x,i)=>/ intl"/.test(r[i])===(E.includes(x.id))),'甲级 table: the clubs in next season\u2019s 冠军杯 are marked ('+E.map(id=>S.teams[id].short).join('、')+')');
   ok(/获得下赛季/.test(els.app.innerHTML),'with a legend');
   const keep=S.cup.winner;S.cup.winner=null;render();const r2=rows(els.app.innerHTML);
-  ok(/ intl"/.test(r2[0])&&/ intl"/.test(r2[1])&&/intl-maybe/.test(r2[2])&&/递补/.test(els.app.innerHTML),'before the cup final: top two in, 3rd a maybe');
+  ok(/ intl"/.test(r2[0])&&/ intl"/.test(r2[1])&&/ intl"/.test(r2[2])&&/intl-maybe/.test(r2[3])&&/递补/.test(els.app.innerHTML),'before the cup final: top three in, 4th a maybe');
   S.cup.winner=keep;S.round++;UI.tab='home';}
 const t0=table(0).map(r=>r.id),cw=S.cup.winner,want=intlEntrants(t0,cw),winner=S.teams[I.winner].name;
 newSeason();
 ok(S.records[S.records.length-1].intl===winner,'the season record keeps the winner');
 ok(S.intl!==I&&S.intl.season===S.season&&S.intl.stage===0,'a new 冠军杯 for the new season');
-ok(S.intl.home.join()===want.join()&&want.length===3&&new Set(want).size===3,'entrants: 甲级 1st and 2nd and the 天穹杯 winner (or 3rd)');
+ok(S.intl.home.join()===want.join()&&want.length===4&&new Set(want).size===4,'entrants: 甲级 1st, 2nd and 3rd and the 天穹杯 winner (or 4th)');
 ok(S.teams.filter(t=>t.foreign).length===FOREIGN.length,'the same clubs from abroad, not a second set');
 ok(S.teams.filter(t=>t.foreign).every(t=>aiGap(t)<=3),'and they renew their squads to stay at their level');
 // an old save without the cup: plays on, and gets one next season

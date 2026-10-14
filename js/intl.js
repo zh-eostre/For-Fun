@@ -1,5 +1,5 @@
 /* ---------- 天际冠军杯: the international cup ----------
-   32 clubs: our three entrants (甲级's top two and the 天穹杯 winner) and 29 from abroad. eight groups of four play
+   32 clubs: our four entrants (甲级's top three and the 天穹杯 winner) and 28 from abroad. eight groups of four play
    home and away (six Wednesdays), the top two of each go to single-match rounds: the last 16, quarter-finals,
    semi-finals and a final (a draw goes to penalties). a cup begun as four groups (an older save) has no last 16. the clubs from abroad live in S.teams so the match engine can use them, marked foreign with
    div -1, and take no part in anything else (league, 天穹杯, transfers, job offers) */
@@ -66,11 +66,11 @@ function abroadForm(t){
 const intlDay=k=>(S.pre||0)+7*(S.intl.weeks||INTL_WEEKS_V1)[k]+2;
 // our entrants from a final 甲级 table (ids, best first) and the cup winner
 function intlEntrants(top,cupWinner){
-  const ids=top.slice(0,2);
-  ids.push(cupWinner!=null&&!ids.includes(cupWinner)&&!S.teams[cupWinner].foreign?cupWinner:top[2]);
+  const ids=top.slice(0,INTL_LEAGUE_PLACES);
+  ids.push(cupWinner!=null&&!ids.includes(cupWinner)&&!S.teams[cupWinner].foreign?cupWinner:top[INTL_LEAGUE_PLACES]);
   return ids;
 }
-// the draw: our clubs go to groups that can't meet before the quarter-finals (A, C, E); the rest from abroad fill
+// the draw: our clubs go to groups that can't meet before the quarter-finals (A, C, E, G); the rest from abroad fill
 // the smallest group first, strongest first
 function newIntl(home){
   if(S.intl)foreignForm(S.intl);  // last season's cup moves the clubs abroad up or down
