@@ -90,6 +90,11 @@ button{font:inherit;color:inherit}
 /* arena */
 .arena{position:relative;isolation:isolate;background:#0B0A0D;color:#EDE5DA;min-height:calc(100vh - 54px);display:flex;flex-direction:column;overflow:hidden;--horizon:200px}
 
+/* in a fight the page is exactly the window: the top bar, then the arena, the hand at its foot always in view */
+#app:has(>.arena){display:flex;flex-direction:column;height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
+#app:has(>.arena) .arena{flex:1;min-height:0}
+#app:has(>.arena) .field{min-height:0}
+
 /* the backdrop: a wall of this zone's stone, its floor running toward you, two torches; each round shifts its colours */
 .scene{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden;filter:hue-rotate(calc(var(--loop,0)*40deg))}
 .scene .wall{position:absolute;left:0;right:0;top:0;height:var(--horizon);background:var(--wall) center bottom/1280px 384px repeat-x;image-rendering:pixelated;
@@ -175,12 +180,16 @@ button{font:inherit;color:inherit}
 .piles{display:flex;gap:10px;font-size:13px;opacity:.8}
 .endturn{background:#C9822B;border:0;color:#2A1600;font-weight:700;padding:10px 18px;border-radius:10px;cursor:pointer;font-size:15px}
 .endturn:disabled{opacity:.4;cursor:wait}
-.hand{--w:118px;--R:900px;--S:4.6deg;--max:36deg;--lift:-34px;position:relative;height:216px;flex:none}
+/* the cards turn about a point R below them, a step apart (closer when there are many, up to max across the hand);
+   the hand rises by as much as its outermost card dips, so no card's text falls below the screen */
+.hand{--w:118px;--h:166px;--R:1500px;--S:2.9deg;--max:22deg;--lift:-44px;--u:1;position:relative;flex:none;
+  --step:min(var(--S),var(--max)/var(--u));--tmax:calc(var(--step)*var(--u)/2);
+  --drop:calc(var(--R)*(1 - cos(var(--tmax))) + var(--w)/2*sin(var(--tmax)));height:calc(var(--h) + var(--drop) + 18px)}
 .hand>.empty{position:absolute;inset:0;display:grid;place-items:center;margin:0;opacity:.6}
-.hand .card{position:absolute;left:calc(50% - var(--w)/2);bottom:10px;transform-origin:50% calc(100% + var(--R));
-  transform:rotate(calc(var(--p)*min(var(--S),var(--max)/var(--u))));transition:transform .2s}
+.hand .card{position:absolute;left:calc(50% - var(--w)/2);bottom:calc(var(--drop) + 8px);transform-origin:50% calc(100% + var(--R));
+  transform:rotate(calc(var(--p)*var(--step)));transition:transform .2s}
 .hand .card .face{box-shadow:-4px 3px 12px rgba(0,0,0,.5)}
-.arena .hand .card:hover:not(:disabled) .face,.arena .hand .card.lift .face{transform:translateY(var(--lift)) scale(1.12)}
+.arena .hand .card:hover:not(:disabled) .face,.arena .hand .card.lift .face{transform:translateY(var(--lift)) scale(1.15)}
 .arena .hand .card:hover,.arena .hand .card.lift{z-index:20}
 @media (hover:none){.arena .hand .card:hover:not(.lift){z-index:auto}.arena .hand .card:hover:not(.lift) .face{transform:none}}
 
@@ -242,25 +251,54 @@ button{font:inherit;color:inherit}
 [data-tip]{cursor:help;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:14px;z-index:40;max-width:90vw;text-align:center}
 
+/* a short window: a lower wall, and everyone a size smaller, so the field never runs under the hand */
+@media (max-height:800px) and (min-width:601px){
+  .arena{--horizon:150px}
+  .foes{margin-top:calc(var(--horizon) - 100px)}
+  .enemy.elite .sprite{width:96px;height:96px}.enemy.boss .sprite{width:128px;height:128px}
+  .hero .sprite{width:96px;height:96px}
+  .ctrl{flex-direction:row;align-items:center}
+  .piles{flex-direction:column;gap:0}
+}
 @media (max-width:600px){
+  .bar .grow{display:none}
+  .relics{flex:1 1 calc(100% - 110px);min-width:0;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:2px 0}
+  .relics::-webkit-scrollbar{display:none}
+  .relic{flex:none}
   .card{width:96px;height:146px}
   .card .cname{font-size:13px}
   .card .art{font-size:30px;margin:6px 0 0}
   .card .cdesc{font-size:11px;padding:2px 5px 5px}
   .enemy{width:112px}
-  .arena{--horizon:150px}
+  .arena{--horizon:120px}
   .foes{margin-top:calc(var(--horizon) - 76px)}
-  .field{grid-template-columns:1fr;padding:10px 10px 0}
+  .field{grid-template-columns:1fr auto;gap:6px 8px;padding:10px 10px 0}
   .foes{justify-self:center;padding:0}
-  .ally{grid-row:2}
-  .ctrl{grid-column:1;grid-row:3;flex-direction:row;justify-self:end}
-  .hero .sprite{width:96px;height:96px}
+  .ctrl{gap:6px;padding-bottom:4px}
+  .ctrl .orb{width:52px;height:52px}.ctrl .orb b{font-size:22px}
+  .ctrl .piles{flex-direction:column;gap:0;font-size:12px;text-align:center}
+  .endturn{padding:8px 12px;font-size:14px}
+  .hero .sprite{width:64px;height:64px}.pet .sprite{width:48px;height:48px}
   .me-plate{width:auto;flex:1;min-width:150px}
   .torch{display:none}
-  .sprite{width:64px;height:64px}.enemy.elite .sprite{width:96px;height:96px}.enemy.boss .sprite{width:128px;height:128px}
-  .hand{--w:96px;--R:700px;--max:22deg;--lift:-30px;height:192px}
+  .sprite{width:64px;height:64px}.enemy.elite .sprite,.enemy.boss .sprite{width:96px;height:96px}
+  .hand{--w:96px;--h:146px;--R:1100px;--S:2.9deg;--max:15deg;--lift:-36px}
   .hero{min-width:0}
   .hero .sprite{width:64px;height:64px}
   .floor{grid-template-columns:40px 1fr}
   .node{min-width:0;padding:7px 10px}
+}
+/* a very short window, wide or narrow: the wall lower still, the boss and the hero smaller */
+@media (max-height:680px){
+  .arena{--horizon:100px}
+  .foes{margin-top:calc(var(--horizon) - 70px)}
+  .enemy.elite .sprite,.enemy.boss .sprite{width:96px;height:96px}
+  .hero .sprite{width:64px;height:64px}.pet .sprite{width:48px;height:48px}
+  .torch{display:none}
+}
+@media (max-height:680px) and (max-width:600px){
+  .arena{--horizon:90px}
+  .field{padding-top:4px}
+  .enemy .sprite,.enemy.elite .sprite,.enemy.boss .sprite{width:64px;height:64px}
+  .foes{margin-top:calc(var(--horizon) - 66px)}
 }

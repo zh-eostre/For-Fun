@@ -58,9 +58,9 @@ function showTip(el){
 function hideTip(){const t=document.getElementById('tip');if(t)t.hidden=true;TIP.el=null}
 const tipAt=(x,y)=>{const el=document.elementFromPoint(x,y);return el&&el.closest('[data-tip]')};
 // the page re-renders under a still mouse (the enemies acting, numbers floating up): follow what is under it now
-function syncTip(){if(TIP.x<0)return;const d=tipAt(TIP.x,TIP.y);d?showTip(d):hideTip()}
+function syncTip(){if(TIP.x<0)return;const d=tipAt(TIP.x,TIP.y);d&&!d.matches('.card')?showTip(d):hideTip()}
 document.addEventListener('pointermove',e=>{
-  if(e.pointerType==='mouse'){TIP.x=e.clientX;TIP.y=e.clientY;const d=e.target.closest('[data-tip]');if(d!==TIP.el)d?showTip(d):hideTip()}
+  if(e.pointerType==='mouse'){TIP.x=e.clientX;TIP.y=e.clientY;const d=e.target.closest('[data-tip]:not(.card)');if(d!==TIP.el)d?showTip(d):hideTip()}
   else if(Math.hypot(e.clientX-TIP.sx,e.clientY-TIP.sy)>10)clearTimeout(TIP.timer);
 });
 document.addEventListener('pointerout',e=>{if(!e.relatedTarget){TIP.x=-1;hideTip()}});

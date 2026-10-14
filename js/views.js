@@ -12,7 +12,7 @@ function markChanges(before,after){
 }
 function cardHtml(c,o={}){
   const d=CARDS[c.id],cost=costOf(c),desc=o.vs?markChanges(d.d(o.vs.up,o.vs),d.d(c.up,c)):d.d(c.up,c);
-  return `<button class="card t-${d.t} r-${d.r} ${c.up?'up':''} ${o.cls||''}" ${o.style?`style="${o.style}"`:''} ${o.act?`data-act="${o.act}" data-arg="${o.arg!==undefined?o.arg:c.uid}"`:''} ${o.dis?'disabled':''} aria-label="${d.n}${c.up?'+':''}，费用 ${cost}">
+  return `<button class="card t-${d.t} r-${d.r} ${c.up?'up':''} ${o.cls||''}" ${o.style?`style="${o.style}"`:''} ${o.tip?tipAttr(`${d.n}${c.up?'+':''} · ${cost} 费 · ${TYPE[d.t]}\n${desc.replace(/<[^>]+>/g,'')}`):''} ${o.act?`data-act="${o.act}" data-arg="${o.arg!==undefined?o.arg:c.uid}"`:''} ${o.dis?'disabled':''} aria-label="${d.n}${c.up?'+':''}，费用 ${cost}">
 <span class="face">  <span class="cost ${o.vs&&cost<costOf(o.vs)?'cheaper':''}">${cost}</span><span class="cname">${d.n}${c.up?'+':''}</span>
   <span class="art">${ico('c-'+c.id)}</span><span class="ctype">${TYPE[d.t]}</span><span class="cdesc"><span>${desc}</span></span></span></button>`;
 }
@@ -143,7 +143,7 @@ function handHtml(){
   if(!h.length)return '<div class="hand"><p class="empty">手牌已用完</p></div>';
   let p=0;const pos=h.map((c,i)=>p+=i?CARDS[c.id].t!==CARDS[h[i-1].id].t?1.4:1:0);
   return `<div class="hand" style="--u:${Math.max(p,1)}">${h.map((c,i)=>cardHtml(c,{act:'play',
-    cls:`${costOf(c)>C.energy||C.busy?'nope':''} ${UI.lift===c.uid?'lift':''}`,style:`--p:${(pos[i]-p/2).toFixed(2)}`})).join('')}</div>`;
+    cls:`${costOf(c)>C.energy||C.busy?'nope':''} ${UI.lift===c.uid?'lift':''}`,style:`--p:${(pos[i]-p/2).toFixed(2)}`,tip:1})).join('')}</div>`;
 }
 function vReward(){
   const r=S.reward,boss=!!r.boss;
