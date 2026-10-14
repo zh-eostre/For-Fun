@@ -25,7 +25,8 @@ ok(wkOf(iDays[iDays.length-1])===wkOf(last)+1,'the 冠军杯 final comes the wee
 ok(wkOf(cDays[cDays.length-1])===wkOf(last)-1,'the 天穹杯 final is in the week before it');
 // screens
 UI.tab='home';render();ok(!bad(els.app.innerHTML)&&els.app.innerHTML.includes(INTL_NAME),'home: the season list shows our 冠军杯 matches');
-ok(seasonDays(0).length===weeks(),'甲级 has a round every weekend, so no weekend off');
+ok(seasonDays(0).length===weeks()-BREAK_WEEKS.length,'甲级 has a round every weekend but the two breaks');
+ok(BREAK_WEEKS.every(w=>[intlDay(intlStages()-3),intlDay(intlStages()-2)].some(d=>Math.floor((d-S.pre)/7)===w)),'the quarter- and semi-finals are played in the breaks');
 UI.tab='cup';UI.cupv='intl';render();ok(!bad(els.app.innerHTML)&&/A 组/.test(els.app.innerHTML)&&/H 组/.test(els.app.innerHTML)&&/32 队 · 8 个小组/.test(els.app.innerHTML),'cup tab: eight group tables');
 UI.cupv='dom';render();ok(!bad(els.app.innerHTML)&&els.app.innerHTML.includes(CUP_NAME),'and the 天穹杯 behind the switch');
 ACT.team(String(away[0].id));render();ok(!bad(els.app.innerHTML)&&/海外俱乐部/.test(els.app.innerHTML),'a club from abroad has a team page');UI.pages=[];UI.tab='home';

@@ -607,6 +607,7 @@ function planWarmups(){
   const lastW=Math.floor((leagueDay(rounds()-1)-S.pre)/7),added=[];
   for(let w=Math.max(0,Math.floor((S.day-S.pre)/7));w<=Math.min(lastW,weeks()-1);w++){
     const a=S.pre+7*w,b=a+6,sat=a+5,inWeek=d=>d>=a&&d<=b;if(S.day>sat)continue;
+    if(S.cal>=4&&BREAK_WEEKS.includes(w))continue;  // a break is for resting
     if(Array.from({length:rounds()-S.round},(_,i)=>leagueDay(S.round+i)).some(inWeek))continue;
     if((S.friendlies||[]).some(f=>inWeek(f.day)))continue;
     if(cupFmt().names.some((_,k)=>cupMay(k)&&inWeek(cupDay(k))))continue;

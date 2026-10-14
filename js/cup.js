@@ -10,7 +10,7 @@ function newCup(){
   const home=S.teams.filter(t=>!t.foreign),n=home.length,base=n>=32?32:16,extra=Math.max(0,n-base);
   if(!extra)return {fmt:CUP_LEGACY,stage:0,ties:pairUp(shuffle(home.map(t=>t.id))),byes:[],rounds:[],winner:null};
   const order=[...home].sort((a,b)=>(a.rep||0)-(b.rep||0)).map(t=>t.id);
-  return {fmt:base===32?CUP_FORMAT32:CUP_FORMAT,stage:0,ties:pairUp(shuffle(order.slice(0,extra*2))),byes:order.slice(extra*2),rounds:[],winner:null};
+  return {fmt:base===32?(S.cal>=4?CUP_FORMAT32_C4:CUP_FORMAT32):CUP_FORMAT,stage:0,ties:pairUp(shuffle(order.slice(0,extra*2))),byes:order.slice(extra*2),rounds:[],winner:null};
 }
 // the next cup stage comes before our next league match (by date: lower divisions also play midweek rounds)
 const cupDue=()=>S.cup.stage<cupFmt().names.length&&cupDay(S.cup.stage)<leagueDay(S.round);

@@ -7,9 +7,10 @@ const step=()=>{if(S.event)ACT.event('0');if(S.offer)ACT.offerNo();ffToMatch();S
 const ids=TEAMS.map((t,i)=>[t,i]).filter(([t])=>t.div===0).sort((a,b)=>b[0].rep-a[0].rep).map(x=>x[1]);
 // a 甲级 club outside the 冠军杯: a league round every weekend, so no warm-ups
 newGame(ids[ids.length-1],teamNames());
-ok(S.cal===3&&weeks()===22&&!intlIn()&&seasonDays(0).length===weeks()&&!S.friendlies.some(f=>f.warm),'a new game: 22 weeks, 甲级 plays every weekend, no warm-ups needed');
-// an older pyramid (10 / 12 / 14): its 甲级 sits 4 weekends out, and each gets a warm-up
-{const drop=new Set(DIVS.flatMap((_,d)=>S.teams.filter(t=>t.div===d&&t.id!==S.my).slice(-2).map(t=>t.id)));
+ok(S.cal===4&&weeks()===24&&!intlIn()&&seasonDays(0).length===weeks()-2&&!S.friendlies.some(f=>f.warm),'a new game: 24 weeks, 甲级 plays every weekend but the two breaks, which get no warm-up');
+UI.tab='home';S.day=S.pre+7*BREAK_WEEKS[0]-3;render();ok(/休赛周/.test(els.app.innerHTML),'the strip marks the break');S.day=0;
+// an older pyramid (10 / 12 / 14) on the 22-week calendar: its 甲级 sits 4 weekends out, and each gets a warm-up
+{S.cal=3;const drop=new Set(DIVS.flatMap((_,d)=>S.teams.filter(t=>t.div===d&&t.id!==S.my).slice(-2).map(t=>t.id)));
   const kept=S.teams.filter(t=>!drop.has(t.id)),map=new Map(kept.map((t,i)=>[t.id,i]));
   S.my=map.get(S.my);S.teams=kept;S.teams.forEach((t,i)=>t.id=i);S.rival=pickRival();
   S.fixtures=DIVS.map((_,d)=>genFixtures(divIds(d)));S.results=DIVS.map(()=>[]);S.cup=newCup();

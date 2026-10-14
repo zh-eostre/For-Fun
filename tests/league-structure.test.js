@@ -7,7 +7,8 @@ ok(DIVS.every((_,d)=>divSize(d)===DIV_SIZES[d])&&[0,1,2].map(rounds).join()==='2
 ok(new Set(DIVS.map((_,d)=>leagueDay(rounds(d)-1,d))).size===1,'every division ends on the same day');
 const wk=d=>Math.floor((d-S.pre)/7),cupWs=cupFmt().at;
 const sats=d=>seasonDays(d).filter(x=>x%7===5).map(wk),tues=d=>seasonDays(d).filter(x=>x%7===1).map(wk);
-ok(weeks()===22&&seasonDays(0).every(x=>x%7===5)&&sats(0).length===22,'a 22-week season; 甲级 plays every Saturday and nothing else');
+ok(weeks()===24&&seasonDays(0).every(x=>x%7===5)&&sats(0).length===22,'a 24-week season; 甲级 plays every Saturday but the breaks, and nothing else');
+ok(DIVS.every((_,d)=>seasonDays(d).every(x=>!BREAK_WEEKS.includes(wk(x)))),'no league round in either break week ('+BREAK_WEEKS.map(w=>w+2).join(', ')+')');
 ok(sats(1).length===22&&sats(2).length===22,'乙级 and 丙级 play every weekend');
 ok(tues(1).length===4&&tues(2).length===8&&[...tues(1),...tues(2)].every(w=>!cupWs.includes(w)),'乙级 and 丙级 play their 4 and 8 extra rounds on Tuesdays, never in a 天穹杯 week');
 ok(S.cup.fmt.names[0]==='资格赛'&&S.cup.fmt.names[1]==='三十二强'&&S.cup.ties.length===10&&S.cup.byes.length===22,'cup: 20 clubs in the qualifying round, 22 byes');

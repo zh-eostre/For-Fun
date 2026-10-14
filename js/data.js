@@ -101,6 +101,9 @@ const ONE_CLUB_OVR=80,ONE_CLUB=6,ONE_CLUB_AURA=.5,ONE_CLUB_AURA_MAX=1,ONE_CLUB_R
 const LATE_MIN=85;  // from this minute a goal that wins or levels the match can be a 绝杀 / 绝平
 const YC_BAN=3;   // yellow cards in one competition that add up to a one-match ban in it
 // player name parts; genName in engine.js combines them
+// calendar 4: a season of SEASON_WEEKS4 weeks, two of them breaks (BREAK_WEEKS) with no league anywhere: the 冠军杯
+// quarter- and semi-finals are played in them, so a club still in it plays once that week and the rest rest and
+// train. the other weeks as calendar 3.
 // calendar 3: a season of SEASON_WEEKS weeks, league rounds on Saturdays. 甲级 (22 rounds) plays every Saturday;
 // 乙级 (26) and 丙级 (30) add their extra rounds on Tuesdays of weeks without a cup tie (see seasonDays in engine.js;
 // on the old 10-club 甲级, 18 rounds, it sat 4 weekends out, on 冠军杯 weeks). cup ties and 冠军杯 matches on Wednesdays: the 天穹杯 final in the week before the
@@ -108,12 +111,13 @@ const YC_BAN=3;   // yellow cards in one competition that add up to a one-match 
 // friendly on the Saturday (planWarmups in club.js).
 // the day after any of our matches is a rest day, every other day is a training day.
 // a season keeps the calendar it began with: 1 (a week per 甲级 round, extra rounds on Tuesdays), 2 (26 weeks, every
-// round on a Saturday) or 3
-const CAL_V=3,SEASON_WEEKS=22;
+// round on a Saturday), 3 or 4
+const CAL_V=4,SEASON_WEEKS=22,SEASON_WEEKS4=24,BREAK_WEEKS=[14,19];
 // later calendars have more training days a season than calendar 1 (about 75): per-day chances (training growth,
 // surprises) are scaled so a season adds up to about what it did
 const DAY_SCALE3=.73;  // about 95 training days a season on calendar 3
-const dayScale=()=>S.cal>=3?DAY_SCALE3:S.cal>=2?.6:1;
+const DAY_SCALE4=.66;  // about 10 more on calendar 4 (the breaks)
+const dayScale=()=>S.cal>=4?DAY_SCALE4:S.cal>=3?DAY_SCALE3:S.cal>=2?.6:1;
 const WEEKDAYS=['周一','周二','周三','周四','周五','周六','周日'];
 const DAY_REST=10;   // stamina everyone gets back on a rest day
 // per training day, depending on the training setting: stamina change, and chance to improve by 1
@@ -131,7 +135,7 @@ const INTL_NAME='天际冠军杯';
 // each competition keeps its own bookings and bans: league, 天穹杯, 冠军杯 (friendlies have neither)
 const COMPS={lg:'联赛',cup:CUP_NAME,intl:INTL_NAME};
 const INTL_GROUPS=8,INTL_GROUP_ROUNDS=6,INTL_LEAGUE_PLACES=3;  // 甲级's places (the 天穹杯 winner has one more)
-const INTL_WEEKS=[1,3,4,7,8,10,11,14,18,22];  // six group rounds, last 16, quarters, semis, final (after the league)
+const INTL_WEEKS=[1,3,4,7,8,10,11,14,19,24];  // six group rounds, last 16, quarters and semis (in the breaks), final (after the league)
 const INTL_WEEKS4=[3,4,7,8,10,11,14,18,22];   // the four-group cup on the 22-week calendar
 const INTL_WEEKS_V2=[3,4,7,8,11,12,16,19,23];  // on the 26-week calendar
 const INTL_WEEKS_V1=[2,3,5,6,8,9,11,12,15];  // on the first, shorter calendar
@@ -166,6 +170,7 @@ const CUP_FORMAT32={
   at:[2,5,9,12,16,20],          // the final in the week before the last league round
   prize:[0,0,10,30,60,120,250]
 };
+const CUP_FORMAT32_C4={...CUP_FORMAT32,at:[2,5,9,13,17,22]};  // on calendar 4 (24 weeks, breaks in weeks 14 and 19)
 
 const INJ_RATE=.00046;    // chance per team per minute of an injury, scaled by stamina (about one every 40-60 matches per team)
 const INJ_DAYS=[2,3,4,4,5,6,7,9,12,16,21];  // how many days an injury lasts, picked at random

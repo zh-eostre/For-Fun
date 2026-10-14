@@ -155,7 +155,7 @@ function vCalendar(){
       const opp=S.teams[fx[0]===S.my?fx[1]:fx[0]];
       what=m.cup?CUP_NAME:m.intl?'冠军杯':'联赛';sub=`${fx[0]===S.my?'主':'客'} ${opp.short}`;
     }else if(t==='rest'){what='休息';sub=`体能 +${restAmt()}`}
-    else{what='训练';sub=S.cal>=2&&d%7===5&&d>=(S.pre||0)?'联赛轮空':T}
+    else{what='训练';sub=S.cal>=4&&BREAK_WEEKS.includes(Math.floor((d-(S.pre||0))/7))&&d>=(S.pre||0)?'休赛周':S.cal>=2&&d%7===5&&d>=(S.pre||0)?'联赛轮空':T}
     // marks for the transfer windows and the last round
     const mark=d===winterStart()?'冬窗开启':S.pre!=null&&d===winterStart()+WINTER?'冬窗关闭':S.pre!=null&&d===S.pre?'转会窗关闭':m&&m.r!=null&&m.r===rounds()-1?'最后一轮':after[d]||'';
     return `<div class="day ${t} ${m&&m.intl?'intl':''} ${d===S.day?'today':''}"><span class="wd">${d%7===0||d===S.day?`<i>第${Math.floor(d/7)+1}周</i>`:''}${WEEKDAYS[d%7]}</span><b>${what}</b><small>${sub}</small>${mark?`<em>${mark}</em>`:''}</div>`;
@@ -264,9 +264,9 @@ function vRules(){
   <p class="muted" style="font-size:12px;margin:0 0 10px">音效：进球与夺冠的欢呼声来自 Gregor Quendel《Free Crowd Cheering Sounds》（CC BY 4.0，已剪辑），失球时全场的「噢——」和扑救后的掌声来自 itmightgetloud 在圣保利 Millerntor 球场的录音（Sound Of Sankt Pauli，CC0）。</p>
   <p class="rule-diff">本档难度：<b>${diff().name}</b>（${diff().note}）。开局预算 ×${diff().budget}，比赛收入 ×${diff().income}，AI 球队水平 ${diff().ai>0?'+':''}${diff().ai}，我方伤病几率 ×${diff().inj}。</p>
   ${sec('赛季与日程',[`联赛是金字塔：${DIVS.map((dn,d)=>`${dn} ${DIV_SIZES[d]} 队`).join('、')}，各自主客场双循环（${DIVS.map((dn,d)=>`${dn} ${2*(DIV_SIZES[d]-1)} 轮`).join('、')}）。每级前 ${SWAP} 名升级、后 ${SWAP} 名降级。`,
-    `一个赛季 ${weeks()} 周，联赛在周六进行，三个级别在同一天结束。${DIVS.map((dn,d)=>{const r=rounds(d),w=weeks();return r<w?`${dn} ${r} 轮，有 ${w-r} 个周末轮空`:r>w?`${dn} ${r} 轮，有 ${r-w} 轮放在周二（避开杯赛周）`:`${dn} ${r} 轮，每周六一轮`}).join('；')}。`,
+    `一个赛季 ${weeks()} 周，联赛在周六进行，三个级别在同一天结束。${S.cal>=4?`第 ${BREAK_WEEKS.map(w=>w+2).join('、')} 周是休赛周：所有联赛暂停，只有${INTL_NAME}的八强和半决赛照常在周三进行，其他球队整周训练和恢复。`:''}${DIVS.map((dn,d)=>{const r=rounds(d),w=weeks()-(S.cal>=4?BREAK_WEEKS.length:0);return r<w?`${dn} ${r} 轮，有 ${w-r} 个周末轮空`:r>w?`${dn} ${r} 轮，有 ${r-w} 轮放在周二（避开杯赛周）`:`${dn} ${r} 轮，每周六一轮`}).join('；')}。`,
     `${CUP_NAME}决赛在联赛最后一轮的前一周，${INTL_NAME}决赛在联赛最后一轮的后一周（进了决赛，赛季就踢到决赛为止）。`,
-    `哪一周你没有正式比赛（联赛轮空、杯赛已出局），那周六会自动安排一场热身赛，对手是海外球队，不计成绩、不吃牌。`,
+    `哪一周你没有正式比赛（联赛轮空、杯赛已出局），那周六会自动安排一场热身赛，对手是海外球队，不计成绩、不吃牌；休赛周不安排。`,
     `季前一周：转会窗口开放，还有两场友谊赛（对手是本国其他级别的球队，不计成绩、不吃牌）。赛季过半后开 ${WINTER} 天冬窗，其余时间不能买卖球员。AI 球队大多在窗口最后几天才出手，所以想要的人最好早点下手；冬窗只是小修补，出手的球队不多。窗口结束前 3 天，会传出豪门盯上了哪位年轻天才，窗口最后一天他可能被签走（${diff().name}难度：${Math.round(diff().grab*100)}%）。`,
     `${CUP_NAME}是单场淘汰，平局直接点球大战。杯赛在周中，3 天后就是下一轮联赛。`,
     `${INTL_NAME}：${4*INTL_GROUPS} 队参加，本国派出甲级前 ${INTL_LEAGUE_PLACES} 名和${CUP_NAME}冠军（冠军已在前 ${INTL_LEAGUE_PLACES} 名时由甲级第 ${INTL_LEAGUE_PLACES+1} 名替补），其余 ${4*INTL_GROUPS-INTL_LEAGUE_PLACES-1} 队来自海外（每季从 ${FOREIGN.length} 支海外俱乐部里按实力抽签，强队更常出现；它们的底蕴会随冠军杯成绩升降）。${INTL_GROUPS} 个小组主客场双循环，前两名进十六强，之后单场淘汰。比赛在周三，收入 1.5 倍；小组赛胜 ${money(INTL_PRIZE.win)}、平 ${money(INTL_PRIZE.draw)}，进十六强 ${money(INTL_PRIZE.ko[0])}、八强 ${money(INTL_PRIZE.ko[1])}、四强 ${money(INTL_PRIZE.ko[2])}、决赛 ${money(INTL_PRIZE.ko[3])}，冠军 ${money(INTL_PRIZE.champion)}。海外球队不参加联赛和${CUP_NAME}，也不买卖球员。`])}

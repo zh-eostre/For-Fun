@@ -609,7 +609,7 @@ function news(t){S.news.unshift({r:`S${S.season} ${NEWS_TAG||`第${Math.min(S.ro
 
 // rounds in the current season for a division (ours by default), and the season's league weeks (by calendar)
 const rounds=d=>S.fixtures[d??my().div].length;
-const weeks=()=>S.cal>=3?SEASON_WEEKS:S.cal>=2?Math.max(...S.fixtures.map(f=>f.length)):S.fixtures[0].length;
+const weeks=()=>S.cal>=4?SEASON_WEEKS4:S.cal>=3?SEASON_WEEKS:S.cal>=2?Math.max(...S.fixtures.map(f=>f.length)):S.fixtures[0].length;
 // spreads n picks evenly over a list
 const spread=(a,n)=>n<=0?[]:n>=a.length?[...a]:Array.from({length:n},(_,i)=>a[Math.round(i*(a.length-1)/Math.max(1,n-1))]);
 // a division's league match days this season. every week has a Saturday round, except that a division with fewer
@@ -618,14 +618,15 @@ const spread=(a,n)=>n<=0?[]:n>=a.length?[...a]:Array.from({length:n},(_,i)=>a[Ma
 // Tuesdays of weeks without a cup tie. the first and last weeks are always played, so every division ends the same day
 function seasonDays(d=my().div){
   if(!(S.cal>=2))return seasonDaysV1(d);
-  const W=weeks(),R=S.fixtures[d].length,pre=S.pre||0;
-  let off=W-R;const out=new Set(),mid=w=>w>0&&w<W-1&&!out.has(w);
+  const W=weeks(),R=S.fixtures[d].length,pre=S.pre||0,brk=S.cal>=4?BREAK_WEEKS:[];
+  let off=W-brk.length-R;const out=new Set(brk),mid=w=>w>0&&w<W-1&&!out.has(w);  // the breaks: no league anywhere
   const intlW=d===0?(S.intl&&S.intl.weeks)||(S.cal>=3?INTL_WEEKS4:INTL_WEEKS_V2):[],cupW=S.cup&&!S.cup.skipped?cupFmt().at:[];
   for(const pool of [intlW,cupW,Array.from({length:W},(_,w)=>w)]){
     const take=spread(pool.filter(mid),off);take.forEach(w=>out.add(w));off-=take.length;
   }
   const days=[];for(let w=0;w<W;w++)if(!out.has(w))days.push(pre+7*w+5);
-  if(R>W)spread(Array.from({length:W},(_,w)=>w).filter(w=>w>0&&w<W-1&&!cupW.includes(w)),R-W).forEach(w=>days.push(pre+7*w+1));
+  const sat=W-brk.length;
+  if(R>sat)spread(Array.from({length:W},(_,w)=>w).filter(w=>w>0&&w<W-1&&!cupW.includes(w)&&!brk.includes(w)),R-sat).forEach(w=>days.push(pre+7*w+1));
   return days.sort((a,b)=>a-b);
 }
 // the calendar before version 2: the top flight every Saturday, a bigger division's extra rounds on Tuesdays
