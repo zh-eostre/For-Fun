@@ -15,3 +15,15 @@ The page loads `style.css` and the scripts in `js/` (data, icons, run, views, ma
 ```
 for f in tests/*.test.js; do node $f; done
 ```
+
+To check the balance after changing numbers, a bot plays the game many times and reports how far runs get, what each
+fight costs, and how much each card and relic is worth (runs that start with it against runs that start without):
+
+```
+node tools/balance.js 1000 overall fights      # quick: difficulty, every encounter
+node tools/balance.js 1000 cards relics        # slow: every card and relic, a thousand runs each
+```
+
+The bot plays sensibly but not like a person, so read the numbers as comparisons between cards, fights and rounds,
+not as how hard the game is for you. A card worth anything only alongside others (余烬, 吞噬, 剧毒) looks weaker in
+these tests than it is.

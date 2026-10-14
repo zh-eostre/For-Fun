@@ -14,7 +14,7 @@ fight('bat');const b=C.enemies[0];b.hp=b.max=40;play('thorns',true);b.next={a:2,
 ok(b.hp===0&&S.screen==='reward'&&S.hp>0,'an attacker killed by thorns stops attacking, and the fight is won');
 // exhaust
 fight('cultist');C.hand=[];C.draw=[{uid:nid(),id:'strike'},{uid:nid(),id:'defend'},{uid:nid(),id:'bash'}];C.discard=[];play('embers');play('devour');
-play('shout');ok(C.p.block===3&&C.hand.length===3,'余烬 and 吞噬: exhausting a card gives block and draws');
+play('shout');ok(C.p.block===4&&C.hand.length===3,'余烬 and 吞噬: exhausting a card gives block and draws');
 fight('cultist');const c=C.enemies[0];C.hand=['strike','defend','bash'].map(id=>({uid:nid(),id}));C.draw=[];C.discard=[];
 play('hellfire');ok(c.hp===c.max-21&&C.exhaust.length===4&&!C.hand.length,'业火焚身: exhausts the hand, 7 damage for each card, then itself');
 fight('cultist');const d=C.enemies[0];S.relics.push('censer');d.block=2;play('shout');ok(d.hp===d.max-1&&d.block===0,'焚香炉: exhausting a card hurts every enemy for 3');

@@ -56,14 +56,14 @@ function hitEnemy(e,base,mul=1){
   if(!e||e.hp<=0)return;
   let d=pDmg(base,e,mul);const b=Math.min(e.block,d);e.block-=b;d-=b;e.hp-=d;
   fx('e'+e.uid,d>0?'-'+d:'格挡',d>0?'dmg':'blk');HIT['e'+e.uid]=performance.now();
-  if(e.hp<=0){e.hp=0;if(has('fang'))heal(4)}
+  if(e.hp<=0){e.hp=0;if(has('fang'))heal(3)}
 }
 // damage that isn't an attack (thorns, poison, the censer): no strength, weakness or vulnerability; block stops it unless it pierces
 function harm(e,n,pierce){
   if(!e||e.hp<=0||n<=0)return;
   let d=n;if(!pierce){const b=Math.min(e.block,d);e.block-=b;d-=b}e.hp-=d;
   fx('e'+e.uid,d>0?'-'+d:'格挡',d>0?'dmg':'blk');HIT['e'+e.uid]=performance.now();
-  if(e.hp<=0){e.hp=0;if(has('fang'))heal(4)}
+  if(e.hp<=0){e.hp=0;if(has('fang'))heal(3)}
 }
 function exhaust(c){C.exhaust.push(c);if(C.p.embers)gainBlock(C.p.embers);if(C.p.devour)draw(C.p.devour);if(has('censer'))alive().forEach(e=>harm(e,3))}
 function atk(base,n=1,mul=1){for(let i=0;i<n;i++){const t=curTarget();if(!t)break;hitEnemy(t,base,mul)}}
@@ -84,7 +84,7 @@ function startTurn(){
   if(!C.p.barricade)C.p.block=0;
   if(C.p.poison>0){loseHp(C.p.poison);C.p.poison--;if(S.hp<=0)return die()}
   C.energy=3+(has('core')?1:0)+(C.turn===1&&has('lantern')?1:0);
-  if(C.turn===1&&has('anchor'))gainBlock(10);
+  if(C.turn===1&&has('anchor'))gainBlock(7);
   if(C.p.demon){C.p.str+=C.p.demon;fx('p',`力量 +${C.p.demon}`,'st')}
   if(C.p.fumes)alive().forEach(e=>applyE(e,'poison',C.p.fumes));
   draw(5+C.p.inspire+(has('crown')?1:0)+(C.turn===1&&has('ring')?2:0));
@@ -107,7 +107,7 @@ function checkWin(){
   if(alive().length)return;
   C.busy=true;
   setTimeout(()=>{
-    if(has('blood'))heal(8);
+    if(has('blood'))heal(6);
     const elite=C.type==='elite',boss=C.type==='boss';
     let gold=boss?R(95,110):elite?R(30,40):R(14,24);if(has('purse'))gold=Math.round(gold*1.5);
     S.reward={gold,goldTaken:false,cards:rollCards(3,elite||boss),cardTaken:false,
@@ -121,7 +121,7 @@ async function endTurn(){
   C.busy=true;
   C.discard.push(...C.hand);C.hand=[];
   if(C.p.metal)gainBlock(C.p.metal);
-  if(has('ori')&&C.p.block===0)gainBlock(6);
+  if(has('ori')&&C.p.block===0)gainBlock(3);
   render();
   for(const e of C.enemies){
     if(e.hp<=0)continue;

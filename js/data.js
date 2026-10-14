@@ -24,7 +24,7 @@ const CARDS={
   sunder:{n:'破甲',c:1,t:'atk',r:'com',d:u=>`造成 ${DM(u?9:7)} 点伤害，施加 ${u?2:1} 层虚弱`,f:u=>{const t=curTarget();hitEnemy(t,u?9:7);if(t.hp>0)applyE(t,'weak',u?2:1)}},
   venom:{n:'毒刃',c:1,t:'atk',r:'com',d:u=>`造成 ${DM(u?6:4)} 点伤害，施加 ${u?5:3} 层中毒`,f:u=>{const t=curTarget();hitEnemy(t,u?6:4);if(t.hp>0)applyE(t,'poison',u?5:3)}},
   slam:{n:'全身撞击',c:1,cu:0,t:'atk',r:'com',d:u=>`造成等同于你格挡值的伤害（${DM(C?C.p.block:0)}）`,f:u=>atk(C.p.block)},
-  anger:{n:'怒火',c:0,t:'atk',r:'com',d:u=>`造成 ${DM(u?8:6)} 点伤害，放一张复制到弃牌堆`,f:u=>{atk(u?8:6);C.discard.push({uid:nid(),id:'anger',up:u})}},
+  anger:{n:'怒火',c:0,t:'atk',r:'com',d:u=>`造成 ${DM(u?6:4)} 点伤害，放一张复制到弃牌堆`,f:u=>{atk(u?6:4);C.discard.push({uid:nid(),id:'anger',up:u})}},
   shrug:{n:'硬抗',c:1,t:'skl',r:'com',d:u=>`获得 ${u?11:8} 点格挡，抽 1 张牌`,f:u=>{gainBlock(u?11:8);draw(1)}},
   shout:{n:'战吼',c:0,t:'skl',r:'com',ex:1,d:u=>`抽 ${u?3:2} 张牌。消耗`,f:u=>draw(u?3:2)},
   scare:{n:'恐吓',c:0,t:'skl',r:'com',ex:1,d:u=>`所有敌人获得 ${u?2:1} 层虚弱。消耗`,f:u=>alive().forEach(e=>applyE(e,'weak',u?2:1))},
@@ -34,22 +34,22 @@ const CARDS={
   heavy:{n:'巨刃',c:2,t:'atk',r:'unc',d:u=>`造成 ${DM(14,u?5:3)} 点伤害，力量效果 ×${u?5:3}`,f:u=>atk(14,1,u?5:3)},
   rampage:{n:'狂怒',c:1,t:'atk',r:'unc',d:(u,c)=>`造成 ${DM(8+((c&&c.bonus)||0))} 点伤害，本场每次打出伤害 +${u?8:5}`,f:(u,c)=>{atk(8+(c.bonus||0));c.bonus=(c.bonus||0)+(u?8:5)}},
   entrench:{n:'堡垒',c:2,cu:1,t:'skl',r:'unc',d:u=>`你的格挡值翻倍`,f:u=>gainBlock(C.p.block)},
-  adren:{n:'肾上腺素',c:0,t:'skl',r:'unc',ex:1,d:u=>`获得 ${u?2:1} 点能量，抽 2 张牌。消耗`,f:u=>{C.energy+=u?2:1;draw(2)}},
+  adren:{n:'肾上腺素',c:0,t:'skl',r:'rare',ex:1,d:u=>`获得 ${u?2:1} 点能量，抽 2 张牌。消耗`,f:u=>{C.energy+=u?2:1;draw(2)}},
   catal:{n:'催化',c:1,t:'skl',r:'unc',ex:1,d:u=>`目标的中毒层数${u?'变为 3 倍':'翻倍'}。消耗`,f:u=>{const t=curTarget();if(t)applyE(t,'poison',(t.poison||0)*(u?2:1))}},
-  shock:{n:'震荡波',c:1,t:'skl',r:'unc',ex:1,d:u=>`所有敌人获得 ${u?3:2} 层虚弱和易伤。消耗`,f:u=>alive().forEach(e=>{applyE(e,'weak',u?3:2);applyE(e,'vuln',u?3:2)})},
-  whirl:{n:'旋风斩',c:2,t:'atk',r:'unc',d:u=>`对所有敌人造成 ${DM(u?7:5,1,true)} 点伤害 2 次`,f:u=>atkAll(u?7:5,2)},
+  shock:{n:'震荡波',c:2,t:'skl',r:'unc',ex:1,d:u=>`所有敌人获得 ${u?3:2} 层虚弱和易伤。消耗`,f:u=>alive().forEach(e=>{applyE(e,'weak',u?3:2);applyE(e,'vuln',u?3:2)})},
+  whirl:{n:'旋风斩',c:2,t:'atk',r:'unc',d:u=>`对所有敌人造成 ${DM(u?9:7,1,true)} 点伤害 2 次`,f:u=>atkAll(u?9:7,2)},
   inflame:{n:'燃烧意志',c:1,t:'pow',r:'unc',d:u=>`获得 ${u?3:2} 点力量`,f:u=>{C.p.str+=u?3:2;fx('p',`力量 +${u?3:2}`,'st')}},
   metal:{n:'金属化',c:1,t:'pow',r:'unc',d:u=>`每回合结束时获得 ${u?4:3} 点格挡`,f:u=>C.p.metal+=u?4:3},
   fumes:{n:'毒气',c:1,t:'pow',r:'unc',d:u=>`每回合开始时，所有敌人获得 ${u?3:2} 层中毒`,f:u=>C.p.fumes+=u?3:2},
   rupture:{n:'毒发',c:1,cu:0,t:'skl',r:'unc',d:u=>`目标立即失去等同于其中毒层数的生命${C&&curTarget()?`（<b>${curTarget().poison}</b>）`:''}`,f:u=>{const t=curTarget();if(t)harm(t,t.poison,true)}},
   thorns:{n:'荆棘护甲',c:1,t:'pow',r:'unc',d:u=>`每次受到攻击时，对攻击者造成 ${u?5:3} 点伤害`,f:u=>C.p.thorns+=u?5:3},
-  embers:{n:'余烬',c:1,t:'pow',r:'unc',d:u=>`每消耗一张牌，获得 ${u?4:3} 点格挡`,f:u=>C.p.embers+=u?4:3},
+  embers:{n:'余烬',c:1,t:'pow',r:'unc',d:u=>`每消耗一张牌，获得 ${u?5:4} 点格挡`,f:u=>C.p.embers+=u?5:4},
   frenzy:{n:'狂乱',c:2,t:'atk',r:'rare',d:u=>`造成 ${DM(u?5:4)} 点伤害 ${u?5:4} 次`,f:u=>atk(u?5:4,u?5:4)},
-  execute:{n:'处决',c:3,t:'atk',r:'rare',d:u=>`造成 ${DM(u?42:30)} 点伤害`,f:u=>atk(u?42:30)},
-  demon:{n:'恶魔形态',c:3,t:'pow',r:'rare',d:u=>`每回合开始时获得 ${u?3:2} 点力量`,f:u=>C.p.demon+=u?3:2},
-  barricade:{n:'壁垒',c:3,cu:2,t:'pow',r:'rare',d:u=>`格挡不再在回合开始时消失`,f:u=>C.p.barricade=1},
+  execute:{n:'处决',c:3,t:'atk',r:'rare',d:u=>`造成 ${DM(u?48:36)} 点伤害`,f:u=>atk(u?48:36)},
+  demon:{n:'恶魔形态',c:3,cu:2,t:'pow',r:'rare',d:u=>`每回合开始时获得 ${u?3:2} 点力量`,f:u=>C.p.demon+=u?3:2},
+  barricade:{n:'壁垒',c:2,cu:1,t:'pow',r:'rare',d:u=>`格挡不再在回合开始时消失`,f:u=>C.p.barricade=1},
   inspire:{n:'灵感',c:1,cu:0,t:'pow',r:'rare',d:u=>`每回合多抽 1 张牌`,f:u=>C.p.inspire+=1},
-  offering:{n:'献祭',c:0,t:'skl',r:'rare',ex:1,d:u=>`失去 6 点生命，获得 2 点能量，抽 ${u?5:3} 张牌。消耗`,f:u=>{loseHp(6);C.energy+=2;draw(u?5:3)}},
+  offering:{n:'献祭',c:0,t:'skl',r:'rare',ex:1,d:u=>`失去 5 点生命，获得 2 点能量，抽 ${u?5:3} 张牌。消耗`,f:u=>{loseHp(5);C.energy+=2;draw(u?5:3)}},
   limit:{n:'极限突破',c:1,t:'skl',r:'rare',ex:u=>!u,d:u=>`力量翻倍。${u?'':'消耗'}`,f:u=>{const g=C.p.str;C.p.str*=2;if(g>0)fx('p',`力量 +${g}`,'st')}},
   toxin:{n:'剧毒',c:1,t:'pow',r:'rare',d:u=>`每次施加中毒时，额外施加 ${u?2:1} 层`,f:u=>C.p.toxin+=u?2:1},
   devour:{n:'吞噬',c:2,cu:1,t:'pow',r:'rare',d:u=>`每消耗一张牌，抽 1 张牌`,f:u=>C.p.devour+=1},
@@ -63,15 +63,15 @@ function rollCards(n,elite){const s=new Set();let g=0;while(s.size<n&&g++<50)s.a
 
 /* ---------- relics ---------- */
 const RELICS={
-  blood:{n:'燃烧之血',d:'战斗胜利后回复 8 点生命'},
-  anchor:{n:'船锚',d:'每场战斗第一回合获得 10 点格挡'},
+  blood:{n:'燃烧之血',d:'战斗胜利后回复 6 点生命'},
+  anchor:{n:'船锚',d:'每场战斗第一回合获得 7 点格挡'},
   whet:{n:'磨刀石',d:'战斗开始时获得 1 点力量'},
   ring:{n:'蛇眼戒指',d:'每场战斗第一回合多抽 2 张牌'},
   drum:{n:'战鼓',d:'每回合打出第 3 张攻击牌时，获得 1 点力量'},
   sac:{n:'毒囊',d:'战斗开始时，所有敌人获得 3 层中毒'},
   purse:{n:'金币袋',d:'获得的金币 +50%'},
-  ori:{n:'山铜',d:'回合结束时若没有格挡，获得 6 点格挡'},
-  fang:{n:'吸血牙',d:'每击杀一个敌人，回复 4 点生命'},
+  ori:{n:'山铜',d:'回合结束时若没有格挡，获得 3 点格挡'},
+  fang:{n:'吸血牙',d:'每击杀一个敌人，回复 3 点生命'},
   lantern:{n:'灯笼',d:'每场战斗第一回合多 1 点能量'},
   censer:{n:'焚香炉',d:'每消耗一张牌，对所有敌人造成 3 点伤害'},
   core:{n:'能量核心',d:'每回合多 1 点能量',boss:1},
@@ -90,20 +90,20 @@ const EN={
   archer:{n:'骷髅弓手',hp:[20,24],ai:(e,t)=>t%2?{b:6,a:4}:{a:3,n:2}},
   shroom:{n:'毒蘑菇',hp:[14,18],ai:(e,t)=>t%2?{a:5}:{a:2,po:3}},
   bat:{n:'吸血蝠',hp:[10,13],ai:()=>({a:4})},
-  snake:{n:'沙蛇',hp:[28,32],ai:(e,t)=>t%3===2?{vu:2,w:1}:{a:6}},
+  snake:{n:'沙蛇',hp:[34,38],ai:(e,t)=>t%3===2?{vu:2,w:1}:{a:6}},
   rat:{n:'巨鼠',hp:[12,15],ai:()=>pick([{a:5},{a:2,n:2}])},
-  goblin:{n:'哥布林',hp:[22,26],ai:(e,t)=>t%2?{a:9}:{a:4,n:2}},
-  spider:{n:'狼蛛',hp:[26,30],ai:(e,t)=>t%2?{a:7}:{a:4,po:2}},
-  ghoul:{n:'食尸鬼',hp:[36,42],ai:(e,t)=>[{a:5,vu:1},{a:4,n:2},{a:10}][t%3]},
-  priest:{n:'兽人祭司',hp:[24,28],ai:(e,t)=>[{h:8},{a:6},{a:3,w:1}][t%3]},
+  goblin:{n:'哥布林',hp:[20,24],ai:(e,t)=>t%2?{a:8}:{a:3,n:2}},
+  spider:{n:'狼蛛',hp:[30,34],ai:(e,t)=>t%2?{a:7}:{a:4,po:2}},
+  ghoul:{n:'食尸鬼',hp:[38,44],ai:(e,t)=>[{a:5,vu:1},{a:4,n:2},{a:10}][t%3]},
+  priest:{n:'兽人祭司',hp:[24,28],ai:(e,t)=>[{h:6},{a:6},{a:3,w:1}][t%3]},
   golem:{n:'石像鬼',hp:[78,84],elite:1,ai:(e,t)=>[{b:12,a:7},{a:12},{s:2,b:8}][t%3]},
-  knight:{n:'暗影骑士',hp:[68,74],elite:1,ai:(e,t)=>[{a:5,n:3},{vu:2,a:9},{a:16}][t%3]},
-  ogre:{n:'双头食人魔',hp:[88,94],elite:1,ai:(e,t)=>[{a:11},{s:3,b:6},{a:6,n:2}][t%3]},
-  troll:{n:'巨魔',hp:[96,102],elite:1,ai:(e,t)=>[{a:13},{a:6,n:2},{h:12,b:8}][t%3]},
+  knight:{n:'暗影骑士',hp:[68,74],elite:1,ai:(e,t)=>[{a:5,n:3},{vu:2,a:8},{a:14}][t%3]},
+  ogre:{n:'双头食人魔',hp:[88,94],elite:1,ai:(e,t)=>[{a:11},{s:2,b:6},{a:6,n:2}][t%3]},
+  troll:{n:'巨魔',hp:[96,102],elite:1,ai:(e,t)=>[{a:12},{a:6,n:2},{h:10,b:8}][t%3]},
   naga:{n:'娜迦女王',hp:[74,80],elite:1,ai:(e,t)=>[{w:2,vu:2},{a:7,po:4},{a:17}][t%3]},
-  dragon:{n:'深渊巨龙',hp:[170,170],boss:1,ai:(e,t)=>[{a:6,n:3},{b:15,s:2},{w:2,vu:1},{a:20}][t%4]},
-  titan:{n:'机械泰坦',hp:[180,180],boss:1,ai:(e,t)=>[{b:12,a:8},{a:4,n:4},{s:2,po:3},{a:20}][t%4]},
-  lich:{n:'不死巫妖',hp:[175,175],boss:1,ai:(e,t)=>[{a:6,n:3},{po:5,w:2},{h:15,b:12},{a:22}][t%4]}
+  dragon:{n:'深渊巨龙',hp:[170,170],boss:1,ai:(e,t)=>[{a:5,n:3},{b:15,s:2},{w:2,vu:1},{a:18}][t%4]},
+  titan:{n:'机械泰坦',hp:[170,170],boss:1,ai:(e,t)=>[{b:12,a:8},{a:4,n:3},{s:2,po:2},{a:16}][t%4]},
+  lich:{n:'不死巫妖',hp:[165,165],boss:1,ai:(e,t)=>[{a:5,n:3},{po:4,w:1},{h:8,b:10},{a:18}][t%4]}
 };
 const EASY=[['slime'],['wolf'],['bat','bat'],['shroom','bat'],['rat','rat']];
 const NORMAL=[['cultist'],['slime','slime','bat'],['archer','bat'],['shroom','shroom','bat'],['wolf','slime'],['snake'],['archer','archer'],['wolf','bat','bat'],
@@ -111,7 +111,7 @@ const NORMAL=[['cultist'],['slime','slime','bat'],['archer','bat'],['shroom','sh
 const ELITES=[['golem'],['knight'],['ogre'],['troll'],['naga']];
 const BOSSES=['dragon','titan','lich'];
 function makeEnemy(k){
-  const d=EN[k],fl=d.boss?0:S.floor,hm=1+.25*S.loop+.025*fl,dm=1+.2*S.loop+.012*fl,hp=Math.round(R(d.hp[0],d.hp[1])*hm);
+  const d=EN[k],fl=d.boss?0:S.floor,hm=1+.4*S.loop+.025*fl,dm=1+.35*S.loop+.02*fl,hp=Math.round(R(d.hp[0],d.hp[1])*hm);
   return {uid:nid(),k,name:d.n,hp,max:hp,block:0,str:0,weak:0,vuln:0,poison:0,t:0,dm,bm:hm,next:null};
 }
 
