@@ -22,6 +22,13 @@ alive().forEach(e=>e.hp=0);checkWin();await flush();
 ok(S.screen==='reward'&&S.reward&&S.reward.cards.length===3,'victory: a reward with three cards to choose from');
 const n=S.deck.length;A.rcard(S.reward.cards[0]);ok(S.deck.length===n+1,'a card taken into the deck');
 const g=S.gold;A.next();ok(S.floor===1&&S.screen==='map'&&S.gold>g,'on to the next floor, with the gold');
+// leaving a reward untouched still collects the gold and an elite's relic; a boss relic must be chosen first
+S.reward={gold:30,goldTaken:false,cards:['twin'],cardTaken:false,relic:'anchor',relicTaken:false,boss:null};S.screen='reward';S.floor=0;
+const g2=S.gold;A.next();ok(S.gold===g2+30&&has('anchor'),"walking past an elite's reward still collects its gold and relic");
+S.floor=0;S.reward={gold:100,goldTaken:false,cards:['twin'],cardTaken:false,relic:null,boss:['core','crown','heart'],bossTaken:false};S.screen='reward';
+A.nextloop();ok(S.loop===0&&S.screen==='reward','the next tower waits until a boss relic is chosen');
+A.rboss('core');A.nextloop();ok(S.loop===1&&has('core'),'then the climb goes on');
+S.loop=0;S.floor=1;S.map=genMap();S.screen='map';S.relics=['blood'];
 // the other rooms
 S.map[1]=['rest','shop','event'];A.go('0');ok(S.screen==='rest'&&/篝火/.test(els.app.innerHTML),'a campfire');
 S.hp=40;A.rheal();ok(S.hp>40&&S.rest.done,'resting heals');A.next();

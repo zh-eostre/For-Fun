@@ -15,8 +15,9 @@ const A={
   rrelic:()=>{const r=S.reward;if(r.relicTaken)return;r.relicTaken=true;gainRelic(r.relic);toast(`获得「${RELICS[r.relic].n}」`);save();render()},
   rboss:k=>{const r=S.reward;if(r.bossTaken)return;r.bossTaken=true;gainRelic(k);toast(`获得「${RELICS[k].n}」`);save();render()},
   rcard:id=>{const r=S.reward;if(r.cardTaken)return;r.cardTaken=true;addCard(id);toast(`「${CARDS[id].n}」加入了牌组`);save();render()},
-  next:()=>{const r=S.reward;if(r&&!r.goldTaken){S.gold+=r.gold}nextFloor()},
-  nextloop:()=>{const r=S.reward;if(!r.goldTaken)S.gold+=r.gold;S.loop++;S.floor=-1;S.path=[];S.map=genMap();S.hp=S.maxHp;setBest();nextFloor()},
+  // leaving a reward still collects the gold and the relic (they have no downside); only the card can be skipped
+  next:()=>{const r=S.reward;if(r){if(!r.goldTaken)S.gold+=r.gold;if(r.relic&&!r.relicTaken){r.relicTaken=true;gainRelic(r.relic);toast(`获得「${RELICS[r.relic].n}」`)}}nextFloor()},
+  nextloop:()=>{const r=S.reward;if(!r.bossTaken){toast('先选一件首领遗物');return}if(!r.goldTaken)S.gold+=r.gold;S.loop++;S.floor=-1;S.path=[];S.map=genMap();S.hp=S.maxHp;setBest();nextFloor()},
   buy:i=>{const x=S.shop.cards[+i];if(!x||x.sold)return;if(S.gold<x.price){toast('金币不够');return}S.gold-=x.price;x.sold=true;addCard(x.id);toast(`买下「${CARDS[x.id].n}」`);save();render()},
   buyrelic:()=>{const x=S.shop.relic;if(!x||x.sold||S.gold<x.price)return;S.gold-=x.price;x.sold=true;gainRelic(x.k);toast(`获得「${RELICS[x.k].n}」`);save();render()},
   shopremove:()=>{if(S.shop.removed||S.gold<S.removeCost)return;UI.over={mode:'remove',from:'shop'};renderOver()},
