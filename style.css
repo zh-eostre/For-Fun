@@ -131,6 +131,8 @@ button{font:inherit;color:inherit}
 .card .cost{position:absolute;left:4px;top:3px;width:24px;height:24px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FFE2A3,var(--energy) 60%,#8A4D0D);color:#2A1600;font-family:"Cinzel",serif;font-size:14px;line-height:24px;z-index:1;box-shadow:0 0 0 1.5px #2A1600}
 .card .cname{position:relative;z-index:1;color:#fff;font-family:"ZCOOL XiaoWei",serif;font-size:15px;line-height:30px;padding-left:18px;white-space:nowrap}
 .card.up .cname{color:#BFF29E}
+.card .cost.cheaper{box-shadow:0 0 0 2px #3E8E2B,0 0 8px #7CD65A}
+.card.up::after{content:"+";position:absolute;right:5px;top:35px;width:20px;height:20px;border-radius:50%;background:#3E8E2B;color:#fff;font:700 16px/20px "Cinzel",serif;box-shadow:0 0 0 1.5px #1C3F12}
 .card .art{font-size:36px;line-height:1;margin:8px 0 2px;color:var(--tc);display:flex}
 .card .ctype{font-size:10px;color:#7A6A5A;letter-spacing:.1em}
 .card .cdesc{font-size:12px;line-height:1.4;padding:3px 7px 6px;flex:1;display:flex;align-items:center}
@@ -145,6 +147,9 @@ button{font:inherit;color:inherit}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:14px}
 .panel h2{margin:0 0 6px;font-size:24px}
 .cardrow{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:12px 0}
+.compare{display:flex;align-items:center;justify-content:center;gap:14px;margin:14px 0}
+.compare .arrow{font-size:28px;color:var(--muted)}
+.compare-act{display:flex;gap:10px;justify-content:center;margin-bottom:6px}
 .shopitem{display:flex;flex-direction:column;align-items:center;gap:6px}
 .price{font-family:"Cinzel",serif;color:var(--gold);font-size:15px;display:inline-flex;align-items:center;gap:4px}
 .sold{opacity:.3}

@@ -32,6 +32,12 @@ S.loop=0;S.floor=1;S.map=genMap();S.screen='map';S.relics=['blood'];
 // the other rooms
 S.map[1]=['rest','shop','event'];A.go('0');ok(S.screen==='rest'&&/篝火/.test(els.app.innerHTML),'a campfire');
 S.hp=40;A.rheal();ok(S.hp>40&&S.rest.done,'resting heals');A.next();
+// upgrading: pick a card, see it before and after, confirm
+S.map[1]=['rest','rest','rest'];S.floor=1;A.go('0');A.rup();const u=S.deck.find(c=>!c.up);
+ok(!/cname">[^<]*\\+</.test(els.ov.innerHTML),'the cards to upgrade show as they are now');
+A.pick(String(u.uid));ok(!u.up&&/确认升级/.test(els.ov.innerHTML)&&(els.ov.innerHTML.match(/class="card /g)||[]).length===2,'picking one shows it before and after');
+A.unsel();A.pick(String(u.uid));A.upgrade();ok(u.up&&S.rest.done&&!UI.over,'confirming upgrades it');
+A.rup();ok(!els.ov.innerHTML.includes('data-arg="'+u.uid+'"')&&/已升级的 1 张不在这里/.test(els.ov.innerHTML),'an upgraded card is left out, and the count says so');A.close();A.next();
 S.map[2]=['shop','shop','shop'];A.go('0');ok(S.screen==='shop'&&S.shop.cards.length===5&&!bad(els.app.innerHTML),'a shop with five cards');
 S.gold=999;A.buy('0');ok(S.shop.cards[0].sold,'buying a card');A.next();
 S.map[3]=['event','event','event'];A.go('0');ok(S.screen==='event'&&!bad(els.app.innerHTML),'an event: '+EVENTS[S.event.k].n);

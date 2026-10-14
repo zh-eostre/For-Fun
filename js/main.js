@@ -24,10 +24,16 @@ const A={
   rheal:()=>{const h=Math.round(S.maxHp*.3);heal(h);S.rest={done:true,msg:`你睡了一觉，回复了生命，现在 ${S.hp}/${S.maxHp}。`};save();render()},
   rup:()=>{UI.over={mode:'upgrade',from:'rest'};renderOver()},
   ev:o=>{const res=EVENTS[S.event.k].run(o);if(res===false){toast('金币不够');return}if(res!==null)S.event.res=res;save();render()},
+  unsel:()=>{if(UI.over){UI.over.sel=null;renderOver()}},
+  upgrade:()=>{
+    const c=UI.over&&S.deck.find(x=>x.uid===UI.over.sel);if(!c)return;
+    c.up=true;S.rest={done:true,msg:`「${CARDS[c.id].n}」升级成了「${CARDS[c.id].n}+」。`};toast(`「${CARDS[c.id].n}」升级了`);
+    UI.over=null;save();render();
+  },
   pick:u=>{
     const o=UI.over,c=S.deck.find(x=>x.uid===+u);if(!c)return;
-    if(o.mode==='upgrade'){c.up=true;S.rest={done:true,msg:`「${CARDS[c.id].n}」升级成了「${CARDS[c.id].n}+」。`}}
-    else if(o.mode==='remove'){
+    if(o.mode==='upgrade'){o.sel=c.uid;renderOver();return}
+    if(o.mode==='remove'){
       if(S.deck.length<=5){toast('牌组至少要留 5 张');return}
       S.deck=S.deck.filter(x=>x!==c);
       if(o.from==='shop'){S.gold-=S.removeCost;S.removeCost+=25;S.shop.removed=true}
@@ -71,7 +77,7 @@ document.addEventListener('scroll',hideTip,true);
 
 document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const f=A[b.dataset.act];if(f)f(b.dataset.arg)});
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'&&UI.over&&(UI.over.mode==='deck'||UI.over.from!=='event')){UI.over=null;renderOver()}
+  if(e.key==='Escape'&&UI.over){if(UI.over.sel)A.unsel();else if(UI.over.mode==='deck'||UI.over.from!=='event'){UI.over=null;renderOver()}}
   if(S&&S.screen==='combat'&&C&&!UI.over){
     if(e.key==='e'||e.key==='E')endTurn();
     const n=parseInt(e.key,10);if(n>=1&&n<=9&&C.hand[n-1])playCard(C.hand[n-1].uid);

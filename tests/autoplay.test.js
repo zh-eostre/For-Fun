@@ -6,6 +6,7 @@ let runs=0,floors=0,broken=0,loops=0,wins=0;
 for(let r=0;r<6;r++){A.new();runs++;let guard=0;
   while(S.screen!=='dead'&&guard++<400&&S.loop<2){
     if(!sane()||bad(els.app.innerHTML)){broken++;console.log('  broken at',S.screen,S.floor,els.app.innerHTML.match(/.{40}(undefined|NaN).{20}/));break}
+    if(UI.over&&UI.over.sel){A.upgrade();continue}
     if(UI.over){const c=S.deck.find(x=>UI.over.mode!=='upgrade'||!x.up);if(c)A.pick(String(c.uid));else A.close();continue}
     if(S.screen==='map'){A.go(String(Math.floor(Math.random()*S.map[S.floor].length)));continue}
     if(S.screen==='combat'){

@@ -4,11 +4,17 @@ function fxHtml(target){const n=performance.now();return FX.filter(f=>f.target==
 function hitCls(target){const t=HIT[target];if(!t)return '';const d=performance.now()-t;return d<350?`hit" style="animation-delay:-${Math.round(d)}ms`:''}
 
 /* ---------- render ---------- */
+// in a before-and-after, the numbers an upgrade changes are marked in the after
+function markChanges(before,after){
+  const a=before.split(/(\d+)/),b=after.split(/(\d+)/);
+  if(a.length!==b.length||a.some((x,i)=>i%2===0&&x!==b[i]))return after;
+  return b.map((x,i)=>i%2&&x!==a[i]?`<b class="up">${x}</b>`:x).join('');
+}
 function cardHtml(c,o={}){
-  const d=CARDS[c.id],cost=costOf(c);
+  const d=CARDS[c.id],cost=costOf(c),desc=o.vs?markChanges(d.d(o.vs.up,o.vs),d.d(c.up,c)):d.d(c.up,c);
   return `<button class="card t-${d.t} r-${d.r} ${c.up?'up':''} ${o.cls||''}" ${o.act?`data-act="${o.act}" data-arg="${o.arg!==undefined?o.arg:c.uid}"`:''} ${o.dis?'disabled':''} aria-label="${d.n}${c.up?'+':''}，费用 ${cost}">
-  <span class="cost">${cost}</span><span class="cname">${d.n}${c.up?'+':''}</span>
-  <span class="art">${ico('c-'+c.id)}</span><span class="ctype">${TYPE[d.t]}</span><span class="cdesc"><span>${d.d(c.up,c)}</span></span></button>`;
+  <span class="cost ${o.vs&&cost<costOf(o.vs)?'cheaper':''}">${cost}</span><span class="cname">${d.n}${c.up?'+':''}</span>
+  <span class="art">${ico('c-'+c.id)}</span><span class="ctype">${TYPE[d.t]}</span><span class="cdesc"><span>${desc}</span></span></button>`;
 }
 function topbar(){
   return `<header class="bar"><div class="wrap">
@@ -141,11 +147,16 @@ function renderOver(){
   const el=document.getElementById('ov'),o=UI.over;
   if(!o||!S){el.innerHTML='';return}
   const title={deck:'你的牌组',upgrade:'选一张牌升级',remove:'选一张牌删除'}[o.mode];
-  const list=sortDeck(S.deck).filter(c=>o.mode!=='upgrade'||!c.up);
-  const can=o.mode==='deck'||o.from!=='event';
+  const list=sortDeck(S.deck).filter(c=>o.mode!=='upgrade'||!c.up),ups=S.deck.filter(c=>c.up).length;
+  const can=o.mode==='deck'||o.from!=='event',sel=o.sel&&S.deck.find(c=>c.uid===o.sel);
+  // upgrading picks a card first, then shows it before and after, to confirm
+  const body=sel?`<p class="muted" style="margin:0;font-size:14px">升级后的变化：</p>
+  <div class="compare">${cardHtml(sel,{dis:1})}<span class="arrow" aria-hidden="true">→</span>${cardHtml({...sel,up:true},{dis:1,vs:sel})}</div>
+  <div class="compare-act"><button class="btn" data-act="unsel">换一张</button><button class="btn primary" data-act="upgrade">确认升级</button></div>`
+  :`${o.mode==='upgrade'?`<p class="muted" style="margin:0;font-size:14px">点一张牌，看看升级后会怎样。${ups?`已升级的 ${ups} 张不在这里。`:''}</p>`:''}
+  <div class="cardrow">${list.map(c=>cardHtml(c,{act:o.mode==='deck'?'':'pick',arg:c.uid,dis:o.mode==='deck'})).join('')}</div>`;
   el.innerHTML=`<div class="over" role="dialog" aria-label="${title}"><div class="box"><div class="head"><h2 class="disp" style="margin:0">${title}</h2>
   ${can?`<button class="btn sm" data-act="close">${o.mode==='deck'?'关闭':'取消'}</button>`:''}</div>
-  ${o.mode==='upgrade'?'<p class="muted" style="margin:0;font-size:14px">升级后名字会变绿，数值更高，部分牌费用会降低。</p>':''}
-  <div class="cardrow">${list.map(c=>cardHtml(o.mode==='upgrade'?{...c,up:true}:c,{act:o.mode==='deck'?'':'pick',arg:c.uid,dis:o.mode==='deck'})).join('')}</div></div></div>`;
+  ${body}</div></div>`;
 }
 
