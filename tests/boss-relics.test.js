@@ -9,6 +9,7 @@ fight('dragonscale');ok(C.p.block===10,'龙鳞: 10 block on the first turn');
 A.new('knight');S.relics.push('stone');addCard('twin');ok(S.deck.at(-1).up,'贤者之石: new cards come upgraded');
 A.new('knight');const g0=S.gold;gainRelic('contract');ok(S.gold===g0+300,'商人契约: 300 gold at once');S.map[0]=['shop','shop','shop'];A.go('0');ok(S.shop.cards.every(x=>x.price<=80)&&removePrice()===38,'商人契约: the shop at half price');
 A.next();S.map[1]=['fight','fight','fight'];A.go('0');alive().forEach(e=>e.hp=0);checkWin();await flush();ok(S.reward.gold===0&&!/rgold/.test(els.app.innerHTML),'and fights drop no gold');
+A.next();S.map[2]=['fight','fight','fight'];A.go('0');C.type='boss';alive().forEach(e=>e.hp=0);checkWin();await flush();ok(S.reward.gold===300&&/300 金币/.test(els.app.innerHTML),'but a boss pays 300');
 const bossRelics=Object.keys(RELICS).filter(k=>RELICS[k].boss);ok(bossRelics.length===9,'nine boss relics');
 A.new('knight');S.relics.push('core','crown','horn','hourglass');ok(freeRelics(true).length===5,'after four bosses there are still five to choose from');
 `);

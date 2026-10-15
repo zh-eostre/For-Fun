@@ -148,7 +148,7 @@ const RELICS={
   stone:{n:'贤者之石',d:'此后获得的卡牌都已升级',boss:1},
   obsidian:{n:'黑曜盾',d:'每回合结束时获得 3 点格挡；回合开始时，格挡保留一半而不是清空',boss:1},
   dragonscale:{n:'龙鳞',d:'每场战斗第一回合获得 10 点格挡',boss:1},
-  contract:{n:'商人契约',d:'立即获得 300 金币；商店的一切半价；战斗不再掉落金币',boss:1}
+  contract:{n:'商人契约',d:'立即获得 300 金币；商店的一切半价；普通和精英战斗不再掉落金币，首领改为掉落 300 金币',boss:1}
 };
 const has=k=>S.relics.includes(k);
 function gainRelic(k){if(!k)return;S.relics.push(k);if(k==='heart'){S.maxHp+=30;S.hp+=30}if(k==='contract')S.gold+=300}

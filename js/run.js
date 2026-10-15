@@ -139,7 +139,7 @@ function checkWin(){
   setTimeout(()=>{
     if(has('blood'))heal(6);
     const elite=C.type==='elite',boss=C.type==='boss';
-    let gold=boss?R(95,110):elite?R(30,40):R(14,24);if(has('purse'))gold=Math.round(gold*1.5);if(has('contract'))gold=0;
+    let gold=boss?R(95,110):elite?R(30,40):R(14,24);if(has('purse'))gold=Math.round(gold*1.5);if(has('contract'))gold=boss?300:0;
     S.reward={gold,goldTaken:false,cards:rollCards(3,elite||boss),cardTaken:false,
       relic:elite?pick(freeRelics(false))||null:null,relicTaken:false,
       boss:boss?shuffle(freeRelics(true)).slice(0,3):null,bossTaken:false};
