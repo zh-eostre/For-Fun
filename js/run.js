@@ -53,6 +53,7 @@ function startCombat(type){
   if(has('whet'))C.p.str+=1;
   if(has('sac'))C.enemies.forEach(e=>e.poison+=3);
   if(has('whistle'))summon('wolf',3);
+  if(has('horn')){const n=Math.min(3,S.hp-1);if(n>0)loseHp(n)}
   S.screen='combat';FX=[];HIT={};
   startTurn();
 }
@@ -92,22 +93,25 @@ function applyE(e,k,n){if(!e||n<=0)return;if(k==='poison')n+=C.p.toxin;e[k]=(e[k
 // the hand keeps itself sorted: attacks, then skills, then powers; cheaper first within each
 const HAND_ORDER={atk:0,skl:1,pow:2};
 const byHand=(a,b)=>HAND_ORDER[CARDS[a.id].t]-HAND_ORDER[CARDS[b.id].t]||costOf(a)-costOf(b)||a.id.localeCompare(b.id)||b.up-a.up;
-function draw(n){for(let i=0;i<n;i++){if(C.hand.length>=10)break;if(!C.draw.length){if(!C.discard.length)break;C.draw=shuffle(C.discard);C.discard=[]}C.hand.push(C.draw.pop())}C.hand.sort(byHand)}
+// the hand holds 10 cards, or 7 with the 沙漏
+const handMax=()=>has('hourglass')?7:10;
+function draw(n){for(let i=0;i<n;i++){if(C.hand.length>=handMax())break;if(!C.draw.length){if(!C.discard.length)break;C.draw=shuffle(C.discard);C.discard=[]}C.hand.push(C.draw.pop())}C.hand.sort(byHand)}
 function heal(n){const h=Math.min(n,S.maxHp-S.hp);if(h>0){S.hp+=h;if(C)fx('p','+'+h,'heal')}}
 function loseHp(n){S.hp-=n;if(C){fx('p','-'+n,'dmg');HIT.p=performance.now();if(C.p.agony&&!C.busy){C.p.str+=C.p.agony;fx('p',`力量 +${C.p.agony}`,'st')}}}
 // cards made in a fight (飞刀) go to the hand, or to the discard pile when the hand is full
-function addHand(id,n,up=false){for(let i=0;i<n;i++)(C.hand.length<10?C.hand:C.discard).push({uid:nid(),id,up});C.hand.sort(byHand)}
+function addHand(id,n,up=false){for(let i=0;i<n;i++)(C.hand.length<handMax()?C.hand:C.discard).push({uid:nid(),id,up});C.hand.sort(byHand)}
 function hitPlayer(d){const b=Math.min(C.p.block,d);C.p.block-=b;d-=b;S.hp-=d;fx('p',d>0?'-'+d:'格挡',d>0?'dmg':'blk');HIT.p=performance.now()}
 
 function startTurn(){
   C.turn++;C.atkCount=0;C.played=0;C.tomeUsed=false;
-  if(!C.p.barricade)C.p.block=0;
+  if(!C.p.barricade)C.p.block=has('obsidian')?Math.floor(C.p.block/2):0;
   if(C.p.poison>0){loseHp(C.p.poison);C.p.poison--;if(S.hp<=0)return die()}
-  C.energy=3+(has('core')?1:0)+(C.turn===1&&has('lantern')?1:0)+(has('scar')&&S.hp*2<=S.maxHp?1:0);
+  C.energy=3+(has('core')?1:0)+(has('horn')?1:0)+(C.turn===1&&has('lantern')?1:0)+(has('scar')&&S.hp*2<=S.maxHp?1:0);
   if(C.turn===1&&has('anchor'))gainBlock(7);
+  if(C.turn===1&&has('dragonscale'))gainBlock(10);
   if(C.p.demon){C.p.str+=C.p.demon;fx('p',`力量 +${C.p.demon}`,'st')}
   if(C.p.fumes)alive().forEach(e=>applyE(e,'poison',C.p.fumes));
-  draw(5+C.p.inspire+(has('crown')?1:0)+(C.turn===1&&has('ring')?2:0));
+  draw(5+C.p.inspire+(has('crown')?2:0)+(has('hourglass')?3:0)+(C.turn===1&&has('ring')?2:0));
   if(C.p.bladedance)addHand('shiv',C.p.bladedance);
   C.busy=false;render();
 }
@@ -135,7 +139,7 @@ function checkWin(){
   setTimeout(()=>{
     if(has('blood'))heal(6);
     const elite=C.type==='elite',boss=C.type==='boss';
-    let gold=boss?R(95,110):elite?R(30,40):R(14,24);if(has('purse'))gold=Math.round(gold*1.5);
+    let gold=boss?R(95,110):elite?R(30,40):R(14,24);if(has('purse'))gold=Math.round(gold*1.5);if(has('contract'))gold=0;
     S.reward={gold,goldTaken:false,cards:rollCards(3,elite||boss),cardTaken:false,
       relic:elite?pick(freeRelics(false))||null:null,relicTaken:false,
       boss:boss?shuffle(freeRelics(true)).slice(0,3):null,bossTaken:false};
@@ -148,6 +152,7 @@ async function endTurn(){
   C.discard.push(...C.hand);C.hand=[];
   if(C.p.metal)gainBlock(C.p.metal);
   if(has('ori')&&C.p.block===0)gainBlock(3);
+  if(has('obsidian'))gainBlock(3);
   render();
   if(C.pets.length){await sleep(250);if(!C)return;C.pets.forEach(petAct);render()}
   for(const e of C.enemies){
@@ -179,9 +184,9 @@ function die(){S.hp=0;C&&(C.busy=true);S.newBest=setBest();setTimeout(()=>{C=nul
 /* ---------- shop / events ---------- */
 function genShop(){
   const ids=[...rollPool('com',2),...rollPool('unc',2),...rollPool('rare',1)];
-  const price={com:[45,55],unc:[68,82],rare:[135,160]};
-  return {cards:ids.map(id=>({id,price:R(...price[CARDS[id].r]),sold:false})),
-    relic:(()=>{const k=pick(freeRelics(false));return k?{k,price:R(140,170),sold:false}:null})(),removed:false};
+  const price={com:[45,55],unc:[68,82],rare:[135,160]},m=has('contract')?.5:1;
+  return {cards:ids.map(id=>({id,price:Math.round(R(...price[CARDS[id].r])*m),sold:false})),
+    relic:(()=>{const k=pick(freeRelics(false));return k?{k,price:Math.round(R(140,170)*m),sold:false}:null})(),removed:false};
 }
 function rollPool(r,n){return shuffle(POOL(r)).slice(0,n)}
 const EVENTS={
@@ -202,5 +207,7 @@ const EVENTS={
     opts:()=>[['赌 50 金币','a'],['不赌','x']],
     run:o=>{if(o==='a'){if(Math.random()<.5){S.gold+=50;return '你赢了！金币 +50。'}S.gold-=50;return '你输了 50 金币。赌徒笑着走开了。'}return '你摇摇头离开了。'}}
 };
-function addCard(id,up=false){S.deck.push({uid:nid(),id,up})}
+// what removing a card costs at the shop (half with the 商人契约)
+const removePrice=()=>has('contract')?Math.round(S.removeCost/2):S.removeCost;
+function addCard(id,up=false){up=up||has('stone');S.deck.push({uid:nid(),id,up})}
 

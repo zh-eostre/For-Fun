@@ -140,11 +140,18 @@ const RELICS={
   scar:{n:'战痕',d:'生命不高于一半时，每回合多 1 点能量',start:1},
   bracelet:{n:'疾风手环',d:'每回合打出第 6 张牌时，获得 1 点能量'},
   core:{n:'能量核心',d:'每回合多 1 点能量',boss:1},
-  crown:{n:'王冠',d:'每回合多抽 1 张牌',boss:1},
-  heart:{n:'巨人之心',d:'最大生命 +30',boss:1}
+  crown:{n:'王冠',d:'每回合多抽 2 张牌',boss:1},
+  heart:{n:'巨人之心',d:'最大生命 +30',boss:1},
+  // boss relics with a price: strong, but each takes something away
+  horn:{n:'魔王之角',d:'每回合多 1 点能量；每场战斗开始时失去 3 点生命（不会致死）',boss:1},
+  hourglass:{n:'沙漏',d:'每回合多抽 3 张牌；手牌上限变为 7 张',boss:1},
+  stone:{n:'贤者之石',d:'此后获得的卡牌都已升级',boss:1},
+  obsidian:{n:'黑曜盾',d:'每回合结束时获得 3 点格挡；回合开始时，格挡保留一半而不是清空',boss:1},
+  dragonscale:{n:'龙鳞',d:'每场战斗第一回合获得 10 点格挡',boss:1},
+  contract:{n:'商人契约',d:'立即获得 300 金币；商店的一切半价；战斗不再掉落金币',boss:1}
 };
 const has=k=>S.relics.includes(k);
-function gainRelic(k){if(!k)return;S.relics.push(k);if(k==='heart'){S.maxHp+=30;S.hp+=30}}
+function gainRelic(k){if(!k)return;S.relics.push(k);if(k==='heart'){S.maxHp+=30;S.hp+=30}if(k==='contract')S.gold+=300}
 const freeRelics=boss=>Object.keys(RELICS).filter(k=>!!RELICS[k].boss===!!boss&&!RELICS[k].start&&(!S.relics.includes(k)||k==='heart'));
 
 /* ---------- enemies ---------- */

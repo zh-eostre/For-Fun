@@ -22,7 +22,7 @@ const A={
   nextloop:()=>{const r=S.reward;if(!r.bossTaken){toast('先选一件首领遗物');return}if(!r.goldTaken)S.gold+=r.gold;S.loop++;S.floor=-1;S.path=[];S.map=genMap();S.hp=S.maxHp;setBest();nextFloor()},
   buy:i=>{const x=S.shop.cards[+i];if(!x||x.sold)return;if(S.gold<x.price){toast('金币不够');return}S.gold-=x.price;x.sold=true;addCard(x.id);toast(`买下「${CARDS[x.id].n}」`);save();render()},
   buyrelic:()=>{const x=S.shop.relic;if(!x||x.sold||S.gold<x.price)return;S.gold-=x.price;x.sold=true;gainRelic(x.k);toast(`获得「${RELICS[x.k].n}」`);save();render()},
-  shopremove:()=>{if(S.shop.removed||S.gold<S.removeCost)return;UI.over={mode:'remove',from:'shop'};renderOver()},
+  shopremove:()=>{if(S.shop.removed||S.gold<removePrice())return;UI.over={mode:'remove',from:'shop'};renderOver()},
   rheal:()=>{const h=Math.round(S.maxHp*.3);heal(h);S.rest={done:true,msg:`你睡了一觉，回复了生命，现在 ${S.hp}/${S.maxHp}。`};save();render()},
   rup:()=>{UI.over={mode:'upgrade',from:'rest'};renderOver()},
   ev:o=>{const res=EVENTS[S.event.k].run(o);if(res===false){toast('金币不够');return}if(res!==null)S.event.res=res;save();render()},
@@ -38,7 +38,7 @@ const A={
     if(o.mode==='remove'){
       if(S.deck.length<=5){toast('牌组至少要留 5 张');return}
       S.deck=S.deck.filter(x=>x!==c);
-      if(o.from==='shop'){S.gold-=S.removeCost;S.removeCost+=25;S.shop.removed=true}
+      if(o.from==='shop'){S.gold-=removePrice();S.removeCost+=25;S.shop.removed=true}
       else S.event.res=`你洗去了「${CARDS[c.id].n}${c.up?'+':''}」，感觉轻松了许多。`;
       toast(`删除了「${CARDS[c.id].n}」`);
     }

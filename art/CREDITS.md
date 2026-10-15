@@ -87,6 +87,12 @@
 | icons/r-whistle.svg | game-icons.net `delapouite/whistle` |
 | icons/r-scar.svg | game-icons.net `lorc/scar-wound` |
 | icons/r-bracelet.svg | game-icons.net `lorc/fast-arrow` |
+| icons/r-horn.svg | game-icons.net `lorc/bull-horns` |
+| icons/r-hourglass.svg | game-icons.net `lorc/hourglass` |
+| icons/r-stone.svg | game-icons.net `lorc/stone-sphere` |
+| icons/r-obsidian.svg | game-icons.net `delapouite/attached-shield` |
+| icons/r-dragonscale.svg | game-icons.net `lorc/dorsal-scales` |
+| icons/r-contract.svg | game-icons.net `delapouite/scroll-quill` |
 | icons/r-censer.svg | game-icons.net `lorc/incense` |
 | icons/n-fight.svg | game-icons.net `lorc/crossed-swords` |
 | icons/n-elite.svg | game-icons.net `lorc/horned-skull` |

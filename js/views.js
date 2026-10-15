@@ -153,11 +153,11 @@ function handHtml(){
 function vReward(){
   const r=S.reward,boss=!!r.boss;
   return `<div class="wrap"><section class="panel"><h2 class="disp">${boss?'首领倒下了！':'战斗胜利'}</h2>
-  <button class="reward" data-act="rgold" ${r.goldTaken?'disabled':''}><span class="ri gold">${ico('u-gold')}</span>${r.goldTaken?'已拿取':''} ${r.gold} 金币</button>
+  ${r.gold?`<button class="reward" data-act="rgold" ${r.goldTaken?'disabled':''}><span class="ri gold">${ico('u-gold')}</span>${r.goldTaken?'已拿取':''} ${r.gold} 金币</button>`:''}
   ${r.relic?`<button class="reward" data-act="rrelic" ${r.relicTaken?'disabled':''}><span class="ri relic-ico">${ico('r-'+r.relic)}</span><span><b>${RELICS[r.relic].n}</b><br><span class="muted" style="font-size:13px">${RELICS[r.relic].d}</span></span></button>`:''}
   ${boss?`<h3 class="disp" style="font-size:20px;margin:16px 0 4px">选一件首领遗物</h3>${r.bossTaken?'<p class="muted">已选择。</p>':r.boss.map(k=>`<button class="reward" data-act="rboss" data-arg="${k}"><span class="ri relic-ico">${ico('r-'+k)}</span><span><b>${RELICS[k].n}</b><br><span class="muted" style="font-size:13px">${RELICS[k].d}</span></span></button>`).join('')}`:''}
   <h3 class="disp" style="font-size:20px;margin:16px 0 0">选一张牌加入牌组</h3>
-  ${r.cardTaken?'<p class="muted">已选择。</p>':`<div class="cardrow">${r.cards.map(id=>cardHtml({id,up:false},{act:'rcard',arg:id})).join('')}</div>`}
+  ${r.cardTaken?'<p class="muted">已选择。</p>':`<div class="cardrow">${r.cards.map(id=>cardHtml({id,up:has('stone')},{act:'rcard',arg:id})).join('')}</div>`}
   <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:10px">
   <button class="btn primary" data-act="${boss?'nextloop':'next'}">${boss?`登上第 ${S.loop+2} 轮的塔`:r.cardTaken?'继续前进':'跳过，继续前进'}</button></div>
   ${boss?'<p class="muted" style="font-size:13px;text-align:right;margin:8px 0 0">下一轮敌人会更强，但你的牌组和遗物都会保留，生命也会回满。</p>':''}
@@ -166,9 +166,9 @@ function vReward(){
 function vShop(){
   const s=S.shop;
   return `<div class="wrap"><section class="panel"><h2 class="disp">${ico('n-shop')} 地下商店</h2><p class="muted" style="margin:0">「随便看看，金币说话。」</p>
-  <div class="cardrow">${s.cards.map((x,i)=>`<div class="shopitem ${x.sold?'sold':''}">${cardHtml({id:x.id,up:false},{act:x.sold?'':'buy',arg:i,dis:x.sold})}<span class="price">${x.sold?'已售出':ico('u-gold')+x.price}</span></div>`).join('')}</div>
+  <div class="cardrow">${s.cards.map((x,i)=>`<div class="shopitem ${x.sold?'sold':''}">${cardHtml({id:x.id,up:has('stone')},{act:x.sold?'':'buy',arg:i,dis:x.sold})}<span class="price">${x.sold?'已售出':ico('u-gold')+x.price}</span></div>`).join('')}</div>
   ${s.relic?`<button class="reward" data-act="buyrelic" ${s.relic.sold||S.gold<s.relic.price?'disabled':''}><span class="ri relic-ico">${ico('r-'+s.relic.k)}</span><span style="flex:1"><b>${RELICS[s.relic.k].n}</b><br><span class="muted" style="font-size:13px">${RELICS[s.relic.k].d}</span></span><span class="price">${s.relic.sold?'已售出':ico('u-gold')+s.relic.price}</span></button>`:''}
-  <button class="reward" data-act="shopremove" ${s.removed||S.gold<S.removeCost?'disabled':''}><span class="ri">${ico('u-remove')}</span><span style="flex:1"><b>删牌服务</b><br><span class="muted" style="font-size:13px">从牌组里永久移除一张牌，让好牌更容易抽到</span></span><span class="price">${s.removed?'已使用':ico('u-gold')+S.removeCost}</span></button>
+  <button class="reward" data-act="shopremove" ${s.removed||S.gold<removePrice()?'disabled':''}><span class="ri">${ico('u-remove')}</span><span style="flex:1"><b>删牌服务</b><br><span class="muted" style="font-size:13px">从牌组里永久移除一张牌，让好牌更容易抽到</span></span><span class="price">${s.removed?'已使用':ico('u-gold')+removePrice()}</span></button>
   <div style="text-align:right;margin-top:12px"><button class="btn primary" data-act="next">离开商店</button></div></section></div>`;
 }
 function vRest(){
