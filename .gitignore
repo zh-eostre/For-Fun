@@ -5,6 +5,8 @@ tools/.corpus/
 
 # screenshots taken while working on the game
 /*.png
+!/favicon.png
+!/icon-192.png
 
 # desktop app: dependencies, the copied game, cached fonts and build output (made by desktop/prepare.js and npm)
 desktop/node_modules/
