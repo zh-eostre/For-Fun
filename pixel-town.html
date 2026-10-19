@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>晴川小镇</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#BCD5C3;--panel:#FFF7E6;--ink:#2E2219;--muted:#7A6652;--edge:#4A3426;--soft:#EFE2C8;
+  --accent:#3E8E5A;--warn:#C0472F;--gold:#B87D12;--sel:#F2C14E;--frame:#26352B;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#152022;--panel:#232B2A;--ink:#EDE4D3;--muted:#A99A86;--edge:#080B0B;--soft:#30393A;
+    --accent:#5DB37B;--warn:#E8735A;--gold:#E2B14A;--frame:#0C1210;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#152022;--panel:#232B2A;--ink:#EDE4D3;--muted:#A99A86;--edge:#080B0B;--soft:#30393A;
+  --accent:#5DB37B;--warn:#E8735A;--gold:#E2B14A;--frame:#0C1210;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans SC",system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;font-size:14px;line-height:1.55}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--sel);outline-offset:2px}
+.px{font-family:"Pixelify Sans","Noto Sans SC",monospace}
+.hd{font-family:"ZCOOL KuaiLe","Noto Sans SC",sans-serif;font-weight:400}
+.muted{color:var(--muted)}
+.ok{color:var(--accent)}
+.bad{color:var(--warn)}
+
+.box{background:var(--panel);border:3px solid var(--edge);border-radius:4px;box-shadow:0 4px 0 var(--edge)}
+.btn{border:2px solid var(--edge);background:var(--panel);border-radius:4px;padding:6px 12px;cursor:pointer;box-shadow:0 3px 0 var(--edge);line-height:1.3}
+.btn:hover{background:var(--soft)}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--edge)}
+.btn.primary{background:var(--accent);color:#fff;font-weight:700}
+.btn.danger{color:var(--warn)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.sm{padding:3px 9px;font-size:13px}
+
+/* top */
+.top{max-width:1560px;margin:0 auto;padding:12px 16px 0;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.brand{font-size:26px;line-height:1;margin-right:4px}
+.clock{display:flex;align-items:center;gap:8px}
+.season{font-size:15px;font-weight:700}
+.dbar{width:60px;height:6px;border:2px solid var(--edge);border-radius:2px;background:var(--soft);overflow:hidden}
+.dbar i{display:block;height:100%;background:var(--sel);width:0}
+.speeds{display:flex;gap:4px}
+.speeds button{border:2px solid var(--edge);background:var(--panel);border-radius:4px;width:34px;height:28px;cursor:pointer;font-family:"Pixelify Sans",monospace;font-size:13px;padding:0}
+.speeds button[aria-pressed="true"]{background:var(--sel);color:#2E2219;font-weight:700}
+.res{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin-left:auto}
+.rc{display:flex;align-items:baseline;gap:3px;white-space:nowrap}
+.rc .ic{font-size:16px}
+.rc b{font-family:"Pixelify Sans",monospace;font-size:19px;font-weight:700}
+.rc small{color:var(--muted);font-family:"Pixelify Sans",monospace;font-size:13px}
+.rc i{font-style:normal;font-family:"Pixelify Sans",monospace;font-size:12px}
+.rc i.up{color:var(--accent)}.rc i.dn{color:var(--warn)}
+.rc.warn b{color:var(--warn)}
+
+/* layout */
+.layout{max-width:1560px;margin:0 auto;padding:12px 16px 24px;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start}
+.layout>section,.side{min-width:0}
+.mapframe{width:fit-content;max-width:100%;overflow:auto;border:3px solid var(--edge);border-radius:4px;background:var(--frame);box-shadow:0 4px 0 var(--edge);max-height:calc(100vh - 250px);min-height:280px}
+canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:manipulation;cursor:pointer}
+.build{display:flex;gap:8px;overflow-x:auto;padding:12px 2px 8px;scrollbar-width:thin}
+.sep{flex:none;width:2px;background:var(--edge);opacity:.25;margin:6px 2px}
+.tool{flex:none;width:80px;border:2px solid var(--edge);background:var(--panel);border-radius:4px;padding:6px 4px 5px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;box-shadow:0 3px 0 var(--edge)}
+.tool:hover{background:var(--soft)}
+.tool.on{background:var(--sel);color:#2E2219}
+.tool img{width:32px;height:32px;image-rendering:pixelated}
+.tool .emo{font-size:24px;line-height:32px;height:32px}
+.tool .tn{font-size:13px;font-weight:700}
+.tool .tc{font-size:11px;line-height:1.3;text-align:center;color:var(--muted)}
+.tool.on .tc{color:#5a4632}
+.tool .tc .short{color:var(--warn);font-weight:700}
+.tool.locked{opacity:.45;cursor:not-allowed}
+.hint{font-size:13px;color:var(--muted);margin:2px 2px 0}
+
+/* side */
+.side{display:flex;flex-direction:column;gap:14px}
+.side section{padding:12px 14px}
+.side h3{margin:0 0 4px;font-size:18px}
+.side p{margin:4px 0}
+.reqs{list-style:none;margin:6px 0;padding:0}
+.reqs li{padding:2px 0}
+.reqs li::before{content:"✗";display:inline-block;width:18px;color:var(--warn);font-weight:700}
+.reqs li.y::before{content:"✓";color:var(--accent)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;margin:6px 0}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0}
+.prog{height:12px;border:2px solid var(--edge);border-radius:3px;background:var(--soft);overflow:hidden;margin:6px 0 4px}
+.prog i{display:block;height:100%;background:var(--accent)}
+.quest{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:2px dashed var(--soft)}
+.quest:first-of-type{border-top:0}
+.quest.cur b{color:var(--ink)}
+.quest.next{color:var(--muted)}
+.quest .rw{font-size:12px;color:var(--gold);white-space:nowrap}
+.seg{display:flex;gap:4px;margin:6px 0}
+.seg button{flex:1;border:2px solid var(--edge);background:var(--panel);border-radius:4px;padding:4px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--sel);color:#2E2219;font-weight:700}
+.parts{font-size:13px;margin:4px 0 0;padding:0;list-style:none}
+.parts li{display:flex;justify-content:space-between}
+.trade{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.setup{max-width:1000px;margin:0 auto;padding:20px 16px 32px}
+.setup h1{font-size:40px;margin:0 0 10px;color:var(--accent);text-shadow:3px 3px 0 var(--edge)}
+.setup .lbl{margin:10px 0 2px;color:var(--muted);font-size:13px}
+.setup .seg{max-width:420px}
+.kinds{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-top:6px}
+.kind{text-align:left;border:2px solid var(--edge);background:var(--panel);border-radius:4px;padding:8px 10px;cursor:pointer;box-shadow:0 3px 0 var(--edge);display:flex;flex-direction:column;gap:2px}
+.kind span{font-size:12.5px;color:var(--muted);line-height:1.45}
+.kind.on{background:var(--sel);color:#2E2219}.kind.on span{color:#5a4632}
+.pvwrap{margin:16px 0 6px;padding:6px;background:var(--frame)}
+.pvwrap canvas{width:100%;height:auto;cursor:default}
+.setup .stats{text-align:center;margin:4px 0 12px}
+.setup .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:8px}
+.log{list-style:none;margin:0;padding:0;font-size:13px}
+.log li{padding:4px 0;border-top:1px solid var(--soft)}
+.log li:first-child{border-top:0}
+.log .d{color:var(--muted);font-family:"Pixelify Sans",monospace;margin-right:6px}
+.log li.good{color:var(--accent)}
+.log li.bad{color:var(--warn)}
+.winter{border-color:#3E86C9}
+
+/* title */
+.title{min-height:92vh;display:grid;place-items:center;text-align:center;padding:24px 16px}
+.title h1{font-size:clamp(54px,13vw,104px);line-height:1;margin:14px 0 6px;color:var(--accent);text-shadow:4px 4px 0 var(--edge)}
+.title p{font-size:16px;margin:8px auto;max-width:480px}
+.strip{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.strip img{width:48px;height:48px;image-rendering:pixelated}
+.title .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:22px}
+.how{max-width:520px;margin:26px auto 0;text-align:left;padding:14px 18px;font-size:14px}
+.how ul{margin:6px 0 0;padding-left:20px}
+
+/* modal + toast */
+.over{position:fixed;inset:0;background:rgba(10,12,10,.6);z-index:30;display:grid;place-items:center;padding:16px}
+.modal{max-width:440px;width:100%;padding:18px}
+.modal .ico{font-size:44px;line-height:1}
+.modal h2{margin:8px 0 6px;font-size:26px}
+.modal .choices{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.modal .icons{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.modal .icons img{width:40px;height:40px;image-rendering:pixelated}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--edge);color:#FFF7E6;padding:10px 16px;border-radius:4px;z-index:40;max-width:90vw;text-align:center;font-size:14px}
+
+@media (max-width:980px){
+  .layout{grid-template-columns:1fr}
+  .mapframe{max-height:58vh}
+  .res{margin-left:0;width:100%}
+}
+@media (max-width:520px){
+  .rc b{font-size:16px}
+  .brand{font-size:22px}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal"></div>
+<div id="toast" class="toast" hidden></div>
+<script>
+/* ================= constants ================= */
+let W=24,H=16;const T=16,KEY='qingchuan-town-v1';
+const SIZES=[{n:'小',w:24,h:16},{n:'中',w:34,h:22},{n:'大',w:46,h:30}];
+const KINDS={valley:{n:'河谷',e:'🏞️',d:'一条河穿过平原，树林和岩石都有，最均衡。'},lakes:{n:'湖区',e:'🎣',d:'好几个大湖，农场和渔屋很好发展，但岩石少，石头要省着用。'},forest:{n:'密林',e:'🌲',d:'到处是森林，木材多到用不完，但要先砍出空地才能盖房子。'},hills:{n:'山地',e:'⛰️',d:'岩石遍布，石头很充足，但水源少，粮食是最大的难题。'}};
+const SEASON_DAYS=7,DAY_MS=2600;
+const SN=['春','夏','秋','冬'],SICON=['🌸','☀️','🍂','❄️'];
+const N4=[[0,-1],[1,0],[0,1],[-1,0]];
+const RI={coins:'💰',wood:'🪵',stone:'🪨',food:'🌾'};
+const RN={coins:'金币',wood:'木材',stone:'石头',food:'粮食'};
+const HN=['木屋','砖房','宅院'];
+const HCAP=[4,8,14],HTAX=[.2,.35,.55],HHEAT=[.3,.45,.6];
+
+const B={
+  road:{n:'道路',cost:{coins:2},rank:0,cat:0,desc:'建筑要靠道路连到市政厅才能运作。电脑上可以按住鼠标拖动连续铺路。'},
+  bridge:{n:'桥',cost:{wood:8,coins:4},rank:0,cat:0,desc:'只能建在水上，像道路一样把两岸连起来。'},
+  house:{n:'民居',cost:{wood:10},rank:0,cat:1,desc:'居民住的地方。附近服务越齐全，居民会自己把房子升级成砖房、宅院，住更多人、交更多税。'},
+  farm:{n:'农场',cost:{wood:12,coins:8},workers:3,rank:0,cat:2,desc:'生产粮食。紧挨着水产量更高。秋天产量最高，冬天停产。'},
+  lumber:{n:'伐木场',cost:{coins:15,wood:5},workers:2,rank:0,cat:2,desc:'2 格内的树越多，木材产量越高（每棵树 0.5，最多 3.5）。'},
+  quarry:{n:'采石场',cost:{wood:15},workers:3,rank:0,cat:2,need:'rock',desc:'必须紧挨着岩石。周围 8 格的岩石越多，产量越高（最多 3）。'},
+  well:{n:'水井',cost:{stone:6,coins:5},rank:0,cat:3,r:3,svc:'water',desc:'为 3 格内的民居供水。民居升级必备。'},
+  store:{n:'仓库',cost:{wood:20},rank:0,cat:0,desc:'木材、石头、粮食的储存上限各 +150。冬天前很需要。'},
+  plant:{n:'种树',cost:{coins:3},rank:0,cat:4,desc:'在空地上种一棵树。伐木场旁边多种树可以提高产量。'},
+  fish:{n:'渔屋',cost:{wood:15},workers:2,rank:1,cat:2,need:'water',desc:'必须紧挨着水。四季都能捕鱼，冬天河面结冰产量较低。'},
+  market:{n:'市场',cost:{wood:20,stone:10},workers:2,rank:1,cat:3,r:4,svc:'market',desc:'为 4 格内的民居提供商品，民居升级必备。每天另赚 3 金币。'},
+  park:{n:'公园',cost:{coins:25},rank:1,cat:3,r:3,svc:'park',upkeep:.5,desc:'3 格内的居民更开心。是宅院的升级条件之一。'},
+  school:{n:'学校',cost:{wood:20,stone:30,coins:40},workers:2,rank:2,cat:3,r:5,svc:'school',upkeep:1,desc:'5 格内的砖房才能升级成宅院。'},
+  workshop:{n:'工坊',cost:{wood:15,stone:20},workers:2,rank:2,cat:2,desc:'每天把 1 木材和 1 石头加工成 6 金币。用来消化多余的材料。'},
+  temple:{n:'神庙',cost:{stone:50,coins:60},workers:1,rank:3,cat:3,r:6,svc:'temple',upkeep:1,desc:'6 格内的居民幸福感大增，也能代替公园让砖房升级。'},
+  tower:{n:'钟楼',cost:{stone:120,wood:80,coins:300},rank:4,cat:5,unique:1,desc:'小镇的地标，只能建一座。全镇幸福度 +10。'},
+  hall:{n:'市政厅',desc:'小镇的中心，每天收入 2 金币。所有道路都要从这里连出去。'}
+};
+const ORDER=['road','bridge','house','store','farm','fish','lumber','quarry','workshop','well','market','park','school','temple','plant','tower'];
+const RANKS=[
+  {n:'拓荒地',pop:0},
+  {n:'小村庄',pop:15,reward:{coins:80}},
+  {n:'村镇',pop:45,reward:{coins:150}},
+  {n:'小镇',pop:100,reward:{coins:250}},
+  {n:'城镇',pop:180,reward:{coins:400}},
+  {n:'繁华之城',pop:300,reward:{coins:600}}
+];
+const QUESTS=[
+  {t:'建 2 栋民居',c:()=>cnt('house')>=2,p:()=>`${cnt('house')}/2`,r:{wood:15}},
+  {t:'建一座农场，并用道路连上',c:()=>connCnt('farm')>=1,r:{food:20}},
+  {t:'人口达到 8',c:()=>popTotal()>=8,p:()=>`${popTotal()}/8`,r:{coins:40}},
+  {t:'建一座伐木场',c:()=>connCnt('lumber')>=1,r:{wood:20}},
+  {t:'建一座采石场',c:()=>connCnt('quarry')>=1,r:{stone:15}},
+  {t:'建一口水井',c:()=>connCnt('well')>=1,r:{coins:30}},
+  {t:'人口达到 15',c:()=>popTotal()>=15,p:()=>`${popTotal()}/15`,r:{coins:50}},
+  {t:'建一座市场',c:()=>connCnt('market')>=1,r:{stone:20}},
+  {t:'让一栋民居升级成砖房',c:()=>lvCnt(2)>=1,r:{wood:30,coins:40}},
+  {t:'熬过第一个冬天',c:()=>S.day>=SEASON_DAYS*4,r:{coins:80}},
+  {t:'人口达到 45',c:()=>popTotal()>=45,p:()=>`${popTotal()}/45`,r:{coins:80}},
+  {t:'建一所学校',c:()=>connCnt('school')>=1,r:{coins:60}},
+  {t:'让一栋砖房升级成宅院',c:()=>lvCnt(3)>=1,r:{coins:120}},
+  {t:'幸福度达到 75',c:()=>S.happy>=75,p:()=>`${Math.round(S.happy)}/75`,r:{coins:100}},
+  {t:'拥有 5 栋宅院',c:()=>lvCnt(3)>=5,p:()=>`${lvCnt(3)}/5`,r:{coins:200}},
+  {t:'人口达到 100',c:()=>popTotal()>=100,p:()=>`${popTotal()}/100`,r:{coins:150}},
+  {t:'建一座神庙',c:()=>connCnt('temple')>=1,r:{stone:40}},
+  {t:'人口达到 180',c:()=>popTotal()>=180,p:()=>`${popTotal()}/180`,r:{coins:250}},
+  {t:'建成钟楼',c:()=>cnt('tower')>=1,r:{coins:300}},
+  {t:'人口达到 300',c:()=>popTotal()>=300,p:()=>`${popTotal()}/300`,r:{coins:500}}
+];
+
+/* ================= state & helpers ================= */
+let S=null,SETUP={size:0,kind:'valley',cand:null},UI={screen:'title',tool:'select',sel:null,hover:null,pending:null,speed:1,scale:2,drag:false,ptype:'mouse',confirmDel:null,confirmNew:false};
+let MODAL=null,dirty=true,walkers=[],connSet=new Set(),acc=0;
+const R=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const I=(x,y)=>y*W+x;
+const XY=i=>[i%W,Math.floor(i/W)];
+const inb=(x,y)=>x>=0&&y>=0&&x<W&&y<H;
+const hash=(x,y,k)=>{let h=Math.imul(x+1,374761393)^Math.imul(y+7,668265263)^Math.imul(k+3,1274126177);h=Math.imul(h^(h>>>13),1274126177);return (h^(h>>>16))>>>0};
+const season=()=>Math.floor((S.day%(SEASON_DAYS*4))/SEASON_DAYS);
+const yearN=()=>Math.floor(S.day/(SEASON_DAYS*4))+1;
+const dayIn=()=>S.day%SEASON_DAYS+1;
+const fmt=v=>{const a=Math.abs(v);return a>=10?String(Math.round(v)):(Math.round(v*10)/10).toString()};
+const ent=()=>Object.entries(S.b).map(([i,b])=>[+i,b]);
+const houses=()=>Object.values(S.b).filter(b=>b.type==='house');
+const cnt=t=>Object.values(S.b).filter(b=>b.type===t).length;
+const connCnt=t=>Object.values(S.b).filter(b=>b.type===t&&b.conn).length;
+const lvCnt=l=>houses().filter(b=>b.lv>=l).length;
+const popTotal=()=>houses().reduce((s,b)=>s+b.res,0);
+const popCap=()=>houses().filter(b=>b.conn).reduce((s,b)=>s+HCAP[b.lv-1],0);
+const storeCap=()=>150+150*cnt('store');
+const terr=(x,y)=>inb(x,y)?S.t[I(x,y)]:null;
+const bAt=(x,y)=>inb(x,y)?S.b[I(x,y)]:null;
+function countR(x,y,r,v){let n=0;for(let yy=y-r;yy<=y+r;yy++)for(let xx=x-r;xx<=x+r;xx++){if(!inb(xx,yy)||(xx-x)**2+(yy-y)**2>r*r)continue;if(S.t[I(xx,yy)]===v&&!S.b[I(xx,yy)])n++}return n}
+function count8(x,y,v){let n=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if((dx||dy)&&terr(x+dx,y+dy)===v)n++}return n}
+const isRoad=b=>!!b&&(b.type==='road'||b.type==='bridge');
+const adj4=(x,y,v)=>N4.some(([dx,dy])=>terr(x+dx,y+dy)===v);
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function load(){try{const t=localStorage.getItem(KEY);if(t){const d=JSON.parse(t);if(d&&d.v===1)return d}}catch(e){}return null}
+function log(t,c=''){S.log.unshift({d:`${yearN()}年${SN[season()]}${dayIn()}日`,t,c});S.log=S.log.slice(0,40)}
+function gain(r){for(const k in r)S.res[k]=(S.res[k]||0)+r[k];const c=storeCap();for(const k of ['wood','stone','food'])S.res[k]=Math.min(c,S.res[k])}
+const rTxt=r=>Object.entries(r).map(([k,v])=>`${RI[k]}${v}`).join(' ');
+
+/* ================= map ================= */
+function genMap(kind){
+  const t=new Array(W*H).fill('g'),f=W*H/384,hx=W>>1,hy=H>>1;
+  const blob=(cx,cy,r,v,dens=1,only='g')=>{for(let y=Math.floor(cy-r-1);y<=cy+r+1;y++)for(let x=Math.floor(cx-r-1);x<=cx+r+1;x++){if(!inb(x,y))continue;const d=Math.hypot(x-cx,y-cy)+Math.random()*1.2-.6;if(d<=r&&Math.random()<dens&&(only==null||t[I(x,y)]===only))t[I(x,y)]=v}};
+  const river=(wide)=>{let x=Math.random()<.5?R(1,Math.floor(W*.28)):R(Math.ceil(W*.72),W-2),y=0;
+    while(y<H){t[I(x,y)]='w';if(Math.random()<wide&&inb(x+1,y))t[I(x+1,y)]='w';const r=Math.random();if(r<.22)x=clamp(x-1,0,W-1);else if(r<.44)x=clamp(x+1,0,W-1);else y++}};
+  const many=(n,fn)=>{for(let i=0;i<Math.round(n);i++)fn()};
+  const away=()=>{let x,y,g=0;do{x=R(1,W-2);y=R(1,H-2)}while(Math.hypot(x-hx,y-hy)<5&&g++<30);return [x,y]};
+  if(kind==='lakes'){
+    many(2+f,()=>{const [x,y]=away();blob(x,y,R(2,4),'w',1,null)});
+    many(4*f,()=>blob(R(1,W-2),R(1,H-2),R(1,3),'t',.75));
+    many(2*f,()=>blob(R(1,W-2),R(1,H-2),R(1,2),'r',.7));
+  }else if(kind==='forest'){
+    river(.15);
+    many(12*f,()=>blob(R(0,W-1),R(0,H-1),R(2,4),'t',.85));
+    many(3*f,()=>blob(R(1,W-2),R(1,H-2),R(1,2),'r',.7));
+    blob(hx+pick([-6,6]),hy+pick([-3,3]),1.5,'w',1,null);
+  }else if(kind==='hills'){
+    many(9*f,()=>blob(R(0,W-1),R(0,H-1),R(1,3),'r',.75));
+    many(3*f,()=>blob(R(1,W-2),R(1,H-2),R(1,2),'t',.75));
+    blob(hx+pick([-6,-5,5,6]),hy+pick([-3,3]),1.6,'w',1,null);
+    many(f*.6,()=>{const [x,y]=away();blob(x,y,R(1,2),'w',1,null)});
+  }else{
+    river(.4);
+    many(1+f*.5,()=>blob(R(4,W-5),pick([2,H-3,R(2,H-3)]),R(2,3),'w',1,null));
+    many(6*f,()=>blob(R(1,W-2),R(1,H-2),R(1,3),'t',.75));
+    many(4*f,()=>blob(R(1,W-2),R(1,H-2),R(1,2),'r',.7));
+  }
+  blob(hx+pick([-5,5]),hy+pick([-3,3]),2,'t',.8);
+  blob(hx+pick([-7,7]),hy+pick([-2,2,4]),1,'r',.9);
+  const cr=kind==='forest'?3.3:2.6;
+  for(let yy=0;yy<H;yy++)for(let xx=0;xx<W;xx++)if(Math.hypot(xx-hx,yy-hy)<=cr)t[I(xx,yy)]='g';
+  return t;
+}
+function newState(kind){
+  const hx=W>>1,hy=H>>1;
+  const st={v:1,W,H,kind,day:0,t:genMap(kind),b:{},nid:1,res:{coins:120,wood:45,stone:15,food:40},delta:{coins:0,wood:0,stone:0,food:0},
+     happy:60,tax:1,rank:0,q:0,ev:{harvest:0,blizzard:0,fest:0},nextEvent:12,log:[],short:{food:0,heat:0},hall:I(hx,hy),won:false};
+  st.b[st.hall]={type:'hall',id:0};
+  [[hx-2,hy],[hx-1,hy],[hx+1,hy],[hx+2,hy]].forEach(([x,y])=>st.b[I(x,y)]={type:'road',id:st.nid++});
+  return st;
+}
+function newGame(){UI.screen='setup';UI.confirmNew=false;rollSetup()}
+function rollSetup(){const z=SIZES[SETUP.size];W=z.w;H=z.h;SETUP.cand=newState(SETUP.kind);renderSetup()}
+function startGame(){
+  S=SETUP.cand;SETUP.cand=null;W=S.W;H=S.H;
+  log(`你带着几个伙伴来到这片${KINDS[S.kind].n}。先建民居和农场，再用道路把它们连到市政厅。`);
+  UI={...UI,tool:'select',sel:null,pending:null,speed:1,confirmNew:false};walkers=[];acc=0;
+  recompute();dirty=true;save();mount();
+}
+function renderSetup(){
+  const c=SETUP.cand,app=document.getElementById('app');
+  let tr=0,rk=0,wt=0;for(const v of c.t){if(v==='t')tr++;else if(v==='r')rk++;else if(v==='w')wt++}
+  app.innerHTML=`<div class="setup"><h1 class="hd">选择地图</h1>
+  <div class="opts"><div><p class="lbl">大小</p><div class="seg">${SIZES.map((z,i)=>`<button data-act="ssize" data-arg="${i}" aria-pressed="${SETUP.size===i}">${z.n}　<span class="px">${z.w}×${z.h}</span></button>`).join('')}</div></div>
+  <div><p class="lbl">地形</p><div class="kinds">${Object.entries(KINDS).map(([k,v])=>`<button class="kind ${SETUP.kind===k?'on':''}" data-act="skind" data-arg="${k}" aria-pressed="${SETUP.kind===k}"><b>${v.e} ${v.n}</b><span>${v.d}</span></button>`).join('')}</div></div></div>
+  <div class="pvwrap box"><canvas id="pv" width="${W*T}" height="${H*T}" aria-label="地图预览"></canvas></div>
+  <p class="muted stats">🌳 ${tr} 棵树　🪨 ${rk} 块岩石　💧 ${wt} 格水面　·　可用空地约 ${W*H-tr-rk-wt} 格</p>
+  <div class="row"><button class="btn" data-act="reroll">🎲 换一张</button><button class="btn primary" data-act="startgame">就这张，开始建造</button>${S?'<button class="btn" data-act="back">返回现在的小镇</button>':''}</div>
+  ${SETUP.size>0?'<p class="muted" style="text-align:center;font-size:13px">大地图可以在地图框里滚动，手机上用手指拖动。</p>':''}</div>`;
+  const pv=document.getElementById('pv'),g=pv.getContext('2d'),prev=S;
+  S=c;drawStatic(g);S=prev;
+}
+
+/* ================= simulation ================= */
+function recompute(){
+  connSet=new Set();
+  const [hx,hy]=XY(S.hall),q=[];
+  N4.forEach(([dx,dy])=>{const b=bAt(hx+dx,hy+dy);if(isRoad(b)){const j=I(hx+dx,hy+dy);connSet.add(j);q.push(j)}});
+  while(q.length){const [x,y]=XY(q.shift());N4.forEach(([dx,dy])=>{const b=bAt(x+dx,y+dy),j=I(x+dx,y+dy);if(isRoad(b)&&!connSet.has(j)){connSet.add(j);q.push(j)}})}
+  for(const [i,b] of ent()){
+    const [x,y]=XY(i);
+    b.conn=b.type==='hall'?true:isRoad(b)?connSet.has(i):N4.some(([dx,dy])=>{const j=I(x+dx,y+dy);return inb(x+dx,y+dy)&&(connSet.has(j)||j===S.hall)});
+  }
+  let free=popTotal();
+  const order=['farm','fish','lumber','quarry','market','school','temple','workshop'];
+  const wp=ent().filter(([i,b])=>B[b.type].workers).sort((a,c)=>order.indexOf(a[1].type)-order.indexOf(c[1].type)||a[1].id-c[1].id);
+  for(const [i,b] of wp){const need=B[b.type].workers;b.workers=(b.conn&&!b.paused)?Math.min(need,free):0;free-=b.workers;b.eff=b.workers/need}
+  S.idle=free;
+  const svcs=ent().filter(([i,b])=>B[b.type].svc&&b.conn&&(!B[b.type].workers||b.eff>0));
+  for(const [i,b] of ent()){
+    if(b.type!=='house')continue;
+    const [x,y]=XY(i);b.cov={};
+    for(const [j,s] of svcs){const [sx,sy]=XY(j),r=B[s.type].r;if((sx-x)**2+(sy-y)**2<=r*r)b.cov[B[s.type].svc]=1}
+  }
+}
+function prodOf(b,i){
+  const o={},[x,y]=XY(i),s=season(),e=b.eff||0;
+  switch(b.type){
+    case 'farm':if(e){let f=(3+(adj4(x,y,'w')?1:0))*[1,1.2,1.5,0][s]*e;if(S.ev.harvest)f*=2;o.food=f}break;
+    case 'fish':if(e)o.food=2*(s===3?.6:1)*e;break;
+    case 'lumber':if(e)o.wood=Math.min(3.5,.5*countR(x,y,2,'t'))*e;break;
+    case 'quarry':if(e)o.stone=Math.min(3,count8(x,y,'r'))*e;break;
+    case 'market':if(e)o.coins=3*e;break;
+    case 'workshop':if(e){o.wood=-e;o.stone=-e;o.coins=6*e}break;
+    case 'hall':o.coins=2;break;
+  }
+  const up=B[b.type].upkeep;if(up&&b.conn)o.coins=(o.coins||0)-up;
+  return o;
+}
+function taxIncome(){return houses().reduce((s,b)=>s+b.res*HTAX[b.lv-1],0)*[.6,1,1.5][S.tax]}
+function heatNeed(){let h=houses().reduce((s,b)=>s+(b.res?HHEAT[b.lv-1]:0),0);if(S.ev.blizzard)h*=2;return h}
+function happyParts(foodShort,heatShort){
+  const parts=[['基础',50]],pop=popTotal();
+  if(pop)parts.push(foodShort?['粮食短缺',-25]:['粮食充足',10]);
+  if(heatShort)parts.push(['冬天缺柴',-20]);
+  parts.push(['税率'+['低','中','高'][S.tax],[8,0,-12][S.tax]]);
+  let sv=0,n=0;houses().forEach(b=>{if(!b.res)return;const c=b.cov||{};sv+=b.res*((c.water?4:0)+(c.market?4:0)+(c.park?8:0)+(c.temple?12:0));n+=b.res});
+  if(n)parts.push(['公共服务',Math.round(sv/n)]);
+  if(cnt('tower')&&ent().some(([i,b])=>b.type==='tower'&&b.conn))parts.push(['钟楼',10]);
+  if(S.ev.fest)parts.push(['庙会',15]);
+  return {parts,t:clamp(parts.reduce((s,p)=>s+p[1],0),0,100)};
+}
+function houseReq(b){
+  const c=b.cov||{},cap=HCAP[b.lv-1],need=Math.ceil(cap*.75);
+  if(b.lv===1)return [['连上道路',b.conn],['水井覆盖',!!c.water],['市场覆盖',!!c.market],['幸福度 50 以上',S.happy>=50],[`住满 ${need} 人`,b.res>=need]];
+  if(b.lv===2)return [['连上道路',b.conn],['水井覆盖',!!c.water],['市场覆盖',!!c.market],['学校覆盖',!!c.school],['公园或神庙覆盖',!!(c.park||c.temple)],['幸福度 65 以上',S.happy>=65],[`住满 ${need} 人`,b.res>=need]];
+  return null;
+}
+function houseKeep(b){const c=b.cov||{};if(b.lv===2)return b.conn&&c.water&&c.market&&S.happy>=40;if(b.lv===3)return b.conn&&c.water&&c.market&&c.school&&(c.park||c.temple)&&S.happy>=55;return true}
+
+function dayTick(){
+  recompute();
+  const s=season(),before={...S.res},pop=popTotal();
+  for(const [i,b] of ent()){
+    if(b.type==='workshop'&&(S.res.wood<1||S.res.stone<1))continue;
+    const o=prodOf(b,i);for(const k in o)S.res[k]+=o[k];
+  }
+  S.res.coins+=taxIncome();
+  S.res.food-=pop*.25;
+  if(s===3)S.res.wood-=heatNeed();
+  const foodShort=pop>0&&S.res.food<0,heatShort=s===3&&S.res.wood<0;
+  S.short.food=foodShort?S.short.food+1:0;S.short.heat=heatShort?S.short.heat+1:0;
+  const cap=storeCap();for(const k of ['wood','stone','food'])S.res[k]=clamp(S.res[k],0,cap);S.res.coins=Math.max(0,S.res.coins);
+  for(const k in S.res)S.delta[k]=S.res[k]-before[k];
+  if(S.short.food===1)log('粮食吃完了！居民在挨饿，幸福度会快速下降。多建农场或渔屋。','bad');
+  if(S.short.heat===1)log('木材烧完了，民居没法取暖。','bad');
+  const hp=happyParts(foodShort,heatShort);S.happy+=(hp.t-S.happy)*.3;
+
+  for(const b of houses()){
+    const req=houseReq(b);
+    if(req&&req.every(r=>r[1])){b.up=(b.up||0)+1;if(b.up>=2){b.lv++;b.up=0;b.down=0;log(`一栋民居升级成了${HN[b.lv-1]}！`,'good');dirty=true}}else b.up=0;
+    if(b.lv>1&&!houseKeep(b)){b.down=(b.down||0)+1;if(b.down>=4){b.lv--;b.down=0;b.res=Math.min(b.res,HCAP[b.lv-1]);log(`一栋${HN[b.lv]}因为缺少服务退化成了${HN[b.lv-1]}。`,'bad');dirty=true}}else b.down=0;
+    if(!b.conn&&b.res>0)b.res--;
+  }
+  if(S.happy>=35&&!foodShort){
+    let quota=Math.max(2,Math.ceil(pop*.08));
+    for(const b of shuffle(houses().filter(b=>b.conn&&b.res<HCAP[b.lv-1]))){if(quota<=0)break;const k=Math.min(quota,HCAP[b.lv-1]-b.res,2);b.res+=k;quota-=k}
+  }
+  if((S.happy<25||S.short.food>=2)&&pop>0){
+    let leave=Math.max(1,Math.floor(pop*.06));
+    for(const b of shuffle(houses().filter(b=>b.res>0))){if(leave<=0)break;const k=Math.min(b.res,leave);b.res-=k;leave-=k}
+    if(S.day%3===0)log('有居民失望地搬走了。','bad');
+  }
+  for(const k in S.ev)if(S.ev[k]>0)S.ev[k]--;
+  S.day++;
+  const ns=season();
+  if(dayIn()===1){
+    const msg=['春天到了，农场恢复生产。','夏天到了，作物长得更快。','秋天是收获的季节，农场产量最高。趁现在囤够过冬的粮食和木材！','冬天来了：农场停产，河面结冰，民居每天要烧木材取暖。'][ns];
+    log(msg,ns===3?'bad':'');
+  }
+  if(ns===2&&dayIn()===SEASON_DAYS-1)log('还有 2 天入冬。看看右边的「过冬准备」够不够。','bad');
+  recompute();checkRank();checkQuests();maybeEvent();
+  dirty=true;save();
+}
+function checkRank(){
+  const pop=popTotal();
+  while(S.rank<RANKS.length-1&&pop>=RANKS[S.rank+1].pop){
+    S.rank++;const r=RANKS[S.rank];gain(r.reward);
+    const un=ORDER.filter(k=>B[k].rank===S.rank);
+    log(`小镇升级为「${r.n}」！奖励 ${rTxt(r.reward)}`,'good');
+    openModal({icon:'🎉',title:`升级为「${r.n}」`,text:`人口达到 ${r.pop}，奖励 ${rTxt(r.reward)}。${un.length?'解锁了新建筑：':''}`,icons:un,
+      choices:[{label:S.rank===RANKS.length-1?'太好了，继续经营':'继续',primary:1,fn:()=>{}}]});
+    if(S.rank===RANKS.length-1&&!S.won){S.won=true;log('晴川小镇成为了繁华之城！你可以继续经营下去。','good')}
+  }
+}
+function checkQuests(){
+  let n=0;
+  while(S.q<QUESTS.length&&QUESTS[S.q].c()&&n<5){const q=QUESTS[S.q];gain(q.r);log(`完成任务「${q.t}」，奖励 ${rTxt(q.r)}`,'good');toast(`任务完成：${q.t}　${rTxt(q.r)}`);S.q++;n++}
+}
+const TRADE=[{g:{coins:25},r:{wood:10}},{g:{coins:35},r:{stone:10}},{g:{coins:20},r:{food:10}},{g:{wood:10},r:{coins:10}},{g:{stone:10},r:{coins:14}},{g:{food:10},r:{coins:8}}];
+const TRADES=[{g:{wood:30},r:{coins:45}},{g:{coins:40},r:{food:45}},{g:{stone:20},r:{coins:40}},{g:{coins:50},r:{stone:25}},{g:{food:40},r:{coins:35}},{g:{coins:35},r:{wood:35}},{g:{food:30},r:{wood:30}}];
+function canPay(c){return Object.entries(c).every(([k,v])=>S.res[k]>=v)}
+function pay(c){for(const k in c)S.res[k]-=c[k]}
+function maybeEvent(){
+  if(S.day<S.nextEvent)return;
+  S.nextEvent=S.day+R(9,15);
+  const s=season(),pop=popTotal(),opts=['merchant','merchant','coins'];
+  if(s===1||s===2)opts.push('harvest');
+  if(s===3)opts.push('blizzard','blizzard');
+  if(pop>=6&&popCap()-pop>=4)opts.push('immig');
+  if(pop>=15)opts.push('fest');
+  const k=pick(opts);
+  if(k==='merchant'){
+    const tr=shuffle([...TRADES]).slice(0,2);
+    openModal({icon:'🐫',title:'旅行商人路过',text:'「好东西不等人。要换点什么吗？」',choices:[
+      ...tr.map(t=>({label:`用 ${rTxt(t.g)} 换 ${rTxt(t.r)}`,dis:!canPay(t.g),fn:()=>{pay(t.g);gain(t.r);log(`和商人交易：${rTxt(t.g)} → ${rTxt(t.r)}`)}})),
+      {label:'不用了',fn:()=>{}}]});
+  }else if(k==='fest'){
+    openModal({icon:'🏮',title:'居民想办庙会',text:'大家想热闹一下。花 40 金币办庙会，接下来 5 天幸福度 +15。',choices:[
+      {label:'办！花 💰40',primary:1,dis:S.res.coins<40,fn:()=>{S.res.coins-=40;S.ev.fest=5;log('庙会开始了，镇上热闹非凡。','good')}},
+      {label:'今年就算了',fn:()=>{}}]});
+  }else if(k==='harvest'){S.ev.harvest=3;log('风调雨顺！接下来 3 天农场产量翻倍。','good');toast('🌾 大丰收：农场产量翻倍 3 天')}
+  else if(k==='blizzard'){S.ev.blizzard=3;log('暴风雪来了！接下来 3 天取暖用的木材翻倍。','bad');toast('🌨️ 暴风雪：取暖木材翻倍 3 天')}
+  else if(k==='immig'){let n=6;for(const b of shuffle(houses().filter(b=>b.conn))){const k2=Math.min(n,HCAP[b.lv-1]-b.res);b.res+=k2;n-=k2;if(n<=0)break}log('一队移民听说了晴川小镇，搬了进来。','good');toast('🧳 新移民搬进了小镇')}
+  else{const g=R(20,40);S.res.coins+=g;log(`居民在河边捡到一袋金币，交给了镇上：+${g} 金币。`,'good')}
+}
+
+/* ================= actions ================= */
+function canPlace(type,x,y){
+  const d=B[type],i=I(x,y);
+  if(!inb(x,y))return {ok:false,msg:'超出地图'};
+  if(S.rank<d.rank)return {ok:false,msg:`小镇升级为「${RANKS[d.rank].n}」后解锁`};
+  if(S.b[i])return {ok:false,msg:'这里已经有建筑了'};
+  const t=S.t[i];
+  if(type==='bridge'){if(t!=='w')return {ok:false,msg:'桥只能建在水上'};return canPay(d.cost)?{ok:true}:{ok:false,msg:'材料不够：需要 '+rTxt(d.cost)}}
+  if(t==='w')return {ok:false,msg:'不能建在水上，可以先建桥'};
+  if(t==='t')return {ok:false,msg:type==='plant'?'这里已经有树了':'先用「拆除」把树砍掉'};
+  if(t==='r')return {ok:false,msg:'先用「拆除」把岩石凿掉'};
+  if(d.unique&&cnt(type))return {ok:false,msg:'只能建一座'};
+  if(d.need==='rock'&&!count8(x,y,'r'))return {ok:false,msg:'必须紧挨着岩石'};
+  if(d.need==='water'&&!adj4(x,y,'w'))return {ok:false,msg:'必须紧挨着水'};
+  if(!canPay(d.cost))return {ok:false,msg:'材料不够：需要 '+rTxt(d.cost)};
+  return {ok:true};
+}
+function place(type,x,y,quiet){
+  const v=canPlace(type,x,y);
+  if(!v.ok){if(!quiet)toast(v.msg);return false}
+  pay(B[type].cost);
+  if(type==='plant')S.t[I(x,y)]='t';
+  else S.b[I(x,y)]={type,id:S.nid++,lv:1,res:0};
+  UI.pending=null;recompute();checkQuests();dirty=true;save();renderUI();
+  return true;
+}
+function clearTile(x,y){
+  const i=I(x,y),t=S.t[i];
+  if(t==='t'){if(S.res.coins<1){toast('需要 1 金币');return}S.res.coins-=1;S.t[i]='g';gain({wood:3})}
+  else if(t==='r'){if(S.res.coins<2){toast('需要 2 金币');return}S.res.coins-=2;S.t[i]='g';gain({stone:2})}
+  else return;
+  dirty=true;save();renderUI();
+}
+function demolish(i){
+  const b=S.b[i];if(!b||b.type==='hall')return;
+  const ref={};for(const [k,v] of Object.entries(B[b.type].cost))ref[k]=Math.floor(v/2);
+  delete S.b[i];gain(ref);
+  if(UI.sel===i)UI.sel=null;
+  UI.confirmDel=null;recompute();dirty=true;save();renderUI();toast(`拆除了${B[b.type].n}`);
+}
+function applyTool(t,dragging,touch){
+  const [x,y]=XY(t),tool=UI.tool;
+  if(tool==='select'){UI.sel=t;UI.confirmDel=null;renderUI();return}
+  if(tool==='demolish'){
+    const b=S.b[t];
+    if(b){if(dragging)return;if(b.type==='hall'){toast('市政厅不能拆');return}
+      if(UI.confirmDel===t){demolish(t)}else{UI.confirmDel=t;toast(`再点一次确认拆除${B[b.type].n}`)}return}
+    clearTile(x,y);return;
+  }
+  const multi=tool==='road'||tool==='plant'||tool==='bridge';
+  if(dragging&&!multi)return;
+  if(touch&&!multi&&UI.pending!==t){UI.pending=t;renderInfo();return}
+  place(tool,x,y,dragging);
+}
+function setTool(t){UI.tool=t;UI.pending=null;UI.confirmDel=null;if(t!=='select')UI.sel=null;renderUI()}
+
+/* ================= pixel art ================= */
+const P=(g,x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x,y,w,h)};
+const rows=(g,ox,oy,arr,c)=>arr.forEach(([x,w,y])=>P(g,ox+x,oy+y,w,1,c));
+const BASEP={w:'#3E86C9',wh:'#7DB9EC',sand:'#D9C68C',road:'#B88A55',road2:'#9E7243',road3:'#CDA273',rock:'#8C9198',rockh:'#B9BEC4',rockd:'#5F646B',ice:0};
+const PAL=[
+  {...BASEP,g:'#7BC15D',g1:'#69AF4E',g2:'#8ED06F',t:'#3F8F3E',th:'#62B456',td:'#2B6A30',crop:'#93D86F',crop2:'#6FBF52',lawn:'#8ED06F'},
+  {...BASEP,g:'#6AB04E',g1:'#5A9E41',g2:'#7EC05F',t:'#2E7E35',th:'#4CA046',td:'#205B27',crop:'#4FA83E',crop2:'#3E8C30',lawn:'#7EC05F'},
+  {...BASEP,g:'#B9B25B',g1:'#A69E4A',g2:'#CBC46D',t:'#D3802C',th:'#F0AB48',td:'#A3551D',crop:'#E2B93B',crop2:'#C99A26',lawn:'#C2BD66'},
+  {...BASEP,g:'#E8EEF2',g1:'#D2DCE4',g2:'#F7FAFC',t:'#3D6A4C',th:'#FFFFFF',td:'#2A4D36',w:'#B7DBF0',wh:'#E8F5FD',sand:'#DCE3E8',road:'#C8B7A1',road2:'#B19F89',road3:'#D9CBB8',rockh:'#FFFFFF',crop:null,lawn:'#F1F5F8',ice:1}
+];
+const SH='rgba(0,0,0,.2)',WIN='#F5DE8C',DOOR='#5B3A1E',TIM='#7A5233';
+
+function sGround(g,x,y,p){const ox=x*T,oy=y*T;P(g,ox,oy,T,T,p.g);for(let k=0;k<6;k++){const h=hash(x,y,k);P(g,ox+h%16,oy+(h>>>4)%16,1,1,k%2?p.g1:p.g2)}}
+function sWater(g,x,y,p){
+  const ox=x*T,oy=y*T;P(g,ox,oy,T,T,p.w);
+  for(let k=0;k<2;k++){const h=hash(x,y,k+20);P(g,ox+2+h%10,oy+3+(h>>>4)%10,3,1,p.wh)}
+  if(p.ice){const h=hash(x,y,31);P(g,ox+3+h%6,oy+5+(h>>>3)%6,4,1,'#FFFFFF')}
+  const land=(dx,dy)=>inb(x+dx,y+dy)&&S.t[I(x+dx,y+dy)]!=='w';
+  if(land(0,-1))P(g,ox,oy,T,2,p.sand);if(land(0,1))P(g,ox,oy+14,T,2,p.sand);
+  if(land(-1,0))P(g,ox,oy,2,T,p.sand);if(land(1,0))P(g,ox+14,oy,2,T,p.sand);
+}
+function sTree(g,ox,oy,p,v){
+  ox+=(v%3)-1;
+  P(g,ox+3,oy+14,10,1,SH);P(g,ox+7,oy+11,2,4,'#6B4423');
+  rows(g,ox,oy,[[5,6,3],[4,8,4],[3,10,5],[3,10,6],[3,10,7],[3,10,8],[4,8,9],[5,6,10]],p.t);
+  P(g,ox+5,oy+4,3,1,p.th);P(g,ox+4,oy+5,3,1,p.th);P(g,ox+4,oy+6,1,1,p.th);
+  P(g,ox+10,oy+8,2,1,p.td);P(g,ox+6,oy+10,4,1,p.td);P(g,ox+11,oy+6,1,2,p.td);
+}
+function sRock(g,ox,oy,p){
+  P(g,ox+2,oy+13,12,1,SH);
+  rows(g,ox,oy,[[5,5,6],[4,7,7],[3,8,8],[3,8,9],[3,8,10],[3,8,11],[4,6,12]],p.rock);
+  P(g,ox+5,oy+7,3,1,p.rockh);P(g,ox+4,oy+8,2,2,p.rockh);P(g,ox+8,oy+11,3,1,p.rockd);P(g,ox+10,oy+9,1,2,p.rockd);
+  rows(g,ox,oy,[[11,3,10],[10,5,11],[10,5,12],[11,3,13]],p.rock);P(g,ox+11,oy+11,1,1,p.rockh);P(g,ox+13,oy+12,1,1,p.rockd);
+}
+function sRoad(g,x,y,p){
+  const ox=x*T,oy=y*T,isR=(dx,dy)=>{const b=bAt(x+dx,y+dy);return !!b};
+  P(g,ox+3,oy+3,10,10,p.road);
+  if(isR(0,-1))P(g,ox+3,oy,10,3,p.road);if(isR(0,1))P(g,ox+3,oy+13,10,3,p.road);
+  if(isR(-1,0))P(g,ox,oy+3,3,10,p.road);if(isR(1,0))P(g,ox+13,oy+3,3,10,p.road);
+  for(let k=0;k<4;k++){const h=hash(x,y,k+40);P(g,ox+4+h%8,oy+4+(h>>>4)%8,1,1,k%2?p.road2:p.road3)}
+}
+function sBridge(g,x,y,p){
+  const ox=x*T,oy=y*T,h=!!bAt(x-1,y)||!!bAt(x+1,y)||(terr(x-1,y)!=='w'&&terr(x-1,y)!=null)||(terr(x+1,y)!=='w'&&terr(x+1,y)!=null);
+  const v=!!bAt(x,y-1)||!!bAt(x,y+1);
+  if(h&&!(v&&!bAt(x-1,y)&&!bAt(x+1,y))){P(g,ox,oy+3,T,10,'#A87C49');for(let k=1;k<16;k+=3)P(g,ox+k,oy+3,1,10,'#86592F');P(g,ox,oy+2,T,1,'#6B4423');P(g,ox,oy+13,T,1,'#6B4423');P(g,ox,oy+14,T,1,'rgba(0,0,0,.2)')}
+  else{P(g,ox+3,oy,10,T,'#A87C49');for(let k=1;k<16;k+=3)P(g,ox+3,oy+k,10,1,'#86592F');P(g,ox+2,oy,1,T,'#6B4423');P(g,ox+13,oy,1,T,'#6B4423');P(g,ox+14,oy,1,T,'rgba(0,0,0,.2)')}
+  if(p.ice)P(g,ox+4,oy+4,3,1,'#fff');
+}
+const SPR={
+  house(g,ox,oy,p,b){
+    const lv=b?b.lv:1;
+    if(lv===1){
+      P(g,ox+2,oy+14,13,1,SH);P(g,ox+3,oy+8,10,6,'#C99A62');P(g,ox+3,oy+10,10,1,'#A87C49');P(g,ox+3,oy+12,10,1,'#A87C49');
+      rows(g,ox,oy,[[7,2,2],[6,4,3],[5,6,4],[4,8,5],[3,10,6],[2,12,7]],'#B5463A');P(g,ox+2,oy+7,12,1,'#8E3229');
+      if(p.ice){P(g,ox+6,oy+3,4,1,'#fff');P(g,ox+5,oy+4,6,1,'#fff')}
+      P(g,ox+7,oy+10,2,4,DOOR);P(g,ox+4,oy+9,2,2,WIN);P(g,ox+10,oy+9,2,2,WIN);
+    }else if(lv===2){
+      P(g,ox+1,oy+14,14,1,SH);P(g,ox+2,oy+7,12,7,'#E8D8B5');
+      P(g,ox+2,oy+7,1,7,TIM);P(g,ox+13,oy+7,1,7,TIM);P(g,ox+2,oy+10,12,1,TIM);
+      rows(g,ox,oy,[[6,4,1],[4,8,2],[3,10,3],[2,12,4],[1,14,5],[1,14,6]],'#3F6FA8');P(g,ox+1,oy+6,14,1,'#2E5384');
+      P(g,ox+11,oy+0,2,3,'#8C5A3C');
+      if(p.ice){P(g,ox+5,oy+2,6,1,'#fff');P(g,ox+3,oy+3,10,1,'#fff')}
+      P(g,ox+4,oy+8,2,2,WIN);P(g,ox+10,oy+8,2,2,WIN);P(g,ox+10,oy+11,2,2,WIN);P(g,ox+9,oy+13,4,1,'#D9506E');
+      P(g,ox+6,oy+11,2,3,DOOR);P(g,ox+3,oy+11,2,2,WIN);
+    }else{
+      P(g,ox+0,oy+15,16,1,SH);P(g,ox+2,oy+5,12,10,'#F0E4C9');P(g,ox+2,oy+14,12,1,'#8F877C');
+      P(g,ox+2,oy+9,12,1,TIM);P(g,ox+2,oy+5,1,10,TIM);P(g,ox+13,oy+5,1,10,TIM);
+      rows(g,ox,oy,[[7,2,0],[5,6,1],[3,10,2],[2,12,3],[1,14,4]],'#2F8A86');P(g,ox+1,oy+4,14,1,'#1F625F');
+      P(g,ox+12,oy+0,2,3,'#8C5A3C');
+      if(p.ice){P(g,ox+5,oy+1,6,1,'#fff');P(g,ox+3,oy+2,9,1,'#fff')}
+      P(g,ox+4,oy+6,2,2,WIN);P(g,ox+7,oy+6,2,2,WIN);P(g,ox+10,oy+6,2,2,WIN);
+      P(g,ox+4,oy+10,2,2,WIN);P(g,ox+10,oy+10,2,2,WIN);P(g,ox+7,oy+10,2,4,DOOR);
+      P(g,ox+3,oy+12,3,1,'#D9506E');P(g,ox+10,oy+12,3,1,'#E2B93B');
+      P(g,ox+0,oy+11,2,4,p.t);P(g,ox+14,oy+11,2,4,p.t);
+    }
+  },
+  farm(g,ox,oy,p){
+    P(g,ox+1,oy+3,14,12,p.ice?'#CFC3B8':'#8A5A33');
+    for(const y of [4,7,10,13]){
+      P(g,ox+1,oy+y+1,14,1,p.ice?'#BDB0A4':'#734A2A');
+      if(p.crop){P(g,ox+2,oy+y,12,1,p.crop);for(let x=2;x<14;x+=2)P(g,ox+x,oy+y-1,1,1,p.crop2)}
+    }
+    if(p.ice){P(g,ox+3,oy+5,5,1,'#fff');P(g,ox+8,oy+9,5,1,'#fff');P(g,ox+2,oy+12,4,1,'#fff')}
+    P(g,ox+0,oy+3,16,1,'#A07A4A');for(const x of [0,5,10,15])P(g,ox+x,oy+2,1,2,'#A07A4A');
+    P(g,ox+12,oy+4,1,5,'#6B4423');P(g,ox+11,oy+5,3,1,'#6B4423');P(g,ox+12,oy+3,1,1,'#E2B93B');
+  },
+  lumber(g,ox,oy,p){
+    P(g,ox+1,oy+14,14,1,SH);P(g,ox+1,oy+7,9,7,'#9C6B3E');P(g,ox+1,oy+9,9,1,'#86592F');P(g,ox+1,oy+12,9,1,'#86592F');
+    P(g,ox+0,oy+5,11,2,'#6E4528');if(p.ice)P(g,ox+0,oy+5,11,1,'#fff');P(g,ox+4,oy+10,3,4,'#4A2E18');
+    P(g,ox+10,oy+11,6,4,'#8A5A33');P(g,ox+10,oy+11,2,2,'#E0BC85');P(g,ox+12,oy+13,2,2,'#E0BC85');P(g,ox+14,oy+11,2,2,'#E0BC85');
+    P(g,ox+11,oy+9,4,2,'#8A5A33');P(g,ox+11,oy+9,2,2,'#E0BC85');P(g,ox+13,oy+9,2,2,'#D0A86E');
+  },
+  quarry(g,ox,oy,p){
+    P(g,ox+1,oy+4,14,11,'#6F737A');P(g,ox+2,oy+5,12,9,'#55595F');P(g,ox+2,oy+5,12,1,'#8C9198');P(g,ox+3,oy+8,10,1,'#7C8187');
+    P(g,ox+3,oy+10,3,3,'#C3C7CC');P(g,ox+7,oy+11,3,2,'#C3C7CC');P(g,ox+11,oy+10,2,3,'#B0B5BA');
+    P(g,ox+9,oy+6,5,2,'#8A5A33');P(g,ox+9,oy+8,1,1,'#2E2E2E');P(g,ox+13,oy+8,1,1,'#2E2E2E');
+    if(p.ice)P(g,ox+1,oy+4,14,1,'#fff');
+  },
+  well(g,ox,oy,p){
+    P(g,ox+2,oy+14,12,1,SH);P(g,ox+4,oy+5,1,5,TIM);P(g,ox+11,oy+5,1,5,TIM);
+    P(g,ox+5,oy+2,6,1,'#B5463A');P(g,ox+3,oy+3,10,2,'#B5463A');if(p.ice)P(g,ox+3,oy+3,10,1,'#fff');
+    P(g,ox+8,oy+5,1,2,'#DDD');P(g,ox+7,oy+7,2,2,'#8A5A33');
+    P(g,ox+3,oy+10,10,4,'#9AA0A6');P(g,ox+4,oy+10,8,1,p.ice?'#B7DBF0':'#2E62A0');P(g,ox+3,oy+12,10,1,'#7E848A');P(g,ox+6,oy+11,1,1,'#7E848A');P(g,ox+10,oy+13,1,1,'#7E848A');
+  },
+  store(g,ox,oy,p){
+    P(g,ox+0,oy+15,16,1,SH);P(g,ox+1,oy+6,14,9,'#A8382E');
+    rows(g,ox,oy,[[5,6,2],[3,10,3],[2,12,4],[1,14,5]],'#6B2420');if(p.ice){P(g,ox+5,oy+2,6,1,'#fff');P(g,ox+3,oy+3,10,1,'#fff')}
+    P(g,ox+4,oy+9,8,6,'#F2EEE6');P(g,ox+5,oy+10,6,5,'#8A2A22');
+    for(let k=0;k<5;k++){P(g,ox+5+k+(k>2?1:0),oy+10+k,1,1,'#F2EEE6');P(g,ox+10-k-(k>2?1:0),oy+10+k,1,1,'#F2EEE6')}
+    P(g,ox+7,oy+6,2,2,'#E2B93B');
+  },
+  plant(g,ox,oy,p){sTree(g,ox,oy,p,1)},
+  fish(g,ox,oy,p){
+    P(g,ox+1,oy+14,10,1,SH);P(g,ox+2,oy+7,8,7,'#B98A5A');P(g,ox+2,oy+10,8,1,'#9C7046');
+    rows(g,ox,oy,[[4,4,4],[3,6,5],[1,10,6]],'#2F6E8C');if(p.ice)P(g,ox+4,oy+4,4,1,'#fff');
+    P(g,ox+5,oy+10,2,4,DOOR);P(g,ox+3,oy+8,2,1,WIN);
+    P(g,ox+11,oy+8,1,6,TIM);P(g,ox+15,oy+8,1,6,TIM);P(g,ox+11,oy+8,5,1,TIM);
+    P(g,ox+12,oy+9,1,3,'#9FB7C9');P(g,ox+14,oy+9,1,3,'#9FB7C9');P(g,ox+12,oy+12,1,1,'#7A93A6');
+  },
+  market(g,ox,oy,p){
+    P(g,ox+1,oy+14,14,1,SH);P(g,ox+2,oy+6,1,5,TIM);P(g,ox+13,oy+6,1,5,TIM);
+    for(let x=1;x<15;x+=2)P(g,ox+x,oy+3,2,3,(x>>1)%2?'#F2EEE6':'#D24B3C');
+    for(let x=1;x<15;x+=2)P(g,ox+x,oy+6,1,1,(x>>1)%2?'#F2EEE6':'#D24B3C');
+    if(p.ice)P(g,ox+1,oy+3,14,1,'#fff');
+    P(g,ox+2,oy+10,12,4,'#A0703F');P(g,ox+2,oy+13,12,1,TIM);
+    P(g,ox+3,oy+9,2,1,'#E04A3A');P(g,ox+6,oy+9,2,1,'#F0A030');P(g,ox+9,oy+9,2,1,'#7CC24E');P(g,ox+12,oy+9,1,1,'#E2B93B');
+  },
+  park(g,ox,oy,p){
+    P(g,ox+1,oy+1,14,14,p.lawn);P(g,ox+7,oy+1,2,14,p.sand);P(g,ox+1,oy+7,14,2,p.sand);
+    P(g,ox+5,oy+5,6,6,'#B6BBC1');P(g,ox+6,oy+6,4,4,p.ice?'#E8F5FD':'#6FB0E8');P(g,ox+7,oy+7,2,2,'#fff');
+    if(!p.ice){for(const [x,y,c] of [[2,2,'#F06292'],[4,3,'#FFD54F'],[12,2,'#F06292'],[13,4,'#FFD54F'],[3,12,'#FFD54F'],[12,13,'#F06292']])P(g,ox+x,oy+y,1,1,c)}
+    P(g,ox+2,oy+10,3,3,p.t);P(g,ox+11,oy+10,3,3,p.t);P(g,ox+2,oy+10,1,1,p.th);P(g,ox+11,oy+10,1,1,p.th);
+  },
+  school(g,ox,oy,p){
+    P(g,ox+0,oy+15,16,1,SH);P(g,ox+1,oy+7,14,8,'#B9533D');P(g,ox+1,oy+9,14,1,'#9C4231');P(g,ox+1,oy+12,14,1,'#9C4231');
+    P(g,ox+0,oy+5,16,2,'#4A4A55');if(p.ice)P(g,ox+0,oy+5,16,1,'#fff');
+    P(g,ox+6,oy+1,4,5,'#E8DCC4');P(g,ox+5,oy+0,6,1,'#4A4A55');P(g,ox+7,oy+2,2,2,'#E2B93B');
+    P(g,ox+7,oy+11,2,4,DOOR);P(g,ox+3,oy+10,2,2,'#CFE6F5');P(g,ox+11,oy+10,2,2,'#CFE6F5');
+  },
+  workshop(g,ox,oy,p){
+    P(g,ox+1,oy+14,14,1,SH);P(g,ox+2,oy+7,10,8,'#8C9198');P(g,ox+2,oy+10,10,1,'#6F737A');P(g,ox+2,oy+13,10,1,'#6F737A');
+    P(g,ox+10,oy+1,2,5,'#6F737A');P(g,ox+1,oy+5,12,2,'#5E636A');if(p.ice)P(g,ox+1,oy+5,12,1,'#fff');
+    P(g,ox+4,oy+10,3,5,'#4A2E18');P(g,ox+9,oy+9,2,2,'#F0A030');
+    P(g,ox+12,oy+12,4,1,'#3A3D42');P(g,ox+13,oy+13,2,2,'#3A3D42');
+  },
+  temple(g,ox,oy,p){
+    P(g,ox+1,oy+13,14,2,'#CFC8BA');P(g,ox+2,oy+7,12,6,'#F2EEE6');
+    for(const x of [3,6,9,12])P(g,ox+x,oy+7,1,6,'#D4CCBC');P(g,ox+7,oy+9,2,4,TIM);
+    rows(g,ox,oy,[[7,2,1],[5,6,2],[3,10,3],[1,14,4],[1,14,5]],'#E2B93B');P(g,ox+2,oy+6,12,1,'#B88A1E');P(g,ox+7,oy+0,2,1,'#E2B93B');
+    if(p.ice){P(g,ox+5,oy+2,6,1,'#fff');P(g,ox+3,oy+3,10,1,'#fff')}
+  },
+  tower(g,ox,oy,p){
+    P(g,ox+2,oy+15,12,1,SH);P(g,ox+4,oy+3,8,12,'#D9CDB5');P(g,ox+4,oy+7,8,1,'#BDB09A');P(g,ox+4,oy+11,8,1,'#BDB09A');
+    P(g,ox+3,oy+2,10,2,'#A9A39A');rows(g,ox,oy,[[7,2,0],[6,4,1]],'#E2B93B');
+    P(g,ox+5,oy+4,6,5,'#5B4A3A');P(g,ox+6,oy+4,4,4,'#F2EEE6');P(g,ox+8,oy+5,1,2,'#2E2219');P(g,ox+8,oy+6,2,1,'#2E2219');
+    P(g,ox+7,oy+12,2,3,DOOR);P(g,ox+3,oy+14,10,1,'#8F877C');
+  },
+  hall(g,ox,oy,p){
+    P(g,ox+0,oy+15,16,1,SH);P(g,ox+1,oy+6,14,9,'#E8D8B5');P(g,ox+1,oy+13,14,2,'#A9A39A');
+    rows(g,ox,oy,[[6,4,1],[4,8,2],[2,12,3],[0,16,4],[0,16,5]],'#3F6FA8');P(g,ox+0,oy+5,16,1,'#2E5384');
+    if(p.ice){P(g,ox+4,oy+2,8,1,'#fff');P(g,ox+2,oy+3,12,1,'#fff')}
+    P(g,ox+6,oy+2,4,3,'#F2EEE6');P(g,ox+8,oy+3,1,1,'#2E2219');P(g,ox+7,oy+3,1,1,'#2E2219');
+    P(g,ox+3,oy+7,1,6,'#CFC3A4');P(g,ox+12,oy+7,1,6,'#CFC3A4');
+    P(g,ox+6,oy+9,4,6,DOOR);P(g,ox+7,oy+8,2,1,DOOR);P(g,ox+4,oy+8,1,2,WIN);P(g,ox+11,oy+8,1,2,WIN);
+    P(g,ox+14,oy+0,1,5,'#555');P(g,ox+15,oy+0,1,2,'#D24B3C');P(g,ox+12,oy+0,2,2,'#D24B3C');
+  }
+};
+function drawBld(g,type,ox,oy,p,b){if(SPR[type])SPR[type](g,ox,oy,p,b)}
+
+/* ================= canvas ================= */
+let cv,ctx,off,octx;
+function drawStatic(g=octx){
+  const p=PAL[season()];
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    const i=I(x,y),t=S.t[i],b=S.b[i];
+    if(t==='w')sWater(g,x,y,p);else sGround(g,x,y,p);
+    if(b&&b.type==='road')sRoad(g,x,y,p);
+    if(b&&b.type==='bridge')sBridge(g,x,y,p);
+  }
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    const i=I(x,y),t=S.t[i],b=S.b[i],ox=x*T,oy=y*T;
+    if(b&&!isRoad(b))drawBld(g,b.type,ox,oy,p,b);
+    else if(t==='t')sTree(g,ox,oy,p,hash(x,y,5));
+    else if(t==='r')sRock(g,ox,oy,p);
+  }
+}
+const SHIRTS=['#D24B3C','#3F6FA8','#E2B93B','#7CC24E','#8E5AB5','#E07A3A','#2F8A86','#F2EEE6'];
+const HAIRS=['#2E2219','#5B3A1E','#8C5A3C','#1A1A1A','#C9A15A'];
+function updateWalkers(dt){
+  const roads=[...connSet];
+  const target=Math.min(60,Math.floor(popTotal()/3),roads.length*2);
+  while(walkers.length<target&&roads.length){const [x,y]=XY(pick(roads));walkers.push({x,y,tx:x,ty:y,px:-1,py:-1,c:pick(SHIRTS),h:pick(HAIRS),ox:R(-3,3),oy:R(-3,2),sp:.0011+Math.random()*.0006,ph:Math.random()*1000})}
+  if(walkers.length>target)walkers.length=target;
+  for(const w of walkers){
+    if(!connSet.has(I(Math.round(w.tx),Math.round(w.ty)))&&roads.length){const [x,y]=XY(pick(roads));Object.assign(w,{x,y,tx:x,ty:y})}
+    const dx=w.tx-w.x,dy=w.ty-w.y,d=Math.hypot(dx,dy),st=w.sp*dt;
+    if(d<=st){w.x=w.tx;w.y=w.ty;
+      const nb=N4.map(([a,b])=>[w.tx+a,w.ty+b]).filter(([x,y])=>inb(x,y)&&connSet.has(I(x,y)));
+      let ch=nb.filter(([x,y])=>!(x===w.px&&y===w.py));if(!ch.length)ch=nb;
+      if(ch.length){const [nx,ny]=pick(ch);w.px=w.tx;w.py=w.ty;w.tx=nx;w.ty=ny}
+    }else{w.x+=dx/d*st;w.y+=dy/d*st}
+  }
+}
+function bubble(ox,oy,col,ch){
+  P(ctx,ox+10,oy-1,6,7,'#2E2219');P(ctx,ox+11,oy,4,5,col);
+  if(ch==='!'){P(ctx,ox+12,oy,2,3,'#fff');P(ctx,ox+12,oy+4,2,1,'#fff')}
+  else{P(ctx,ox+12,oy+1,2,1,'#fff');P(ctx,ox+12,oy+3,2,1,'#fff')}
+}
+function draw(now){
+  if(dirty){drawStatic();dirty=false}
+  ctx.drawImage(off,0,0);
+  const s=season(),p=PAL[s];
+  if(s!==3)for(let i=0;i<W*H;i++){if(S.t[i]!=='w')continue;const [x,y]=XY(i),ph=Math.floor(now/500+hash(x,y,9)%7)%7;if(ph<3){const h=hash(x,y,ph+50);P(ctx,x*T+3+h%8,y*T+4+(h>>>5)%8,2,1,'rgba(255,255,255,.55)')}}
+  for(const [i,b] of ent()){
+    const [x,y]=XY(i),ox=x*T,oy=y*T;
+    let sx=-1,sy=0;
+    if(b.type==='workshop'&&b.eff>0){sx=ox+10;sy=oy+1}
+    else if(s===3&&b.type==='house'&&b.res>0&&b.lv>1){sx=ox+(b.lv===2?11:12);sy=oy}
+    if(sx>=0)for(let k=0;k<3;k++){const t=((now/1100)+k/3+(hash(x,y,3)%10)/10)%1;P(ctx,Math.round(sx+Math.sin(t*6+k)*1.5),Math.round(sy-t*9),2,2,`rgba(225,225,225,${(.7*(1-t)).toFixed(2)})`)}
+  }
+  for(const w of walkers){
+    const x=Math.round(w.x*T+6+w.ox),y=Math.round(w.y*T+5+w.oy),f=Math.floor((now+w.ph)/220)%2;
+    P(ctx,x,y,3,1,w.h);P(ctx,x,y+1,3,1,'#F1C9A0');P(ctx,x,y+2,3,2,w.c);P(ctx,x+(f?0:2),y+4,1,1,'#3A2A1E');
+  }
+  for(const [i,b] of ent()){
+    if(isRoad(b)||b.type==='hall')continue;
+    const [x,y]=XY(i),ox=x*T,oy=y*T;
+    if(!b.conn){if(Math.floor(now/450)%2)bubble(ox,oy,'#D24B3C','!')}
+    else if(b.paused)bubble(ox,oy,'#7A7F86','=');
+    else if(B[b.type].workers&&b.eff<1)bubble(ox,oy,'#E2A21B','!');
+  }
+  const t=UI.pending??UI.hover;
+  if(UI.tool!=='select'&&UI.tool!=='demolish'&&t!=null){
+    const [x,y]=XY(t),d=B[UI.tool],v=canPlace(UI.tool,x,y);
+    if(d.r){for(let yy=y-d.r;yy<=y+d.r;yy++)for(let xx=x-d.r;xx<=x+d.r;xx++)if(inb(xx,yy)&&(xx-x)**2+(yy-y)**2<=d.r*d.r)P(ctx,xx*T,yy*T,T,T,'rgba(255,226,120,.22)')}
+    if(UI.tool==='lumber')hl(x,y,2,'t');if(UI.tool==='quarry')hlr(x,y);
+    ctx.globalAlpha=.75;if(UI.tool==='road')P(ctx,x*T+3,y*T+3,10,10,p.road);else drawBld(ctx,UI.tool,x*T,y*T,p,{lv:1});ctx.globalAlpha=1;
+    P(ctx,x*T,y*T,T,T,v.ok?'rgba(80,200,120,.28)':'rgba(220,60,40,.35)');outline(x,y,v.ok?'#7CFF9E':'#FF6B57');
+  }else if(UI.tool==='demolish'&&t!=null){const [x,y]=XY(t);P(ctx,x*T,y*T,T,T,UI.confirmDel===t?'rgba(220,60,40,.55)':'rgba(220,60,40,.28)');outline(x,y,'#FF6B57')}
+  else if(UI.tool==='select'){
+    if(UI.hover!=null&&UI.hover!==UI.sel){const [x,y]=XY(UI.hover);outline(x,y,'rgba(255,255,255,.7)')}
+    if(UI.sel!=null){const [x,y]=XY(UI.sel),b=S.b[UI.sel];
+      if(b&&B[b.type].r){const r=B[b.type].r;for(let yy=y-r;yy<=y+r;yy++)for(let xx=x-r;xx<=x+r;xx++)if(inb(xx,yy)&&(xx-x)**2+(yy-y)**2<=r*r)P(ctx,xx*T,yy*T,T,T,'rgba(255,226,120,.2)')}
+      if(b&&b.type==='lumber')hl(x,y,2,'t');if(b&&b.type==='quarry')hlr(x,y);
+      outline(x,y,'#F2C14E')}
+  }
+}
+function outline(x,y,c){ctx.strokeStyle=c;ctx.lineWidth=1;ctx.strokeRect(x*T+.5,y*T+.5,T-1,T-1)}
+function hl(x,y,r,v){for(let yy=y-r;yy<=y+r;yy++)for(let xx=x-r;xx<=x+r;xx++)if(inb(xx,yy)&&(xx-x)**2+(yy-y)**2<=r*r&&S.t[I(xx,yy)]===v&&!S.b[I(xx,yy)])outline(xx,yy,'#9BFF7A')}
+function hlr(x,y){for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)if((dx||dy)&&terr(x+dx,y+dy)==='r')outline(x+dx,y+dy,'#9BFF7A')}
+
+const ICON={};
+function makeIcons(){
+  const p=PAL[0];
+  for(const k of [...ORDER,'hall']){
+    const c=document.createElement('canvas');c.width=16;c.height=16;const g=c.getContext('2d');
+    if(k==='road'){P(g,0,3,16,10,p.road);P(g,4,6,1,1,p.road2);P(g,11,9,1,1,p.road3)}
+    else if(k==='bridge'){P(g,0,0,16,16,p.w);P(g,0,3,16,10,'#A87C49');for(let q=1;q<16;q+=3)P(g,q,3,1,10,'#86592F');P(g,0,2,16,1,'#6B4423');P(g,0,13,16,1,'#6B4423')}
+    else drawBld(g,k,0,0,p,{lv:1});
+    ICON[k]=c.toDataURL();
+  }
+  const c=document.createElement('canvas');c.width=16;c.height=16;const g=c.getContext('2d');
+  SPR.house(g,0,0,p,{lv:2});ICON.house2=c.toDataURL();g.clearRect(0,0,16,16);SPR.house(g,0,0,p,{lv:3});ICON.house3=c.toDataURL();
+}
+
+/* ================= UI ================= */
+function mount(){
+  UI.screen='game';
+  const app=document.getElementById('app');
+  app.innerHTML=`<header class="top" id="top"></header>
+  <main class="layout"><section>
+    <div class="mapframe" id="frame"><canvas id="cv" width="${W*T}" height="${H*T}" aria-label="小镇地图"></canvas></div>
+    <nav class="build" id="build" aria-label="建造"></nav>
+    <p class="hint" id="hint"></p>
+  </section><aside class="side" id="side"></aside></main>`;
+  cv=document.getElementById('cv');ctx=cv.getContext('2d');ctx.imageSmoothingEnabled=false;
+  off=document.createElement('canvas');off.width=W*T;off.height=H*T;octx=off.getContext('2d');
+  bindCanvas();fitCanvas();dirty=true;renderUI();
+  const fr=document.getElementById('frame'),[hx,hy]=XY(S.hall);
+  fr.scrollLeft=hx*T*UI.scale-fr.clientWidth/2;fr.scrollTop=hy*T*UI.scale-fr.clientHeight/2;
+}
+function fitCanvas(){
+  const fr=document.getElementById('frame');if(!fr||!cv)return;
+  const avail=fr.parentElement.clientWidth;
+  UI.scale=clamp(Math.floor(avail/(W*T)),2,4);
+  cv.style.width=W*T*UI.scale+'px';cv.style.height=H*T*UI.scale+'px';
+}
+function tileAt(e){const r=cv.getBoundingClientRect(),x=Math.floor((e.clientX-r.left)/r.width*W),y=Math.floor((e.clientY-r.top)/r.height*H);return inb(x,y)?I(x,y):null}
+function bindCanvas(){
+  cv.addEventListener('pointermove',e=>{const t=tileAt(e);if(e.pointerType==='mouse'&&t!==UI.hover){UI.hover=t;if(UI.tool!=='select')renderInfo()}if(UI.drag&&e.pointerType==='mouse'&&t!=null)applyTool(t,true)});
+  cv.addEventListener('pointerleave',()=>{UI.hover=null;if(UI.tool!=='select')renderInfo()});
+  cv.addEventListener('pointerdown',e=>{UI.ptype=e.pointerType;if(e.pointerType!=='mouse'||e.button!==0)return;const t=tileAt(e);if(t==null)return;UI.drag=true;applyTool(t,false)});
+  cv.addEventListener('click',e=>{if(UI.ptype==='mouse')return;const t=tileAt(e);if(t!=null)applyTool(t,false,true)});
+  cv.addEventListener('contextmenu',e=>{e.preventDefault();setTool('select')});
+}
+window.addEventListener('pointerup',()=>UI.drag=false);
+window.addEventListener('resize',()=>fitCanvas());
+
+function renderUI(){if(!S||!cv)return;renderTop();renderBuild();renderSide()}
+function renderTop(){
+  const c=storeCap(),pop=popTotal(),cp=popCap(),s=season();
+  const chip=(k,v,extra,warn)=>`<div class="rc ${warn?'warn':''}" title="${RN[k]||''}"><span class="ic">${RI[k]}</span><b>${Math.floor(v)}</b>${extra||''}<i class="${S.delta[k]>=0?'up':'dn'}">${S.delta[k]>=0?'+':''}${fmt(S.delta[k])}</i></div>`;
+  document.getElementById('top').innerHTML=`<span class="brand hd">晴川小镇</span>
+  <div class="clock"><span class="season">${SICON[s]} 第${yearN()}年 ${SN[s]} ${dayIn()}日</span><span class="dbar"><i id="dbar"></i></span></div>
+  <div class="speeds" role="group" aria-label="速度">${[[0,'Ⅱ'],[1,'▶'],[2,'▶▶'],[4,'▶▶▶']].map(([v,l])=>`<button data-act="speed" data-arg="${v}" aria-pressed="${UI.speed===v}" title="${v?v+' 倍速':'暂停（空格）'}" style="${v===4?'width:44px':''}">${l}</button>`).join('')}</div>
+  <div class="res">
+   ${chip('coins',S.res.coins)}
+   ${chip('wood',S.res.wood,`<small>/${c}</small>`,s===3&&S.short.heat)}
+   ${chip('stone',S.res.stone,`<small>/${c}</small>`)}
+   ${chip('food',S.res.food,`<small>/${c}</small>`,S.short.food)}
+   <div class="rc" title="人口 / 住房上限（空闲劳动力）"><span class="ic">👥</span><b>${pop}</b><small>/${cp}</small><small>　闲 ${S.idle||0}</small></div>
+   <div class="rc ${S.happy<35?'warn':''}" title="幸福度"><span class="ic">${S.happy>=70?'😄':S.happy>=45?'🙂':S.happy>=30?'😐':'😠'}</span><b>${Math.round(S.happy)}</b></div>
+  </div>`;
+}
+let buildSig='';
+function renderBuild(){
+  const sig=UI.tool+'|'+S.rank+'|'+ORDER.map(k=>canPay(B[k].cost)?1:0).join('')+'|'+JSON.stringify(S.res,(k,v)=>typeof v==='number'?Math.floor(v):v);
+  if(sig===buildSig)return;buildSig=sig;
+  let last=-1,h=`<button class="tool ${UI.tool==='select'?'on':''}" data-act="tool" data-arg="select" title="查看格子（Esc）"><span class="emo">👆</span><span class="tn">查看</span><span class="tc">点格子看详情</span></button>
+  <button class="tool ${UI.tool==='demolish'?'on':''}" data-act="tool" data-arg="demolish"><span class="emo">⛏️</span><span class="tn">拆除</span><span class="tc">砍树 凿石 拆建筑</span></button>`;
+  for(const k of ORDER){
+    const d=B[k],locked=S.rank<d.rank;
+    if(d.cat!==last){h+='<span class="sep"></span>';last=d.cat}
+    const cost=Object.entries(d.cost).map(([r,v])=>`<span class="${S.res[r]<v?'short':''}">${RI[r]}${v}</span>`).join(' ');
+    h+=`<button class="tool ${UI.tool===k?'on':''} ${locked?'locked':''}" data-act="tool" data-arg="${k}" ${locked?'aria-disabled="true"':''} title="${d.n}：${d.desc}">
+      <img src="${ICON[k]}" alt=""><span class="tn">${d.n}</span><span class="tc">${locked?`「${RANKS[d.rank].n}」解锁`:cost}</span></button>`;
+  }
+  document.getElementById('build').innerHTML=h;
+  document.getElementById('hint').textContent=UI.tool==='select'?'选一个建筑，然后在地图上点击放置。':'已选「'+(UI.tool==='demolish'?'拆除':B[UI.tool].n)+'」：可以连续放置。按 Esc、右键或点「查看」结束。';
+}
+function renderSide(){
+  const s=season(),pop=popTotal();
+  const r=S.rank,nx=RANKS[r+1];
+  const qs=QUESTS.slice(S.q,S.q+3);
+  const hp=happyParts(S.short.food>0,S.short.heat>0);
+  let winter='';
+  if(s===2||(s===1&&dayIn()>=5)||s===3){
+    const daysLeft=s===3?SEASON_DAYS-dayIn()+1:SEASON_DAYS;
+    const needF=Math.ceil(pop*.25*daysLeft),needW=Math.ceil(houses().reduce((a,b)=>a+(b.res?HHEAT[b.lv-1]:0),0)*daysLeft);
+    winter=`<section class="box winter"><h3 class="hd">${s===3?'❄️ 冬天还剩 '+daysLeft+' 天':'❄️ 过冬准备'}</h3>
+    <p>${s===3?'剩下的冬天':'整个冬天'}大约需要：</p>
+    <dl class="kv"><dt>🌾 粮食</dt><dd class="${S.res.food>=needF?'ok':'bad'}">${needF}（现有 ${Math.floor(S.res.food)}${s===3?'，渔屋还在产':''}）</dd>
+    <dt>🪵 取暖木材</dt><dd class="${S.res.wood>=needW?'ok':'bad'}">${needW}（现有 ${Math.floor(S.res.wood)}）</dd></dl>
+    ${needF>storeCap()?'<p class="bad">需要的粮食超过了仓储上限，建一座仓库吧。</p>':''}</section>`;
+  }
+  const mk=ent().some(([i,b])=>b.type==='market'&&b.conn&&b.eff>0);
+  const trade=mk?`<section class="box"><h3 class="hd">⚖️ 市集交易</h3><p class="muted">有市场在运作，就能在这里买卖材料。</p>
+   <div class="trade">${TRADE.map((t,i)=>`<button class="btn sm" data-act="trade" data-arg="${i}" ${canPay(t.g)?'':'disabled'}>${rTxt(t.g)} → ${rTxt(t.r)}</button>`).join('')}</div></section>`:'';
+  const lg=S.log.slice(0,8).map(l=>`<li class="${l.c}"><span class="d">${l.d}</span>${l.t}</li>`).join('');
+  document.getElementById('side').innerHTML=`
+  <section class="box" id="info">${vInfo()}</section>
+  ${winter}${trade}
+  <section class="box"><h3 class="hd">🏘️ ${RANKS[r].n}</h3>
+   ${nx?`<div class="prog"><i style="width:${Math.min(100,pop/nx.pop*100)}%"></i></div>
+   <p class="muted">人口 ${pop}/${nx.pop} 升级为「${nx.n}」，解锁：${ORDER.filter(k=>B[k].rank===r+1).map(k=>B[k].n).join('、')||'荣誉'}</p>`:'<p class="ok">已经是最高等级了！</p>'}
+  </section>
+  <section class="box"><h3 class="hd">📜 任务</h3>
+   ${qs.length?qs.map((q,i)=>`<div class="quest ${i?'next':'cur'}"><span>${i?'':'▸ '}<b>${q.t}</b>${q.p&&!i?` <span class="muted">${q.p()}</span>`:''}</span><span class="rw">${rTxt(q.r)}</span></div>`).join(''):'<p class="ok">所有任务都完成了！</p>'}
+  </section>
+  <section class="box"><h3 class="hd">😊 幸福度 ${Math.round(S.happy)} <span class="muted" style="font-size:13px">→ ${Math.round(hp.t)}</span></h3>
+   <ul class="parts">${hp.parts.map(([l,v])=>`<li><span>${l}</span><span class="${v>0&&l!=='基础'?'ok':v<0?'bad':''}">${l==='基础'?'':v>0?'+':''}${v}</span></li>`).join('')}</ul>
+   <p style="margin-top:10px">税率（每天税收 💰${fmt(taxIncome())}）</p>
+   <div class="seg">${['低','中','高'].map((l,i)=>`<button data-act="tax" data-arg="${i}" aria-pressed="${S.tax===i}">${l}</button>`).join('')}</div>
+  </section>
+  <section class="box"><h3 class="hd">📰 小镇动态</h3><ul class="log">${lg}</ul></section>
+  <div style="text-align:right"><button class="btn sm danger" data-act="newgame">${UI.confirmNew?'确定？会清掉现在的小镇':'重新开始'}</button></div>`;
+}
+function renderInfo(){const el=document.getElementById('info');if(el)el.innerHTML=vInfo()}
+function preview(type,x,y){
+  if(type==='lumber'){const n=countR(x,y,2,'t');return `，附近 ${n} 棵树，满员每天 ${fmt(Math.min(3.5,.5*n))} 木材`}
+  if(type==='quarry'){const n=count8(x,y,'r');return `，周围 ${n} 块岩石，满员每天 ${fmt(Math.min(3,n))} 石头`}
+  if(type==='farm')return adj4(x,y,'w')?'，紧挨着水，产量 +1':'，没挨着水（挨着水产量 +1）';
+  if(B[type].r){let n=0;for(const [i,b] of ent()){if(b.type!=='house')continue;const [hx,hy]=XY(i);if((hx-x)**2+(hy-y)**2<=B[type].r**2)n++}return `，能覆盖 ${n} 栋民居`}
+  return '';
+}
+function vInfo(){
+  if(UI.tool==='demolish')return `<h3 class="hd">⛏️ 拆除</h3><p>点树木砍伐：花 💰1，得 🪵3。<br>点岩石开采：花 💰2，得 🪨2。<br>点建筑要再点一次确认，退还一半材料。</p>`;
+  if(UI.tool!=='select'){
+    const d=B[UI.tool],t=UI.pending??UI.hover;
+    let h=`<h3 class="hd"><img src="${ICON[UI.tool]}" alt="" style="width:24px;height:24px;image-rendering:pixelated;vertical-align:-5px"> ${d.n}</h3><p class="muted">${d.desc}</p>
+    <p>花费 ${rTxt(d.cost)}${d.workers?`，需要 ${d.workers} 个工人`:''}${d.upkeep?`，每天维护 💰${d.upkeep}`:''}</p>`;
+    if(t!=null){const [x,y]=XY(t),v=canPlace(UI.tool,x,y);
+      h+=v.ok?`<p class="ok">✓ 可以建在这里${preview(UI.tool,x,y)}</p>`:`<p class="bad">✗ ${v.msg}</p>`;
+      if(UI.pending!=null&&v.ok)h+=`<button class="btn primary" data-act="confirm">在这里建造</button>`;
+    }else h+=`<p class="muted">${UI.ptype==='mouse'?'把鼠标移到地图上预览位置，点击建造。':'点地图选位置，再点一次（或按按钮）确认。'}</p>`;
+    return h;
+  }
+  if(UI.sel==null)return `<h3 class="hd">欢迎来到晴川小镇</h3><p>点地图上的格子查看详情。建筑头上的红色「!」表示还没用道路连到市政厅，黄色「!」表示缺工人。</p>`;
+  const i=UI.sel,[x,y]=XY(i),b=S.b[i],t=S.t[i];
+  if(!b){
+    if(t==='t')return `<h3 class="hd">🌳 树木</h3><p>伐木场附近的树越多，木材产量越高。</p><button class="btn" data-act="clear">砍掉（💰1 → 🪵3）</button>`;
+    if(t==='r')return `<h3 class="hd">🪨 岩石</h3><p>采石场必须建在岩石旁边。</p><button class="btn" data-act="clear">凿掉（💰2 → 🪨2）</button>`;
+    if(t==='w')return `<h3 class="hd">💧 水面</h3><p>紧挨着水的农场产量更高，渔屋只能建在水边。冬天会结冰。想过河就建一座桥。</p>`;
+    return `<h3 class="hd">空地</h3><p class="muted">可以在这里建造。</p>`;
+  }
+  const d=B[b.type],o=prodOf(b,i);
+  const out=Object.entries(o).filter(([k,v])=>Math.abs(v)>.01).map(([k,v])=>`${RI[k]}${v>0?'+':''}${fmt(v)}`).join(' ');
+  let h='';
+  if(b.type==='house'){
+    const req=houseReq(b),c=b.cov||{};
+    h=`<h3 class="hd"><img src="${b.lv===1?ICON.house:ICON['house'+b.lv]}" alt="" style="width:24px;height:24px;image-rendering:pixelated;vertical-align:-5px"> ${HN[b.lv-1]}（${b.lv} 级）</h3>
+    <dl class="kv"><dt>居民</dt><dd>${b.res}/${HCAP[b.lv-1]}</dd><dt>每人交税</dt><dd>💰${HTAX[b.lv-1]}/天</dd>
+    <dt>覆盖服务</dt><dd>${['water','market','park','school','temple'].filter(k=>c[k]).map(k=>({water:'水井',market:'市场',park:'公园',school:'学校',temple:'神庙'})[k]).join('、')||'无'}</dd></dl>`;
+    if(!b.conn)h+='<p class="bad">没有连到道路，居民不会搬进来，住着的也会离开。</p>';
+    if(req)h+=`<p><b>升级成${HN[b.lv]}还需要：</b></p><ul class="reqs">${req.map(([l,ok])=>`<li class="${ok?'y':''}">${l}</li>`).join('')}</ul>${req.every(r=>r[1])?'<p class="ok">条件都满足了，很快就会升级。</p>':''}`;
+    else h+='<p class="ok">已经是最高级的宅院了。</p>';
+    if(b.lv>1&&!houseKeep(b))h+=`<p class="bad">现在缺少维持${HN[b.lv-1]}的服务，再这样几天会退化。</p>`;
+  }else{
+    h=`<h3 class="hd"><img src="${ICON[b.type]}" alt="" style="width:24px;height:24px;image-rendering:pixelated;vertical-align:-5px"> ${d.n}</h3><p class="muted">${d.desc}</p><dl class="kv">`;
+    if(d.workers)h+=`<dt>工人</dt><dd>${b.workers||0}/${d.workers}${b.paused?'（已停工）':''}</dd>`;
+    if(out)h+=`<dt>每天</dt><dd>${out}</dd>`;
+    if(d.svc){let n=0;for(const [j,hb] of ent()){if(hb.type==='house'&&hb.cov&&hb.cov[d.svc])n++}h+=`<dt>覆盖</dt><dd>${n} 栋民居</dd>`}
+    if(b.type==='farm'&&season()===3)h+='<dt>状态</dt><dd>冬天停产</dd>';
+    h+='</dl>';
+    if(!b.conn&&b.type!=='hall')h+='<p class="bad">没有连到道路，无法运作。</p>';
+    else if(d.workers&&!b.paused&&b.eff<1)h+=`<p class="bad">缺工人。多建民居增加人口，或者让别的建筑停工把人让出来。</p>`;
+    if(d.workers)h+=`<button class="btn sm" data-act="pause">${b.paused?'恢复生产':'停工（让出工人）'}</button> `;
+  }
+  if(b.type!=='hall')h+=`<button class="btn sm danger" data-act="del">${UI.confirmDel===i?'再点一次确认拆除':'拆除'}</button>`;
+  return h;
+}
+function vTitle(){
+  const sv=load();
+  return `<div class="title"><div>
+   <div class="strip">${['house','house2','house3','farm','market','well','temple','tower'].map(k=>`<img src="${ICON[k]}" alt="">`).join('')}</div>
+   <h1 class="hd">晴川小镇</h1>
+   <p>在一片河谷里，从一座市政厅开始，建成一座热闹的小城。</p>
+   <div class="row">${sv?`<button class="btn primary" data-act="cont">继续经营（${KINDS[sv.kind||'valley'].n}${SIZES.find(z=>z.w===(sv.W||24))?.n||''}图，第 ${Math.floor(sv.day/28)+1} 年，${(()=>{let n=0;for(const b of Object.values(sv.b))if(b.type==='house')n+=b.res;return n})()} 位居民）</button><button class="btn" data-act="newgame2">建一座新小镇</button>`:`<button class="btn primary" data-act="newgame2">开始建造</button>`}</div>
+   <div class="box how"><b>怎么玩</b><ul>
+    <li>建筑要用道路连到市政厅才会运作。</li>
+    <li>居民住进民居后会去农场、伐木场上班。人手不够，产量就会下降。</li>
+    <li>民居附近有水井和市场会升级成砖房，再加上学校和公园就能升级成宅院，住更多人、交更多税。</li>
+    <li>冬天农场停产，民居还要烧木材取暖，秋天记得囤货。</li>
+   </ul></div></div></div>`;
+}
+function openModal(m){MODAL=m;renderModal()}
+function renderModal(){
+  const el=document.getElementById('modal');
+  if(!MODAL){el.innerHTML='';return}
+  el.innerHTML=`<div class="over" role="dialog" aria-modal="true"><div class="box modal"><div class="ico">${MODAL.icon}</div><h2 class="hd">${MODAL.title}</h2><p>${MODAL.text}</p>
+  ${MODAL.icons&&MODAL.icons.length?`<div class="icons">${MODAL.icons.map(k=>`<span title="${B[k].n}"><img src="${ICON[k]}" alt="${B[k].n}"></span>`).join('')}</div><p class="muted">${MODAL.icons.map(k=>B[k].n).join('、')}</p>`:''}
+  <div class="choices">${MODAL.choices.map((c,i)=>`<button class="btn ${c.primary?'primary':''}" data-act="choice" data-arg="${i}" ${c.dis?'disabled':''}>${c.label}${c.dis?'（不够）':''}</button>`).join('')}</div></div></div>`;
+  const b=el.querySelector('.btn:not(:disabled)');if(b)b.focus();
+}
+function toast(t){const el=document.getElementById('toast');el.textContent=t;el.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>el.hidden=true,2400)}
+
+const ACT={
+  speed:a=>{UI.speed=+a;renderTop()},
+  tool:a=>{if(a!=='select'&&a!=='demolish'&&S.rank<B[a].rank){toast(`小镇升级为「${RANKS[B[a].rank].n}」后解锁`);return}setTool(a)},
+  tax:a=>{S.tax=+a;save();renderSide()},
+  trade:a=>{const t=TRADE[+a];if(!canPay(t.g))return;pay(t.g);gain(t.r);buildSig='';save();renderUI()},
+  confirm:()=>{if(UI.pending!=null){const [x,y]=XY(UI.pending);place(UI.tool,x,y)}},
+  clear:()=>{const [x,y]=XY(UI.sel);clearTile(x,y)},
+  pause:()=>{const b=S.b[UI.sel];if(!b)return;b.paused=!b.paused;recompute();save();renderUI()},
+  del:()=>{if(UI.confirmDel===UI.sel)demolish(UI.sel);else{UI.confirmDel=UI.sel;renderInfo()}},
+  newgame:()=>{if(UI.confirmNew){UI.confirmNew=false;newGame()}else{UI.confirmNew=true;renderSide();setTimeout(()=>{if(UI.confirmNew){UI.confirmNew=false;if(S)renderSide()}},3000)}},
+  newgame2:()=>newGame(),
+  cont:()=>{S=load();W=S.W||24;H=S.H||16;recompute();dirty=true;mount()},
+  ssize:a=>{SETUP.size=+a;rollSetup()},
+  skind:a=>{SETUP.kind=a;rollSetup()},
+  reroll:()=>rollSetup(),
+  startgame:()=>startGame(),
+  back:()=>{W=S.W||24;H=S.H||16;dirty=true;mount()},
+  choice:a=>{const c=MODAL.choices[+a];MODAL=null;renderModal();if(c&&c.fn)c.fn();save();renderUI()}
+};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const f=ACT[b.dataset.act];if(f)f(b.dataset.arg)});
+document.addEventListener('keydown',e=>{
+  if(!S||MODAL||UI.screen!=='game')return;
+  if(e.key==='Escape')setTool('select');
+  if(e.key===' '&&!['BUTTON','INPUT'].includes(document.activeElement.tagName)){e.preventDefault();UI.speed=UI.speed?0:1;renderTop()}
+});
+
+let last=performance.now();
+function frame(now){
+  const dt=Math.min(100,now-last);last=now;
+  if(S&&cv&&UI.screen==='game'){
+    if(!MODAL&&UI.speed>0&&!document.hidden){acc+=dt*UI.speed;let n=0;while(acc>=DAY_MS&&n<3){acc-=DAY_MS;dayTick();renderUI();n++}}
+    const db=document.getElementById('dbar');if(db)db.style.width=(acc/DAY_MS*100)+'%';
+    updateWalkers(MODAL||!UI.speed?0:dt);
+    draw(now);
+  }
+  requestAnimationFrame(frame);
+}
+makeIcons();
+document.getElementById('app').innerHTML=vTitle();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
