@@ -911,3 +911,27 @@ tr.intl-maybe td:first-child{box-shadow:inset 4px 0 color-mix(in srgb,var(--ambe
 .tag2.eyed{background:color-mix(in srgb,var(--red) 18%,transparent);color:var(--ink)}
 .tag2.oneclub{background:color-mix(in srgb,var(--pitch) 22%,transparent);color:var(--ink);font-weight:700}
 .tag2.loyal{background:color-mix(in srgb,var(--muted) 20%,transparent);color:var(--ink)}
+
+/* knockout bracket: one column per round, ties paired by the tie they feed, a 〕 joining each pair */
+.bracket-wrap{overflow-x:auto;margin:0 -4px;padding:0 4px 4px}
+.bracket{display:grid;grid-template-columns:repeat(var(--cols),minmax(120px,1fr)) minmax(84px,.7fr);gap:0 22px;min-width:calc(var(--cols)*142px + 100px)}
+.bcol{display:flex;flex-direction:column;min-width:0}
+.bh{display:flex;flex-direction:column;align-items:center;font-size:13px;margin-bottom:6px;min-height:34px}
+.bh small{font-size:11px;color:var(--muted)}
+.bcol.now .bh b{color:var(--pitch)}
+.bbody{flex:1;display:flex;flex-direction:column;justify-content:space-around;min-height:calc(var(--ties)*62px)}
+.bpair{flex:1;display:flex;flex-direction:column;justify-content:space-around;position:relative}
+.bpair::after{content:"";position:absolute;right:-12px;top:25%;bottom:25%;width:10px;border:1.5px solid var(--line);border-left:0;border-radius:0 6px 6px 0}
+.bpair::before{content:"";position:absolute;right:-22px;top:50%;width:10px;border-top:1.5px solid var(--line)}
+.btie{border:1px solid var(--line);border-radius:8px;background:var(--card);font-size:13px;overflow:hidden;margin:4px 0}
+.btie.mine{border-color:var(--pitch);box-shadow:0 0 0 1px var(--pitch)}
+.bt{display:flex;justify-content:space-between;gap:6px;padding:3px 8px;line-height:1.35}
+.bt+.bt{border-top:1px solid var(--line)}
+.bt span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bt b{font-size:13px}.bt small{font-size:10px;color:var(--muted);margin-left:2px}
+.bt.w{font-weight:700}.bt.l{color:var(--muted)}.bt.me span{color:var(--pitch);font-weight:700}
+.bt.tbd{color:var(--muted);font-style:italic}
+.bchamp .bbody{justify-content:center}
+.bcup{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:30px;padding:10px 6px;border:1.5px dashed var(--amber);border-radius:10px}
+.bcup span{font-size:14px;font-weight:700;text-align:center}
+.bcup.me{background:color-mix(in srgb,var(--amber) 18%,transparent)}
