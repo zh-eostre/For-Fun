@@ -11,9 +11,9 @@ const other=S.teams.find(t=>t.id!==S.my&&t.div===0&&t.id!==S.rival);ACT.team(Str
 ok(/常用阵型/.test(els.app.innerHTML)&&!bad(els.app.innerHTML),'team page for '+other.name);
 const star=[...other.players].filter(p=>p.pos!=='GK').sort((a,b)=>b.ovr-a.ovr)[0],bench=[...other.players].filter(p=>!bestForm(other,true).ids.includes(p.id)).sort((a,b)=>a.ovr-b.ovr)[0];
 ok(askPrice(star,other)>value(star)*1.7&&askPrice(bench,other)<value(bench)*1.1,'star asks '+askPrice(star,other)+' (value '+value(star)+'), bench man '+askPrice(bench,other)+' (value '+value(bench)+')');
-const rv=S.teams[S.rival],rs=[...rv.players].sort((a,b)=>b.ovr-a.ovr)[0];ok(Math.abs(askPrice(rs,rv)-Math.round(value(rs)*1.8*1.3))<=1,'rival charges 30% more');
-const n0=my().players.length,b0=S.budget,price=askPrice(star,other);ACT.player(String(star.id));ok(/以 .* 签下/.test(els.app.innerHTML)&&!bad(els.app.innerHTML),'AI player page shows the buy button');
-twice('bid',String(star.id));ok(my().players.includes(star)&&!other.players.includes(star)&&S.budget===b0-price&&my().players.length===n0+1,'bought '+star.name+' for '+price+' ['+POS[star.pos]+', block: '+buyBlock(star,other)+', toast: '+els.toast.textContent+']');
+const rv=S.teams[S.rival],rs=[...rv.players].sort((a,b)=>b.ovr-a.ovr)[0];ok(Math.abs(askPrice(rs,rv)-Math.round(value(rs)*1.8*1.3*(1+(willing(rs,rv).extra||0))))<=1,'rival charges 30% more');
+const n0=my().players.length,b0=S.budget,price=askPrice(star,other);ACT.player(String(star.id));ok(/谈判（要价 /.test(els.app.innerHTML)&&!bad(els.app.innerHTML),'AI player page shows the negotiate button');
+ACT.bid(String(star.id));ok(/谈判：/.test(els.app.innerHTML)&&/按要价签下/.test(els.app.innerHTML),'bidding opens the negotiation');twice('offer',star.id+':0');ok(my().players.includes(star)&&!other.players.includes(star)&&S.budget===b0-price&&my().players.length===n0+1,'bought '+star.name+' for '+price+' ['+POS[star.pos]+', block: '+buyBlock(star,other)+', toast: '+els.toast.textContent+']');
 ok(UI.pages.length===1&&UI.pages[0].type==='team','after buying, back on the team page');
 while(other.players.length>15)other.players.pop();const t15=other.players[0];ok(buyBlock(t15,other)!=='','club with 15 players refuses: '+buyBlock(t15,other));
 ACT.back();ok(!UI.pages.length,'back returns to the tabs');

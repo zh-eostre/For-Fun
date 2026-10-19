@@ -468,16 +468,55 @@ function willing(p,from){
 const withWill=(price,p,from)=>Math.round(price*(1+(willing(p,from).extra||0)));  // (one who won't come is shown at his price)
 const marketPrice=p=>withWill(p.price,p,null);
 // why a club won't sell (or we can't buy) right now; '' when the deal can go ahead
-function buyBlock(p,t){
+function buyBlock(p,t,cash=true){
   if(t.foreign)return '海外俱乐部不出售球员';
   if(loyal(p,t))return `他誓言终老于${t.short}，不会离开`;  // a loyal one (or a 一人一城) at an AI club
   if(!windowOpen())return windowShut();
   if(t.players.length<=15)return '对方阵容人数不足，不愿出售';
   if(p.pos==='GK'&&t.players.filter(x=>x.pos==='GK').length<=2)return '对方门将不够，不愿出售';
-  if(squadFull())return `你的一线队已满 ${SQUAD_MAX} 人`;
+  if(cash&&squadFull())return `你的一线队已满 ${SQUAD_MAX} 人`;  // (a part-exchange keeps our numbers)
   const w=willing(p,t);if(!w.ok)return w.why;
-  if(S.budget<askPrice(p,t))return '资金不够';
+  if(cash&&S.budget<askPrice(p,t))return '资金不够';
   return '';
+}
+// haggling: this window's key, whether we may still haggle over him, and his price (up after a cheeky offer)
+const windowKey=()=>`${S.season}:${S.pre!=null&&S.day>=S.pre?'w':'s'}`;
+const haggled=p=>p.hg&&p.hg.w===windowKey();
+const dealPrice=(p,t)=>Math.round(askPrice(p,t)*(1+(haggled(p)?p.hg.up:0)));
+// our players an AI club would take in part-exchange for p, with what each counts for (his sale value)
+const swapsFor=(p,t)=>my().players.filter(q=>!q.loan&&q.age<=SWAP_AGE&&q.ovr>=xiLevel(t)-SWAP_BELOW&&!unavail(q))
+  .sort((a,b)=>sellPrice(b)-sellPrice(a)).slice(0,6).map(q=>({q,credit:sellPrice(q)}));
+// an offer at a share off the price (HAGGLE[k]): taken, or turned down. returns 'yes' / 'no' / undefined (not made)
+function makeOffer(id,k){
+  if(!windowOpen()){toast(windowShut());return}
+  const f=findAny(id);if(!f||f.t.id===S.my)return;const {p,t}=f,why=buyBlock(p,t,false);if(why){toast(why);return}
+  if(squadFull()){toast(`你的一线队已满 ${SQUAD_MAX} 人`);return}
+  const [off,chance]=HAGGLE[k],price=Math.round(dealPrice(p,t)*(1-off));
+  if(off&&haggled(p)){toast(`${t.short}不再接受还价`);return}
+  if(S.budget<price){toast('资金不够');return}
+  if(off&&Math.random()>=chance){
+    p.hg={w:windowKey(),up:k===HAGGLE.length-1?HAGGLE_UP:0};
+    news(k===HAGGLE.length-1?`${t.name}的总监把 ${money(price)} 的报价撕成两半：「你在侮辱${p.name}吗？」要价上涨 ${Math.round(HAGGLE_UP*100)}%，本窗口不再还价。`
+      :`${t.name}冷笑一声，把 ${money(price)} 的报价推了回来：「${p.name}可不是打折货。」本窗口不再接受还价。`);
+    return 'no'}
+  completeDeal(p,t,price,null);return 'yes';
+}
+// a part-exchange: one of ours goes to them, counted at his sale value, and we pay the rest (nothing back if he's worth more)
+function swapDeal(id,qid){
+  if(!windowOpen()){toast(windowShut());return}
+  const f=findAny(id);if(!f||f.t.id===S.my)return;const {p,t}=f,why=buyBlock(p,t,false);if(why){toast(why);return}
+  const s=swapsFor(p,t).find(x=>x.q.id===qid);if(!s){toast(`${t.short}看不上这名球员`);return}
+  const cash=Math.max(0,dealPrice(p,t)-s.credit);if(S.budget<cash){toast('资金不够');return}
+  completeDeal(p,t,cash,s.q);
+}
+function completeDeal(p,t,cash,give){
+  S.budget-=cash;
+  if(give){if(oneClub(give,my()))soldOneClub(give);bankPlayer(give);my().players=my().players.filter(x=>x!==give);dropFromLineup(give.id);
+    t.players.push(give);joinClub(give,t,false)}
+  t.players=t.players.filter(x=>x!==p);my().players.push(p);joinClub(p,my(),false);delete p.hg;
+  news(give?`🤝 交易达成！${give.name}远赴${t.name}，${p.name}（${POS[p.pos]}，能力 ${p.ovr}）加盟${my().short}${cash?`，另付 ${money(cash)}`:''}。`
+    :`以 ${money(cash)} 从 ${t.name} 签下 ${p.name}（${POS[p.pos]}，能力 ${p.ovr}）。`);
+  toast(`签下 ${p.name}，记得去阵容页安排他`);
 }
 function buyFrom(id){
   if(!windowOpen()){toast(windowShut());return}

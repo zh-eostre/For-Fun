@@ -184,6 +184,10 @@ const NAT_DIV=[.45,.2,0],NAT_GA=.015,NAT_CHAMP=.15;
 // league records, kept per division: [key, label, unit, of a player ('p') / a club ('t'), lowest is best]
 const LREC=[['goals','个人单季进球','球','p'],['ast','个人单季助攻','次','p'],['pts','单季积分','分','t'],['gf','单季最多进球','球','t'],
   ['ga','单季最少失球','球','t',true],['streak','单季最长连胜','场','t'],['margin','单场最大胜分差','球','t']];
+// haggling with an AI club: [share off the asking price, chance they take it]; a turned-down offer ends haggling
+// for that player this window, and the cheekiest also puts his price up HAGGLE_UP. a part-exchange player has to be
+// of use to them: no more than SWAP_BELOW under their usual XI, and SWAP_AGE or younger
+const HAGGLE=[[0,1],[.1,.55],[.2,.2]],HAGGLE_UP=.05,SWAP_BELOW=8,SWAP_AGE=31;
 // whether a player wants to join us: our pull (底蕴, plus PULL_DIV by division, plus a share of the manager's
 // reputation) against what he expects (his ability, the standing of the club he'd leave; veterans and the very young
 // expect less). up to WILL_GAP short, he comes for WILL_PREMIUM more per point (a fee on top); further short, he won't

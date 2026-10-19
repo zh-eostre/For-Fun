@@ -965,3 +965,26 @@ tr.intl-maybe td:first-child{box-shadow:inset 4px 0 color-mix(in srgb,var(--ambe
 .natrow{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;padding:7px 0;border-top:1px solid var(--line);font-size:13px}
 .natrow:first-child{border-top:0}.natrow small{color:var(--muted);margin-right:4px}.natrow em{font-style:normal;color:var(--muted);margin-left:4px;font-size:12px}
 .natrow .me{color:var(--pitch);font-weight:700}
+
+/* the negotiation dialog */
+.deal-opts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.deal-opt{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 6px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);cursor:pointer;font:inherit;color:inherit}
+.deal-opt.full{border-color:var(--pitch)}.deal-opt b{font-size:14px}.deal-opt span{font-size:18px;font-weight:700}.deal-opt small{font-size:11px;color:var(--muted)}
+.deal-opt:disabled,.deal-swap:disabled{opacity:.45;cursor:default}
+.deal-swaps{display:flex;flex-direction:column;gap:6px}
+.deal-swap{display:grid;grid-template-columns:auto 1fr auto;gap:2px 10px;align-items:baseline;text-align:left;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);cursor:pointer;font:inherit;color:inherit}
+.deal-swap small{color:var(--muted);font-size:12px}.deal-swap span{font-weight:700}
+.deal-res{margin:0 0 8px;font-weight:700}.deal-res.no{color:var(--red)}
+
+/* the ball strip in a live match */
+.bstrip{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:4px 10px;margin:8px 0 10px}
+.bs-t{font-size:12px;font-weight:700;padding-left:8px;border-left:4px solid var(--c)}
+.bs-field{position:relative;height:30px;border-radius:6px;background:repeating-linear-gradient(90deg,#2E7D4F 0 10%,#2A7348 10% 20%);box-shadow:inset 0 0 0 2px rgba(255,255,255,.55)}
+.bs-mid{position:absolute;left:50%;top:0;bottom:0;border-left:2px solid rgba(255,255,255,.55)}
+.bs-box{position:absolute;top:22%;bottom:22%;width:9%;border:2px solid rgba(255,255,255,.55)}.bs-box.l{left:0;border-left:0}.bs-box.r{right:0;border-right:0}
+.bs-net{position:absolute;top:34%;bottom:34%;width:6px;background:rgba(255,255,255,.75)}.bs-net.l{left:-6px;border-radius:3px 0 0 3px}.bs-net.r{right:-6px;border-radius:0 3px 3px 0}
+.bs-net.hit{background:var(--amber);box-shadow:0 0 12px var(--amber)}
+.bs-ball{position:absolute;top:50%;left:var(--to);width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.5)}
+.bs-cap{grid-column:1/-1;text-align:center;font-size:11px;color:var(--muted);margin-top:-2px}
+@media (prefers-reduced-motion:no-preference){.bs-ball{animation:bsmove .45s ease-out both}@keyframes bsmove{from{left:var(--from)}to{left:var(--to)}}
+  .bstrip.goal .bs-field{animation:bsgoal .8s ease-out}@keyframes bsgoal{30%{box-shadow:inset 0 0 0 2px var(--amber),0 0 18px var(--amber)}}}

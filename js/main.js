@@ -156,7 +156,10 @@ const ACT={
   rules:()=>{UI.modal={type:'rules'};render()},
   closeModal:()=>closeModal(),
   back:()=>{UI.pages.pop();render()},
-  bid:(a,b)=>{if(!arm(b,'再点一次确认签下'))return;buyFrom(+a);if(UI.modal&&UI.modal.id===+a&&findP(+a))UI.modal=null;save();render()},
+  bid:a=>{UI.modal={type:'deal',id:+a};render()},
+  offer:(a,b)=>{const [id,k]=a.split(':').map(Number);if(!k&&!arm(b,'再点一次确认签下'))return;const r=makeOffer(id,k);
+    if(r==='yes')UI.modal=null;else if(r==='no')UI.modal={type:'deal',id,res:'no'};save();render()},
+  swap:(a,b)=>{const [id,qid]=a.split(':').map(Number);if(!arm(b,'再点一次确认交换'))return;swapDeal(id,qid);if(findP(id))UI.modal=null;save();render()},
   loan:(a,b)=>{if(!arm(b,'再点一次确认租借'))return;loanOut(+a);save();render()},
   recall:a=>{recallLoan(+a);save();render()},
   div:a=>{UI.div=+a;render()},

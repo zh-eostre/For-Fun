@@ -241,22 +241,40 @@ function vTeamPage(tid){
   const xi=onPitch(t,b.ids).filter(Boolean),avgOf=ps=>ps.length?Math.round(ps.reduce((s,p)=>s+p.ovr,0)/ps.length):0,me=Math.round(xiLevel(my()));
   const lines=['FW','MF','DF','GK'].map(pos=>`${POS[pos]} ${avgOf(xi.filter(p=>p.pos===pos))}`).join(' · ');
   const rows=PO.map(pos=>`<div class="group-h">${POS[pos]}</div><div class="mlist">`+t.players.filter(p=>p.pos===pos).sort((a,b)=>b.ovr-a.ovr).map(p=>{
-    const why=buyBlock(p,t);
+    const why=buyBlock(p,t,false);  // the price itself is for the negotiation
     return `<div class="mrow"><div style="min-width:0"><div class="pname"><button class="link" data-act="player" data-arg="${p.id}">${p.name}</button>${oneClub(p,t)?' <span class="tag2 oneclub" title="青训出身、只为这支球队效力的传奇，不会转会">一人一城</span>':loyal(p,t)?' <span class="tag2 loyal" title="这支球队青训出身，效力多年，不会转会">忠诚</span>':''}${p.sig?` <span class="sig" style="display:inline">「${p.sig}」</span>`:''}</div>
       <div class="price">${p.age} 岁，${p.apps} 场 ${p.goals} 球 ${p.ast||0} 助${p.rn?`，评分 ${avgRating(p).toFixed(1)}`:''}${unavail(p)?'，伤停中':''}</div></div>
       <div><div class="ovr num">${p.ovr}</div><div class="potl">${p.age>23?`潜力 ${p.pot}`:'潜力 ?'}</div></div>
-      <button class="btn small primary" data-act="bid" data-arg="${p.id}" ${why?`disabled title="${why}"`:''}>${money(askPrice(p,t))}</button></div>`}).join('')+'</div>').join('');
+      <button class="btn small primary" data-act="bid" data-arg="${p.id}" ${why?`disabled title="${why}"`:`title="点开谈判：按要价、还价或用球员交换"`}>${money(dealPrice(p,t))}</button></div>`}).join('')+'</div>').join('');
   return `<section class="panel" style="border-left:6px solid ${t.color}"><h2>${t.name}</h2>
   <p class="muted" style="margin:-4px 0 0;font-size:14px">${t.foreign?`海外俱乐部 · ${INTL_NAME}`:`${DIVS[t.div]}第 ${rk} 名`} · 底蕴 ${t.rep}（${tierOf(t.rep)}）· 常用阵型 ${b.form} · ${t.players.length} 人${tid===S.rival?' · 宿敌（要价贵 30%）':''}</p>
   ${tid===S.my?'':`<p class="team-power">首发平均能力 <b class="num">${avgOf(xi)}</b><span class="muted">（我方 ${me}）</span> <span class="muted">${lines}</span></p>`}</section>
-  <section class="panel" style="padding:4px 10px"><p class="muted" style="font-size:13px;margin:8px 0">按钮上是对方要价：主力和核心球员要价更高。阵容不足 16 人或门将只剩 2 个时对方不卖。</p>${rows}</section>`;
+  <section class="panel" style="padding:4px 10px"><p class="muted" style="font-size:13px;margin:8px 0">按钮上是对方要价，点开可以谈判（还价或用球员交换）：主力和核心球员要价更高。阵容不足 16 人或门将只剩 2 个时对方不卖。</p>${rows}</section>`;
 }
 // one player in detail, ours or another club's
 // the player dialog is a native <dialog> opened with showModal() after each render: the browser keeps focus
 // inside it, makes the page behind inert and handles Escape (see the 'cancel' listener in main.js)
 function vModal(){
   const t=UI.modal.type;
-  return `<dialog class="modal ${t==='opp'||t==='rules'||t==='takers'?'wide':''}" aria-labelledby="mtitle">${t==='opp'?vOppXI():t==='rules'?vRules():t==='takers'?vTakersModal():vPlayer(UI.modal.id)}</dialog>`;
+  return `<dialog class="modal ${t==='opp'||t==='rules'||t==='takers'?'wide':''}" aria-labelledby="mtitle">${t==='opp'?vOppXI():t==='rules'?vRules():t==='takers'?vTakersModal():t==='deal'?vDeal(UI.modal.id):vPlayer(UI.modal.id)}</dialog>`;
+}
+// negotiating for an AI club's player: pay the price, haggle (with the odds), or offer one of ours in part-exchange
+function vDeal(id){
+  const f=findAny(id);if(!f||f.t.id===S.my)return '<p>他已经不在那里了。</p>';
+  const {p,t}=f,why=buyBlock(p,t,false),full=dealPrice(p,t),w=willing(p,t),left=haggled(p),last=UI.modal.res;
+  const offers=HAGGLE.map(([off,ch],k)=>{const price=Math.round(full*(1-off)),no=(off&&left)||S.budget<price||squadFull()||!!why;
+    return `<button class="deal-opt ${k?'':'full'}" data-act="offer" data-arg="${id}:${k}" ${no?'disabled':''}><b>${k?`还价 −${Math.round(off*100)}%`:'按要价签下'}</b><span class="num">${money(price)}</span><small>${k?`成功率约 ${Math.round(ch*100)}%`:'一定成交'}</small></button>`}).join('');
+  const sw=swapsFor(p,t);
+  return `<section class="panel"><div class="mhead"><h2 id="mtitle">谈判：${p.name}</h2><button class="btn small mclose" data-act="closeModal" aria-label="关闭">✕</button></div>
+  <p class="muted" style="margin:-4px 0 10px">${t.name} · ${POS[p.pos]} · ${p.age} 岁 · 能力 ${p.ovr}${p.age<=23?'':` · 潜力 ${p.pot}`} · 要价 ${money(full)}${w.extra?`（含他要求的加价 ${Math.round(w.extra*100)}%）`:''}${left&&p.hg.up?'（被你激怒，已涨价）':''}</p>
+  ${why?`<p class="warn">${why}</p>`:''}${last?`<p class="deal-res ${last}">${last==='no'?`报价被拒绝了。${t.short}本窗口不再接受还价。`:'成交！'}</p>`:''}
+  <div class="deal-opts">${offers}</div>
+  ${left?`<p class="muted" style="font-size:13px;margin:6px 0 0">${t.short}本窗口不再接受还价，只能按要价签下。</p>`:''}
+  <h3 style="margin:16px 0 6px">球员加钱交换</h3>
+  ${sw.length?`<p class="muted" style="font-size:13px;margin:0 0 8px">用我方一名球员抵一部分转会费（按他的出售价计），其余付现金。对方只要能进他们轮换的人（能力不低于 ${Math.round(xiLevel(t))-SWAP_BELOW}、${SWAP_AGE} 岁以下）。</p>
+  <div class="deal-swaps">${sw.map(({q,credit})=>{const cash=Math.max(0,full-credit),no=S.budget<cash||!!why;
+    return `<button class="deal-swap" data-act="swap" data-arg="${id}:${q.id}" ${no?'disabled':''}><b>${q.name}</b><small>${POS[q.pos]} · ${q.age} 岁 · ${q.ovr} · 抵 ${money(credit)}</small><span>${cash?`+ ${money(cash)}`:'直接交换'}</span></button>`}).join('')}</div>`
+  :`<p class="muted" style="font-size:13px;margin:0">我方没有${t.short}看得上的球员（能力不低于 ${Math.round(xiLevel(t))-SWAP_BELOW}、${SWAP_AGE} 岁以下）。</p>`}</section>`;
 }
 // how the game works, in plain words; the numbers come from the game's own settings
 function vRules(){
@@ -335,7 +353,7 @@ function vPlayer(id){
       ${p.loan?`<button class="btn small" data-act="recall" data-arg="${p.id}">召回</button>`:p.age<=LOAN_AGE?`<button class="btn small" data-act="loan" data-arg="${p.id}">外租（赛季结束回归）</button>`:`<button class="btn small" disabled title="只有 ${LOAN_AGE} 岁及以下的球员可以外租">外租（${LOAN_AGE} 岁及以下）</button>`}
       <button class="btn small" data-act="list" data-arg="${p.id}" aria-pressed="${!!p.listed}" title="挂牌后，转会窗口期间球队会专门为他报价（约身价的 ${LIST_RANGE[0]}–${LIST_RANGE[1]} 倍）">${p.listed?'✓ 挂牌中（点击撤下）':'挂牌出售'}</button>
       <button class="btn small danger" data-act="sell" data-arg="${p.id}" ${windowOpen()?'':`disabled title="${windowShut()}"`}>直接出售 ${money(sellPrice(p))}</button>`
-    :(()=>{const why=buyBlock(p,t);return `<button class="btn small primary" data-act="bid" data-arg="${p.id}" ${why?'disabled':''}>以 ${money(askPrice(p,t))} 签下</button>${why?`<span class="muted" style="font-size:13px">${why}</span>`:''}`})();
+    :(()=>{const why=buyBlock(p,t,false);return `<button class="btn small primary" data-act="bid" data-arg="${p.id}" ${why?'disabled':''}>谈判（要价 ${money(dealPrice(p,t))}）</button>${why?`<span class="muted" style="font-size:13px">${why}</span>`:''}`})();
   return `<section class="panel"><div class="mhead"><h2 id="mtitle">${p.name}${p.youth?' <span class="tag2 youth">青训</span>':''}</h2><button class="btn small mclose" data-act="closeModal" aria-label="关闭">✕</button></div>
   <p class="muted" style="margin:-4px 0 10px;font-size:14px">${POS[p.pos]}，${p.age} 岁，${t.name}${status?`。${status}`:''}</p>
   ${p.sig?`<p class="sig" style="margin:0 0 10px">必杀技「${p.sig}」</p>`:''}
@@ -752,6 +770,15 @@ function boostChips(){
   if(targets(M.weak,M[mySide()+'Form'],M.tac))c.push(`<span class="bchip">针对弱点 +${TARGET_BONUS}</span>`);
   return c.length?`<div class="bchips">${c.join('')}</div>`:'';
 }
+// the ball on a strip of pitch, home attacking to the right: it moves from where it was to where play is this
+// minute, to their goal on a chance, into the net on a goal
+function ballStrip(H,A){
+  const to=M.ball??50,from=M.ballFrom??to,g=M.flash;
+  return `<div class="bstrip ${g?'goal':''}" aria-hidden="true"><span class="bs-t" style="--c:${H.color}">${H.short}</span>
+  <div class="bs-field"><i class="bs-mid"></i><i class="bs-box l"></i><i class="bs-box r"></i><i class="bs-net l ${g==='a'?'hit':''}"></i><i class="bs-net r ${g==='h'?'hit':''}"></i>
+  <b class="bs-ball" style="--from:${from}%;--to:${to}%"></b></div><span class="bs-t" style="--c:${A.color}">${A.short}</span>
+  <small class="bs-cap">${(M.att??'h')==='h'?`${H.short} 进攻 →`:`← ${A.short} 进攻`}</small></div>`;
+}
 function vMatch(){
   const H=S.teams[M.h],A=S.teams[M.a];
   const clock=M.done?'FT':M.min>=45&&M.ht?'HT':`${M.min}'`;
@@ -811,7 +838,7 @@ function vMatch(){
   <div class="score"><span class="${M.flash==='h'?'flash':''}">${M.hg}</span><span class="colon">:</span><span class="${M.flash==='a'?'flash':''}">${M.ag}</span></div>
   <div class="side disp">${A.name}<small>客队</small></div>
   <div class="clock">${clock}${M.hp!==undefined?` <span class="pk">点球 ${M.hp}:${M.ap}</span>`:''}<small>你的战术：${TACT[M.tac]}${S.boost>0?'，士气高涨':''}</small>${boostChips()}</div></div>
-  ${ctl}
+  ${M.done||M.pk?'':ballStrip(H,A)}${ctl}
   <ul class="feed">${M.feed.map(e=>`<li class="${e.cls}"><span class="m">${e.min==='PK'?'PK':e.min+"'"}</span><span>${e.t}</span></li>`).join('')}</ul></div>`;
 }
 // season end: how our reputation moved, and any clubs that want us

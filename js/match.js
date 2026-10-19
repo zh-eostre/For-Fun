@@ -65,11 +65,14 @@ function loop(){if(!M||M.done||M.paused)return;if(pressing){M.timer=setTimeout(l
   if(!M.done&&!M.paused)M.timer=setTimeout(loop,base+perLine*Math.min(3,M.feed.length-n))}
 function tick(skipping){
   M.min++;M.flash=null;
+  // the ball on the strip above the commentary (for show only: Math.random, so the match itself is untouched)
+  M.ballFrom=M.ball??50;M.moved=false;
   const ht=M.h===S.my?M.tac:M.aiTac,at=M.a===S.my?M.tac:M.aiTac,b=S.boost>0?BOOST:0;
   const sh=strength(S.teams[M.h],M.hIds,ht,true,M.h===S.my?b:0,M.hForm),sa=strength(S.teams[M.a],M.aIds,at,false,M.a===S.my?b:0,M.aForm);
   sh.atk+=counter(ht,at);sa.atk+=counter(at,ht);
   const mb=myBoost(),ms=M.h===S.my?sh:sa;ms.atk+=mb.atk;ms.def+=mb.def;
   side('h',xgMin(sh,sa));side('a',xgMin(sa,sh));
+  if(!M.moved){const poss=(M.poss??50)/100;M.ball=clamp((M.ball??50)+(Math.random()-.5)*28+(poss-.5)*24,14,86);M.att=M.ball>=50?'h':'a'}
   const myG=M.h===S.my?M.hg:M.ag,opG=M.h===S.my?M.ag:M.hg;if(myG<opG)M.trailed=true;
   if(!M.done){flair('h');flair('a')}
   for(const s of ['h','a']){
@@ -135,7 +138,7 @@ function side(s,p){
     // turns out to be a 绝杀 / 绝平, so it's kept and judged at the final whistle (lateCheck)
     const margin=(s==='h'?M.hg-M.ag:M.ag-M.hg)-1;
     M.lastGoal={s,min:M.min,name:sc.name,kind:M.min>=LATE_MIN?(margin===0?'win':margin===-1?'level':null):null};
-    M.flash=s;M.feed.unshift({min:M.min,cls:'goal '+(mine?'mine':'theirs'),t:`进球！${t}（${team.short}${a?` · 助攻 ${a.name}`:''}）`});
+    M.flash=s;M.ball=s==='h'?99:1;M.att=s;M.moved=true;M.feed.unshift({min:M.min,cls:'goal '+(mine?'mine':'theirs'),t:`进球！${t}（${team.short}${a?` · 助攻 ${a.name}`:''}）`});
     if(M.lastGoal.kind)M.feed.unshift({min:M.min,cls:'sys',t:LINE.lateMaybe(M.lastGoal.kind,team.short,90-M.min)});
     const star=by||(sig?sc:null);  // a signature move behind it: its cut-in plays first
     if(!M.skip)M.hold=Date.now()+(mine?2600:800)+(star?1300:0);
@@ -162,6 +165,7 @@ function side(s,p){
     const saved=gk&&rng()<.5;if(saved){ev(gk.id).sv=(ev(gk.id).sv||0)+1;st.on++;applaud()}
     M.feed.unshift({min:M.min,cls:saved?'save':'',t:saved?LINE.fkSaved(tk.name,gk.name):LINE.fkMiss(tk.name)});
   };
+  if(r<p*2.2&&!M.moved){M.ball=s==='h'?80+Math.random()*14:6+Math.random()*14;M.att=s;M.moved=true}  // a chance: the ball near their goal
   if(r<p&&rng()<PEN_SHARE)penalty();
   else if(r<p){
     const sc=scorer(team,ids,form);

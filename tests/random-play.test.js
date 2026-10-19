@@ -77,7 +77,7 @@ while(seasons<${SEASONS}&&guard++<20000){
     else if(r<.23){const p=pk(my().players);if(p)twice('sell',String(p.id))}
     else if(r<.245){const p=pk(my().players.filter(x=>x.age<=LOAN_AGE&&!x.loan));if(p)twice('loan',String(p.id))}
     else if(r<.255){const p=pk(my().players.filter(x=>x.loan));if(p)ACT.recall(String(p.id))}
-    else if(r<.265){const o=pk(S.teams.filter(t=>t.id!==S.my));const p=pk(o.players);if(p)twice('bid',String(p.id))}
+    else if(r<.265){const o=pk(S.teams.filter(t=>t.id!==S.my));const p=pk(o.players);if(p){ACT.bid(String(p.id));const k=Math.floor(Math.random()*3);twice('offer',p.id+':'+k);UI.modal=null}}
     else if(r<.275)twice('fup',pk(['scout','physio','ground','stadium']));
     else if(r<.285&&S.academy.intake.length){R()<.6?ACT.ysign(String(pk(S.academy.intake).id)):twice('yrel',String(pk(S.academy.intake).id))}
     else if(r<.29)twice('aup');
