@@ -69,7 +69,7 @@ function renderSide(){
   const qs=QUESTS.slice(S.q,S.q+3);
   const hp=happyParts(S.short.food>0,S.short.heat>0);
   let winter='';
-  if(s===2||(s===1&&dayIn()>=5)||s===3){
+  if(s===2||(s===1&&dayIn()>=SEASON_DAYS-2)||s===3){
     const daysLeft=s===3?SEASON_DAYS-dayIn()+1:SEASON_DAYS;
     const needF=Math.ceil(pop*.25*daysLeft),needW=Math.ceil(houses().reduce((a,b)=>a+(b.res?HHEAT[b.lv-1]:0),0)*daysLeft);
     winter=`<section class="box winter"><h3 class="hd">${s===3?'❄️ 冬天还剩 '+daysLeft+' 天':'❄️ 过冬准备'}</h3>
@@ -160,9 +160,9 @@ function vTitle(){
    <div class="strip">${['house','house2','house3','farm','market','well','temple','tower'].map(k=>`<img src="${ICON[k]}" alt="">`).join('')}</div>
    <h1 class="hd">晴川小镇</h1>
    <p>在一片河谷里，从一座市政厅开始，建成一座热闹的小城。</p>
-   <div class="row">${sv?`<button class="btn primary" data-act="cont">继续经营（${KINDS[sv.kind||'valley'].n}${SIZES.find(z=>z.w===(sv.W||24))?.n||''}图，第 ${Math.floor(sv.day/28)+1} 年，${(()=>{let n=0;for(const b of Object.values(sv.b))if(b.type==='house')n+=b.res;return n})()} 位居民）</button><button class="btn" data-act="newgame2">建一座新小镇</button>`:`<button class="btn primary" data-act="newgame2">开始建造</button>`}</div>
+   <div class="row">${sv?`<button class="btn primary" data-act="cont">继续经营（${KINDS[sv.kind||'valley'].n}${SIZES.find(z=>z.w===(sv.W||24))?.n||''}图，第 ${Math.floor(sv.day/(SEASON_DAYS*4))+1} 年，${(()=>{let n=0;for(const b of Object.values(sv.b))if(b.type==='house')n+=b.res;return n})()} 位居民）</button><button class="btn" data-act="newgame2">建一座新小镇</button>`:`<button class="btn primary" data-act="newgame2">开始建造</button>`}</div>
    <div class="box how"><b>怎么玩</b><ul>
-    <li>建筑要用道路连到市政厅才会运作。</li>
+    <li>民居和需要工人的建筑，要用道路连到市政厅才会运作。水井、公园、仓库不用连路。</li>
     <li>居民住进民居后会去农场、伐木场上班。人手不够，产量就会下降。</li>
     <li>民居附近有水井和市场会升级成砖房，再加上学校和公园就能升级成宅院，住更多人、交更多税。</li>
     <li>冬天农场停产，民居还要烧木材取暖，秋天记得囤货。</li>

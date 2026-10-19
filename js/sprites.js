@@ -33,35 +33,42 @@ function sRock(g,ox,oy,p){
   rows(g,ox,oy,[[11,3,10],[10,5,11],[10,5,12],[11,3,13]],p.rock);P(g,ox+11,oy+11,1,1,p.rockh);P(g,ox+13,oy+12,1,1,p.rockd);
 }
 function sRoad(g,x,y,p){
-  const ox=x*T,oy=y*T,isR=(dx,dy)=>{const b=bAt(x+dx,y+dy);return !!b};
+  const ox=x*T,oy=y*T,isR=(dx,dy)=>linkTo(x,y,dx,dy);
   P(g,ox+3,oy+3,10,10,p.road);
   if(isR(0,-1))P(g,ox+3,oy,10,3,p.road);if(isR(0,1))P(g,ox+3,oy+13,10,3,p.road);
   if(isR(-1,0))P(g,ox,oy+3,3,10,p.road);if(isR(1,0))P(g,ox+13,oy+3,3,10,p.road);
   for(let k=0;k<4;k++){const h=hash(x,y,k+40);P(g,ox+4+h%8,oy+4+(h>>>4)%8,1,1,k%2?p.road2:p.road3)}
 }
 function sBridge(g,x,y,p){
-  const ox=x*T,oy=y*T,h=!!bAt(x-1,y)||!!bAt(x+1,y)||(terr(x-1,y)!=='w'&&terr(x-1,y)!=null)||(terr(x+1,y)!=='w'&&terr(x+1,y)!=null);
-  const v=!!bAt(x,y-1)||!!bAt(x,y+1);
-  if(h&&!(v&&!bAt(x-1,y)&&!bAt(x+1,y))){P(g,ox,oy+3,T,10,'#A87C49');for(let k=1;k<16;k+=3)P(g,ox+k,oy+3,1,10,'#86592F');P(g,ox,oy+2,T,1,'#6B4423');P(g,ox,oy+13,T,1,'#6B4423');P(g,ox,oy+14,T,1,'rgba(0,0,0,.2)')}
+  const ox=x*T,oy=y*T,h=linkTo(x,y,-1,0)||linkTo(x,y,1,0)||(terr(x-1,y)!=='w'&&terr(x-1,y)!=null)||(terr(x+1,y)!=='w'&&terr(x+1,y)!=null);
+  const v=linkTo(x,y,0,-1)||linkTo(x,y,0,1);
+  if(h&&!(v&&!linkTo(x,y,-1,0)&&!linkTo(x,y,1,0))){P(g,ox,oy+3,T,10,'#A87C49');for(let k=1;k<16;k+=3)P(g,ox+k,oy+3,1,10,'#86592F');P(g,ox,oy+2,T,1,'#6B4423');P(g,ox,oy+13,T,1,'#6B4423');P(g,ox,oy+14,T,1,'rgba(0,0,0,.2)')}
   else{P(g,ox+3,oy,10,T,'#A87C49');for(let k=1;k<16;k+=3)P(g,ox+3,oy+k,10,1,'#86592F');P(g,ox+2,oy,1,T,'#6B4423');P(g,ox+13,oy,1,T,'#6B4423');P(g,ox+14,oy,1,T,'rgba(0,0,0,.2)')}
   if(p.ice)P(g,ox+4,oy+4,3,1,'#fff');
 }
 const SPR={
   house(g,ox,oy,p,b){
-    const lv=b?b.lv:1;
+    const lv=b?b.lv:1,d=b&&b.dir!=null?b.dir:2;
+    // facing right is facing left mirrored; f: front (door toward the viewer), side (door near the left edge), back (no door)
+    if(d===1){g.save();g.translate(2*ox+T,0);g.scale(-1,1);SPR.house(g,ox,oy,p,{...b,dir:3});g.restore();return}
+    const f=d===2?'front':d===3?'side':'back';
     if(lv===1){
       P(g,ox+2,oy+14,13,1,SH);P(g,ox+3,oy+8,10,6,'#C99A62');P(g,ox+3,oy+10,10,1,'#A87C49');P(g,ox+3,oy+12,10,1,'#A87C49');
       rows(g,ox,oy,[[7,2,2],[6,4,3],[5,6,4],[4,8,5],[3,10,6],[2,12,7]],'#B5463A');P(g,ox+2,oy+7,12,1,'#8E3229');
       if(p.ice){P(g,ox+6,oy+3,4,1,'#fff');P(g,ox+5,oy+4,6,1,'#fff')}
-      P(g,ox+7,oy+10,2,4,DOOR);P(g,ox+4,oy+9,2,2,WIN);P(g,ox+10,oy+9,2,2,WIN);
+      if(f==='front'){P(g,ox+7,oy+10,2,4,DOOR);P(g,ox+4,oy+9,2,2,WIN);P(g,ox+10,oy+9,2,2,WIN)}
+      else if(f==='side'){P(g,ox+0,oy+11,4,3,p.road);P(g,ox+4,oy+10,2,4,DOOR);P(g,ox+9,oy+9,2,2,WIN)}
+      else{P(g,ox+5,oy+9,2,2,WIN);P(g,ox+9,oy+9,2,2,WIN)}
     }else if(lv===2){
       P(g,ox+1,oy+14,14,1,SH);P(g,ox+2,oy+7,12,7,'#E8D8B5');
       P(g,ox+2,oy+7,1,7,TIM);P(g,ox+13,oy+7,1,7,TIM);P(g,ox+2,oy+10,12,1,TIM);
       rows(g,ox,oy,[[6,4,1],[4,8,2],[3,10,3],[2,12,4],[1,14,5],[1,14,6]],'#3F6FA8');P(g,ox+1,oy+6,14,1,'#2E5384');
       P(g,ox+11,oy+0,2,3,'#8C5A3C');
       if(p.ice){P(g,ox+5,oy+2,6,1,'#fff');P(g,ox+3,oy+3,10,1,'#fff')}
-      P(g,ox+4,oy+8,2,2,WIN);P(g,ox+10,oy+8,2,2,WIN);P(g,ox+10,oy+11,2,2,WIN);P(g,ox+9,oy+13,4,1,'#D9506E');
-      P(g,ox+6,oy+11,2,3,DOOR);P(g,ox+3,oy+11,2,2,WIN);
+      P(g,ox+4,oy+8,2,2,WIN);P(g,ox+10,oy+8,2,2,WIN);
+      if(f==='front'){P(g,ox+10,oy+11,2,2,WIN);P(g,ox+9,oy+13,4,1,'#D9506E');P(g,ox+6,oy+11,2,3,DOOR);P(g,ox+3,oy+11,2,2,WIN)}
+      else if(f==='side'){P(g,ox+0,oy+11,3,3,p.road);P(g,ox+3,oy+11,2,3,DOOR);P(g,ox+7,oy+11,2,2,WIN);P(g,ox+10,oy+11,2,2,WIN);P(g,ox+7,oy+13,5,1,'#D9506E')}
+      else{P(g,ox+4,oy+11,2,2,WIN);P(g,ox+10,oy+11,2,2,WIN)}
     }else{
       P(g,ox+0,oy+15,16,1,SH);P(g,ox+2,oy+5,12,10,'#F0E4C9');P(g,ox+2,oy+14,12,1,'#8F877C');
       P(g,ox+2,oy+9,12,1,TIM);P(g,ox+2,oy+5,1,10,TIM);P(g,ox+13,oy+5,1,10,TIM);
@@ -69,9 +76,10 @@ const SPR={
       P(g,ox+12,oy+0,2,3,'#8C5A3C');
       if(p.ice){P(g,ox+5,oy+1,6,1,'#fff');P(g,ox+3,oy+2,9,1,'#fff')}
       P(g,ox+4,oy+6,2,2,WIN);P(g,ox+7,oy+6,2,2,WIN);P(g,ox+10,oy+6,2,2,WIN);
-      P(g,ox+4,oy+10,2,2,WIN);P(g,ox+10,oy+10,2,2,WIN);P(g,ox+7,oy+10,2,4,DOOR);
-      P(g,ox+3,oy+12,3,1,'#D9506E');P(g,ox+10,oy+12,3,1,'#E2B93B');
-      P(g,ox+0,oy+11,2,4,p.t);P(g,ox+14,oy+11,2,4,p.t);
+      if(f==='front'){P(g,ox+4,oy+10,2,2,WIN);P(g,ox+10,oy+10,2,2,WIN);P(g,ox+7,oy+10,2,4,DOOR);P(g,ox+3,oy+12,3,1,'#D9506E');P(g,ox+10,oy+12,3,1,'#E2B93B');P(g,ox+0,oy+11,2,4,p.t)}
+      else if(f==='side'){P(g,ox+0,oy+11,3,3,p.road);P(g,ox+3,oy+10,2,4,DOOR);P(g,ox+7,oy+10,2,2,WIN);P(g,ox+10,oy+10,2,2,WIN);P(g,ox+6,oy+12,3,1,'#D9506E');P(g,ox+10,oy+12,3,1,'#E2B93B')}
+      else{P(g,ox+4,oy+10,2,2,WIN);P(g,ox+7,oy+10,2,2,WIN);P(g,ox+10,oy+10,2,2,WIN);P(g,ox+0,oy+11,2,4,p.t)}
+      P(g,ox+14,oy+11,2,4,p.t);
     }
   },
   farm(g,ox,oy,p){

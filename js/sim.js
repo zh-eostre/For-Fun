@@ -6,7 +6,8 @@ function recompute(){
   while(q.length){const [x,y]=XY(q.shift());N4.forEach(([dx,dy])=>{const b=bAt(x+dx,y+dy),j=I(x+dx,y+dy);if(isRoad(b)&&!connSet.has(j)){connSet.add(j);q.push(j)}})}
   for(const [i,b] of ent()){
     const [x,y]=XY(i);
-    b.conn=b.type==='hall'?true:isRoad(b)?connSet.has(i):N4.some(([dx,dy])=>{const j=I(x+dx,y+dy);return inb(x+dx,y+dy)&&(connSet.has(j)||j===S.hall)});
+    b.conn=b.type==='hall'?true:isRoad(b)?connSet.has(i):!needRoad(b.type)?true:N4.some(([dx,dy])=>{const j=I(x+dx,y+dy);return inb(x+dx,y+dy)&&(connSet.has(j)||j===S.hall)});
+    if(!isRoad(b)&&b.type!=='hall'){const d=faceDir(x,y,b.dir);if(d!==b.dir){b.dir=d;dirty=true}}
   }
   let free=popTotal();
   const order=['farm','fish','lumber','quarry','market','school','temple','workshop'];

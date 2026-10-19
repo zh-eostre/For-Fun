@@ -25,8 +25,18 @@ const terr=(x,y)=>inb(x,y)?S.t[I(x,y)]:null;
 const bAt=(x,y)=>inb(x,y)?S.b[I(x,y)]:null;
 function countR(x,y,r,v){let n=0;for(let yy=y-r;yy<=y+r;yy++)for(let xx=x-r;xx<=x+r;xx++){if(!inb(xx,yy)||(xx-x)**2+(yy-y)**2>r*r)continue;if(S.t[I(xx,yy)]===v&&!S.b[I(xx,yy)])n++}return n}
 function count8(x,y,v){let n=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if((dx||dy)&&terr(x+dx,y+dy)===v)n++}return n}
+const needRoad=t=>t==='house'||!!B[t].workers;
 const isRoad=b=>!!b&&(b.type==='road'||b.type==='bridge');
 const adj4=(x,y,v)=>N4.some(([dx,dy])=>terr(x+dx,y+dy)===v);
+// door direction (index into N4): face a neighbouring road, preferring ones linked to the hall; keep the current side while it still works
+function faceDir(x,y,cur){
+  const nb=d=>{const [dx,dy]=N4[d];return inb(x+dx,y+dy)?I(x+dx,y+dy):-1};
+  const sides=[2,1,3,0].filter(d=>{const j=nb(d);return j>=0&&(isRoad(S.b[j])||j===S.hall)});
+  const linked=sides.filter(d=>{const j=nb(d);return connSet.has(j)||j===S.hall}),pool=linked.length?linked:sides;
+  return pool.length?(pool.includes(cur)?cur:pool[0]):(cur??2);
+}
+// does whatever is at (x+dx,y+dy) open onto the road at (x,y)? roads and the hall link on every side, other buildings only at their door
+const linkTo=(x,y,dx,dy)=>{const b=bAt(x+dx,y+dy);return !!b&&(isRoad(b)||b.type==='hall'||N4[b.dir??2][0]===-dx&&N4[b.dir??2][1]===-dy)};
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function load(){try{const t=localStorage.getItem(KEY);if(t){const d=JSON.parse(t);if(d&&d.v===1)return d}}catch(e){}return null}
 function log(t,c=''){S.log.unshift({d:`${yearN()}年${SN[season()]}${dayIn()}日`,t,c});S.log=S.log.slice(0,40)}

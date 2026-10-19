@@ -2,7 +2,7 @@
 let W=24,H=16;const T=16,KEY='qingchuan-town-v1';
 const SIZES=[{n:'小',w:24,h:16},{n:'中',w:34,h:22},{n:'大',w:46,h:30}];
 const KINDS={valley:{n:'河谷',e:'🏞️',d:'一条河穿过平原，树林和岩石都有，最均衡。'},lakes:{n:'湖区',e:'🎣',d:'好几个大湖，农场和渔屋很好发展，但岩石少，石头要省着用。'},forest:{n:'密林',e:'🌲',d:'到处是森林，木材多到用不完，但要先砍出空地才能盖房子。'},hills:{n:'山地',e:'⛰️',d:'岩石遍布，石头很充足，但水源少，粮食是最大的难题。'}};
-const SEASON_DAYS=7,DAY_MS=2600;
+const SEASON_DAYS=30,DAY_MS=5000;
 const SN=['春','夏','秋','冬'],SICON=['🌸','☀️','🍂','❄️'];
 const N4=[[0,-1],[1,0],[0,1],[-1,0]];
 const RI={coins:'💰',wood:'🪵',stone:'🪨',food:'🌾'};
@@ -11,22 +11,22 @@ const HN=['木屋','砖房','宅院'];
 const HCAP=[4,8,14],HTAX=[.2,.35,.55],HHEAT=[.3,.45,.6];
 
 const B={
-  road:{n:'道路',cost:{coins:2},rank:0,cat:0,desc:'建筑要靠道路连到市政厅才能运作。电脑上可以按住鼠标拖动连续铺路。'},
+  road:{n:'道路',cost:{coins:2},rank:0,cat:0,desc:'民居和需要工人的建筑要靠道路连到市政厅才能运作。电脑上可以按住鼠标拖动连续铺路。'},
   bridge:{n:'桥',cost:{wood:8,coins:4},rank:0,cat:0,desc:'只能建在水上，像道路一样把两岸连起来。'},
   house:{n:'民居',cost:{wood:10},rank:0,cat:1,desc:'居民住的地方。附近服务越齐全，居民会自己把房子升级成砖房、宅院，住更多人、交更多税。'},
   farm:{n:'农场',cost:{wood:12,coins:8},workers:3,rank:0,cat:2,desc:'生产粮食。紧挨着水产量更高。秋天产量最高，冬天停产。'},
   lumber:{n:'伐木场',cost:{coins:15,wood:5},workers:2,rank:0,cat:2,desc:'2 格内的树越多，木材产量越高（每棵树 0.5，最多 3.5）。'},
   quarry:{n:'采石场',cost:{wood:15},workers:3,rank:0,cat:2,need:'rock',desc:'必须紧挨着岩石。周围 8 格的岩石越多，产量越高（最多 3）。'},
-  well:{n:'水井',cost:{stone:6,coins:5},rank:0,cat:3,r:3,svc:'water',desc:'为 3 格内的民居供水。民居升级必备。'},
-  store:{n:'仓库',cost:{wood:20},rank:0,cat:0,desc:'木材、石头、粮食的储存上限各 +150。冬天前很需要。'},
+  well:{n:'水井',cost:{stone:6,coins:5},rank:0,cat:3,r:3,svc:'water',desc:'为 3 格内的民居供水。民居升级必备。不用连路。'},
+  store:{n:'仓库',cost:{wood:20},rank:0,cat:0,desc:'木材、石头、粮食的储存上限各 +150。冬天前很需要。不用连路。'},
   plant:{n:'种树',cost:{coins:3},rank:0,cat:4,desc:'在空地上种一棵树。伐木场旁边多种树可以提高产量。'},
   fish:{n:'渔屋',cost:{wood:15},workers:2,rank:1,cat:2,need:'water',desc:'必须紧挨着水。四季都能捕鱼，冬天河面结冰产量较低。'},
   market:{n:'市场',cost:{wood:20,stone:10},workers:2,rank:1,cat:3,r:4,svc:'market',desc:'为 4 格内的民居提供商品，民居升级必备。每天另赚 3 金币。'},
-  park:{n:'公园',cost:{coins:25},rank:1,cat:3,r:3,svc:'park',upkeep:.5,desc:'3 格内的居民更开心。是宅院的升级条件之一。'},
+  park:{n:'公园',cost:{coins:25},rank:1,cat:3,r:3,svc:'park',upkeep:.5,desc:'3 格内的居民更开心。是宅院的升级条件之一。不用连路。'},
   school:{n:'学校',cost:{wood:20,stone:30,coins:40},workers:2,rank:2,cat:3,r:5,svc:'school',upkeep:1,desc:'5 格内的砖房才能升级成宅院。'},
   workshop:{n:'工坊',cost:{wood:15,stone:20},workers:2,rank:2,cat:2,desc:'每天把 1 木材和 1 石头加工成 6 金币。用来消化多余的材料。'},
   temple:{n:'神庙',cost:{stone:50,coins:60},workers:1,rank:3,cat:3,r:6,svc:'temple',upkeep:1,desc:'6 格内的居民幸福感大增，也能代替公园让砖房升级。'},
-  tower:{n:'钟楼',cost:{stone:120,wood:80,coins:300},rank:4,cat:5,unique:1,desc:'小镇的地标，只能建一座。全镇幸福度 +10。'},
+  tower:{n:'钟楼',cost:{stone:120,wood:80,coins:300},rank:4,cat:5,unique:1,desc:'小镇的地标，只能建一座。全镇幸福度 +10。不用连路。'},
   hall:{n:'市政厅',desc:'小镇的中心，每天收入 2 金币。所有道路都要从这里连出去。'}
 };
 const ORDER=['road','bridge','house','store','farm','fish','lumber','quarry','workshop','well','market','park','school','temple','plant','tower'];

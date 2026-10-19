@@ -65,7 +65,7 @@ function draw(now){
     const [x,y]=XY(t),d=B[UI.tool],v=canPlace(UI.tool,x,y);
     if(d.r){for(let yy=y-d.r;yy<=y+d.r;yy++)for(let xx=x-d.r;xx<=x+d.r;xx++)if(inb(xx,yy)&&(xx-x)**2+(yy-y)**2<=d.r*d.r)P(ctx,xx*T,yy*T,T,T,'rgba(255,226,120,.22)')}
     if(UI.tool==='lumber')hl(x,y,2,'t');if(UI.tool==='quarry')hlr(x,y);
-    ctx.globalAlpha=.75;if(UI.tool==='road')P(ctx,x*T+3,y*T+3,10,10,p.road);else drawBld(ctx,UI.tool,x*T,y*T,p,{lv:1});ctx.globalAlpha=1;
+    ctx.globalAlpha=.75;if(UI.tool==='road')P(ctx,x*T+3,y*T+3,10,10,p.road);else drawBld(ctx,UI.tool,x*T,y*T,p,{lv:1,dir:faceDir(x,y)});ctx.globalAlpha=1;
     P(ctx,x*T,y*T,T,T,v.ok?'rgba(80,200,120,.28)':'rgba(220,60,40,.35)');outline(x,y,v.ok?'#7CFF9E':'#FF6B57');
   }else if(UI.tool==='demolish'&&t!=null){const [x,y]=XY(t);P(ctx,x*T,y*T,T,T,UI.confirmDel===t?'rgba(220,60,40,.55)':'rgba(220,60,40,.28)');outline(x,y,'#FF6B57')}
   else if(UI.tool==='select'){
