@@ -161,6 +161,9 @@ const ACT={
   recall:a=>{recallLoan(+a);save();render()},
   div:a=>{UI.div=+a;render()},
   seDiv:a=>{UI.seDiv=+a;render()},
+  cer:()=>{const A=nationalAwards(),i=UI.cer||0;if(i>=A.length)return;UI.cer=i+1;render();const w=A[i][2][0];
+    if(w.tid===S.my){celebrate(A[i][0]==='coach'?'年度最佳教练！':`${w.name}！`,`「${A[i][1]}」`,'party')}else sfx('fanfare')},
+  cerAll:()=>{UI.cer=nationalAwards().length;render()},
   lb:a=>{const [d,k]=a.split(':');UI.lb={...(UI.lb&&typeof UI.lb==='object'?UI.lb:{}),[d]:k};render()},
   hlb:a=>{UI.hlb=a;render()},
   cupv:a=>{UI.cupv=a;render()},

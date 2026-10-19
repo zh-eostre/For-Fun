@@ -786,7 +786,7 @@ function expectedRank(){return S.teams.filter(t=>t.div===my().div).sort((a,b)=>b
 const prizeFor=(div,rank)=>PRIZES[div][Math.min(rank,PRIZES[div].length)-1];
 // moveTo: the id of a club whose offer we accept (otherwise we stay)
 function newSeason(moveTo){
-  finishIntl();
+  finishIntl();UI.cer=0;
   const move=moveTo!=null&&(S.jobOffers||[]).find(o=>o.club===moveTo);
   const div=my().div,rank=myRank(),prize=prizeFor(div,rank);
   {const r=table()[rank-1];S.history.push({season:S.season,div,rank,pts:r.pts,p:r.p,gf:r.gf,ga:r.ga,club:my().name,up:zone(div,rank)==='up'||undefined})}

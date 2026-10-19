@@ -555,6 +555,14 @@ function standings(div){
   <tbody>${T.map((r,i)=>`<tr class="${r.id===S.my?'me':''} ${zone(div,i+1)} ${qcls(r.id)}"><td>${i+1}</td><td><span class="dot" style="background:${r.color}"></span>${r.id===S.my?r.name:`<button class="link" data-act="team" data-arg="${r.id}">${r.name}</button>${tierTag(S.teams[r.id])}`}${qtag(r.id)}${r.id===S.rival?' <span class="tag2 derby">宿敌</span>':''}</td>
   <td>${r.p}</td><td>${r.w}</td><td>${r.d}</td><td>${r.l}</td><td>${r.gf}:${r.ga}</td><td class="pts">${r.pts}</td></tr>`).join('')}</tbody></table></div><p class="legend">${legend}</p>`;
 }
+// a division's records: the value, who set it, when; ours marked, and any this season is on course to beat
+function vRecords(div){
+  const rec=(S.lrec||{})[div]||{},now=seasonBests(div);
+  const rows=LREC.map(([k,label,unit])=>{const r=rec[k],n=now[k],beat=n&&r&&lrecBetter(k,n.v,r);
+    return `<div class="lrec ${r&&r.tid===S.my?'me':''}"><span class="lr-l">${label}</span><b class="num">${r?r.v:'—'}<small> ${unit}</small></b>
+    <span class="lr-who">${r?`${r.pid!=null?`${r.name} · ${S.teams[r.tid]?S.teams[r.tid].short:r.team}`:r.name}${r.note?` · ${r.note}`:''}<small> 第 ${r.season} 季</small>`:'本季结束后建立'}${beat?`<em class="lr-beat">本季 ${n.v}，有望打破</em>`:''}</span></div>`}).join('');
+  return `<section class="panel"><h2>${DIVS[div]}联赛纪录</h2>${rows}</section>`;
+}
 function vTable(div,switcher=true){
   if(div===undefined)div=UI.div??my().div;
   const res=S.results[div],last=res[res.length-1];
@@ -565,7 +573,7 @@ function vTable(div,switcher=true){
   const RL_MIN=Math.max(1,Math.floor(res.length/2)),rl=S.teams.filter(t=>t.div===div).flatMap(t=>t.players.filter(p=>p.rn>=RL_MIN).map(p=>({p,t}))).sort((a,b)=>avgRating(b.p)-avgRating(a.p)).slice(0,8);
   const pickDiv=switcher?`<div class="seg sm" style="margin-bottom:10px">${DIVS.map((dn,d)=>!divSize(d)?'':`<button data-act="div" data-arg="${d}" aria-pressed="${d===div}">${dn}${d===my().div?'（本队）':''}</button>`).join('')}</div>`:'';
   return `<div class="cols"><div class="col"><section class="panel"><h2>${DIVS[div]}积分榜</h2>${pickDiv}${standings(div)}</section>
-  ${last?`<section class="panel"><h2>上一轮赛果</h2>${last.map(r=>`<div class="res"><span>${S.teams[r.h].name}</span><span class="num">${r.hg} : ${r.ag}</span><span>${S.teams[r.a].name}</span></div>`).join('')}</section>`:''}</div><div class="col">
+  ${last?`<section class="panel"><h2>上一轮赛果</h2>${last.map(r=>`<div class="res"><span>${S.teams[r.h].name}</span><span class="num">${r.hg} : ${r.ag}</span><span>${S.teams[r.a].name}</span></div>`).join('')}</section>`:''}${vRecords(div)}</div><div class="col">
   ${vBoards(div,[['goals','射手',()=>vLeaders('射手榜','只算联赛',sc.map(x=>({p:x.p,t:x.t,v:G(x.p),label:String(G(x.p)),sub:`${x.p.apps} 场`})),v=>v)],['ast','助攻',()=>vLeaders('助攻榜','只算联赛',as.map(x=>({p:x.p,t:x.t,v:A(x.p),label:String(A(x.p)),sub:`${G(x.p)} 球 · ${x.p.apps} 场`})),v=>v)],['rating','评分',()=>vLeaders('评分榜',`出场 ${RL_MIN} 场以上`,rl.map(x=>({p:x.p,t:x.t,v:avgRating(x.p),label:avgRating(x.p).toFixed(2),sub:`${x.p.rn} 场`})),v=>v-5)],['cards','红黄牌',()=>vLeaders('红黄牌榜','红牌算 3 分',cd.map(x=>({p:x.p,t:x.t,v:(x.p.rcs||0)*3+(x.p.ycs||0),label:`${x.p.ycs||0}黄${x.p.rcs?` ${x.p.rcs}红`:''}`,sub:`${x.p.apps} 场`})),v=>v)]])}</div></div>`;
 }
 const gainTag=p=>p.gain>0?`<span class="gain">+${p.gain}</span>`:p.gain<0?`<span class="gain neg">${p.gain}</span>`:'';
@@ -824,6 +832,17 @@ function vCareer(){
   <div class="tw scrollbox"><table class="sticky-head"><thead><tr><th>季</th><th>球队</th><th>联赛</th><th>名次</th></tr></thead>
   <tbody>${H.slice().reverse().map(h=>`<tr><td>${h.season}</td><td>${h.club||'—'}</td><td>${DIVS[h.div||0]}</td><td>${h.rank===1?'🏆 ':''}第 ${h.rank}</td></tr>`).join('')}</tbody></table></div></section>`;
 }
+// the national awards ceremony: each award's three nominees, its winner revealed with a click (UI.cer: how many are)
+function vCeremony(){
+  const A=nationalAwards(),n=Math.min(UI.cer||0,A.length);if(!A.length)return '';
+  const card=([k,l,nom],i)=>{const shown=i<n;
+    return `<div class="cer ${shown?'shown':''} ${shown&&nom[0].tid===S.my?'mine':''}"><small>${l}</small>
+    ${shown?`<b class="disp">${nom[0].name}</b><span>${nom[0].team}${nom[0].stat?` · ${nom[0].stat}`:''}</span>`:'<b class="disp">？？？</b>'}
+    <ul>${nom.map((x,j)=>`<li class="${shown&&j===0?'win':''} ${x.tid===S.my?'me':''}">${x.name}<em>${x.team}</em></li>`).join('')}</ul></div>`};
+  return `<section class="panel ceremony"><h2>🏆 全国年度颁奖典礼 <span class="muted" style="font-weight:400;font-size:14px">第 ${S.season} 赛季 · 三个级别一起评选</span></h2>
+  <div class="cers">${A.map(card).join('')}</div>
+  ${n<A.length?`<div class="go" style="justify-content:flex-start;margin:10px 0 0"><button class="btn primary" data-act="cer">揭晓「${A[n][1]}」</button><button class="btn" data-act="cerAll">全部揭晓</button></div>`:''}</section>`;
+}
 function vSeasonEnd(){
   const div=my().div,rank=myRank(),exp=expectedRank(),prize=prizeFor(div,rank),z=zone(div,rank),dn=DIVS[div];
   const board=rank<=exp-2?'远远超出预期，董事会非常满意。':rank<=exp?'大致符合预期，董事会对你的工作表示认可。':'成绩低于预期，董事会希望你下赛季能有起色。';
@@ -842,7 +861,7 @@ function vSeasonEnd(){
   const ad=UI.seDiv!=null&&divSize(UI.seDiv)?UI.seDiv:div,a=seasonAwards(ad),xi=seasonXI(ad);
   const awardCards=Object.entries(AWARDS).map(([k,l])=>a[k]?`<div class="aw ${a[k].tid===S.my?'mine':''}"><small>${l}</small><b>${a[k].name}</b><span>${a[k].team} · ${a[k].stat}</span></div>`:'').join('');
   const divSw=act=>`<div class="seg sm" style="margin-bottom:10px">${DIVS.map((n,d)=>!divSize(d)?'':`<button data-act="${act}" data-arg="${d}" aria-pressed="${d===ad}">${n}${d===div?'（本队）':''}</button>`).join('')}</div>`;
-  return `${glory.length?`<section class="glory"><div class="cup">🏆</div><div class="disp">${glory.join(' · ')}</div><small>${my().name} · 第 ${S.season} 赛季</small></section>`:''}
+  return `${vCeremony()}${glory.length?`<section class="glory"><div class="cup">🏆</div><div class="disp">${glory.join(' · ')}</div><small>${my().name} · 第 ${S.season} 赛季</small></section>`:''}
   <section class="panel se-hero ${z}" style="--team:${my().color}">
     <div class="se-top"><div class="se-place"><small>第 ${S.season} 赛季 · ${dn}</small><b class="disp">第 ${rank}</b></div><p>${msg}</p></div>
     <div class="se-stats">${stat(`${me.w}-${me.d}-${me.l}`,'胜-平-负')}${stat(me.pts,'积分')}${stat(`${me.gf}:${me.ga}`,'进:失')}${stat(money(prize+bonus),bonus?`奖金（含董事会 ${money(bonus)}）`:'赛季奖金')}</div>
@@ -1098,7 +1117,9 @@ function vHonours(){
   </div><div class="col">
   ${(()=>{const won=R.flatMap(r=>(r.awards||[]).flatMap((a,d)=>Object.entries(a).filter(([k,w])=>w&&w.tid===(r.my??S.my)).map(([k,w])=>({r,d,k,w})))
       .concat((r.xi||[]).flatMap((l,d)=>l.filter(w=>w.tid===(r.my??S.my)).map(w=>({r,d,k:'xi',w})))));
-    return `<section class="panel"><h2>个人奖项${won.length?` <span class="muted" style="font-weight:400;font-size:13px">${won.length} 项</span>`:''}</h2>${won.length?'<div class="scrollbox">'+won.reverse().map(x=>`<div class="res" style="grid-template-columns:1fr auto"><span style="text-align:left">第 ${x.r.season} 季${DIVS[x.d]}${AWARDS[x.k]||'最佳阵容'}：${x.w.name}</span><span class="muted">${x.w.stat}</span></div>`).join('')+'</div>':'<p class="muted" style="margin:0">还没有球员拿过个人奖项。</p>'}</section>`})()}
+    const nat=R.filter(r=>r.nat&&r.nat.length).slice().reverse();
+    const natPanel=nat.length?`<section class="panel"><h2>全国年度大奖</h2><div class="scrollbox">${nat.map(r=>`<div class="natrow"><b>第 ${r.season} 季</b>${r.nat.map(w=>`<span class="${w.tid===(r.my??S.my)?'me':''}"><small>${w.l}</small>${w.name}<em>${w.team}</em></span>`).join('')}</div>`).join('')}</div></section>`:'';
+    return natPanel+`<section class="panel"><h2>个人奖项${won.length?` <span class="muted" style="font-weight:400;font-size:13px">${won.length} 项</span>`:''}</h2>${won.length?'<div class="scrollbox">'+won.reverse().map(x=>`<div class="res" style="grid-template-columns:1fr auto"><span style="text-align:left">第 ${x.r.season} 季${DIVS[x.d]}${AWARDS[x.k]||'最佳阵容'}：${x.w.name}</span><span class="muted">${x.w.stat}</span></div>`).join('')+'</div>':'<p class="muted" style="margin:0">还没有球员拿过个人奖项。</p>'}</section>`})()}
   ${vClubBoards()}
   ${vOneClub()}
   <section class="panel"><h2>传奇退役${S.legends.length?` <span class="muted" style="font-weight:400;font-size:13px">${S.legends.length} 人</span>`:''}</h2>${S.legends.length?'<div class="scrollbox">'+[...S.legends].reverse().map(l=>`<div class="res" style="grid-template-columns:1fr auto"><span style="text-align:left">${l.name}${l.oneClub?' <span class="tag2 oneclub">一人一城</span>':''} <span class="muted">${POS[l.pos]}，第 ${l.season} 季${l.club&&l.club!==my().name?`于${l.club}`:''}退役${l.seasons?`，效力 ${l.seasons} 季`:''}${l.titles&&l.titles.length||l.ups?`<br>${[l.titles&&l.titles.length?`🏆 ${trophyCount(l.titles)}`:'',l.ups?`⬆ 升级${l.ups>1?` ×${l.ups}`:''}`:''].filter(Boolean).join(' · ')}`:''}</span></span><span class="muted">${l.peak?`巅峰 <b class="num">${l.peak}</b> · `:''}${l.apps} 场 ${l.goals} 球</span></div>`).join('')+'</div>':`<p class="muted" style="margin:0">效力 ${LEGEND_SEASONS} 季、出场 ${LEGEND_APPS} 场以上，或效力 ${LEGEND_HONOUR_SEASONS} 季、出场 ${LEGEND_HONOUR_APPS} 场以上并帮球队夺得甲级、杯赛冠军或升级的球员，退役后载入史册。</p>`}</section>

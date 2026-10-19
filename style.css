@@ -940,3 +940,28 @@ tr.intl-maybe td:first-child{box-shadow:inset 4px 0 color-mix(in srgb,var(--ambe
 .will.no{background:color-mix(in srgb,var(--red) 22%,transparent);color:var(--red)}
 
 .news-filter{margin:-2px 0 8px}
+
+/* league records */
+.lrec{display:grid;grid-template-columns:7.5em auto 1fr;gap:4px 10px;align-items:baseline;padding:7px 0;border-top:1px solid var(--line);font-size:14px}
+.lrec:first-of-type{border-top:0}
+.lrec b{font-size:17px}.lrec b small{font-size:12px;font-weight:400;color:var(--muted)}
+.lr-l{color:var(--muted)}.lr-who{font-size:13px;min-width:0}.lr-who small{color:var(--muted);margin-left:4px}
+.lrec.me .lr-who{color:var(--pitch);font-weight:700}
+.lr-beat{display:inline-block;font-style:normal;font-size:11px;margin-left:6px;padding:0 5px;border-radius:4px;background:color-mix(in srgb,var(--amber) 30%,transparent)}
+
+/* the national awards ceremony */
+.ceremony{background:linear-gradient(160deg,color-mix(in srgb,var(--amber) 14%,var(--card)),var(--card) 60%)}
+.cers{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.cer{border:1.5px dashed var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.cer small{color:var(--muted);font-size:12px}
+.cer b{font-size:20px;line-height:1.25}.cer>span{font-size:12px;color:var(--muted)}
+.cer ul{list-style:none;margin:6px 0 0;padding:6px 0 0;border-top:1px solid var(--line);font-size:12px;display:flex;flex-direction:column;gap:2px}
+.cer li em{font-style:normal;color:var(--muted);margin-left:6px}
+.cer li.win{font-weight:700}.cer li.win::before{content:"🏆 "}.cer li.me{color:var(--pitch)}
+.cer.shown{border-style:solid;border-color:var(--amber)}
+.cer.mine{background:color-mix(in srgb,var(--amber) 20%,transparent)}
+@media (prefers-reduced-motion:no-preference){.cer.shown b{animation:cerpop .5s ease-out}@keyframes cerpop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}}
+
+.natrow{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;padding:7px 0;border-top:1px solid var(--line);font-size:13px}
+.natrow:first-child{border-top:0}.natrow small{color:var(--muted);margin-right:4px}.natrow em{font-style:normal;color:var(--muted);margin-left:4px;font-size:12px}
+.natrow .me{color:var(--pitch);font-weight:700}

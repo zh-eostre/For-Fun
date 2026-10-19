@@ -156,6 +156,67 @@ function seasonAwards(div){
   const rated=x=>out(x,x&&avgRating(x.p).toFixed(2));
   return {mvp:rated(best(()=>true)),young:rated(best(x=>x.p.age<=21)),gk:rated(best(x=>x.p.pos==='GK')),boot:out(boot,boot&&lg(boot.p,'goals')+' 球'),ast:out(ast,ast&&lg(ast.p,'ast')+' 次助攻')};
 }
+// the national awards for this season: [key, title, nominees (best first, the first wins)]
+function nationalAwards(){
+  const champ=t=>{const T=table(t.div);return T.length&&T[0].id===t.id};
+  const rated=domestic().flatMap(t=>t.players.filter(p=>p.rn>=8).map(p=>({p,t})));
+  const G=p=>compStat(p,'goals','lg'),A=p=>compStat(p,'ast','lg');
+  const score=x=>avgRating(x.p)+NAT_DIV[x.t.div]+(G(x.p)+A(x.p))*NAT_GA+(champ(x.t)?NAT_CHAMP:0);
+  const who=(x,stat)=>({name:x.p.name,pid:x.p.id,tid:x.t.id,team:x.t.name,stat});
+  const nom=f=>rated.filter(f).sort((a,b)=>score(b)-score(a)).slice(0,3).map(x=>who(x,`${DIVS[x.t.div]} · 评分 ${avgRating(x.p).toFixed(2)}${G(x.p)?` · ${G(x.p)} 球`:''}`));
+  const boot=domestic().flatMap(t=>t.players.map(p=>({p,t}))).filter(x=>G(x.p)>0).sort((a,b)=>G(b.p)-G(a.p)||a.t.div-b.t.div||a.p.apps-b.p.apps)
+    .slice(0,3).map(x=>who(x,`${DIVS[x.t.div]} · ${G(x.p)} 球`));
+  // the coach: how far a club finished above where its strength put it, more for a higher division and for trophies
+  const coach=domestic().filter(t=>table(t.div).length).map(t=>{const T=table(t.div),rank=T.findIndex(r=>r.id===t.id)+1,
+      exp=S.teams.filter(u=>u.div===t.div).sort((a,b)=>b.str-a.str).findIndex(u=>u.id===t.id)+1;
+    const sc=exp-rank+(rank===1?3:0)+(S.cup.winner===t.id?2:0)+(S.intl&&S.intl.winner===t.id?3:0)+(2-t.div)*.5;
+    return {t,sc,rank,exp}}).sort((a,b)=>b.sc-a.sc).slice(0,3)
+    .map(({t,rank,exp})=>({name:t.id===S.my?'你':`${t.short}主帅`,tid:t.id,team:t.name,stat:`${DIVS[t.div]}第 ${rank}（赛前预计第 ${exp}）`}));
+  return [['ballon','年度最佳球员',nom(()=>true)],['young','年度最佳新人',nom(x=>x.p.age<=21)],['gk','年度最佳门将',nom(x=>x.p.pos==='GK')],
+    ['boot','全国金靴',boot],['coach','年度最佳教练',coach]].filter(a=>a[2].length);
+}
+// a division's bests this season, for its records: {key: {v, name, tid, note}}
+function seasonBests(d){
+  const ps=S.teams.filter(t=>t.div===d).flatMap(t=>t.players.map(p=>({p,t}))),T=table(d),out={};
+  const top=(f,lo)=>[...ps].filter(x=>f(x.p)>0).sort((a,b)=>f(b.p)-f(a.p)||a.p.apps-b.p.apps)[0];
+  const G=p=>compStat(p,'goals','lg'),A=p=>compStat(p,'ast','lg');
+  const g=top(G),a=top(A);
+  if(g)out.goals={v:G(g.p),name:g.p.name,tid:g.t.id,pid:g.p.id};
+  if(a)out.ast={v:A(a.p),name:a.p.name,tid:a.t.id,pid:a.p.id};
+  if(T.length&&T[0].p){const by=(k,low)=>[...T].sort((x,y)=>low?x[k]-y[k]:y[k]-x[k])[0];
+    for(const [k,low] of [['pts'],['gf'],['ga',true]]){const r=by(k,low);out[k]={v:r[k],name:S.teams[r.id].name,tid:r.id}}}
+  // the longest run of wins, and the biggest win, from the season's results
+  const run={},best={},rounds=S.results[d]||[];let big=null;
+  rounds.forEach(rd=>rd.forEach(m=>{
+    [[m.h,m.hg-m.ag],[m.a,m.ag-m.hg]].forEach(([id,gd])=>{run[id]=gd>0?(run[id]||0)+1:0;if(run[id]>(best[id]||0))best[id]=run[id]});
+    const gd=Math.abs(m.hg-m.ag);if(gd&&(!big||gd>big.v||gd===big.v&&m.hg+m.ag>big.tot)){const w=m.hg>m.ag?m.h:m.a,l=w===m.h?m.a:m.h;
+      big={v:gd,tot:m.hg+m.ag,name:S.teams[w].name,tid:w,note:`${Math.max(m.hg,m.ag)}:${Math.min(m.hg,m.ag)} 对阵${S.teams[l].name}`}}}));
+  const sk=Object.entries(best).sort((a,b)=>b[1]-a[1])[0];
+  if(sk&&sk[1]>0)out.streak={v:sk[1],name:S.teams[+sk[0]].name,tid:+sk[0]};
+  if(big)out.margin={v:big.v,name:big.name,tid:big.tid,note:big.note};
+  return out;
+}
+const lrecBetter=(key,v,old)=>!old||(LREC.find(r=>r[0]===key)[4]?v<old.v:v>old.v);
+// at the season's end: bests that beat a division's records become them (a division's first season sets them
+// quietly); a record broken in our division, or by us, makes the news. returns the ones broken
+function updateRecords(){
+  const R=S.lrec||(S.lrec={}),broken=[];
+  DIVS.forEach((dn,d)=>{if(!divSize(d))return;const rec=R[d]||(R[d]={}),first=!Object.keys(rec).length,b=seasonBests(d);
+    LREC.forEach(([k,label,unit])=>{const x=b[k];if(!x||!lrecBetter(k,x.v,rec[k]))return;
+      const old=rec[k];rec[k]={...x,season:S.season,team:S.teams[x.tid].name};
+      if(first||!old)return;broken.push({d,k,x,old});
+      if(d===my().div||x.tid===S.my)news(x.tid===S.my?`📜 历史被改写！${x.pid!=null?x.name:my().name}以 ${x.v} ${unit}刷新${dn}「${label}」纪录（旧纪录 ${old.v}，${old.team}·第 ${old.season} 季）！`
+        :`📜 ${dn}「${label}」纪录被刷新：${x.pid!=null?`${x.name}（${S.teams[x.tid].short}）`:x.name} ${x.v} ${unit}${x.note?`（${x.note}）`:''}，旧纪录 ${old.v}。`)})});
+  return broken;
+}
+// during the season: one of ours passing his division's goals or assists record makes the news (once each)
+function liveRecords(){
+  const rec=(S.lrec||{})[my().div];if(!rec)return;
+  my().players.forEach(p=>[['goals','个人单季进球','球'],['ast','个人单季助攻','次']].forEach(([k,label,unit])=>{
+    const v=compStat(p,k,'lg'),r=rec[k];if(!r||v<=r.v||(p.lrec||{})[k]===S.season)return;
+    (p.lrec||(p.lrec={}))[k]=S.season;
+    news(`🔥 ${p.name}的第 ${v} ${unit==='球'?'个联赛进球':'次联赛助攻'}！他打破了${DIVS[my().div]}「${label}」纪录（${r.v} ${unit}，${r.team}·第 ${r.season} 季）——一个新的传说正在书写！`)}));
+}
 // team of the season, 1-4-3-3 by average rating (8+ matches)
 const XI_SHAPE={GK:1,DF:4,MF:3,FW:3};
 function seasonXI(div){
@@ -171,6 +232,13 @@ function recordSeason(div,rank){
   const xi=DIVS.map((_,d)=>seasonXI(d));
   S.records.push({season:S.season,champs:DIVS.map((_,d)=>champ(d)),cup:S.cup.winner!=null?S.teams[S.cup.winner].name:null,
     intl:S.intl&&S.intl.winner!=null?S.teams[S.intl.winner].name:null,div,rank,awards,xi,my:S.my});  // my: our club that season
+  updateRecords();
+  // the national awards: kept with the season's record; ours make the news
+  const nat=nationalAwards();S.records[S.records.length-1].nat=nat.map(([k,l,n])=>({k,l,...n[0]}));
+  nat.forEach(([k,l,n])=>{const w=n[0];if(w.tid!==S.my)return;
+    news(k==='coach'?`🏆 全国年度颁奖典礼：你当选「${l}」！聚光灯下，全场为${my().name}的奇迹起立。`
+      :`🏆 全国年度颁奖典礼：${w.name}加冕「${l}」！${k==='ballon'?'这一夜，整个国家都在念他的名字。':'奖杯在灯光下闪耀。'}`);
+    if(k==='ballon')unlock('ballon')});
   awards.forEach((a,d)=>Object.entries(a).forEach(([k,w])=>{if(w&&w.tid===S.my)news(`${w.name} 获得${DIVS[d]}${AWARDS[k]}（${w.stat}）！`)}));
   xi.forEach((l,d)=>{const m=l.filter(w=>w.tid===S.my);if(m.length)news(`${m.map(w=>w.name).join('、')} 入选${DIVS[d]}年度最佳阵容！`)});
   // trophies won this season; a player shares in one if he made TITLE_APPS appearances

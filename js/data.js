@@ -178,6 +178,12 @@ const INJ_DAYS=[2,3,4,4,5,6,7,9,12,16,21];  // how many days an injury lasts, pi
 const ACADEMY_COST=[0,80,150,250,400];
 // what a facility (or the academy) costs to keep, per week by its level (charged on Mondays); 6-8: the stadium's
 // expansions, which take STADIUM_BUILD weeks to build
+// the national awards at the season's end, across the three divisions: a player's score is his average rating plus
+// NAT_DIV for his division, a little for each league goal or assist, and more if his club won its league
+const NAT_DIV=[.45,.2,0],NAT_GA=.015,NAT_CHAMP=.15;
+// league records, kept per division: [key, label, unit, of a player ('p') / a club ('t'), lowest is best]
+const LREC=[['goals','个人单季进球','球','p'],['ast','个人单季助攻','次','p'],['pts','单季积分','分','t'],['gf','单季最多进球','球','t'],
+  ['ga','单季最少失球','球','t',true],['streak','单季最长连胜','场','t'],['margin','单场最大胜分差','球','t']];
 // whether a player wants to join us: our pull (底蕴, plus PULL_DIV by division, plus a share of the manager's
 // reputation) against what he expects (his ability, the standing of the club he'd leave; veterans and the very young
 // expect less). up to WILL_GAP short, he comes for WILL_PREMIUM more per point (a fee on top); further short, he won't
@@ -231,6 +237,7 @@ const ACH={
   late:['读秒杀手','在第 85 分钟以后打进绝杀球'],
   oneclub:['城之守望者','培养出第一位「一人一城」的球员'],
   intl:['大陆之王','夺得天际冠军杯'],
+  ballon:['加冕之夜','有球员获得全国年度最佳球员'],
   clean:['铁壁·不落之城','各项赛事连续 3 场零封对手'],
   streak10:['不败神话·终章','各项赛事 10 连胜'],
   fest:['火力全开','单场打进 6 球'],
