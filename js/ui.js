@@ -78,7 +78,7 @@ function renderSide(){
     <dt>🪵 取暖木材</dt><dd class="${S.res.wood>=needW?'ok':'bad'}">${needW}（现有 ${Math.floor(S.res.wood)}）</dd></dl>
     ${needF>storeCap()?'<p class="bad">需要的粮食超过了仓储上限，建一座仓库吧。</p>':''}</section>`;
   }
-  const mk=ent().some(([i,b])=>b.type==='market'&&b.conn&&b.eff>0);
+  const mk=hasMarket();
   const trade=mk?`<section class="box"><h3 class="hd">⚖️ 市集交易</h3><p class="muted">有市场在运作，就能在这里买卖材料。</p>
    <div class="trade">${TRADE.map((t,i)=>`<button class="btn sm" data-act="trade" data-arg="${i}" ${canPay(t.g)?'':'disabled'}>${rTxt(t.g)} → ${rTxt(t.r)}</button>`).join('')}</div></section>`:'';
   const lg=S.log.slice(0,8).map(l=>`<li class="${l.c}"><span class="d">${l.d}</span>${l.t}</li>`).join('');
@@ -135,9 +135,10 @@ function vInfo(){
     const req=houseReq(b),c=b.cov||{};
     h=`<h3 class="hd"><img src="${b.lv===1?ICON.house:ICON['house'+b.lv]}" alt="" style="width:24px;height:24px;image-rendering:pixelated;vertical-align:-5px"> ${HN[b.lv-1]}（${b.lv} 级）</h3>
     <dl class="kv"><dt>居民</dt><dd>${b.res}/${HCAP[b.lv-1]}</dd><dt>每人交税</dt><dd>💰${HTAX[b.lv-1]}/天</dd>
-    <dt>覆盖服务</dt><dd>${['water','market','park','school','temple'].filter(k=>c[k]).map(k=>({water:'水井',market:'市场',park:'公园',school:'学校',temple:'神庙'})[k]).join('、')||'无'}</dd></dl>`;
+    <dt>覆盖服务</dt><dd>${['water','park','school','temple'].filter(k=>c[k]).map(k=>({water:'水井',park:'公园',school:'学校',temple:'神庙'})[k]).join('、')||'无'}</dd></dl>`;
     if(!b.conn)h+='<p class="bad">没有连到道路，居民不会搬进来，住着的也会离开。</p>';
     if(req)h+=`<p><b>升级成${HN[b.lv]}还需要：</b></p><ul class="reqs">${req.map(([l,ok])=>`<li class="${ok?'y':''}">${l}</li>`).join('')}</ul>${req.every(r=>r[1])?'<p class="ok">条件都满足了，很快就会升级。</p>':''}`;
+    if(req){const c=HUP[b.lv-1],ok=req.slice(0,-1).every(r=>r[1]);h+=`<p class="muted">也可以花钱立刻升级，不用等住满，但其他条件要先满足。</p><button class="btn sm" data-act="upgrade" ${ok&&canPay(c)?'':'disabled'}>花 ${rTxt(c)} 升级成${HN[b.lv]}</button> `}
     else h+='<p class="ok">已经是最高级的宅院了。</p>';
     if(b.lv>1&&!houseKeep(b))h+=`<p class="bad">现在缺少维持${HN[b.lv-1]}的服务，再这样几天会退化。</p>`;
   }else{
@@ -164,7 +165,7 @@ function vTitle(){
    <div class="box how"><b>怎么玩</b><ul>
     <li>民居和需要工人的建筑，要用道路连到市政厅才会运作。水井、公园、仓库不用连路。</li>
     <li>居民住进民居后会去农场、伐木场上班。人手不够，产量就会下降。</li>
-    <li>民居附近有水井和市场会升级成砖房，再加上学校和公园就能升级成宅院，住更多人、交更多税。</li>
+    <li>民居附近有水井、镇上有市场，就会升级成砖房，再加上学校和公园就能升级成宅院，住更多人、交更多税。</li>
     <li>冬天农场停产，民居还要烧木材取暖，秋天记得囤货。</li>
    </ul></div></div></div>`;
 }

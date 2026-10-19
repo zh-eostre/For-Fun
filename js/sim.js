@@ -35,6 +35,7 @@ function prodOf(b,i){
   const up=B[b.type].upkeep;if(up&&b.conn)o.coins=(o.coins||0)-up;
   return o;
 }
+const hasMarket=()=>ent().some(([i,b])=>b.type==='market'&&b.conn&&b.eff>0);
 function taxIncome(){return houses().reduce((s,b)=>s+b.res*HTAX[b.lv-1],0)*[.6,1,1.5][S.tax]}
 function heatNeed(){let h=houses().reduce((s,b)=>s+(b.res?HHEAT[b.lv-1]:0),0);if(S.ev.blizzard)h*=2;return h}
 function happyParts(foodShort,heatShort){
@@ -42,19 +43,19 @@ function happyParts(foodShort,heatShort){
   if(pop)parts.push(foodShort?['粮食短缺',-25]:['粮食充足',10]);
   if(heatShort)parts.push(['冬天缺柴',-20]);
   parts.push(['税率'+['低','中','高'][S.tax],[8,0,-12][S.tax]]);
-  let sv=0,n=0;houses().forEach(b=>{if(!b.res)return;const c=b.cov||{};sv+=b.res*((c.water?4:0)+(c.market?4:0)+(c.park?8:0)+(c.temple?12:0));n+=b.res});
+  let sv=0,n=0;const m=hasMarket();houses().forEach(b=>{if(!b.res)return;const c=b.cov||{};sv+=b.res*((c.water?4:0)+(m?4:0)+(c.park?8:0)+(c.temple?12:0));n+=b.res});
   if(n)parts.push(['公共服务',Math.round(sv/n)]);
   if(cnt('tower')&&ent().some(([i,b])=>b.type==='tower'&&b.conn))parts.push(['钟楼',10]);
   if(S.ev.fest)parts.push(['庙会',15]);
   return {parts,t:clamp(parts.reduce((s,p)=>s+p[1],0),0,100)};
 }
 function houseReq(b){
-  const c=b.cov||{},cap=HCAP[b.lv-1],need=Math.ceil(cap*.75);
-  if(b.lv===1)return [['连上道路',b.conn],['水井覆盖',!!c.water],['市场覆盖',!!c.market],['幸福度 50 以上',S.happy>=50],[`住满 ${need} 人`,b.res>=need]];
-  if(b.lv===2)return [['连上道路',b.conn],['水井覆盖',!!c.water],['市场覆盖',!!c.market],['学校覆盖',!!c.school],['公园或神庙覆盖',!!(c.park||c.temple)],['幸福度 65 以上',S.happy>=65],[`住满 ${need} 人`,b.res>=need]];
+  const c=b.cov||{},m=hasMarket(),cap=HCAP[b.lv-1],need=Math.ceil(cap*.75);
+  if(b.lv===1)return [['连上道路',b.conn],['水井覆盖',!!c.water],['镇上有市场',m],['幸福度 50 以上',S.happy>=50],[`住满 ${need} 人`,b.res>=need]];
+  if(b.lv===2)return [['连上道路',b.conn],['水井覆盖',!!c.water],['镇上有市场',m],['学校覆盖',!!c.school],['公园或神庙覆盖',!!(c.park||c.temple)],['幸福度 65 以上',S.happy>=65],[`住满 ${need} 人`,b.res>=need]];
   return null;
 }
-function houseKeep(b){const c=b.cov||{};if(b.lv===2)return b.conn&&c.water&&c.market&&S.happy>=40;if(b.lv===3)return b.conn&&c.water&&c.market&&c.school&&(c.park||c.temple)&&S.happy>=55;return true}
+function houseKeep(b){const c=b.cov||{},m=hasMarket();if(b.lv===2)return b.conn&&c.water&&m&&S.happy>=40;if(b.lv===3)return b.conn&&c.water&&m&&c.school&&(c.park||c.temple)&&S.happy>=55;return true}
 
 function dayTick(){
   recompute();

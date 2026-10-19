@@ -7,6 +7,7 @@ const ACT={
   confirm:()=>{if(UI.pending!=null){const [x,y]=XY(UI.pending);place(UI.tool,x,y)}},
   clear:()=>{const [x,y]=XY(UI.sel);clearTile(x,y)},
   pause:()=>{const b=S.b[UI.sel];if(!b)return;b.paused=!b.paused;recompute();save();renderUI()},
+  upgrade:()=>upgradeHouse(UI.sel),
   del:()=>{if(UI.confirmDel===UI.sel)demolish(UI.sel);else{UI.confirmDel=UI.sel;renderInfo()}},
   newgame:()=>{if(UI.confirmNew){UI.confirmNew=false;newGame()}else{UI.confirmNew=true;renderSide();setTimeout(()=>{if(UI.confirmNew){UI.confirmNew=false;if(S)renderSide()}},3000)}},
   newgame2:()=>newGame(),

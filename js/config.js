@@ -9,6 +9,7 @@ const RI={coins:'💰',wood:'🪵',stone:'🪨',food:'🌾'};
 const RN={coins:'金币',wood:'木材',stone:'石头',food:'粮食'};
 const HN=['木屋','砖房','宅院'];
 const HCAP=[4,8,14],HTAX=[.2,.35,.55],HHEAT=[.3,.45,.6];
+const HUP=[{wood:15,stone:10,coins:20},{wood:20,stone:30,coins:50}];  // cost to buy a house's next level outright
 
 const B={
   road:{n:'道路',cost:{coins:2},rank:0,cat:0,desc:'民居和需要工人的建筑要靠道路连到市政厅才能运作。电脑上可以按住鼠标拖动连续铺路。'},
@@ -21,7 +22,7 @@ const B={
   store:{n:'仓库',cost:{wood:20},rank:0,cat:0,desc:'木材、石头、粮食的储存上限各 +150。冬天前很需要。不用连路。'},
   plant:{n:'种树',cost:{coins:3},rank:0,cat:4,desc:'在空地上种一棵树。伐木场旁边多种树可以提高产量。'},
   fish:{n:'渔屋',cost:{wood:15},workers:2,rank:1,cat:2,need:'water',desc:'必须紧挨着水。四季都能捕鱼，冬天河面结冰产量较低。'},
-  market:{n:'市场',cost:{wood:20,stone:10},workers:2,rank:1,cat:3,r:4,svc:'market',desc:'为 4 格内的民居提供商品，民居升级必备。每天另赚 3 金币。'},
+  market:{n:'市场',cost:{wood:20,stone:10},workers:2,rank:1,cat:3,desc:'镇上有一座运作中的市场，民居才能升级。每天另赚 3 金币，还能在侧栏买卖材料。'},
   park:{n:'公园',cost:{coins:25},rank:1,cat:3,r:3,svc:'park',upkeep:.5,desc:'3 格内的居民更开心。是宅院的升级条件之一。不用连路。'},
   school:{n:'学校',cost:{wood:20,stone:30,coins:40},workers:2,rank:2,cat:3,r:5,svc:'school',upkeep:1,desc:'5 格内的砖房才能升级成宅院。'},
   workshop:{n:'工坊',cost:{wood:15,stone:20},workers:2,rank:2,cat:2,desc:'每天把 1 木材和 1 石头加工成 6 金币。用来消化多余的材料。'},

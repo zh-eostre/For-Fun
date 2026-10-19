@@ -52,4 +52,13 @@ function applyTool(t,dragging,touch){
   if(touch&&!multi&&UI.pending!==t){UI.pending=t;renderInfo();return}
   place(tool,x,y,dragging);
 }
+// buying skips the "住满" condition, the others still have to hold or the house would just slide back
+function upgradeHouse(i){
+  const b=S.b[i];if(!b||b.type!=='house'||b.lv>=3)return;
+  const c=HUP[b.lv-1];
+  if(!houseReq(b).slice(0,-1).every(r=>r[1])){toast('还有升级条件没满足');return}
+  if(!canPay(c)){toast('材料不够：需要 '+rTxt(c));return}
+  pay(c);b.lv++;b.up=0;b.down=0;log(`花钱把一栋民居升级成了${HN[b.lv-1]}。`,'good');
+  recompute();checkQuests();dirty=true;save();renderUI();
+}
 function setTool(t){UI.tool=t;UI.pending=null;UI.confirmDel=null;if(t!=='select')UI.sel=null;renderUI()}
