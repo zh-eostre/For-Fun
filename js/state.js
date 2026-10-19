@@ -29,11 +29,12 @@ const needRoad=t=>t==='house'||!!B[t].workers;
 const isRoad=b=>!!b&&(b.type==='road'||b.type==='bridge');
 const adj4=(x,y,v)=>N4.some(([dx,dy])=>terr(x+dx,y+dy)===v);
 // door direction (index into N4): face a neighbouring road, preferring ones linked to the hall; keep the current side while it still works
-function faceDir(x,y,cur){
+// houses only face up or down
+function faceDir(x,y,cur,type){
   const nb=d=>{const [dx,dy]=N4[d];return inb(x+dx,y+dy)?I(x+dx,y+dy):-1};
-  const sides=[2,1,3,0].filter(d=>{const j=nb(d);return j>=0&&(isRoad(S.b[j])||j===S.hall)});
+  const allowed=type==='house'?[2,0]:[2,1,3,0],sides=allowed.filter(d=>{const j=nb(d);return j>=0&&(isRoad(S.b[j])||j===S.hall)});
   const linked=sides.filter(d=>{const j=nb(d);return connSet.has(j)||j===S.hall}),pool=linked.length?linked:sides;
-  return pool.length?(pool.includes(cur)?cur:pool[0]):(cur??2);
+  return pool.length?(pool.includes(cur)?cur:pool[0]):(allowed.includes(cur)?cur:2);
 }
 // does whatever is at (x+dx,y+dy) open onto the road at (x,y)? roads and the hall link on every side, other buildings only at their door
 const linkTo=(x,y,dx,dy)=>{const b=bAt(x+dx,y+dy);return !!b&&(isRoad(b)||b.type==='hall'||N4[b.dir??2][0]===-dx&&N4[b.dir??2][1]===-dy)};

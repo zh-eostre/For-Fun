@@ -48,16 +48,13 @@ function sBridge(g,x,y,p){
 }
 const SPR={
   house(g,ox,oy,p,b){
-    const lv=b?b.lv:1,d=b&&b.dir!=null?b.dir:2;
-    // facing right is facing left mirrored; f: front (door toward the viewer), side (door near the left edge), back (no door)
-    if(d===1){g.save();g.translate(2*ox+T,0);g.scale(-1,1);SPR.house(g,ox,oy,p,{...b,dir:3});g.restore();return}
-    const f=d===2?'front':d===3?'side':'back';
+    // houses face down (door toward the viewer) or up (the back, no door)
+    const lv=b?b.lv:1,f=b&&b.dir===0?'back':'front';
     if(lv===1){
       P(g,ox+2,oy+14,13,1,SH);P(g,ox+3,oy+8,10,6,'#C99A62');P(g,ox+3,oy+10,10,1,'#A87C49');P(g,ox+3,oy+12,10,1,'#A87C49');
       rows(g,ox,oy,[[7,2,2],[6,4,3],[5,6,4],[4,8,5],[3,10,6],[2,12,7]],'#B5463A');P(g,ox+2,oy+7,12,1,'#8E3229');
       if(p.ice){P(g,ox+6,oy+3,4,1,'#fff');P(g,ox+5,oy+4,6,1,'#fff')}
       if(f==='front'){P(g,ox+7,oy+10,2,4,DOOR);P(g,ox+4,oy+9,2,2,WIN);P(g,ox+10,oy+9,2,2,WIN)}
-      else if(f==='side'){P(g,ox+0,oy+11,4,3,p.road);P(g,ox+4,oy+10,2,4,DOOR);P(g,ox+9,oy+9,2,2,WIN)}
       else{P(g,ox+5,oy+9,2,2,WIN);P(g,ox+9,oy+9,2,2,WIN)}
     }else if(lv===2){
       P(g,ox+1,oy+14,14,1,SH);P(g,ox+2,oy+7,12,7,'#E8D8B5');
@@ -67,7 +64,6 @@ const SPR={
       if(p.ice){P(g,ox+5,oy+2,6,1,'#fff');P(g,ox+3,oy+3,10,1,'#fff')}
       P(g,ox+4,oy+8,2,2,WIN);P(g,ox+10,oy+8,2,2,WIN);
       if(f==='front'){P(g,ox+10,oy+11,2,2,WIN);P(g,ox+9,oy+13,4,1,'#D9506E');P(g,ox+6,oy+11,2,3,DOOR);P(g,ox+3,oy+11,2,2,WIN)}
-      else if(f==='side'){P(g,ox+0,oy+11,3,3,p.road);P(g,ox+3,oy+11,2,3,DOOR);P(g,ox+7,oy+11,2,2,WIN);P(g,ox+10,oy+11,2,2,WIN);P(g,ox+7,oy+13,5,1,'#D9506E')}
       else{P(g,ox+4,oy+11,2,2,WIN);P(g,ox+10,oy+11,2,2,WIN)}
     }else{
       P(g,ox+0,oy+15,16,1,SH);P(g,ox+2,oy+5,12,10,'#F0E4C9');P(g,ox+2,oy+14,12,1,'#8F877C');
@@ -77,7 +73,6 @@ const SPR={
       if(p.ice){P(g,ox+5,oy+1,6,1,'#fff');P(g,ox+3,oy+2,9,1,'#fff')}
       P(g,ox+4,oy+6,2,2,WIN);P(g,ox+7,oy+6,2,2,WIN);P(g,ox+10,oy+6,2,2,WIN);
       if(f==='front'){P(g,ox+4,oy+10,2,2,WIN);P(g,ox+10,oy+10,2,2,WIN);P(g,ox+7,oy+10,2,4,DOOR);P(g,ox+3,oy+12,3,1,'#D9506E');P(g,ox+10,oy+12,3,1,'#E2B93B');P(g,ox+0,oy+11,2,4,p.t)}
-      else if(f==='side'){P(g,ox+0,oy+11,3,3,p.road);P(g,ox+3,oy+10,2,4,DOOR);P(g,ox+7,oy+10,2,2,WIN);P(g,ox+10,oy+10,2,2,WIN);P(g,ox+6,oy+12,3,1,'#D9506E');P(g,ox+10,oy+12,3,1,'#E2B93B')}
       else{P(g,ox+4,oy+10,2,2,WIN);P(g,ox+7,oy+10,2,2,WIN);P(g,ox+10,oy+10,2,2,WIN);P(g,ox+0,oy+11,2,4,p.t)}
       P(g,ox+14,oy+11,2,4,p.t);
     }
