@@ -71,7 +71,7 @@ function draw(now){
   else if(UI.tool==='select'){
     if(UI.hover!=null&&UI.hover!==UI.sel){const [x,y]=XY(UI.hover);outline(x,y,'rgba(255,255,255,.7)')}
     if(UI.sel!=null){const [x,y]=XY(UI.sel),b=S.b[UI.sel];
-      if(b&&B[b.type].r){const r=B[b.type].r;for(let yy=y-r;yy<=y+r;yy++)for(let xx=x-r;xx<=x+r;xx++)if(inb(xx,yy)&&(xx-x)**2+(yy-y)**2<=r*r)P(ctx,xx*T,yy*T,T,T,'rgba(255,226,120,.2)')}
+      if(b&&radiusOf(b)){const r=radiusOf(b);for(let yy=y-r;yy<=y+r;yy++)for(let xx=x-r;xx<=x+r;xx++)if(inb(xx,yy)&&(xx-x)**2+(yy-y)**2<=r*r)P(ctx,xx*T,yy*T,T,T,'rgba(255,226,120,.2)')}
       if(b&&b.type==='lumber')hl(x,y,2,'t');if(b&&b.type==='fish')hl(x,y,2,'w');if(b&&b.type==='quarry')hlr(x,y);
       outline(x,y,'#F2C14E')}
   }

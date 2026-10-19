@@ -12,24 +12,24 @@ function recompute(){
   let free=popTotal();
   const order=['farm','fish','lumber','quarry','market','school','temple','workshop'];
   const wp=ent().filter(([i,b])=>B[b.type].workers).sort((a,c)=>order.indexOf(a[1].type)-order.indexOf(c[1].type)||a[1].id-c[1].id);
-  for(const [i,b] of wp){const need=B[b.type].workers;b.workers=(b.conn&&!b.paused)?Math.min(need,free):0;free-=b.workers;b.eff=b.workers/need}
+  for(const [i,b] of wp){const need=workersOf(b);b.workers=(b.conn&&!b.paused)?Math.min(need,free):0;free-=b.workers;b.eff=b.workers/need}
   S.idle=free;
   const svcs=ent().filter(([i,b])=>B[b.type].svc&&b.conn&&(!B[b.type].workers||b.eff>0));
   for(const [i,b] of ent()){
     if(b.type!=='house')continue;
     const [x,y]=XY(i);b.cov={};
-    for(const [j,s] of svcs){const [sx,sy]=XY(j),r=B[s.type].r;if((sx-x)**2+(sy-y)**2<=r*r)b.cov[B[s.type].svc]=1}
+    for(const [j,s] of svcs){const [sx,sy]=XY(j),r=radiusOf(s);if((sx-x)**2+(sy-y)**2<=r*r)b.cov[B[s.type].svc]=1}
   }
 }
 function prodOf(b,i){
-  const o={},[x,y]=XY(i),s=season(),e=b.eff||0;
+  const o={},[x,y]=XY(i),s=season(),e=b.eff||0,m=isUp(b)?1.5:1;
   switch(b.type){
-    case 'farm':if(e){let f=(3+(adj4(x,y,'w')?1:0))*[1,1.2,1.5,0][s]*e;if(S.ev.harvest)f*=2;o.food=f}break;
-    case 'fish':if(e)o.food=Math.min(3,.5*countR(x,y,2,'w'))*(s===3?.6:1)*e;break;
-    case 'lumber':if(e)o.wood=Math.min(3.5,.5*countR(x,y,2,'t'))*e;break;
-    case 'quarry':if(e)o.stone=Math.min(3,count8(x,y,'r'))*e;break;
+    case 'farm':if(e){let f=(3+(adj4(x,y,'w')?1:0))*[1,1.2,1.5,0][s]*e;if(S.ev.harvest)f*=2;o.food=f*m}break;
+    case 'fish':if(e)o.food=Math.min(3,.5*countR(x,y,2,'w'))*(s===3?.6:1)*e*m;break;
+    case 'lumber':if(e)o.wood=Math.min(3.5,.5*countR(x,y,2,'t'))*e*m;break;
+    case 'quarry':if(e)o.stone=Math.min(3,count8(x,y,'r'))*e*m;break;
     case 'market':if(e)o.coins=3*e;break;
-    case 'workshop':if(e){o.wood=-e;o.stone=-e;o.coins=6*e}break;
+    case 'workshop':if(e){const k=isUp(b)?2:1;o.wood=-e*k;o.stone=-e*k;o.coins=6*e*k}break;
     case 'hall':o.coins=2;break;
   }
   const up=B[b.type].upkeep;if(up&&b.conn)o.coins=(o.coins||0)-up;
@@ -63,7 +63,7 @@ function dayTick(){
   recompute();
   const s=season(),before={...S.res},pop=popTotal();
   for(const [i,b] of ent()){
-    if(b.type==='workshop'&&(S.res.wood<1||S.res.stone<1))continue;
+    if(b.type==='workshop'&&(S.res.wood<(isUp(b)?2:1)||S.res.stone<(isUp(b)?2:1)))continue;
     const o=prodOf(b,i);for(const k in o)S.res[k]+=o[k];
   }
   S.res.coins+=taxIncome();
@@ -109,7 +109,7 @@ function checkRank(){
     S.rank++;const r=RANKS[S.rank];gain(r.reward);
     const un=ORDER.filter(k=>B[k].rank===S.rank);
     log(`小镇升级为「${r.n}」！奖励 ${rTxt(r.reward)}`,'good');
-    openModal({icon:'🎉',title:`升级为「${r.n}」`,text:`人口达到 ${r.pop}，奖励 ${rTxt(r.reward)}。${un.length?'解锁了新建筑：':''}`,icons:un,
+    openModal({icon:'🎉',title:`升级为「${r.n}」`,text:`人口达到 ${r.pop}，奖励 ${rTxt(r.reward)}。${S.rank===UP_RANK?'现在可以升级农场、仓库等建筑了。':''}${un.length?'解锁了新建筑：':''}`,icons:un,
       choices:[{label:S.rank===RANKS.length-1?'太好了，继续经营':'继续',primary:1,fn:()=>{}}]});
     if(S.rank===RANKS.length-1&&!S.won){S.won=true;log('晴川小镇成为了繁华之城！你可以继续经营下去。','good')}
   }

@@ -20,11 +20,15 @@ const connCnt=t=>Object.values(S.b).filter(b=>b.type===t&&b.conn).length;
 const lvCnt=l=>houses().filter(b=>b.lv>=l).length;
 const popTotal=()=>houses().reduce((s,b)=>s+b.res,0);
 const popCap=()=>houses().filter(b=>b.conn).reduce((s,b)=>s+HCAP[b.lv-1],0);
-const storeCap=()=>150+150*cnt('store');
+const storeCap=()=>150+Object.values(S.b).reduce((s,b)=>s+(b.type==='store'?(isUp(b)?300:150):0),0);
 const terr=(x,y)=>inb(x,y)?S.t[I(x,y)]:null;
 const bAt=(x,y)=>inb(x,y)?S.b[I(x,y)]:null;
 function countR(x,y,r,v){let n=0;for(let yy=y-r;yy<=y+r;yy++)for(let xx=x-r;xx<=x+r;xx++){if(!inb(xx,yy)||(xx-x)**2+(yy-y)**2>r*r)continue;if(S.t[I(xx,yy)]===v&&!S.b[I(xx,yy)])n++}return n}
 function count8(x,y,v){let n=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if((dx||dy)&&terr(x+dx,y+dy)===v)n++}return n}
+// upgraded buildings (not houses, which have their own levels) use the numbers in B[type].up
+const isUp=b=>b.lv>1&&!!B[b.type].up;
+const workersOf=b=>isUp(b)&&B[b.type].up.workers||B[b.type].workers;
+const radiusOf=b=>isUp(b)&&B[b.type].up.r||B[b.type].r;
 const needRoad=t=>t==='house'||!!B[t].workers;
 const isRoad=b=>!!b&&(b.type==='road'||b.type==='bridge');
 const adj4=(x,y,v)=>N4.some(([dx,dy])=>terr(x+dx,y+dy)===v);

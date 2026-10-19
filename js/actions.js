@@ -34,6 +34,7 @@ function clearTile(x,y){
 function demolish(i){
   const b=S.b[i];if(!b||b.type==='hall')return;
   const ref={};for(const [k,v] of Object.entries(B[b.type].cost))ref[k]=Math.floor(v/2);
+  if(isUp(b))for(const [k,v] of Object.entries(B[b.type].up.cost))ref[k]=(ref[k]||0)+Math.floor(v/2);
   delete S.b[i];gain(ref);
   if(UI.sel===i)UI.sel=null;
   UI.confirmDel=null;recompute();dirty=true;save();renderUI();toast(`拆除了${B[b.type].n}`);
@@ -60,5 +61,14 @@ function upgradeHouse(i){
   if(!canPay(c)){toast('材料不够：需要 '+rTxt(c));return}
   pay(c);b.lv++;b.up=0;b.down=0;log(`花钱把一栋民居升级成了${HN[b.lv-1]}。`,'good');
   recompute();checkQuests();dirty=true;save();renderUI();
+}
+function upgradeBld(i){
+  const b=S.b[i];if(!b)return;
+  if(b.type==='house')return upgradeHouse(i);
+  const u=B[b.type].up;if(!u||isUp(b))return;
+  if(S.rank<UP_RANK){toast(`小镇升级为「${RANKS[UP_RANK].n}」后才能升级建筑`);return}
+  if(!canPay(u.cost)){toast('材料不够：需要 '+rTxt(u.cost));return}
+  pay(u.cost);b.lv=2;log(`${B[b.type].n}升级了：${u.d}。`,'good');
+  recompute();dirty=true;save();renderUI();
 }
 function setTool(t){UI.tool=t;UI.pending=null;UI.confirmDel=null;if(t!=='select')UI.sel=null;renderUI()}

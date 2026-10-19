@@ -87,7 +87,7 @@ function renderSide(){
   ${winter}${trade}
   <section class="box"><h3 class="hd">🏘️ ${RANKS[r].n}</h3>
    ${nx?`<div class="prog"><i style="width:${Math.min(100,pop/nx.pop*100)}%"></i></div>
-   <p class="muted">人口 ${pop}/${nx.pop} 升级为「${nx.n}」，解锁：${ORDER.filter(k=>B[k].rank===r+1).map(k=>B[k].n).join('、')||'荣誉'}</p>`:'<p class="ok">已经是最高等级了！</p>'}
+   <p class="muted">人口 ${pop}/${nx.pop} 升级为「${nx.n}」，解锁：${[...ORDER.filter(k=>B[k].rank===r+1).map(k=>B[k].n),...(r+1===UP_RANK?['建筑升级']:[])].join('、')||'荣誉'}</p>`:'<p class="ok">已经是最高等级了！</p>'}
   </section>
   <section class="box"><h3 class="hd">📜 任务</h3>
    ${qs.length?qs.map((q,i)=>`<div class="quest ${i?'next':'cur'}"><span>${i?'':'▸ '}<b>${q.t}</b>${q.p&&!i?` <span class="muted">${q.p()}</span>`:''}</span><span class="rw">${rTxt(q.r)}</span></div>`).join(''):''}${bgq.map(q=>`<div class="quest cur"><span>⏳ <b>${q.t}</b> <span class="muted">${q.p()}</span></span><span class="rw">${rTxt(q.r)}</span></div>`).join('')}${qs.length||bgq.length?'':'<p class="ok">所有任务都完成了！</p>'}
@@ -143,14 +143,15 @@ function vInfo(){
     else h+='<p class="ok">已经是最高级的宅院了。</p>';
     if(b.lv>1&&!houseKeep(b))h+=`<p class="bad">现在缺少维持${HN[b.lv-1]}的服务，再这样几天会退化。</p>`;
   }else{
-    h=`<h3 class="hd"><img src="${ICON[b.type]}" alt="" style="width:24px;height:24px;image-rendering:pixelated;vertical-align:-5px"> ${d.n}</h3><p class="muted">${d.desc}</p><dl class="kv">`;
-    if(d.workers)h+=`<dt>工人</dt><dd>${b.workers||0}/${d.workers}${b.paused?'（已停工）':''}</dd>`;
+    h=`<h3 class="hd"><img src="${ICON[b.type]}" alt="" style="width:24px;height:24px;image-rendering:pixelated;vertical-align:-5px"> ${d.n}${isUp(b)?'（已升级）':''}</h3><p class="muted">${d.desc}</p><dl class="kv">`;
+    if(d.workers)h+=`<dt>工人</dt><dd>${b.workers||0}/${workersOf(b)}${b.paused?'（已停工）':''}</dd>`;
     if(out)h+=`<dt>每天</dt><dd>${out}</dd>`;
     if(d.svc){let n=0;for(const [j,hb] of ent()){if(hb.type==='house'&&hb.cov&&hb.cov[d.svc])n++}h+=`<dt>覆盖</dt><dd>${n} 栋民居</dd>`}
     if(b.type==='farm'&&season()===3)h+='<dt>状态</dt><dd>冬天停产</dd>';
     h+='</dl>';
     if(!b.conn&&b.type!=='hall')h+='<p class="bad">没有连到道路，无法运作。</p>';
     else if(d.workers&&!b.paused&&b.eff<1)h+=`<p class="bad">缺工人。多建民居增加人口，或者让别的建筑停工把人让出来。</p>`;
+    if(d.up&&!isUp(b)){const lock=S.rank<UP_RANK;h+=`<p class="muted">升级：${d.up.d}${d.up.workers?`，工人 ${d.workers} → ${d.up.workers}`:''}${lock?`（小镇升级为「${RANKS[UP_RANK].n}」后解锁）`:''}</p><button class="btn sm" data-act="upgrade" ${!lock&&canPay(d.up.cost)?'':'disabled'}>花 ${rTxt(d.up.cost)} 升级</button> `}
     if(d.workers)h+=`<button class="btn sm" data-act="pause">${b.paused?'恢复生产':'停工（让出工人）'}</button> `;
   }
   if(b.type!=='hall')h+=`<button class="btn sm danger" data-act="del">${UI.confirmDel===i?'再点一次确认拆除':'拆除'}</button>`;
