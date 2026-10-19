@@ -9,6 +9,7 @@
 ```
 index.html        页面骨架
 css/style.css     样式
+icons/            网页图标（市政厅像素画）
 js/config.js      数值：建筑、等级、任务、交易
 js/state.js       全局状态、工具函数、存读档
 js/map.js         地图生成
