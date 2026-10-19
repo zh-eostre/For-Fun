@@ -1,7 +1,7 @@
 /* ================= 输入与主循环 ================= */
 const ACT={
   speed:a=>{UI.speed=+a;renderTop()},
-  tool:a=>{if(a!=='select'&&a!=='demolish'&&S.rank<B[a].rank){toast(`小镇升级为「${RANKS[B[a].rank].n}」后解锁`);return}setTool(a)},
+  tool:a=>{if(a!=='select'&&a!=='demolish'&&S.rank<B[a].rank){toast(`小镇升级为「${RANKS[B[a].rank].n}」后解锁`);return}setTool(UI.tool===a?'select':a)},
   tax:a=>{S.tax=+a;save();renderSide()},
   trade:a=>{const t=TRADE[+a];if(!canPay(t.g))return;pay(t.g);gain(t.r);buildSig='';save();renderUI()},
   confirm:()=>{if(UI.pending!=null){const [x,y]=XY(UI.pending);place(UI.tool,x,y)}},

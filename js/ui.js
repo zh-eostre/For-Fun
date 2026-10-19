@@ -61,7 +61,7 @@ function renderBuild(){
       <img src="${ICON[k]}" alt=""><span class="tn">${d.n}</span><span class="tc">${locked?`「${RANKS[d.rank].n}」解锁`:cost}</span></button>`;
   }
   document.getElementById('build').innerHTML=h;
-  document.getElementById('hint').textContent=UI.tool==='select'?'选一个建筑，然后在地图上点击放置。':'已选「'+(UI.tool==='demolish'?'拆除':B[UI.tool].n)+'」：可以连续放置。按 Esc、右键或点「查看」结束。';
+  document.getElementById('hint').textContent=UI.tool==='select'?'选一个建筑，然后在地图上点击放置。':'已选「'+(UI.tool==='demolish'?'拆除':B[UI.tool].n)+'」：可以连续放置。再点一次按钮、按 Esc 或右键结束。';
 }
 function renderSide(){
   const s=season(),pop=popTotal();
