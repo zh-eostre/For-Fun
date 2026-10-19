@@ -1,0 +1,34 @@
+/* ================= state & helpers ================= */
+let S=null,SETUP={size:0,kind:'valley',cand:null},UI={screen:'title',tool:'select',sel:null,hover:null,pending:null,speed:1,scale:2,drag:false,ptype:'mouse',confirmDel:null,confirmNew:false};
+let MODAL=null,dirty=true,walkers=[],connSet=new Set(),acc=0;
+const R=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const I=(x,y)=>y*W+x;
+const XY=i=>[i%W,Math.floor(i/W)];
+const inb=(x,y)=>x>=0&&y>=0&&x<W&&y<H;
+const hash=(x,y,k)=>{let h=Math.imul(x+1,374761393)^Math.imul(y+7,668265263)^Math.imul(k+3,1274126177);h=Math.imul(h^(h>>>13),1274126177);return (h^(h>>>16))>>>0};
+const season=()=>Math.floor((S.day%(SEASON_DAYS*4))/SEASON_DAYS);
+const yearN=()=>Math.floor(S.day/(SEASON_DAYS*4))+1;
+const dayIn=()=>S.day%SEASON_DAYS+1;
+const fmt=v=>{const a=Math.abs(v);return a>=10?String(Math.round(v)):(Math.round(v*10)/10).toString()};
+const ent=()=>Object.entries(S.b).map(([i,b])=>[+i,b]);
+const houses=()=>Object.values(S.b).filter(b=>b.type==='house');
+const cnt=t=>Object.values(S.b).filter(b=>b.type===t).length;
+const connCnt=t=>Object.values(S.b).filter(b=>b.type===t&&b.conn).length;
+const lvCnt=l=>houses().filter(b=>b.lv>=l).length;
+const popTotal=()=>houses().reduce((s,b)=>s+b.res,0);
+const popCap=()=>houses().filter(b=>b.conn).reduce((s,b)=>s+HCAP[b.lv-1],0);
+const storeCap=()=>150+150*cnt('store');
+const terr=(x,y)=>inb(x,y)?S.t[I(x,y)]:null;
+const bAt=(x,y)=>inb(x,y)?S.b[I(x,y)]:null;
+function countR(x,y,r,v){let n=0;for(let yy=y-r;yy<=y+r;yy++)for(let xx=x-r;xx<=x+r;xx++){if(!inb(xx,yy)||(xx-x)**2+(yy-y)**2>r*r)continue;if(S.t[I(xx,yy)]===v&&!S.b[I(xx,yy)])n++}return n}
+function count8(x,y,v){let n=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if((dx||dy)&&terr(x+dx,y+dy)===v)n++}return n}
+const isRoad=b=>!!b&&(b.type==='road'||b.type==='bridge');
+const adj4=(x,y,v)=>N4.some(([dx,dy])=>terr(x+dx,y+dy)===v);
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function load(){try{const t=localStorage.getItem(KEY);if(t){const d=JSON.parse(t);if(d&&d.v===1)return d}}catch(e){}return null}
+function log(t,c=''){S.log.unshift({d:`${yearN()}年${SN[season()]}${dayIn()}日`,t,c});S.log=S.log.slice(0,40)}
+function gain(r){for(const k in r)S.res[k]=(S.res[k]||0)+r[k];const c=storeCap();for(const k of ['wood','stone','food'])S.res[k]=Math.min(c,S.res[k])}
+const rTxt=r=>Object.entries(r).map(([k,v])=>`${RI[k]}${v}`).join(' ');
