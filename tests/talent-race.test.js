@@ -13,7 +13,7 @@ ok(eyed.length===DIFF.normal.eyes&&eyed.every(p=>p.age<=21&&shownPot(p)>=84),'th
 ok(S.news.some(n=>n.t.includes(eyed[0].name)&&/盯上|总监/.test(n.t)),'in the news');
 UI.tab='market';UI.mf={...UI.mf,age:'all',pos:'all',sort:'pot'};UI.mpage=0;render();ok(/豪门盯上/.test(els.app.innerHTML),'tagged on the market');
 // buy him first: he's ours, and no grab happens
-const p=eyed[0];S.budget+=p.price;ACT.buy(String(p.id));ok(findP(p.id)&&p.eyed==null,'we got there first');
+const p=eyed[0];my().rep=95;S.budget+=marketPrice(p);ACT.buy(String(p.id));  // a club he'd joinok(findP(p.id)&&p.eyed==null,'we got there first');
 toDay(S.pre-1);ok(findP(p.id),'the last day (the window\u2019s seventh) takes nothing from us');
 // the grab itself, over many windows: about the difficulty's chance
 let taken=0,tries=0;for(let k=0;k<40;k++){S.day=S.pre-3;S.market.forEach(x=>delete x.eyed);while(!talents().length)addToMarket(4);

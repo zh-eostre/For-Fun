@@ -220,7 +220,9 @@ function vHome(){
   ${iss.length?`<p class="warn" style="text-align:center">${iss.join('；')}，请先去阵容页调整。</p>`:''}</section>
   ${vBoard()}</div>
   <div class="col">${ask&&wide?ask:''}
-  <section class="panel"><h2>俱乐部动态</h2><ul class="news">${S.news.map(n=>`<li><span class="tag">${n.r.replace(/^S\d+ /,'')}</span><span>${n.t}</span></li>`).join('')}</ul></section>
+  <section class="panel"><h2>俱乐部动态</h2>${(()=>{const f=NEWS_CATS[UI.nf]?UI.nf:'',list=S.news.filter(n=>!f||(n.c||newsCat(n.t))===f);
+    return `<div class="seg sm news-filter">${[['','全部'],...Object.entries(NEWS_CATS)].map(([k,l])=>`<button data-act="nf" data-arg="${k}" aria-pressed="${f===k}">${l}</button>`).join('')}</div>
+    <ul class="news">${list.map(n=>`<li><span class="tag">${n.r.replace(/^S\d+ /,'')}</span><span>${n.t}</span></li>`).join('')||'<li class="muted">这一类暂时没有新消息。</li>'}</ul>`})()}</section>
   ${vCheat()}
   ${vSavePanel()}</div></div>`;
 }
@@ -299,6 +301,7 @@ function vRules(){
     `33 岁起能力可能下滑，也可能退役（能力越高越能坚持），40 岁一定退役。在队效力 ${LEGEND_SEASONS} 季、出场 ${LEGEND_APPS} 场以上，或效力 ${LEGEND_HONOUR_SEASONS} 季、出场 ${LEGEND_HONOUR_APPS} 场以上并帮球队夺得甲级冠军、${CUP_NAME}、${INTL_NAME}或升级（那一季出场满 ${TITLE_APPS} 场），在队退役后会进入传奇名单；一人一城一定会。`])}
   ${sec('转会与俱乐部',[`一线队最多 ${SQUAD_MAX} 人，至少保留 14 人；${LOAN_AGE} 岁及以下的球员可以外租（新赛季长一岁后再算），租借期间不占名额。`,
     '想买其他球队的球员，在积分榜点球队名进入球队页。',
+    `设施和青训营 2 级起每周一收维护费（等级越高越贵，${UPKEEP.slice(2,6).map(money).join(' / ')}），可以降级来省钱，但不退升级费。球场 5 级后还能扩建到 ${FAC.stadium.cost.length} 级，每次要施工几周才完工。资金变成负数会有提醒。`,
     '球探部、理疗室、训练场、球场可以升级；青训营每个赛季会送来一批少年。董事会目标完成有奖金，教练声望够高会收到其他球队的执教邀请。',
     `每个赛季可以发动一次${CHEAT_CARD}。`])}
   </div></section>`;
@@ -580,13 +583,16 @@ function vReveal(){
 }
 // one card per facility: level, what it does now, what the next level adds, and the upgrade button
 function vFacilities(){
-  return `<section class="panel"><h2>设施</h2>
+  const b=S.build;
+  return `<section class="panel"><h2>设施 <span class="muted" style="font-weight:400;font-size:14px">每周维护费合计 ${money(upkeep())}（每周一扣除）</span></h2>
   <div class="facs">${Object.entries(FAC).map(([k,f])=>{
-    const L=facLv(k),max=L>=facCost(k).length,c=facCost(k)[L];
+    const L=facLv(k),max=L>=facCost(k).length,c=facCost(k)[L],building=k==='stadium'&&b,expand=k==='stadium'&&STADIUM_BUILD[L+1];
     return `<div class="fac"><div class="fh"><b>${f.name}</b><span class="tag2" style="background:var(--accent);color:#fff">${L} 级</span></div>
-    <p class="fx">${f.fx(L)}</p>
-    ${max?'<p class="muted" style="margin:0;font-size:12px">已是最高等级</p>':`<p class="fx next">升到 ${L+1} 级：${f.fx(L+1)}</p>
-    <button class="btn small" data-act="fup" data-arg="${k}" ${S.budget<c?'disabled':''}>升级（${money(c)}）</button>`}</div>`}).join('')}</div></section>`;
+    <p class="fx">${f.fx(L)}</p><p class="muted" style="margin:0 0 6px;font-size:12px">维护 ${money(UPKEEP[L])}/周</p>
+    ${building?`<p class="fx next">🏗 扩建到 ${b.lv} 级中，${dayLabel(b.done)}完工（还有 ${Math.ceil((b.done-S.day)/7)} 周）</p>`
+      :max?'<p class="muted" style="margin:0;font-size:12px">已是最高等级</p>':`<p class="fx next">${expand?'扩建':'升'}到 ${L+1} 级：${f.fx(L+1)} · 维护 ${money(UPKEEP[L+1])}/周${expand?` · 工期 ${expand} 周`:''}</p>
+    <button class="btn small" data-act="fup" data-arg="${k}" ${S.budget<c?'disabled':''}>${expand?'扩建':'升级'}（${money(c)}）</button>`}
+    ${L>1&&!building?`<button class="btn small" data-act="fdown" data-arg="${k}" title="降一级，省下每周 ${money(UPKEEP[L]-UPKEEP[L-1])} 维护费（不退钱）">降级</button>`:''}</div>`}).join('')}</div></section>`;
 }
 // scout department level 3+: what our scouts say about the next opponent
 function vOppReport(opp,ob,tac){
@@ -607,7 +613,7 @@ function vAcademy(){
   const grads=my().players.filter(p=>p.youth).sort((a,b)=>b.ovr-a.ovr);
   const conf={high:'把握高',mid:'把握一般',low:'把握很低'};
   return vReveal()+`${vFacilities()}<section class="panel"><h2>青训营 <span class="tag2" style="background:var(--accent);color:#fff">${lv} 级</span></h2>
-  <p class="muted" style="margin:-4px 0 10px;font-size:14px">每季送来 ${lv>=3?4:3} 名少年，签入免费，没签的赛季结束后离开。</p>
+  <p class="muted" style="margin:-4px 0 10px;font-size:14px">每季送来 ${lv>=3?4:3} 名少年，签入免费，没签的赛季结束后离开。维护 ${money(UPKEEP[lv])}/周。${lv>1?` <button class="btn small" data-act="adown" title="降一级，省下每周 ${money(UPKEEP[lv]-UPKEEP[lv-1])} 维护费（不退钱）">降级</button>`:''}</p>
   <div class="cheat-row">${max?'<span class="muted">已是最高等级</span>':`<button class="btn small" data-act="aup" ${S.budget<cost?'disabled':''}>升到 ${lv+1} 级（${money(cost)}）</button>
   <span class="muted">${lv+1>=3&&lv<3?'3 级起每季多送 1 人，':''}少年能力和潜力更高，报告更准</span>`}</div></section>
   <div class="cols"><div class="col"><section class="panel"><h2>本季青训少年</h2>
@@ -642,9 +648,9 @@ function vMarket(){
   ${list.length?'<div class="mlist">'+shown.map(p=>`<div class="mrow"><div style="min-width:0"><div class="pname">${p.name}${gem(p)} ${p.sale?'<span class="tag2 sale">急售半价</span>':''}${p.fresh===S.season?'<span class="tag2 fresh" title="冬窗新到">新到</span>':''}${p.eyed!=null?`<span class="tag2 eyed" title="${S.teams[p.eyed].name} 盯上了他，窗口最后一天可能被签走">豪门盯上</span>`:''}${p.ex?`<span class="tag2 fresh" title="从${p.ex}放出">老部下</span>`:''} <span class="muted" style="font-weight:400">${POS[p.pos]}，${p.age} 岁</span></div>
   ${p.sig?`<div class="sig">必杀「${p.sig}」</div>`:''}
   <div class="pbar" aria-hidden="true"><i class="p" style="width:${pctR(p.scout?p.scout.hi:p.pot)}%"></i><i class="o" style="width:${pctR(p.ovr)}%"></i></div>
-  <div class="price">转会费 ${money(p.price)}${p.scout&&p.scout.conf!=='high'?`<span class="conf">，球探把握${p.scout.conf==='mid'?'一般':'很低'}</span>`:''}</div></div>
+  <div class="price">${(()=>{const w=willing(p,null);return !w.ok?`<span class="will no">不愿加盟</span> `:w.extra?`<span class="will" title="他觉得本队吸引力不够，要求加价">加价 ${Math.round(w.extra*100)}%</span> `:''})()}转会费 ${money(marketPrice(p))}${p.scout&&p.scout.conf!=='high'?`<span class="conf">，球探把握${p.scout.conf==='mid'?'一般':'很低'}</span>`:''}</div></div>
   <div><div class="ovr num">${p.ovr}</div><div class="potl">${potText(p)}</div></div>
-  <button class="btn small primary" data-act="buy" data-arg="${p.id}" ${!open||S.budget<p.price||squadFull()?'disabled':''}>签下</button></div>`).join('')+'</div>'+pager
+  <button class="btn small primary" data-act="buy" data-arg="${p.id}" ${!open||!willing(p,null).ok||S.budget<marketPrice(p)||squadFull()?'disabled':''} ${willing(p,null).ok?'':`title="${willing(p,null).why}"`}>签下</button></div>`).join('')+'</div>'+pager
   :`<p class="muted">${S.market.length?'没有符合条件的球员，换个筛选试试。':'这一轮的球员都被签走了，打完下一场再来看看。'}</p>`}</section>`;
 }
 // what made a performance: goals and assists first, then whatever stood out

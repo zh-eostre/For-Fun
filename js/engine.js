@@ -605,7 +605,15 @@ function aiWindow(chance){
   if(done.length)news(`其他球队转会动态：${done.join('；')}。`);
 }
 let NEWS_TAG=null;  // set while a cup match is being wrapped up, so its news is labelled with the cup stage
-function news(t){S.news.unshift({r:`S${S.season} ${NEWS_TAG||`第${Math.min(S.round+1,rounds())}轮`}`,t});S.news=S.news.slice(0,30)}
+function news(t){S.news.unshift({r:`S${S.season} ${NEWS_TAG||`第${Math.min(S.round+1,rounds())}轮`}`,t,c:newsCat(t)});S.news=S.news.slice(0,40)}
+// what a piece of news is about, for the filter on the club page: a match, a transfer, one of our players, or the club
+const NEWS_CATS={match:'比赛',move:'转会',player:'球员',club:'俱乐部'};
+function newsCat(t){
+  if(/签下|出售|报价|转会|挂牌|租借|市场|挖走|挖角|加盟|冬窗|转会窗|豪门的召唤|远渡重洋|老部下|货架|契约书|想要带走|盯上|球探/.test(t))return 'move';
+  if(/^(胜|负|平) |对阵|热身赛|友谊赛|绝杀|绝平|点球大战|晋级|止步|淘汰|捧起|抽签|冠军：|夺冠|宿敌|半决赛|决赛/.test(t))return 'match';
+  if(/受伤|伤停|伤愈|成长|觉醒|必杀技|退役|挂靴|一人一城|忠诚|传奇|停赛|红牌|黄牌|青训|进步|生疏|入选|获得.*(最佳|金靴|助攻王)|第 [0-9]+ 场/.test(t))return 'player';
+  return 'club';
+}
 
 // rounds in the current season for a division (ours by default), and the season's league weeks (by calendar)
 const rounds=d=>S.fixtures[d??my().div].length;
@@ -879,6 +887,7 @@ function advanceDay(log){
   // the day after one of our matches, nothing more on a day we played. injuries mend every day, match days included
   const today=S.day,type=S.lastMatchDay===today?'match':dayType(today),mode=type==='rest'?{cond:restAmt(),grow:0}:TRAIN_DAY[S.training];
   S.day++;
+  if(S.day%7===0)weekly();  // Monday: upkeep, building work
   playOtherDivisions();
   if(type==='match')my().players.forEach(p=>{if(p.inj>0&&--p.inj===0)(log.healed||(log.healed=[])).push(p)});
   else my().players.forEach(p=>{

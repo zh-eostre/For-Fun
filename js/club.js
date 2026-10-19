@@ -328,15 +328,34 @@ const FAC={
   scout:{name:'球探部',fx:L=>`名单 ${36+4*(L-1)} 人 · 报告准确率 ${pct(.25+.1*(L-1))} · 加派球探 ${money(20-2.5*(L-1))}${L>=5?' · 对手情报：薄弱一线、针对建议、是否已针对':L>=4?' · 对手情报：薄弱一线、针对建议':L>=3?' · 对手情报：薄弱一线':''}`},
   physio:{name:'理疗室',fx:L=>`受伤风险 ${pct(1-.075*(L-1))} · 休息日体能 +${DAY_REST+L-1}${L>=4?' · 部分伤病可带伤再战':''}`},
   ground:{name:'训练场',fx:L=>`训练成长 ×${(1+.15*(L-1)).toFixed(2)}`},
-  stadium:{name:'球场',cost:[0,100,200,350,550],fx:L=>`主场门票收入 ×${(1+.25*(L-1)).toFixed(2)}`}
+  stadium:{name:'球场',cost:[0,100,200,350,550,800,1200,1800],fx:L=>`主场门票收入 ×${(1+.25*(L-1)).toFixed(2)}`}
 };
 const facCost=k=>FAC[k].cost||FAC_COST;
 const stadiumMult=()=>1+.25*(facLv('stadium')-1);
+// the weekly upkeep of our facilities and academy (see UPKEEP)
+const upkeep=()=>Object.keys(FAC).reduce((s,k)=>s+UPKEEP[facLv(k)],0)+UPKEEP[S.academy?S.academy.lv:1];
+// Mondays: the upkeep is paid; a stadium expansion under way may be finished
+function weekly(){
+  const u=upkeep(),was=S.budget;if(u){S.budget-=u;if(was>=0&&S.budget<0)news(`⚠ 资金告急！设施维护费把金库掏空了（每周 ${money(u)}），赶快卖人，或者到「设施」页降低等级。`)}
+  const b=S.build;if(b&&S.day>=b.done){S.fac.stadium=b.lv;S.build=null;
+    if(b.lv>=facCost('stadium').length)maxedOut('stadium',FAC.stadium.name,b.cost);
+    else news(`🏟 扩建竣工！新看台拔地而起，球场升到 ${b.lv} 级：主场门票收入 ×${(1+.25*(b.lv-1)).toFixed(2)}。`)}
+}
+// a facility down a level, to save its upkeep (nothing is paid back)
+function downgradeFac(k){
+  const L=facLv(k);if(L<=1||(k==='stadium'&&S.build))return;
+  S.fac[k]=L-1;news(`${FAC[k].name}降到 ${L-1} 级，每周维护费少 ${money(UPKEEP[L]-UPKEEP[L-1])}。`);toast(`${FAC[k].name}降到 ${L-1} 级`);
+}
 function upgradeFac(k){
   const L=facLv(k),c=facCost(k)[L];
   if(L>=facCost(k).length){toast(`${FAC[k].name}已是最高等级`);return}
+  if(k==='stadium'&&S.build){toast('球场还在扩建中');return}
   if(S.budget<c){toast('资金不够');return}
-  S.budget-=c;S.fac[k]=L+1;
+  S.budget-=c;
+  // the stadium past level 5 is an expansion: built over some weeks, in force when it's done
+  if(k==='stadium'&&STADIUM_BUILD[L+1]){const w=STADIUM_BUILD[L+1];S.build={lv:L+1,done:S.day+7*w,cost:c};
+    news(`🏗 球场扩建动工！花费 ${money(c)}，${w} 周后新看台落成，主场门票收入将升到 ×${(1+.25*L).toFixed(2)}。`);toast(`扩建动工，${w} 周后完工`);return}
+  S.fac[k]=L+1;
   if(L+1>=facCost(k).length){maxedOut(k,FAC[k].name,c);return}
   news(`${FAC[k].name}升级到 ${L+1} 级，花费 ${money(c)}。`);toast(`${FAC[k].name}升到 ${L+1} 级！`);
 }
@@ -361,8 +380,23 @@ const findAny=id=>{for(const t of S.teams){const p=t.players.find(x=>x.id===id);
 function askPrice(p,t){
   const top=[...t.players].sort((a,b)=>b.ovr-a.ovr).slice(0,3),xi=bestForm(t,true).ids;
   const imp=top.includes(p)?1.8:xi.includes(p.id)?1.4:1.05;
-  return Math.round(value(p)*imp*(t.id===S.rival?1.3:1));
+  return withWill(value(p)*imp*(t.id===S.rival?1.3:1),p,t);  // with what he asks on top to join us
 }
+const appeal=()=>my().rep+PULL_DIV[my().div]+S.mgr.rep*.2;
+function wants(p,from){
+  let w=clamp((p.ovr-62)*2.6,0,95);
+  if(from&&!from.foreign&&from.id!==S.my)w=Math.max(w,from.rep-5);  // a man at a bigger club won't step down
+  return w-(p.age>=31?10:p.age<=20?5:0);
+}
+// {ok, extra: the share added to his fee, why: when he won't come}
+function willing(p,from){
+  const gap=wants(p,from)-appeal();
+  if(gap<=0)return {ok:true,extra:0};
+  if(gap<=WILL_GAP)return {ok:true,extra:Math.round(gap*WILL_PREMIUM*100)/100};
+  return {ok:false,why:`${p.name}看不上${my().short}：${my().div>0?`${DIVS[my().div]}的舞台太小了`:'球队的名气还不够'}`};
+}
+const withWill=(price,p,from)=>Math.round(price*(1+(willing(p,from).extra||0)));  // (one who won't come is shown at his price)
+const marketPrice=p=>withWill(p.price,p,null);
 // why a club won't sell (or we can't buy) right now; '' when the deal can go ahead
 function buyBlock(p,t){
   if(t.foreign)return '海外俱乐部不出售球员';
@@ -371,6 +405,7 @@ function buyBlock(p,t){
   if(t.players.length<=15)return '对方阵容人数不足，不愿出售';
   if(p.pos==='GK'&&t.players.filter(x=>x.pos==='GK').length<=2)return '对方门将不够，不愿出售';
   if(squadFull())return `你的一线队已满 ${SQUAD_MAX} 人`;
+  const w=willing(p,t);if(!w.ok)return w.why;
   if(S.budget<askPrice(p,t))return '资金不够';
   return '';
 }

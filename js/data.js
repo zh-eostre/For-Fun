@@ -176,6 +176,14 @@ const INJ_RATE=.00046;    // chance per team per minute of an injury, scaled by 
 const INJ_DAYS=[2,3,4,4,5,6,7,9,12,16,21];  // how many days an injury lasts, picked at random
 // youth academy: upgrade cost to reach the next level, by current level (max level 5)
 const ACADEMY_COST=[0,80,150,250,400];
+// what a facility (or the academy) costs to keep, per week by its level (charged on Mondays); 6-8: the stadium's
+// expansions, which take STADIUM_BUILD weeks to build
+// whether a player wants to join us: our pull (底蕴, plus PULL_DIV by division, plus a share of the manager's
+// reputation) against what he expects (his ability, the standing of the club he'd leave; veterans and the very young
+// expect less). up to WILL_GAP short, he comes for WILL_PREMIUM more per point (a fee on top); further short, he won't
+const PULL_DIV=[12,0,-12],WILL_GAP=20,WILL_PREMIUM=.02;
+const UPKEEP=[0,0,1,2,3.5,5,7,9.5,12];
+const STADIUM_BUILD=[0,0,0,0,0,0,4,6,8];
 // scout department, physio room, training ground: cost to go from level n to n+1, indexed by n
 const FAC_COST=[0,60,120,200,320];
 const SQUAD_MAX=25;    // our first team (players out on loan don't count), as the 25-man lists of the big leagues

@@ -169,6 +169,9 @@ const ACT={
   scout:()=>{const c=scoutCost();if(S.budget<c){toast('资金不够');return}S.budget-=c;addToMarket(4);save();toast('球探带回了 4 名新球员');render()},
   mpage:a=>{UI.mpage=Math.max(0,+a);render()},
   fup:(a,b)=>{if(!arm(b,'再点一次确认升级'))return;upgradeFac(a);save();render()},
+  nf:a=>{UI.nf=a;render()},
+  fdown:(a,b)=>{if(!arm(b,'再点一次确认降级'))return;downgradeFac(a);save();render()},
+  adown:(a,b)=>{if(!arm(b,'再点一次确认降级'))return;if(S.academy.lv>1){S.academy.lv--;news(`青训营降到 ${S.academy.lv} 级，每周维护费少 ${money(UPKEEP[S.academy.lv+1]-UPKEEP[S.academy.lv])}。`)}save();render()},
   train:a=>{S.training=a;save();render()},
   form:a=>{S.formation=a;S.lineup=autoPick(my(),a);S.autoXI=true;UI.selSlot=null;save();toast(`已按 ${a} 重新选好首发`);render()},
   // in a match only that match's tactic changes; otherwise it's the club's default for coming matches
@@ -235,9 +238,11 @@ const ACT={
   buy:a=>{
     if(!windowOpen()){toast(windowShut());return}
     const p=S.market.find(x=>x.id===+a);if(!p)return;
-    if(S.budget<p.price){toast('资金不够');return}
+    const w=willing(p,null);if(!w.ok){toast(w.why);return}
+    const price=marketPrice(p);
+    if(S.budget<price){toast('资金不够');return}
     if(squadFull()){toast(`一线队已满 ${SQUAD_MAX} 人`);return}
-    S.budget-=p.price;S.market=S.market.filter(x=>x!==p);const price=p.price,est=shownPot(p);
+    S.budget-=price;S.market=S.market.filter(x=>x!==p);const est=shownPot(p);
     delete p.price;delete p.scout;delete p.sale;delete p.ex;delete p.eyed;my().players.push(p);joinClub(p,my(),false);
     const diff=p.pot-est;
     news(`以 ${money(price)} 签下 ${p.name}（${POS[p.pos]}，能力 ${p.ovr}，真实潜力 ${p.pot}）。${diff>=6?'球探严重低估了他！':''}`);
