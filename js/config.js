@@ -21,7 +21,7 @@ const B={
   well:{n:'水井',cost:{stone:6,coins:5},rank:0,cat:3,r:3,svc:'water',desc:'为 3 格内的民居供水。民居升级必备。不用连路。'},
   store:{n:'仓库',cost:{wood:20},rank:0,cat:0,desc:'木材、石头、粮食的储存上限各 +150。冬天前很需要。不用连路。'},
   plant:{n:'种树',cost:{coins:3},rank:0,cat:4,desc:'在空地上种一棵树。伐木场旁边多种树可以提高产量。'},
-  fish:{n:'渔屋',cost:{wood:15},workers:2,rank:1,cat:2,need:'water',desc:'必须紧挨着水。四季都能捕鱼，冬天河面结冰产量较低。'},
+  fish:{n:'渔屋',cost:{wood:15},workers:2,rank:1,cat:2,need:'water',desc:'必须紧挨着水。2 格内的水面越多，产量越高（每格 0.5，最多 3）。四季都能捕鱼，冬天结冰产量打 6 折。和农场同时运作，全镇幸福度 +5。'},
   market:{n:'市场',cost:{wood:20,stone:10},workers:2,rank:1,cat:3,desc:'镇上有一座运作中的市场，民居才能升级。每天另赚 3 金币，还能在侧栏买卖材料。'},
   park:{n:'公园',cost:{coins:25},rank:1,cat:3,r:3,svc:'park',upkeep:.5,desc:'3 格内的居民更开心。是宅院的升级条件之一。不用连路。'},
   school:{n:'学校',cost:{wood:20,stone:30,coins:40},workers:2,rank:2,cat:3,r:5,svc:'school',upkeep:1,desc:'5 格内的砖房才能升级成宅院。'},

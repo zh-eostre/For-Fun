@@ -103,6 +103,7 @@ function renderSide(){
 function renderInfo(){const el=document.getElementById('info');if(el)el.innerHTML=vInfo()}
 function preview(type,x,y){
   if(type==='lumber'){const n=countR(x,y,2,'t');return `，附近 ${n} 棵树，满员每天 ${fmt(Math.min(3.5,.5*n))} 木材`}
+  if(type==='fish'){const n=countR(x,y,2,'w');return `，附近 ${n} 格水面，满员每天 ${fmt(Math.min(3,.5*n))} 粮食`}
   if(type==='quarry'){const n=count8(x,y,'r');return `，周围 ${n} 块岩石，满员每天 ${fmt(Math.min(3,n))} 石头`}
   if(type==='farm')return adj4(x,y,'w')?'，紧挨着水，产量 +1':'，没挨着水（挨着水产量 +1）';
   if(B[type].r){let n=0;for(const [i,b] of ent()){if(b.type!=='house')continue;const [hx,hy]=XY(i);if((hx-x)**2+(hy-y)**2<=B[type].r**2)n++}return `，能覆盖 ${n} 栋民居`}

@@ -25,7 +25,7 @@ function prodOf(b,i){
   const o={},[x,y]=XY(i),s=season(),e=b.eff||0;
   switch(b.type){
     case 'farm':if(e){let f=(3+(adj4(x,y,'w')?1:0))*[1,1.2,1.5,0][s]*e;if(S.ev.harvest)f*=2;o.food=f}break;
-    case 'fish':if(e)o.food=2*(s===3?.6:1)*e;break;
+    case 'fish':if(e)o.food=Math.min(3,.5*countR(x,y,2,'w'))*(s===3?.6:1)*e;break;
     case 'lumber':if(e)o.wood=Math.min(3.5,.5*countR(x,y,2,'t'))*e;break;
     case 'quarry':if(e)o.stone=Math.min(3,count8(x,y,'r'))*e;break;
     case 'market':if(e)o.coins=3*e;break;
@@ -35,12 +35,14 @@ function prodOf(b,i){
   const up=B[b.type].upkeep;if(up&&b.conn)o.coins=(o.coins||0)-up;
   return o;
 }
-const hasMarket=()=>ent().some(([i,b])=>b.type==='market'&&b.conn&&b.eff>0);
+const working=t=>ent().some(([i,b])=>b.type===t&&b.conn&&b.eff>0);
+const hasMarket=()=>working('market');
 function taxIncome(){return houses().reduce((s,b)=>s+b.res*HTAX[b.lv-1],0)*[.6,1,1.5][S.tax]}
 function heatNeed(){let h=houses().reduce((s,b)=>s+(b.res?HHEAT[b.lv-1]:0),0);if(S.ev.blizzard)h*=2;return h}
 function happyParts(foodShort,heatShort){
   const parts=[['基础',50]],pop=popTotal();
   if(pop)parts.push(foodShort?['粮食短缺',-25]:['粮食充足',10]);
+  if(pop&&working('farm')&&working('fish'))parts.push(['饮食多样',5]);
   if(heatShort)parts.push(['冬天缺柴',-20]);
   parts.push(['税率'+['低','中','高'][S.tax],[8,0,-12][S.tax]]);
   let sv=0,n=0;const m=hasMarket();houses().forEach(b=>{if(!b.res)return;const c=b.cov||{};sv+=b.res*((c.water?4:0)+(m?4:0)+(c.park?8:0)+(c.temple?12:0));n+=b.res});
