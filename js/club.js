@@ -328,10 +328,12 @@ const FAC={
   scout:{name:'球探部',fx:L=>`名单 ${36+4*(L-1)} 人 · 报告准确率 ${pct(.25+.1*(L-1))} · 加派球探 ${money(20-2.5*(L-1))}${L>=5?' · 对手情报：薄弱一线、针对建议、是否已针对':L>=4?' · 对手情报：薄弱一线、针对建议':L>=3?' · 对手情报：薄弱一线':''}`},
   physio:{name:'理疗室',fx:L=>`受伤风险 ${pct(1-.075*(L-1))} · 休息日体能 +${DAY_REST+L-1}${L>=4?' · 部分伤病可带伤再战':''}`},
   ground:{name:'训练场',fx:L=>`训练成长 ×${(1+.15*(L-1)).toFixed(2)}`},
-  stadium:{name:'球场',cost:[0,100,200,350,550,800,1200,1800],fx:L=>`主场门票收入 ×${(1+.25*(L-1)).toFixed(2)}`}
+  stadium:{name:'球场',cost:[0,100,200,350,550,800,1200,1800],fx:L=>`主场门票收入 ×${gateAt(L).toFixed(2)}`}
 };
 const facCost=k=>FAC[k].cost||FAC_COST;
-const stadiumMult=()=>1+.25*(facLv('stadium')-1);
+// the home gate by stadium level: +.25 a level to 5, then +.2 for each expansion
+const gateAt=L=>1+.25*(Math.min(L,5)-1)+.2*Math.max(0,L-5);
+const stadiumMult=()=>gateAt(facLv('stadium'));
 // the weekly upkeep of our facilities and academy (see UPKEEP)
 const upkeep=()=>Object.keys(FAC).reduce((s,k)=>s+UPKEEP[facLv(k)],0)+UPKEEP[S.academy?S.academy.lv:1];
 // Mondays: the upkeep is paid; a stadium expansion under way may be finished
@@ -339,7 +341,7 @@ function weekly(){
   const u=upkeep(),was=S.budget;if(u){S.budget-=u;if(was>=0&&S.budget<0)news(`⚠ 资金告急！设施维护费把金库掏空了（每周 ${money(u)}），赶快卖人，或者到「设施」页降低等级。`)}
   const b=S.build;if(b&&S.day>=b.done){S.fac.stadium=b.lv;S.build=null;
     if(b.lv>=facCost('stadium').length)maxedOut('stadium',FAC.stadium.name,b.cost);
-    else news(`🏟 扩建竣工！新看台拔地而起，球场升到 ${b.lv} 级：主场门票收入 ×${(1+.25*(b.lv-1)).toFixed(2)}。`)}
+    else news(`🏟 扩建竣工！新看台拔地而起，球场升到 ${b.lv} 级：主场门票收入 ×${gateAt(b.lv).toFixed(2)}。`)}
 }
 // a facility down a level, to save its upkeep (nothing is paid back)
 function downgradeFac(k){
@@ -354,7 +356,7 @@ function upgradeFac(k){
   S.budget-=c;
   // the stadium past level 5 is an expansion: built over some weeks, in force when it's done
   if(k==='stadium'&&STADIUM_BUILD[L+1]){const w=STADIUM_BUILD[L+1];S.build={lv:L+1,done:S.day+7*w,cost:c};
-    news(`🏗 球场扩建动工！花费 ${money(c)}，${w} 周后新看台落成，主场门票收入将升到 ×${(1+.25*L).toFixed(2)}。`);toast(`扩建动工，${w} 周后完工`);return}
+    news(`🏗 球场扩建动工！花费 ${money(c)}，${w} 周后新看台落成，主场门票收入将升到 ×${gateAt(L+1).toFixed(2)}。`);toast(`扩建动工，${w} 周后完工`);return}
   S.fac[k]=L+1;
   if(L+1>=facCost(k).length){maxedOut(k,FAC[k].name,c);return}
   news(`${FAC[k].name}升级到 ${L+1} 级，花费 ${money(c)}。`);toast(`${FAC[k].name}升到 ${L+1} 级！`);
