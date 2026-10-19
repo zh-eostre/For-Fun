@@ -66,7 +66,7 @@ function renderBuild(){
 function renderSide(){
   const s=season(),pop=popTotal();
   const r=S.rank,nx=RANKS[r+1];
-  const qs=QUESTS.slice(S.q,S.q+3);
+  const qs=QUESTS.filter((q,i)=>i>=S.q&&!q.bg).slice(0,3),bgq=QUESTS.filter((q,i)=>q.bg&&!bgDone().includes(i));
   const hp=happyParts(S.short.food>0,S.short.heat>0);
   let winter='';
   if(s===2||(s===1&&dayIn()>=SEASON_DAYS-2)||s===3){
@@ -90,7 +90,7 @@ function renderSide(){
    <p class="muted">人口 ${pop}/${nx.pop} 升级为「${nx.n}」，解锁：${ORDER.filter(k=>B[k].rank===r+1).map(k=>B[k].n).join('、')||'荣誉'}</p>`:'<p class="ok">已经是最高等级了！</p>'}
   </section>
   <section class="box"><h3 class="hd">📜 任务</h3>
-   ${qs.length?qs.map((q,i)=>`<div class="quest ${i?'next':'cur'}"><span>${i?'':'▸ '}<b>${q.t}</b>${q.p&&!i?` <span class="muted">${q.p()}</span>`:''}</span><span class="rw">${rTxt(q.r)}</span></div>`).join(''):'<p class="ok">所有任务都完成了！</p>'}
+   ${qs.length?qs.map((q,i)=>`<div class="quest ${i?'next':'cur'}"><span>${i?'':'▸ '}<b>${q.t}</b>${q.p&&!i?` <span class="muted">${q.p()}</span>`:''}</span><span class="rw">${rTxt(q.r)}</span></div>`).join(''):''}${bgq.map(q=>`<div class="quest cur"><span>⏳ <b>${q.t}</b> <span class="muted">${q.p()}</span></span><span class="rw">${rTxt(q.r)}</span></div>`).join('')}${qs.length||bgq.length?'':'<p class="ok">所有任务都完成了！</p>'}
   </section>
   <section class="box"><h3 class="hd">😊 幸福度 ${Math.round(S.happy)} <span class="muted" style="font-size:13px">→ ${Math.round(hp.t)}</span></h3>
    <ul class="parts">${hp.parts.map(([l,v])=>`<li><span>${l}</span><span class="${v>0&&l!=='基础'?'ok':v<0?'bad':''}">${l==='基础'?'':v>0?'+':''}${v}</span></li>`).join('')}</ul>

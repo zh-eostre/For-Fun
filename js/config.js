@@ -48,7 +48,7 @@ const QUESTS=[
   {t:'人口达到 15',c:()=>popTotal()>=15,p:()=>`${popTotal()}/15`,r:{coins:50}},
   {t:'建一座市场',c:()=>connCnt('market')>=1,r:{stone:20}},
   {t:'让一栋民居升级成砖房',c:()=>lvCnt(2)>=1,r:{wood:30,coins:40}},
-  {t:'熬过第一个冬天',c:()=>S.day>=SEASON_DAYS*4,r:{coins:80}},
+  {t:'熬过第一个冬天',c:()=>S.day>=SEASON_DAYS*4,p:()=>`第 ${Math.min(S.day,SEASON_DAYS*4)}/${SEASON_DAYS*4} 天`,r:{coins:80},bg:1},
   {t:'人口达到 45',c:()=>popTotal()>=45,p:()=>`${popTotal()}/45`,r:{coins:80}},
   {t:'建一所学校',c:()=>connCnt('school')>=1,r:{coins:60}},
   {t:'让一栋砖房升级成宅院',c:()=>lvCnt(3)>=1,r:{coins:120}},

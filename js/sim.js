@@ -111,9 +111,14 @@ function checkRank(){
     if(S.rank===RANKS.length-1&&!S.won){S.won=true;log('晴川小镇成为了繁华之城！你可以继续经营下去。','good')}
   }
 }
+// bg quests run alongside the chain and finish whenever their condition holds; the chain skips over them
+// (saves from before bg quests count any bg quest the chain already passed as done)
+function bgDone(){if(!S.bgDone)S.bgDone=QUESTS.flatMap((q,i)=>q.bg&&i<S.q?[i]:[]);return S.bgDone}
 function checkQuests(){
+  const done=q=>{gain(q.r);log(`完成任务「${q.t}」，奖励 ${rTxt(q.r)}`,'good');toast(`任务完成：${q.t}　${rTxt(q.r)}`)};
+  QUESTS.forEach((q,i)=>{if(q.bg&&!bgDone().includes(i)&&q.c()){bgDone().push(i);done(q)}});
   let n=0;
-  while(S.q<QUESTS.length&&QUESTS[S.q].c()&&n<5){const q=QUESTS[S.q];gain(q.r);log(`完成任务「${q.t}」，奖励 ${rTxt(q.r)}`,'good');toast(`任务完成：${q.t}　${rTxt(q.r)}`);S.q++;n++}
+  while(S.q<QUESTS.length&&n<5){const q=QUESTS[S.q];if(!q.bg){if(!q.c())break;done(q);n++}S.q++}
 }
 function canPay(c){return Object.entries(c).every(([k,v])=>S.res[k]>=v)}
 function pay(c){for(const k in c)S.res[k]-=c[k]}
