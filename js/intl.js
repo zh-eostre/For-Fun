@@ -130,7 +130,7 @@ function playIntl(myRes){
       if(mine&&mine.w===S.my){I.owed=(I.owed||0)+intlKoPrize(I.stage-INTL_GROUP_ROUNDS);news(`${INTL_NAME}晋级${intlStage(I.stage)}！`)}}
     else{I.ties=[];I.winner=w[0];cupHeadline(INTL_NAME,res[0]);
       if(I.winner===S.my){I.owed=(I.owed||0)+INTL_PRIZE.champion;news(`捧起${INTL_NAME}！大陆之巅！`);unlock('intl')}
-      payCup(I,INTL_NAME);
+      payCup(I,INTL_NAME);updateCupRecords('intl');
 }
     if(mine&&mine.w!==S.my)news(`${INTL_NAME}止步${intlStage(k)}，被 ${S.teams[mine.h===S.my?mine.a:mine.h].name} 淘汰。`);
   }

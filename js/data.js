@@ -188,6 +188,9 @@ const LREC=[['goals','个人单季进球','球','p'],['ast','个人单季助攻'
 // for that player this window, and the cheekiest also puts his price up HAGGLE_UP. a part-exchange player has to be
 // of use to them: no more than SWAP_BELOW under their usual XI, and SWAP_AGE or younger
 const HAGGLE=[[0,1],[.1,.55],[.2,.2]],HAGGLE_UP=.05,SWAP_BELOW=8,SWAP_AGE=31;
+// cup records, per cup: [key, label, unit, intl only]
+const CREC=[['goals','单届最多进球','球'],['ast','单届最多助攻','次'],['margin','单场最大胜分差','球'],['streak','最长连续夺冠','连冠'],['home','本国最好成绩','',true]];
+const HOME_RUN=['小组赛出局','十六强','八强','四强','亚军','冠军'];  // how far a home club went in the 冠军杯, worst to best
 // whether a player wants to join us: our pull (底蕴, plus PULL_DIV by division, plus a share of the manager's
 // reputation) against what he expects (his ability, the standing of the club he'd leave; veterans and the very young
 // expect less). up to WILL_GAP short, he comes for WILL_PREMIUM more per point (a fee on top); further short, he won't

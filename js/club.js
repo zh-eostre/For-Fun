@@ -175,6 +175,47 @@ function nationalAwards(){
   return [['ballon','年度最佳球员',nom(()=>true)],['young','年度最佳新人',nom(x=>x.p.age<=21)],['gk','年度最佳门将',nom(x=>x.p.pos==='GK')],
     ['boot','全国金靴',boot],['coach','年度最佳教练',coach]].filter(a=>a[2].length);
 }
+// a cup's bests this edition (once its final is played), for its records: {key: {v, name, tid, pid, note}}
+function cupBests(c){
+  const out={},name=c==='cup'?CUP_NAME:INTL_NAME;
+  const teams=c==='cup'?domestic():S.intl.groups.flat().map(id=>S.teams[id]);
+  const ps=teams.flatMap(t=>t.players.map(p=>({p,t}))),top=k=>ps.filter(x=>compStat(x.p,k,c)>0).sort((a,b)=>compStat(b.p,k,c)-compStat(a.p,k,c))[0];
+  for(const k of ['goals','ast']){const x=top(k);if(x)out[k]={v:compStat(x.p,k,c),name:x.p.name,pid:x.p.id,tid:x.t.id}}
+  // the biggest win, with the round it came in
+  const games=c==='cup'?S.cup.rounds.flatMap((rd,k)=>rd.map(m=>({m,st:stageName(k)}))):[...S.intl.res.flatMap(g=>g.flat().map(m=>({m,st:'小组赛'}))),
+    ...S.intl.ko.flatMap((rd,j)=>rd.map(m=>({m,st:intlStage(INTL_GROUP_ROUNDS+j)})))];
+  let big=null;games.forEach(({m,st})=>{const gd=Math.abs(m.hg-m.ag);if(gd&&(!big||gd>big.v||gd===big.v&&m.hg+m.ag>big.tot)){const w=m.hg>m.ag?m.h:m.a,l=w===m.h?m.a:m.h;
+    big={v:gd,tot:m.hg+m.ag,name:S.teams[w].name,tid:w,note:`${Math.max(m.hg,m.ag)}:${Math.min(m.hg,m.ag)} 对阵${S.teams[l].name}（${st}）`}}});
+  if(big)out.margin=big;
+  // titles in a row: this one and the seasons before it
+  const W=c==='cup'?S.cup.winner:S.intl.winner,wn=S.teams[W].name,past=S.records.filter(r=>r.season<S.season).sort((a,b)=>b.season-a.season);
+  let run=1;for(const r of past){if((c==='cup'?r.cup:r.intl)===wn)run++;else break}
+  out.streak={v:run,name:wn,tid:W,note:run>1?`第 ${S.season-run+1}–${S.season} 季`:''};
+  // the 冠军杯: how far our country's best club went
+  if(c==='intl'){const I=S.intl,home=I.groups.flat().filter(id=>!S.teams[id].foreign);let best=null;
+    // a knockout round reached: its place in HOME_RUN (the final, lost, is 亚军; with a 4-group cup the first is 八强)
+    home.forEach(id=>{let lv=0;I.ko.forEach((rd,j)=>{if(rd.some(m=>m.h===id||m.a===id))lv=Math.max(lv,4-intlKO(I)+j+1)});
+      if(I.winner===id)lv=5;
+      if(!best||lv>best.v)best={v:lv,name:S.teams[id].name,tid:id,label:HOME_RUN[lv]}});
+    if(best)out.home=best}
+  return out;
+}
+// when a cup's final has been played: bests that beat its records become them (its first edition sets them
+// quietly), each with a line in the news
+function updateCupRecords(c){
+  const R=S.crec||(S.crec={}),rec=R[c]||(R[c]={}),first=!Object.keys(rec).length,b=cupBests(c),name=c==='cup'?CUP_NAME:INTL_NAME;
+  CREC.forEach(([k,label,unit,io])=>{if(io&&c!=='intl')return;const x=b[k];if(!x||(rec[k]&&x.v<=rec[k].v))return;
+    const old=rec[k];rec[k]={...x,season:S.season,team:S.teams[x.tid].name};if(first||!old)return;
+    news(`📜 ${name}纪录被改写！「${label}」：${x.pid!=null?`${x.name}（${S.teams[x.tid].short}）${x.v} ${unit}`:k==='home'?`${x.name}打进${x.label}`:`${x.name} ${x.v} ${unit}`}${x.note?`，${x.note}`:''}${x.tid===S.my?'——这是属于我们的历史！':''}`)});
+}
+// during a cup: one of ours passing its goals or assists record makes the news (once each)
+function liveCupRecords(c){
+  const rec=(S.crec||{})[c];if(!rec)return;const name=c==='cup'?CUP_NAME:INTL_NAME;
+  my().players.forEach(p=>[['goals','单届最多进球','球'],['ast','单届最多助攻','次']].forEach(([k,label,unit])=>{
+    const v=compStat(p,k,c),r=rec[k],key=c+k;if(!r||v<=r.v||(p.crec||{})[key]===S.season)return;
+    (p.crec||(p.crec={}))[key]=S.season;
+    news(`🔥 ${p.name}在${name}的第 ${v} ${unit==='球'?'个进球':'次助攻'}！他超越了「${label}」纪录（${r.v} ${unit}，${r.team}·第 ${r.season} 季）！`)}));
+}
 // a division's bests this season, for its records: {key: {v, name, tid, note}}
 function seasonBests(d){
   const ps=S.teams.filter(t=>t.div===d).flatMap(t=>t.players.map(p=>({p,t}))),T=table(d),out={};

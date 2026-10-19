@@ -354,7 +354,7 @@ function finish(){
   if(M.late){const L=M.late,word=L.kind==='win'?'绝杀':'绝平';
     news(L.mine?`⚡ ${L.name} 第 ${L.min} 分钟${word}！`:`第 ${L.min} 分钟被${L.team}的 ${L.name} ${word}。`);
     if(L.mine&&L.kind==='win')unlock('late')}
-  if(M.cup)playCupStage(res);else if(M.intl)playIntl(res);else{loanRound();S.round++;liveRecords()}
+  if(M.cup){playCupStage(res);liveCupRecords('cup')}else if(M.intl){playIntl(res);liveCupRecords('intl')}else{loanRound();S.round++;liveRecords()}
   if(!M.cup&&seasonDone())careerSeasonEnd();  // after the last league round, or after a 冠军杯 final that comes after it
   // a title or promotion settled by this match: confetti
   const party=M.cup&&S.cup.winner===S.my?`${CUP_NAME}冠军！`:M.intl&&S.intl.winner===S.my?`${INTL_NAME}冠军！`:S.round>=rounds()&&!M.cup&&!M.intl?(myRank()===1?`${DIVS[my().div]}冠军！`:zone(my().div,myRank())==='up'?'升级成功！':''):'';

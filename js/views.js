@@ -1007,6 +1007,14 @@ function vBracket(rounds,feed,winner){
   const champ=`<div class="bcol bchamp"><div class="bh"><b>冠军</b></div><div class="bbody"><div class="bcup ${winner===S.my?'me':''}">🏆<span>${winner!=null?S.teams[winner].short:'？'}</span></div></div></div>`;
   return `<section class="panel"><h2>淘汰赛对阵</h2><div class="bracket-wrap"><div class="bracket" style="--cols:${R};--ties:${n(0)}">${cols}${champ}</div></div></section>`;
 }
+// a cup's records
+function vCupRecords(c){
+  const rec=(S.crec||{})[c]||{},name=c==='cup'?CUP_NAME:INTL_NAME;
+  const rows=CREC.filter(r=>!r[3]||c==='intl').map(([k,label,unit])=>{const r=rec[k];
+    return `<div class="lrec ${r&&r.tid===S.my?'me':''}"><span class="lr-l">${label}</span><b class="num">${r?(k==='home'?r.label:r.v):'—'}${r&&unit?`<small> ${unit}</small>`:''}</b>
+    <span class="lr-who">${r?`${r.pid!=null?`${r.name} · ${S.teams[r.tid]?S.teams[r.tid].short:r.team}`:r.name}${r.note?` · ${r.note}`:''}<small> 第 ${r.season} 季</small>`:'第一届决赛后建立'}</span></div>`}).join('');
+  return `<section class="panel"><h2>${name}纪录</h2>${rows}</section>`;
+}
 // a cup's scorers and assists this season (the other count breaks ties), behind a switch; once the cup is won,
 // its top scorer and its top provider are named
 function cupScorers(c,name,teams,won){
@@ -1038,7 +1046,7 @@ function vDomCup(){
   const early=C.rounds.slice(0,start);
   const rounds=early.length?`<section class="panel"><h2>${inBracket?'早期轮次':'已赛轮次'}</h2>${early.map((rd,k)=>cupRound(stageName(k),rd,!inBracket&&k===early.length-1,'cupr'+k)).reverse().join('')}</section>`:'';
   const P=F.prize,prize=`<section class="panel"><h2>奖金</h2><div class="prize-list">${F.names.map((name,k)=>P[k]?`<div><span>止步${stageName(k)}</span><b>${money(P[k])}</b></div>`:'').join('')}<div><span>夺冠</span><b>${money(P[F.names.length])}</b></div></div></section>`;
-  return {head,pending,bracket,more:rounds,boards:cupScorers('cup',CUP_NAME,domestic(),C.winner!=null),honours:cupHonours('cup',CUP_NAME),prize};
+  return {head,pending,bracket,more:rounds,boards:cupScorers('cup',CUP_NAME,domestic(),C.winner!=null),honours:cupHonours('cup',CUP_NAME)+vCupRecords('cup'),prize};
 }
 function vIntl(){
   const I=S.intl,gi=I.groups.findIndex(g=>g.includes(S.my)),me=id=>id===S.my?'me':'';
@@ -1070,7 +1078,7 @@ function vIntl(){
   <details class="fold" data-fold="intl-groups" ${gi<0?'open':''}><summary><span><b>其他小组</b></span></summary>${order.slice(1).map(g=>`<h3 class="grp-h">${'ABCDEFGH'[g]} 组</h3>${tbl(g)}`).join('')}</details></section>`;
   const KP=INTL_PRIZE.ko.slice(-intlKO()),KN=['进十六强','进八强','进四强','进决赛'].slice(-intlKO());
   const prize=`<section class="panel"><h2>奖金</h2><div class="prize-list"><div><span>小组赛每胜 / 平</span><b>${money(INTL_PRIZE.win)} / ${money(INTL_PRIZE.draw)}</b></div>${KP.map((p,j)=>`<div><span>${KN[j]}</span><b>${money(p)}</b></div>`).join('')}<div><span>夺冠</span><b>${money(INTL_PRIZE.champion)}</b></div></div></section>`;
-  return {head,pending,bracket,more:groups,boards:cupScorers('intl',INTL_NAME,I.groups.flat().map(id=>S.teams[id]),I.winner!=null),honours:cupHonours('intl',INTL_NAME),prize};
+  return {head,pending,bracket,more:groups,boards:cupScorers('intl',INTL_NAME,I.groups.flat().map(id=>S.teams[id]),I.winner!=null),honours:cupHonours('intl',INTL_NAME)+vCupRecords('intl'),prize};
 }
 // our club's all-time boards: scorers, assists, average rating (players still here are marked)
 function vClubBoards(){

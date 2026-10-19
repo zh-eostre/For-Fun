@@ -77,7 +77,7 @@ function playCupStage(myRes){
     }
   }
   if(C.winner!==null&&C.winner!==S.my)news(`${CUP_NAME}冠军：${S.teams[C.winner].name}。`);
-  if(C.winner!==null)payCup(C,CUP_NAME);
+  if(C.winner!==null){payCup(C,CUP_NAME);updateCupRecords('cup')}
 }
 // a cup's prize money is paid when its final has been played: what we earned on the way (C.owed), all at once
 function payCup(C,name){
