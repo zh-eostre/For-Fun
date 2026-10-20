@@ -46,11 +46,29 @@ const B={
   spire:{n:'观光塔',cost:{coins:400},workers:4,builders:6,rank:8,cat:5,unique:1,
     stages:[{cost:{stone:200,wood:150,coins:800},days:10},{cost:{stone:200,porcelain:30,coins:1200},days:10},{cost:{coins:2000},days:10}],
     desc:'大工程，分 3 期施工：每期先投入材料，再由 6 个工人干 10 天。建成后要 4 个工人：全镇幸福度 +10，游客每天带来 20 金币。'},
+  lab:{n:'研究所',cost:{wood:40,stone:60,coins:200},workers:4,rank:4,cat:3,unique:1,desc:'有人上班才能研究科技。点研究所选要研究的项目：先付钱，再按天数研究，完成后永久生效。'},
   hall:{n:'市政厅',desc:'小镇的中心，每天收入 2 金币。所有道路都要从这里连出去。'}
 };
-const ORDER=['road','bridge','house','store','farm','fish','lumber','quarry','workshop','mulberry','weave','winery','kiln','well','market','bakery','tea','tavern','firm','park','school','temple','plant','tower','uni','spire'];
+const ORDER=['road','bridge','house','store','farm','fish','lumber','quarry','workshop','mulberry','weave','winery','kiln','well','market','bakery','tea','tavern','firm','park','school','temple','lab','plant','tower','uni','spire'];
 const NOISE_R=2;  // how far industry noise reaches
 const UP_RANK=2;  // town rank that unlocks building upgrades (houses upgrade on their own)
+// policies cost coins every day while switched on (base + per resident); winter ones only charge in winter
+const POLICIES={
+  clinic:{n:'免费诊所',rank:2,base:5,per:.08,d:'全镇幸福度 +5'},
+  heating:{n:'冬季供暖补贴',rank:2,base:5,per:.06,winter:1,d:'冬天取暖用的木材减半，只在冬天扣钱'},
+  overtime:{n:'加班补贴',rank:3,base:8,per:.12,d:'农场、渔屋、伐木场、采石场、养蚕场产量 +15%，但幸福度 −3'}
+};
+// research at the 研究所: pay up front, then it takes `days` staffed days
+const TECHS={
+  seeds:{n:'良种',cost:500,days:15,rank:4,d:'农场产量 +20%'},
+  cold:{n:'冷藏',cost:400,days:10,rank:4,d:'冬天渔屋不再减产'},
+  stove:{n:'节能炉灶',cost:600,days:12,rank:4,d:'取暖用的木材 −25%'},
+  drill:{n:'机械采石',cost:700,days:15,rank:4,d:'采石场产量 +25%'},
+  edu:{n:'现代教育',cost:1000,days:20,rank:4,d:'学校和大学的学位 +50%'},
+  loom:{n:'新式织机',cost:800,days:15,rank:5,d:'纺织厂用同样的蚕丝多织 25% 的布'},
+  brew:{n:'酿造工艺',cost:1000,days:20,rank:6,d:'酒厂用同样的粮食多酿 50% 的酒'},
+  glaze:{n:'釉料改良',cost:1500,days:20,rank:7,d:'陶瓷厂用同样的材料多烧 50% 的瓷器'}
+};
 const RANKS=[
   {n:'拓荒地',pop:0},
   {n:'小村庄',pop:15,reward:{coins:80}},

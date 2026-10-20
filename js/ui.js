@@ -74,7 +74,7 @@ function renderSide(){
   let winter='';
   if(s===2||(s===1&&dayIn()>=SEASON_DAYS-2)||s===3){
     const daysLeft=s===3?SEASON_DAYS-dayIn()+1:SEASON_DAYS;
-    const needF=Math.ceil(pop*.25*daysLeft),needW=Math.ceil(houses().reduce((a,b)=>a+(b.res?HHEAT[b.lv-1]:0),0)*daysLeft);
+    const needF=Math.ceil(pop*.25*daysLeft),needW=Math.ceil(houses().reduce((a,b)=>a+(b.res?HHEAT[b.lv-1]:0),0)*heatFactor()*daysLeft);
     winter=`<section class="box winter"><h3 class="hd">${s===3?'❄️ 冬天还剩 '+daysLeft+' 天':'❄️ 过冬准备'}</h3>
     <p>${s===3?'剩下的冬天':'整个冬天'}大约需要：</p>
     <dl class="kv"><dt>🌾 粮食</dt><dd class="${S.res.food>=needF?'ok':'bad'}">${needF}（现有 ${Math.floor(S.res.food)}${s===3?'，渔屋还在产':''}）</dd>
@@ -100,6 +100,8 @@ function renderSide(){
    <p style="margin-top:10px">税率（每天税收 💰${fmt(taxIncome())}）</p>
    <div class="seg">${['低','中','高'].map((l,i)=>`<button data-act="tax" data-arg="${i}" aria-pressed="${S.tax===i}">${l}</button>`).join('')}</div>
   </section>
+  ${S.rank>=2?`<section class="box"><h3 class="hd">📋 政策</h3><p class="muted">开着的政策每天扣钱，钱不够时会自动停止。</p>
+   ${Object.entries(POLICIES).map(([k,p])=>`<div class="pol"><div><b>${p.n}</b><br><span class="muted">${p.d}</span></div>${S.rank<p.rank?`<span class="muted">「${RANKS[p.rank].n}」解锁</span>`:`<button class="btn sm" data-act="pol" data-arg="${k}" aria-pressed="${!!S.pol[k]}">${S.pol[k]?'已开启':'开启'} · 💰${polCost(k)}/天</button>`}</div>`).join('')}</section>`:''}
   <section class="box"><h3 class="hd">📰 小镇动态</h3><ul class="log">${lg}</ul></section>
   <div style="text-align:right"><button class="btn sm danger" data-act="newgame">${UI.confirmNew?'确定？会清掉现在的小镇':'重新开始'}</button></div>`;
 }
@@ -155,6 +157,7 @@ function vInfo(){
     if(d.svc){let n=0;for(const [j,hb] of ent()){if(hb.type==='house'&&hb.cov&&hb.cov[d.svc])n++}h+=`<dt>覆盖</dt><dd>${n} 栋民居</dd>`}
     if(isMega(b)&&!b.built){const st=d.stages[b.stage];h+=`<dt>进度</dt><dd>第 ${b.stage+1}/${d.stages.length} 期，${b.paid?`已干 ${fmt(b.prog)}/${st.days} 天`:'等材料'}</dd>`}
     if(d.seats)h+=`<dt>全镇学位</dt><dd>已用 ${S.seatsUsed||0} / 共 ${S.seats||0}</dd>`;
+    if(b.type==='lab')h+=`<dt>研究</dt><dd>${S.research?`「${TECHS[S.research.k].n}」${fmt(S.research.prog)}/${TECHS[S.research.k].days} 天`:'空闲'}</dd>`;
     if(b.type==='firm')h+=`<dt>昨天卖出</dt><dd>${b.sold&&b.soldFor?`${rTxt(b.sold)} → 💰${b.soldFor}`:'没有可卖的货'}</dd>`;
     if(b.type==='farm')h+=`<dt>灌溉</dt><dd>${adj4(x,y,'w')?'挨着水':nearWell(x,y)?'水井':'无'}</dd>`;
     if(b.type==='farm'&&season()===3)h+='<dt>状态</dt><dd>冬天停产</dd>';
@@ -167,6 +170,7 @@ function vInfo(){
     if(d.up&&!isUp(b)){const lock=S.rank<UP_RANK;h+=`<p class="muted">升级：${d.up.d}${d.up.workers?`，工人 ${d.workers} → ${d.up.workers}`:''}${lock?`（小镇升级为「${RANKS[UP_RANK].n}」后解锁）`:''}</p><button class="btn sm" data-act="upgrade" ${!lock&&canPay(d.up.cost)?'':'disabled'}>花 ${rTxt(d.up.cost)} 升级</button> `}
     if(d.workers)h+=`<button class="btn sm" data-act="pause">${b.paused?'恢复生产':'停工（让出工人）'}</button> `;
   }
+  if(b.type==='lab')h+=`<div style="margin:8px 0">${Object.entries(TECHS).map(([k,t])=>`<div class="pol"><div><b>${t.n}</b><br><span class="muted">${t.d}</span></div>${S.tech[k]?'<span class="ok">已完成</span>':S.rank<t.rank?`<span class="muted">「${RANKS[t.rank].n}」解锁</span>`:S.research&&S.research.k===k?'<span class="muted">研究中</span>':`<button class="btn sm" data-act="research" data-arg="${k}" ${S.research||S.res.coins<t.cost?'disabled':''}>💰${t.cost} · ${t.days} 天</button>`}</div>`).join('')}</div>`;
   if(b.type!=='hall')h+=`<button class="btn sm danger" data-act="del">${UI.confirmDel===i?'再点一次确认拆除':'拆除'}</button>`;
   return h;
 }

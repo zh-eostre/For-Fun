@@ -9,6 +9,8 @@ const ACT={
   pause:()=>{const b=S.b[UI.sel];if(!b)return;b.paused=!b.paused;recompute();save();renderUI()},
   upgrade:()=>upgradeBld(UI.sel),
   fund:()=>fundStage(UI.sel),
+  research:a=>startResearch(a),
+  pol:a=>{const p=POLICIES[a];if(S.rank<p.rank){toast(`小镇升级为「${RANKS[p.rank].n}」后解锁`);return}S.pol[a]=!S.pol[a];log(`${S.pol[a]?'开启':'停止'}了「${p.n}」政策。`);save();renderUI()},
   del:()=>{if(UI.confirmDel===UI.sel)demolish(UI.sel);else{UI.confirmDel=UI.sel;renderInfo()}},
   newgame:()=>{if(UI.confirmNew){UI.confirmNew=false;newGame()}else{UI.confirmNew=true;renderSide();setTimeout(()=>{if(UI.confirmNew){UI.confirmNew=false;if(S)renderSide()}},3000)}},
   newgame2:()=>newGame(),

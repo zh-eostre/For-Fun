@@ -78,4 +78,10 @@ function fundStage(i){
   pay(st.cost);b.paid=true;log(`${B[b.type].n}第 ${b.stage+1} 期开工。`);
   recompute();save();renderUI();
 }
+function startResearch(k){
+  const t=TECHS[k];if(!t||S.tech[k]||S.research)return;
+  if(S.rank<t.rank){toast(`小镇升级为「${RANKS[t.rank].n}」后才能研究`);return}
+  if(S.res.coins<t.cost){toast(`金币不够：需要 💰${t.cost}`);return}
+  S.res.coins-=t.cost;S.research={k,prog:0};log(`研究所开始研究「${t.n}」。`);save();renderUI();
+}
 function setTool(t){UI.tool=t;UI.pending=null;UI.confirmDel=null;if(t!=='select')UI.sel=null;renderUI()}

@@ -98,6 +98,11 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;touch
 .parts{font-size:13px;margin:4px 0 0;padding:0;list-style:none}
 .parts li{display:flex;justify-content:space-between}
 .trade{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.pol{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-top:2px dashed var(--soft)}
+.pol:first-of-type{border-top:0}
+.pol span.muted{font-size:12.5px}
+.pol .btn{flex:none;white-space:nowrap}
+.pol .btn[aria-pressed="true"]{background:var(--accent);color:#fff}
 .setup{max-width:1000px;margin:0 auto;padding:20px 16px 32px}
 .setup h1{font-size:40px;margin:0 0 10px;color:var(--accent);text-shadow:3px 3px 0 var(--edge)}
 .setup .lbl{margin:10px 0 2px;color:var(--muted);font-size:13px}

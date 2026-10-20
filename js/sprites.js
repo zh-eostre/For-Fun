@@ -144,6 +144,13 @@ const SPR={
     P(g,ox+5,oy+2,6,3,'#3F6FA8');P(g,ox+6,oy+3,4,1,'#9FD3F0');P(g,ox+7,oy+0,1,2,'#6F737A');P(g,ox+7,oy+0,1,1,'#E04A3A');
     if(p.ice)P(g,ox+5,oy+2,6,1,'#fff');
   },
+  lab(g,ox,oy,p){
+    P(g,ox+0,oy+15,16,1,SH);P(g,ox+1,oy+6,14,9,'#E8EEF2');P(g,ox+0,oy+5,16,1,'#6F737A');P(g,ox+1,oy+14,14,1,'#B9BEC4');
+    if(p.ice)P(g,ox+0,oy+5,16,1,'#fff');
+    P(g,ox+2,oy+8,12,2,'#9FD3F0');P(g,ox+2,oy+9,12,1,'#7FB8DA');P(g,ox+7,oy+11,2,4,'#3F6FA8');
+    P(g,ox+3,oy+12,1,1,'#7CC24E');P(g,ox+2,oy+13,3,1,'#7CC24E');P(g,ox+3,oy+11,1,1,'#B9BEC4');
+    P(g,ox+10,oy+2,4,1,'#B9BEC4');P(g,ox+9,oy+1,1,1,'#B9BEC4');P(g,ox+14,oy+1,1,1,'#B9BEC4');P(g,ox+12,oy+3,1,2,'#6F737A');P(g,ox+11,oy+0,1,2,'#8C9198');
+  },
   farm(g,ox,oy,p){
     P(g,ox+1,oy+3,14,12,p.ice?'#CFC3B8':'#8A5A33');
     for(const y of [4,7,10,13]){

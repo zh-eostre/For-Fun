@@ -10,7 +10,7 @@ function recompute(){
     if(!isRoad(b)&&b.type!=='hall'){const d=faceDir(x,y,b.dir,b.type);if(d!==b.dir){b.dir=d;dirty=true}}
   }
   let free=popTotal();
-  const order=['farm','fish','lumber','quarry','market','school','temple','uni','spire','bakery','tea','mulberry','weave','winery','tavern','kiln','firm','workshop'];
+  const order=['farm','fish','lumber','quarry','market','school','temple','lab','uni','spire','bakery','tea','mulberry','weave','winery','tavern','kiln','firm','workshop'];
   const wp=ent().filter(([i,b])=>B[b.type].workers).sort((a,c)=>order.indexOf(a[1].type)-order.indexOf(c[1].type)||a[1].id-c[1].id);
   for(const [i,b] of wp){const need=workersOf(b);b.workers=(b.conn&&!b.paused&&need)?Math.min(need,free):0;free-=b.workers;b.eff=need?b.workers/need:0}
   S.idle=free;
@@ -22,26 +22,27 @@ function recompute(){
     [b.noise,b.noiseBy]=noiseAt(x,y);
   }
   // school places: schools (and a finished university) offer seats town-wide; houses from 砖房 up take them, biggest level first
-  let seats=ent().reduce((t,[i,b])=>t+(B[b.type].seats&&b.conn&&b.eff>0&&(!isMega(b)||b.built)?B[b.type].seats*b.eff:0),0);
+  let seats=ent().reduce((t,[i,b])=>t+(B[b.type].seats&&b.conn&&b.eff>0&&(!isMega(b)||b.built)?B[b.type].seats*b.eff*(S.tech.edu?1.5:1):0),0);
   S.seats=Math.floor(seats);S.seatsUsed=0;S.seatsWanted=0;
   for(const b of houses().filter(b=>b.lv>=2).sort((a,c)=>c.lv-a.lv||a.id-c.id)){S.seatsWanted+=b.res;if(seats>=b.res){b.cov.school=1;seats-=b.res;S.seatsUsed+=b.res}}
 }
+const RAW=['farm','fish','lumber','quarry','mulberry'];  // what 加班补贴 speeds up
 function prodOf(b,i){
-  const o={},[x,y]=XY(i),s=season(),e=b.eff||0,m=isUp(b)?1.5:1;
+  const o={},[x,y]=XY(i),s=season(),e=b.eff||0,m=(isUp(b)?1.5:1)*(S.pol.overtime&&RAW.includes(b.type)?1.15:1);
   switch(b.type){
-    case 'farm':if(e){let f=(3+(adj4(x,y,'w')||nearWell(x,y)?1:0))*[1,1.2,1.5,0][s]*e;if(S.ev.harvest)f*=2;o.food=f*m}break;
-    case 'fish':if(e)o.food=Math.min(3,.5*fishWater(x,y)[0])*(s===3?.6:1)*e*m;break;
+    case 'farm':if(e){let f=(3+(adj4(x,y,'w')||nearWell(x,y)?1:0))*[1,1.2,1.5,0][s]*e;if(S.ev.harvest)f*=2;o.food=f*m*(S.tech.seeds?1.2:1)}break;
+    case 'fish':if(e)o.food=Math.min(3,.5*fishWater(x,y)[0])*(s===3&&!S.tech.cold?.6:1)*e*m;break;
     case 'lumber':if(e)o.wood=Math.min(3.5,.5*countR(x,y,2,'t'))*e*m;break;
-    case 'quarry':if(e)o.stone=Math.min(3,count8(x,y,'r'))*e*m;break;
+    case 'quarry':if(e)o.stone=Math.min(3,count8(x,y,'r'))*e*m*(S.tech.drill?1.25:1);break;
     case 'market':if(e)o.coins=3*e;break;
     case 'bakery':if(e)o.food=-2*e;break;
     case 'tea':if(e)o.coins=2*e;break;
     case 'mulberry':if(e)o.silk=3*[1,1.25,1,0][s]*e*m;break;
-    case 'weave':if(e){const k=isUp(b)?2:1;o.silk=-2*e*k;o.cloth=3*e*k}break;
-    case 'winery':if(e){o.food=-3*e;o.wine=2*e}break;
+    case 'weave':if(e){const k=isUp(b)?2:1;o.silk=-2*e*k;o.cloth=3*e*k*(S.tech.loom?1.25:1)}break;
+    case 'winery':if(e){o.food=-3*e;o.wine=2*e*(S.tech.brew?1.5:1)}break;
     case 'tavern':if(e){o.wine=-e;o.coins=4*e}break;
     case 'spire':if(b.built&&e)o.coins=20*e;break;
-    case 'kiln':if(e){o.stone=-2*e;o.wood=-e;o.porcelain=e}break;
+    case 'kiln':if(e){o.stone=-2*e;o.wood=-e;o.porcelain=e*(S.tech.glaze?1.5:1)}break;
     case 'workshop':if(e){const k=isUp(b)?2:1;o.wood=-e*k;o.stone=-e*k;o.coins=6*e*k}break;
     case 'hall':o.coins=2;break;
   }
@@ -53,7 +54,8 @@ const megaOn=t=>ent().some(([i,b])=>b.type===t&&b.built&&b.conn&&b.eff>0);
 const hasMarket=()=>working('market');
 const taxRate=b=>HTAX[b.lv-1]*(b.lv===4&&b.cov&&b.cov.tavern?1.25:1);  // 公寓 near a tavern pay more
 function taxIncome(){return houses().reduce((s,b)=>s+b.res*taxRate(b),0)*[.6,1,1.5][S.tax]*(megaOn('uni')?1.1:1)}
-function heatNeed(){let h=houses().reduce((s,b)=>s+(b.res?HHEAT[b.lv-1]:0),0);if(S.ev.blizzard)h*=2;return h}
+const heatFactor=()=>(S.tech.stove?.75:1)*(S.pol.heating?.5:1);
+function heatNeed(){let h=houses().reduce((s,b)=>s+(b.res?HHEAT[b.lv-1]:0),0)*heatFactor();if(S.ev.blizzard)h*=2;return h}
 function happyParts(foodShort,heatShort){
   const parts=[['基础',50]],pop=popTotal();
   if(pop)parts.push(foodShort?['粮食短缺',-25]:['粮食充足',10]);
@@ -69,6 +71,8 @@ function happyParts(foodShort,heatShort){
   if(n&&Math.round(nz/n))parts.push(['工业噪音',-Math.round(nz/n)]);
   if(cnt('tower')&&ent().some(([i,b])=>b.type==='tower'&&b.conn))parts.push(['钟楼',10]);
   if(megaOn('spire'))parts.push(['观光塔',10]);
+  if(S.pol.clinic)parts.push(['免费诊所',5]);
+  if(S.pol.overtime)parts.push(['加班',-3]);
   if(S.ev.fest)parts.push(['庙会',15]);
   return {parts,t:clamp(parts.reduce((s,p)=>s+p[1],0),0,100)};
 }
@@ -95,6 +99,19 @@ function buildStep(b){
   if(b.stage>=d.stages.length){b.built=true;log(`${d.n}建成了！`,'good');toast(`🎉 ${d.n}建成了`)}
   else log(`${d.n}第 ${b.stage} 期完工，可以投入下一期的材料了。`,'good');
 }
+const polCost=k=>Math.round(POLICIES[k].base+POLICIES[k].per*popTotal());
+function payPolicies(s){
+  for(const k in POLICIES){
+    if(!S.pol[k]||POLICIES[k].winter&&s!==3)continue;
+    const c=polCost(k);if(S.res.coins<c){S.pol[k]=false;log(`钱不够了，「${POLICIES[k].n}」政策已停止。`,'bad')}else S.res.coins-=c;
+  }
+}
+function researchStep(){
+  if(!S.research)return;
+  const lab=Object.values(S.b).find(b=>b.type==='lab'&&b.conn&&b.eff>0);if(!lab)return;
+  const t=TECHS[S.research.k];S.research.prog+=lab.eff;
+  if(S.research.prog>=t.days){S.tech[S.research.k]=true;log(`研究完成：「${t.n}」，${t.d}。`,'good');toast(`🔬 研究完成：${t.n}`);S.research=null}
+}
 function dayTick(){
   recompute();
   const s=season(),before={...S.res},pop=popTotal();
@@ -110,6 +127,7 @@ function dayTick(){
     const o=prodOf(b,i);for(const k in o)S.res[k]+=o[k];
   }
   S.res.coins+=taxIncome();
+  payPolicies(s);researchStep();
   S.res.food-=pop*.25;
   if(s===3)S.res.wood-=heatNeed();
   const clothNeed=houses().reduce((t,b)=>t+(b.lv===4?b.res*CLOTH_PER:0),0);S.res.cloth-=clothNeed;

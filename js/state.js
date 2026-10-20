@@ -63,7 +63,7 @@ function faceDir(x,y,cur,type){
 const linkTo=(x,y,dx,dy)=>{const b=bAt(x+dx,y+dy);return !!b&&(isRoad(b)||b.type==='hall'||N4[b.dir??2][0]===-dx&&N4[b.dir??2][1]===-dy)};
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 // fill in fields added after a save was made
-function migrate(d){for(const k of Object.keys(RI)){d.res[k]??=0;d.delta[k]??=0}d.short.cloth??=0;return d}
+function migrate(d){for(const k of Object.keys(RI)){d.res[k]??=0;d.delta[k]??=0}d.short.cloth??=0;d.pol??={};d.tech??={};d.research??=null;return d}
 function load(){try{const t=localStorage.getItem(KEY);if(t){const d=JSON.parse(t);if(d&&d.v===1)return migrate(d)}}catch(e){}return null}
 function log(t,c=''){S.log.unshift({d:`${yearN()}年${SN[season()]}${dayIn()}日`,t,c});S.log=S.log.slice(0,40)}
 function gain(r){for(const k in r)S.res[k]=(S.res[k]||0)+r[k];const c=storeCap();for(const k of STORED)S.res[k]=Math.min(c,S.res[k])}

@@ -35,7 +35,7 @@ function genMap(kind){
 function newState(kind){
   const hx=W>>1,hy=H>>1;
   const st={v:1,W,H,kind,day:0,t:genMap(kind),b:{},nid:1,res:{coins:120,wood:45,stone:15,food:40,silk:0,cloth:0,wine:0,porcelain:0},delta:{coins:0,wood:0,stone:0,food:0,silk:0,cloth:0,wine:0,porcelain:0},
-     happy:60,tax:1,rank:0,q:0,bgDone:[],ev:{harvest:0,blizzard:0,fest:0},nextEvent:12,log:[],short:{food:0,heat:0,cloth:0},hall:I(hx,hy),won:false};
+     happy:60,tax:1,rank:0,q:0,bgDone:[],pol:{},tech:{},research:null,ev:{harvest:0,blizzard:0,fest:0},nextEvent:12,log:[],short:{food:0,heat:0,cloth:0},hall:I(hx,hy),won:false};
   st.b[st.hall]={type:'hall',id:0};
   [[hx-2,hy],[hx-1,hy],[hx+1,hy],[hx+2,hy]].forEach(([x,y])=>st.b[I(x,y)]={type:'road',id:st.nid++});
   return st;
