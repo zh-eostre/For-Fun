@@ -14,14 +14,17 @@ function recompute(){
   const wp=ent().filter(([i,b])=>B[b.type].workers).sort((a,c)=>order.indexOf(a[1].type)-order.indexOf(c[1].type)||a[1].id-c[1].id);
   for(const [i,b] of wp){const need=workersOf(b);b.workers=(b.conn&&!b.paused&&need)?Math.min(need,free):0;free-=b.workers;b.eff=need?b.workers/need:0}
   S.idle=free;
-  const uniOn=megaOn('uni');  // a working university counts as school cover everywhere
   const svcs=ent().filter(([i,b])=>B[b.type].svc&&b.conn&&(!B[b.type].workers||b.eff>0)&&!b.dry);
   for(const [i,b] of ent()){
     if(b.type!=='house')continue;
-    const [x,y]=XY(i);b.cov=uniOn?{school:1}:{};
+    const [x,y]=XY(i);b.cov={};
     for(const [j,s] of svcs){const [sx,sy]=XY(j),r=radiusOf(s);if((sx-x)**2+(sy-y)**2<=r*r)b.cov[B[s.type].svc]=1}
     [b.noise,b.noiseBy]=noiseAt(x,y);
   }
+  // school places: schools (and a finished university) offer seats town-wide; houses from 砖房 up take them, biggest level first
+  let seats=ent().reduce((t,[i,b])=>t+(B[b.type].seats&&b.conn&&b.eff>0&&(!isMega(b)||b.built)?B[b.type].seats*b.eff:0),0);
+  S.seats=Math.floor(seats);S.seatsUsed=0;S.seatsWanted=0;
+  for(const b of houses().filter(b=>b.lv>=2).sort((a,c)=>c.lv-a.lv||a.id-c.id)){S.seatsWanted+=b.res;if(seats>=b.res){b.cov.school=1;seats-=b.res;S.seatsUsed+=b.res}}
 }
 function prodOf(b,i){
   const o={},[x,y]=XY(i),s=season(),e=b.eff||0,m=isUp(b)?1.5:1;
@@ -72,8 +75,8 @@ function happyParts(foodShort,heatShort){
 function houseReq(b){
   const c=b.cov||{},m=hasMarket(),cap=HCAP[b.lv-1],need=Math.ceil(cap*.75);
   if(b.lv===1)return [['连上道路',b.conn],['水井覆盖',!!c.water],['镇上有市场',m],['幸福度 50 以上',S.happy>=50],[`住满 ${need} 人`,b.res>=need]];
-  if(b.lv===2)return [['连上道路',b.conn],['水井覆盖',!!c.water],['镇上有市场',m],['学校覆盖',!!c.school],['公园或神庙覆盖',!!(c.park||c.temple)],['幸福度 65 以上',S.happy>=65],[`住满 ${need} 人`,b.res>=need]];
-  if(b.lv===3)return [[`小镇达到「${RANKS[LV4_RANK].n}」`,S.rank>=LV4_RANK],['连上道路',b.conn],['水井覆盖',!!c.water],['镇上有市场',m],['学校覆盖',!!c.school],['公园或神庙覆盖',!!(c.park||c.temple)],['镇上有布',S.res.cloth>=1&&!S.short.cloth],['幸福度 75 以上',S.happy>=75],[`住满 ${need} 人`,b.res>=need]];
+  if(b.lv===2)return [['连上道路',b.conn],['水井覆盖',!!c.water],['镇上有市场',m],['有学位',!!c.school],['公园或神庙覆盖',!!(c.park||c.temple)],['幸福度 65 以上',S.happy>=65],[`住满 ${need} 人`,b.res>=need]];
+  if(b.lv===3)return [[`小镇达到「${RANKS[LV4_RANK].n}」`,S.rank>=LV4_RANK],['连上道路',b.conn],['水井覆盖',!!c.water],['镇上有市场',m],['有学位',!!c.school],['公园或神庙覆盖',!!(c.park||c.temple)],['镇上有布',S.res.cloth>=1&&!S.short.cloth],['幸福度 75 以上',S.happy>=75],[`住满 ${need} 人`,b.res>=need]];
   return null;
 }
 function houseKeep(b){const c=b.cov||{},m=hasMarket();if(b.lv===2)return b.conn&&c.water&&m&&S.happy>=40;if(b.lv===3)return b.conn&&c.water&&m&&c.school&&(c.park||c.temple)&&S.happy>=55;if(b.lv===4)return b.conn&&c.water&&m&&c.school&&(c.park||c.temple)&&!S.short.cloth&&S.happy>=65;return true}

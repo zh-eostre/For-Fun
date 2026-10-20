@@ -87,7 +87,7 @@ function renderSide(){
   const lg=S.log.slice(0,8).map(l=>`<li class="${l.c}"><span class="d">${l.d}</span>${l.t}</li>`).join('');
   document.getElementById('side').innerHTML=`
   <section class="box" id="info">${vInfo()}</section>
-  ${winter}${trade}
+  ${winter}${(S.seatsWanted||0)>(S.seats||0)&&S.rank>=B.school.rank?`<section class="box"><h3 class="hd">🎓 学位不够</h3><p>砖房以上的民居一共需要 ${S.seatsWanted} 个学位，现在只有 ${S.seats}。没学位的房子没法升级，宅院和公寓还会退化。再建一所学校吧。</p></section>`:''}${trade}
   <section class="box"><h3 class="hd">🏘️ ${RANKS[r].n}</h3>
    ${nx?`<div class="prog"><i style="width:${Math.min(100,pop/nx.pop*100)}%"></i></div>
    <p class="muted">人口 ${pop}/${nx.pop} 升级为「${nx.n}」，解锁：${[...ORDER.filter(k=>B[k].rank===r+1).map(k=>B[k].n),...(r+1===UP_RANK?['建筑升级']:[])].join('、')||'荣誉'}</p>`:'<p class="ok">已经是最高等级了！</p>'}
@@ -111,6 +111,7 @@ function preview(type,x,y){
   if(type==='farm')return adj4(x,y,'w')?'，紧挨着水，产量 +1':nearWell(x,y)?'，有水井灌溉，产量 +1':'，没有灌溉（挨着水或 2 格内有水井，产量 +1）';
   if(B[type].noise){let n=0;for(const [i,b] of ent()){if(b.type!=='house')continue;const [hx,hy]=XY(i);if((hx-x)**2+(hy-y)**2<=NOISE_R**2)n++}return (type==='lumber'?lumberTxt(x,y):type==='quarry'?quarryTxt(x,y):'')+(n?`，会吵到 ${n} 栋民居`:'')}
   if(type==='house'){const [nz,by]=noiseAt(x,y);return nz?`，但这里很吵（${B[by].n}，幸福度 −${nz}）`:''}
+  if(B[type].seats)return `，提供 ${B[type].seats} 个学位（全镇现在已用 ${S.seatsUsed||0} / 共 ${S.seats||0}）`;
   if(B[type].r){let n=0;for(const [i,b] of ent()){if(b.type!=='house')continue;const [hx,hy]=XY(i);if((hx-x)**2+(hy-y)**2<=B[type].r**2)n++}return `，能覆盖 ${n} 栋民居`}
   return '';
 }
@@ -140,8 +141,8 @@ function vInfo(){
   if(b.type==='house'){
     const req=houseReq(b),c=b.cov||{};
     h=`<h3 class="hd"><img src="${b.lv===1?ICON.house:ICON['house'+b.lv]}" alt="" style="width:24px;height:24px;image-rendering:pixelated;vertical-align:-5px"> ${HN[b.lv-1]}（${b.lv} 级）</h3>
-    <dl class="kv"><dt>居民</dt><dd>${b.res}/${HCAP[b.lv-1]}</dd><dt>每人交税</dt><dd>💰${fmt(taxRate(b))}/天${taxRate(b)>HTAX[b.lv-1]?'（饭店 +25%）':''}</dd>
-    <dt>覆盖服务</dt><dd>${['water','park','tea','tavern','school','temple'].filter(k=>c[k]).map(k=>({water:'水井',park:'公园',tea:'茶馆',tavern:'饭店',school:'学校',temple:'神庙'})[k]).join('、')||'无'}</dd>${inNet(c)?'<dt>幸福网</dt><dd class="ok">+5</dd>':''}${b.noise?`<dt>噪音</dt><dd class="bad">${B[b.noiseBy].n} −${b.noise}</dd>`:''}</dl>`;
+    <dl class="kv"><dt>居民</dt><dd>${b.res}/${HCAP[b.lv-1]}</dd><dt>每人交税</dt><dd>💰${+taxRate(b).toFixed(2)}/天${taxRate(b)>HTAX[b.lv-1]?'（饭店 +25%）':''}</dd>
+    <dt>覆盖服务</dt><dd>${['water','park','tea','tavern','temple'].filter(k=>c[k]).map(k=>({water:'水井',park:'公园',tea:'茶馆',tavern:'饭店',temple:'神庙'})[k]).join('、')||'无'}</dd>${inNet(c)?'<dt>幸福网</dt><dd class="ok">+5</dd>':''}${b.noise?`<dt>噪音</dt><dd class="bad">${B[b.noiseBy].n} −${b.noise}</dd>`:''}${b.lv>=2?`<dt>学位</dt><dd class="${c.school?'ok':'bad'}">${c.school?'有':'没有，学校名额不够'}</dd>`:''}</dl>`;
     if(!b.conn)h+='<p class="bad">没有连到道路，居民不会搬进来，住着的也会离开。</p>';
     if(req)h+=`<p><b>升级成${HN[b.lv]}还需要：</b></p><ul class="reqs">${req.map(([l,ok])=>`<li class="${ok?'y':''}">${l}</li>`).join('')}</ul>${req.every(r=>r[1])?'<p class="ok">条件都满足了，很快就会升级。</p>':''}`;
     if(req){const c=HUP[b.lv-1],ok=req.slice(0,-1).every(r=>r[1]);h+=`<p class="muted">也可以花钱立刻升级，不用等住满，但其他条件要先满足。</p><button class="btn sm" data-act="upgrade" ${ok&&canPay(c)?'':'disabled'}>花 ${rTxt(c)} 升级成${HN[b.lv]}</button> `}
@@ -153,6 +154,7 @@ function vInfo(){
     if(out)h+=`<dt>每天</dt><dd>${out}</dd>`;
     if(d.svc){let n=0;for(const [j,hb] of ent()){if(hb.type==='house'&&hb.cov&&hb.cov[d.svc])n++}h+=`<dt>覆盖</dt><dd>${n} 栋民居</dd>`}
     if(isMega(b)&&!b.built){const st=d.stages[b.stage];h+=`<dt>进度</dt><dd>第 ${b.stage+1}/${d.stages.length} 期，${b.paid?`已干 ${fmt(b.prog)}/${st.days} 天`:'等材料'}</dd>`}
+    if(d.seats)h+=`<dt>全镇学位</dt><dd>已用 ${S.seatsUsed||0} / 共 ${S.seats||0}</dd>`;
     if(b.type==='firm')h+=`<dt>昨天卖出</dt><dd>${b.sold&&b.soldFor?`${rTxt(b.sold)} → 💰${b.soldFor}`:'没有可卖的货'}</dd>`;
     if(b.type==='farm')h+=`<dt>灌溉</dt><dd>${adj4(x,y,'w')?'挨着水':nearWell(x,y)?'水井':'无'}</dd>`;
     if(b.type==='farm'&&season()===3)h+='<dt>状态</dt><dd>冬天停产</dd>';
