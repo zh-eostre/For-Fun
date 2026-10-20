@@ -128,6 +128,21 @@ const SPR={
     P(g,ox+2,oy+10,12,4,'#A0703F');P(g,ox+2,oy+13,12,1,TIM);
     P(g,ox+3,oy+9,2,1,'#E04A3A');P(g,ox+6,oy+9,2,1,'#F0A030');P(g,ox+9,oy+9,2,1,'#7CC24E');P(g,ox+12,oy+9,1,1,'#E2B93B');
   },
+  bakery(g,ox,oy,p){
+    P(g,ox+1,oy+14,14,1,SH);P(g,ox+2,oy+7,12,7,'#E8C99A');P(g,ox+2,oy+13,12,1,'#C9A97A');
+    P(g,ox+11,oy+1,2,4,'#8C5A3C');rows(g,ox,oy,[[3,10,4],[2,12,5],[1,14,6]],'#9C5B3C');P(g,ox+2,oy+7,12,1,'#7A4530');
+    if(p.ice)P(g,ox+3,oy+4,10,1,'#fff');
+    P(g,ox+3,oy+9,3,3,WIN);P(g,ox+3,oy+10,3,1,'#C98A3A');P(g,ox+7,oy+10,2,4,DOOR);
+    P(g,ox+10,oy+9,3,2,'#D9A35A');P(g,ox+10,oy+9,3,1,'#F0C27A');
+  },
+  tea(g,ox,oy,p){
+    P(g,ox+1,oy+14,14,1,SH);P(g,ox+2,oy+8,12,6,'#C9A06A');P(g,ox+2,oy+8,1,6,'#B5463A');P(g,ox+13,oy+8,1,6,'#B5463A');
+    rows(g,ox,oy,[[4,8,3],[3,10,4],[1,14,5],[0,16,6]],'#4A6B5A');P(g,ox+0,oy+5,1,1,'#4A6B5A');P(g,ox+15,oy+5,1,1,'#4A6B5A');P(g,ox+1,oy+7,14,1,'#2F4A3E');
+    if(p.ice){P(g,ox+4,oy+3,8,1,'#fff');P(g,ox+3,oy+4,10,1,'#fff')}
+    P(g,ox+4,oy+8,2,2,'#E04A3A');P(g,ox+10,oy+8,2,2,'#E04A3A');P(g,ox+4,oy+10,2,1,'#F0A030');P(g,ox+10,oy+10,2,1,'#F0A030');
+    P(g,ox+6,oy+10,4,4,'#5B3A1E');P(g,ox+6,oy+10,4,1,'#3F6FA8');
+    P(g,ox+14,oy+0,1,6,'#5B3A1E');P(g,ox+12,oy+0,2,3,'#F2EEE6');P(g,ox+12,oy+1,2,1,'#2E2219');
+  },
   park(g,ox,oy,p){
     P(g,ox+1,oy+1,14,14,p.lawn);P(g,ox+7,oy+1,2,14,p.sand);P(g,ox+1,oy+7,14,2,p.sand);
     P(g,ox+5,oy+5,6,6,'#B6BBC1');P(g,ox+6,oy+6,4,4,p.ice?'#E8F5FD':'#6FB0E8');P(g,ox+7,oy+7,2,2,'#fff');

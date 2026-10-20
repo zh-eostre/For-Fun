@@ -10,7 +10,7 @@ function recompute(){
     if(!isRoad(b)&&b.type!=='hall'){const d=faceDir(x,y,b.dir,b.type);if(d!==b.dir){b.dir=d;dirty=true}}
   }
   let free=popTotal();
-  const order=['farm','fish','lumber','quarry','market','school','temple','workshop'];
+  const order=['farm','fish','lumber','quarry','market','school','temple','bakery','tea','workshop'];
   const wp=ent().filter(([i,b])=>B[b.type].workers).sort((a,c)=>order.indexOf(a[1].type)-order.indexOf(c[1].type)||a[1].id-c[1].id);
   for(const [i,b] of wp){const need=workersOf(b);b.workers=(b.conn&&!b.paused)?Math.min(need,free):0;free-=b.workers;b.eff=b.workers/need}
   S.idle=free;
@@ -29,6 +29,8 @@ function prodOf(b,i){
     case 'lumber':if(e)o.wood=Math.min(3.5,.5*countR(x,y,2,'t'))*e*m;break;
     case 'quarry':if(e)o.stone=Math.min(3,count8(x,y,'r'))*e*m;break;
     case 'market':if(e)o.coins=3*e;break;
+    case 'bakery':if(e)o.food=-2*e;break;
+    case 'tea':if(e)o.coins=2*e;break;
     case 'workshop':if(e){const k=isUp(b)?2:1;o.wood=-e*k;o.stone=-e*k;o.coins=6*e*k}break;
     case 'hall':o.coins=2;break;
   }
@@ -43,9 +45,12 @@ function happyParts(foodShort,heatShort){
   const parts=[['基础',50]],pop=popTotal();
   if(pop)parts.push(foodShort?['粮食短缺',-25]:['粮食充足',10]);
   if(pop&&working('farm')&&working('fish'))parts.push(['饮食多样',5]);
+  // each working bakery feeds bread to 40 residents; none while food has run out
+  const bread=pop&&!foodShort?Math.round(5*Math.min(1,ent().reduce((s,[i,b])=>s+(b.type==='bakery'&&b.conn?40*(b.eff||0):0),0)/pop)):0;
+  if(bread)parts.push(['面包',bread]);
   if(heatShort)parts.push(['冬天缺柴',-20]);
   parts.push(['税率'+['低','中','高'][S.tax],[8,0,-12][S.tax]]);
-  let sv=0,n=0;const m=hasMarket();houses().forEach(b=>{if(!b.res)return;const c=b.cov||{};sv+=b.res*((c.water?4:0)+(m?4:0)+(c.park?8:0)+(c.temple?12:0));n+=b.res});
+  let sv=0,n=0;const m=hasMarket();houses().forEach(b=>{if(!b.res)return;const c=b.cov||{};sv+=b.res*((c.water?4:0)+(m?4:0)+(c.park?8:0)+(c.tea?6:0)+(c.temple?12:0));n+=b.res});
   if(n)parts.push(['公共服务',Math.round(sv/n)]);
   if(cnt('tower')&&ent().some(([i,b])=>b.type==='tower'&&b.conn))parts.push(['钟楼',10]);
   if(S.ev.fest)parts.push(['庙会',15]);
@@ -64,6 +69,7 @@ function dayTick(){
   const s=season(),before={...S.res},pop=popTotal();
   for(const [i,b] of ent()){
     if(b.type==='workshop'&&(S.res.wood<(isUp(b)?2:1)||S.res.stone<(isUp(b)?2:1)))continue;
+    if(b.type==='bakery'&&S.res.food<2)continue;
     const o=prodOf(b,i);for(const k in o)S.res[k]+=o[k];
   }
   S.res.coins+=taxIncome();

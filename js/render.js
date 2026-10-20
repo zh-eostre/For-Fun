@@ -46,6 +46,7 @@ function draw(now){
     const [x,y]=XY(i),ox=x*T,oy=y*T;
     let sx=-1,sy=0;
     if(b.type==='workshop'&&b.eff>0){sx=ox+10;sy=oy+1}
+    else if(b.type==='bakery'&&b.eff>0){sx=ox+11;sy=oy+0}
     else if(s===3&&b.type==='house'&&b.res>0&&b.lv>1){sx=ox+(b.lv===2?11:12);sy=oy}
     if(sx>=0)for(let k=0;k<3;k++){const t=((now/1100)+k/3+(hash(x,y,3)%10)/10)%1;P(ctx,Math.round(sx+Math.sin(t*6+k)*1.5),Math.round(sy-t*9),2,2,`rgba(225,225,225,${(.7*(1-t)).toFixed(2)})`)}
   }

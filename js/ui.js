@@ -136,7 +136,7 @@ function vInfo(){
     const req=houseReq(b),c=b.cov||{};
     h=`<h3 class="hd"><img src="${b.lv===1?ICON.house:ICON['house'+b.lv]}" alt="" style="width:24px;height:24px;image-rendering:pixelated;vertical-align:-5px"> ${HN[b.lv-1]}（${b.lv} 级）</h3>
     <dl class="kv"><dt>居民</dt><dd>${b.res}/${HCAP[b.lv-1]}</dd><dt>每人交税</dt><dd>💰${HTAX[b.lv-1]}/天</dd>
-    <dt>覆盖服务</dt><dd>${['water','park','school','temple'].filter(k=>c[k]).map(k=>({water:'水井',park:'公园',school:'学校',temple:'神庙'})[k]).join('、')||'无'}</dd></dl>`;
+    <dt>覆盖服务</dt><dd>${['water','park','tea','school','temple'].filter(k=>c[k]).map(k=>({water:'水井',park:'公园',tea:'茶馆',school:'学校',temple:'神庙'})[k]).join('、')||'无'}</dd></dl>`;
     if(!b.conn)h+='<p class="bad">没有连到道路，居民不会搬进来，住着的也会离开。</p>';
     if(req)h+=`<p><b>升级成${HN[b.lv]}还需要：</b></p><ul class="reqs">${req.map(([l,ok])=>`<li class="${ok?'y':''}">${l}</li>`).join('')}</ul>${req.every(r=>r[1])?'<p class="ok">条件都满足了，很快就会升级。</p>':''}`;
     if(req){const c=HUP[b.lv-1],ok=req.slice(0,-1).every(r=>r[1]);h+=`<p class="muted">也可以花钱立刻升级，不用等住满，但其他条件要先满足。</p><button class="btn sm" data-act="upgrade" ${ok&&canPay(c)?'':'disabled'}>花 ${rTxt(c)} 升级成${HN[b.lv]}</button> `}

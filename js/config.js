@@ -22,15 +22,17 @@ const B={
   store:{n:'仓库',cost:{wood:20},rank:0,cat:0,up:{cost:{wood:30,stone:15},d:'储存上限 +150 → +300'},desc:'木材、石头、粮食的储存上限各 +150。冬天前很需要。不用连路。'},
   plant:{n:'种树',cost:{coins:3},rank:0,cat:4,desc:'在空地上种一棵树。伐木场旁边多种树可以提高产量。'},
   fish:{n:'渔屋',cost:{wood:15},workers:2,rank:1,cat:2,need:'water',up:{cost:{wood:22,stone:10},workers:3,d:'产量 ×1.5'},desc:'必须紧挨着水。2 格内的水面越多，产量越高（每格 0.5，最多 3）。四季都能捕鱼，冬天结冰产量打 6 折。和农场同时运作，全镇幸福度 +5。'},
-  market:{n:'市场',cost:{wood:20,stone:10},workers:2,rank:1,cat:3,desc:'镇上有一座运作中的市场，民居才能升级。每天另赚 3 金币，还能在侧栏买卖材料。'},
+  market:{n:'市场',cost:{wood:20,stone:10},workers:4,rank:1,cat:3,desc:'镇上有一座运作中的市场，民居才能升级。每天另赚 3 金币，还能在侧栏买卖材料。'},
+  bakery:{n:'面包房',cost:{wood:20,stone:10,coins:15},workers:3,rank:1,cat:3,desc:'每天用 2 粮食烤面包。每座供应 40 位居民，吃上面包的居民越多，全镇幸福度加得越多（最多 +5）。'},
+  tea:{n:'茶馆',cost:{wood:25,stone:15,coins:30},workers:3,rank:2,cat:3,r:4,svc:'tea',desc:'4 格内的居民更开心。每天另赚 2 金币。'},
   park:{n:'公园',cost:{coins:25},rank:1,cat:3,r:3,svc:'park',upkeep:.5,up:{cost:{coins:38,stone:10},r:4,d:'覆盖半径 3 → 4'},desc:'3 格内的居民更开心。是宅院的升级条件之一。不用连路。'},
-  school:{n:'学校',cost:{wood:20,stone:30,coins:40},workers:2,rank:2,cat:3,r:5,svc:'school',upkeep:1,desc:'5 格内的砖房才能升级成宅院。'},
+  school:{n:'学校',cost:{wood:20,stone:30,coins:40},workers:4,rank:2,cat:3,r:5,svc:'school',upkeep:1,desc:'5 格内的砖房才能升级成宅院。'},
   workshop:{n:'工坊',cost:{wood:15,stone:20},workers:2,rank:2,cat:2,up:{cost:{wood:22,stone:30},workers:4,d:'每天加工 2 份：2 木材 + 2 石头 → 12 金币'},desc:'每天把 1 木材和 1 石头加工成 6 金币。用来消化多余的材料。'},
-  temple:{n:'神庙',cost:{stone:50,coins:60},workers:1,rank:3,cat:3,r:6,svc:'temple',upkeep:1,desc:'6 格内的居民幸福感大增，也能代替公园让砖房升级。'},
+  temple:{n:'神庙',cost:{stone:50,coins:60},workers:3,rank:3,cat:3,r:6,svc:'temple',upkeep:1,desc:'6 格内的居民幸福感大增，也能代替公园让砖房升级。'},
   tower:{n:'钟楼',cost:{stone:120,wood:80,coins:300},rank:4,cat:5,unique:1,desc:'小镇的地标，只能建一座。全镇幸福度 +10。不用连路。'},
   hall:{n:'市政厅',desc:'小镇的中心，每天收入 2 金币。所有道路都要从这里连出去。'}
 };
-const ORDER=['road','bridge','house','store','farm','fish','lumber','quarry','workshop','well','market','park','school','temple','plant','tower'];
+const ORDER=['road','bridge','house','store','farm','fish','lumber','quarry','workshop','well','market','bakery','tea','park','school','temple','plant','tower'];
 const UP_RANK=2;  // town rank that unlocks building upgrades (houses upgrade on their own)
 const RANKS=[
   {n:'拓荒地',pop:0},
