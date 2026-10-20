@@ -5,12 +5,14 @@ const KINDS={valley:{n:'河谷',e:'🏞️',d:'一条河穿过平原，树林和
 const SEASON_DAYS=30,DAY_MS=5000;
 const SN=['春','夏','秋','冬'],SICON=['🌸','☀️','🍂','❄️'];
 const N4=[[0,-1],[1,0],[0,1],[-1,0]];
-const RI={coins:'💰',wood:'🪵',stone:'🪨',food:'🌾',silk:'🧵',cloth:'🧣',wine:'🍶'};
-const RN={coins:'金币',wood:'木材',stone:'石头',food:'粮食',silk:'丝',cloth:'布',wine:'酒'};
-const STORED=['wood','stone','food','silk','cloth','wine'];  // goods limited by warehouse capacity
+const RI={coins:'💰',wood:'🪵',stone:'🪨',food:'🌾',silk:'🧵',cloth:'🧣',wine:'🍶',porcelain:'🏺'};
+const RN={coins:'金币',wood:'木材',stone:'石头',food:'粮食',silk:'丝',cloth:'布',wine:'酒',porcelain:'瓷器'};
+const STORED=['wood','stone','food','silk','cloth','wine','porcelain'];  // goods limited by warehouse capacity
 const HN=['木屋','砖房','宅院','府邸'];
 const HCAP=[4,8,14,20],HTAX=[.2,.35,.55,.8],HHEAT=[.3,.45,.6,.75];
-const CLOTH_PER=.04,LV4_RANK=5,WINE_RANK=6;  // cloth each 府邸 resident uses a day; town rank that allows 府邸
+const CLOTH_PER=.04,LV4_RANK=5,WINE_RANK=6,KILN_RANK=7;
+// what a 商行 ships out each day, in order: [good, coins each, amount the town keeps]
+const EXPORTS=[['porcelain',15,0],['cloth',7,30],['wine',6,30]],EXPORT_PER_DAY=3;  // cloth each 府邸 resident uses a day; town rank that allows 府邸
 const HUP=[{wood:15,stone:10,coins:20},{wood:20,stone:30,coins:50},{wood:30,stone:40,coins:100,cloth:10}];  // cost to buy a house's next level outright
 
 const B={
@@ -36,9 +38,11 @@ const B={
   weave:{n:'织坊',cost:{wood:30,stone:20,coins:40},workers:4,rank:5,cat:2,noise:4,desc:'每天把 2 丝织成 2 布。府邸的居民每天都要用布。会吵到 2 格内的民居（幸福度 −4）。'},
   winery:{n:'酒坊',cost:{wood:30,stone:30,coins:60},workers:3,rank:6,cat:2,desc:'每天用 3 粮食酿 2 酒。'},
   tavern:{n:'酒楼',cost:{wood:40,stone:40,coins:100},workers:4,rank:6,cat:3,r:5,svc:'tavern',desc:'每天用 1 酒。5 格内的居民幸福度大增，府邸交的税 +25%。每天另赚 4 金币。没酒时暂停营业。被公园、茶馆、神庙、酒楼中两种覆盖的民居进入幸福网，幸福度再 +5。'},
+  kiln:{n:'瓷窑',cost:{wood:40,stone:60,coins:80},workers:4,rank:7,cat:2,noise:6,desc:'每天用 2 石头和 1 木材烧出 1 瓷器。会吵到 2 格内的民居（幸福度 −6）。'},
+  firm:{n:'商行',cost:{wood:50,stone:30,coins:150},workers:3,rank:7,cat:3,desc:'每天把最多 3 件货卖到外地：先卖瓷器（每件 15 金币），再卖超过 30 的布（每件 7）和酒（每件 6），留够镇上自己用。'},
   hall:{n:'市政厅',desc:'小镇的中心，每天收入 2 金币。所有道路都要从这里连出去。'}
 };
-const ORDER=['road','bridge','house','store','farm','fish','lumber','quarry','workshop','mulberry','weave','winery','well','market','bakery','tea','tavern','park','school','temple','plant','tower'];
+const ORDER=['road','bridge','house','store','farm','fish','lumber','quarry','workshop','mulberry','weave','winery','kiln','well','market','bakery','tea','tavern','firm','park','school','temple','plant','tower'];
 const NOISE_R=2;  // how far industry noise reaches
 const UP_RANK=2;  // town rank that unlocks building upgrades (houses upgrade on their own)
 const RANKS=[
@@ -82,8 +86,12 @@ const QUESTS=[
   {t:'建一座酒坊',c:()=>connCnt('winery')>=1,r:{coins:200}},
   {t:'建一座酒楼',c:()=>connCnt('tavern')>=1,r:{coins:250}},
   {t:'攒下 30 酒',c:()=>S.res.wine>=30,p:()=>`${Math.floor(S.res.wine)}/30`,r:{coins:250}},
-  {t:'人口达到 800',c:()=>popTotal()>=800,p:()=>`${popTotal()}/800`,r:{coins:900}}
+  {t:'人口达到 800',c:()=>popTotal()>=800,p:()=>`${popTotal()}/800`,r:{coins:900}},
+  {t:'建一座瓷窑',c:()=>connCnt('kiln')>=1,r:{coins:300}},
+  {t:'建一座商行',c:()=>connCnt('firm')>=1,r:{coins:300}},
+  {t:'商行累计赚到 1000 金币',c:()=>(S.exported||0)>=1000,p:()=>`${Math.floor(S.exported||0)}/1000`,r:{stone:100}},
+  {t:'人口达到 1200',c:()=>popTotal()>=1200,p:()=>`${popTotal()}/1200`,r:{coins:1500}}
 ];
 
-const TRADE=[{g:{wine:10},r:{coins:50},rank:WINE_RANK},{g:{silk:10},r:{coins:25},rank:LV4_RANK},{g:{cloth:10},r:{coins:60},rank:LV4_RANK},{g:{coins:25},r:{wood:10}},{g:{coins:35},r:{stone:10}},{g:{coins:20},r:{food:10}},{g:{wood:10},r:{coins:10}},{g:{stone:10},r:{coins:14}},{g:{food:10},r:{coins:8}}];
+const TRADE=[{g:{porcelain:10},r:{coins:120},rank:KILN_RANK},{g:{wine:10},r:{coins:50},rank:WINE_RANK},{g:{silk:10},r:{coins:25},rank:LV4_RANK},{g:{cloth:10},r:{coins:60},rank:LV4_RANK},{g:{coins:25},r:{wood:10}},{g:{coins:35},r:{stone:10}},{g:{coins:20},r:{food:10}},{g:{wood:10},r:{coins:10}},{g:{stone:10},r:{coins:14}},{g:{food:10},r:{coins:8}}];
 const TRADES=[{g:{wood:30},r:{coins:45}},{g:{coins:40},r:{food:45}},{g:{stone:20},r:{coins:40}},{g:{coins:50},r:{stone:25}},{g:{food:40},r:{coins:35}},{g:{coins:35},r:{wood:35}},{g:{food:30},r:{wood:30}}];

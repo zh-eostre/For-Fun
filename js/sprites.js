@@ -118,6 +118,21 @@ const SPR={
     P(g,ox+6,oy+11,4,4,'#5B3A1E');P(g,ox+6,oy+11,4,1,'#D24B3C');P(g,ox+3,oy+9,1,2,'#E04A3A');P(g,ox+12,oy+9,1,2,'#E04A3A');
     P(g,ox+15,oy+0,1,8,'#5B3A1E');P(g,ox+13,oy+1,2,4,'#F2EEE6');P(g,ox+13,oy+2,2,1,'#2E2219');
   },
+  kiln(g,ox,oy,p){
+    P(g,ox+1,oy+14,14,1,SH);P(g,ox+11,oy+1,2,5,'#6F737A');
+    rows(g,ox,oy,[[5,6,4],[3,10,5],[2,12,6],[2,12,7]],'#B9653F');P(g,ox+2,oy+8,12,6,'#A8553A');P(g,ox+2,oy+10,12,1,'#8E4430');
+    if(p.ice){P(g,ox+5,oy+4,6,1,'#fff');P(g,ox+3,oy+5,10,1,'#fff')}
+    P(g,ox+6,oy+10,4,4,'#3A2A1E');P(g,ox+7,oy+12,2,2,'#F0A030');P(g,ox+7,oy+11,2,1,'#D24B3C');
+    P(g,ox+13,oy+12,2,2,'#E8F0F5');P(g,ox+13,oy+13,2,1,'#3F6FA8');P(g,ox+0,oy+12,2,2,'#E8F0F5');P(g,ox+0,oy+13,2,1,'#3F6FA8');
+  },
+  firm(g,ox,oy,p){
+    P(g,ox+0,oy+15,16,1,SH);P(g,ox+1,oy+7,14,8,'#D9C6A5');
+    rows(g,ox,oy,[[3,10,3],[2,12,4],[1,14,5],[0,16,6]],'#7A2A22');P(g,ox+0,oy+6,16,1,'#5A1E18');
+    if(p.ice){P(g,ox+3,oy+3,10,1,'#fff');P(g,ox+2,oy+4,12,1,'#fff')}
+    P(g,ox+4,oy+7,8,2,'#2E2219');P(g,ox+5,oy+7,1,1,'#E2B93B');P(g,ox+7,oy+8,2,1,'#E2B93B');P(g,ox+10,oy+7,1,1,'#E2B93B');
+    P(g,ox+2,oy+10,5,4,'#5B3A1E');P(g,ox+9,oy+10,5,4,'#5B3A1E');
+    P(g,ox+3,oy+12,1,2,'#E8F0F5');P(g,ox+5,oy+11,1,3,'#D24B3C');P(g,ox+10,oy+12,2,2,'#E2B93B');P(g,ox+12,oy+11,1,3,'#3F6FA8');
+  },
   farm(g,ox,oy,p){
     P(g,ox+1,oy+3,14,12,p.ice?'#CFC3B8':'#8A5A33');
     for(const y of [4,7,10,13]){

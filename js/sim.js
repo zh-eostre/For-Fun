@@ -10,7 +10,7 @@ function recompute(){
     if(!isRoad(b)&&b.type!=='hall'){const d=faceDir(x,y,b.dir,b.type);if(d!==b.dir){b.dir=d;dirty=true}}
   }
   let free=popTotal();
-  const order=['farm','fish','lumber','quarry','market','school','temple','bakery','tea','mulberry','weave','winery','tavern','workshop'];
+  const order=['farm','fish','lumber','quarry','market','school','temple','bakery','tea','mulberry','weave','winery','tavern','kiln','firm','workshop'];
   const wp=ent().filter(([i,b])=>B[b.type].workers).sort((a,c)=>order.indexOf(a[1].type)-order.indexOf(c[1].type)||a[1].id-c[1].id);
   for(const [i,b] of wp){const need=workersOf(b);b.workers=(b.conn&&!b.paused)?Math.min(need,free):0;free-=b.workers;b.eff=b.workers/need}
   S.idle=free;
@@ -36,6 +36,7 @@ function prodOf(b,i){
     case 'weave':if(e){o.silk=-2*e;o.cloth=2*e}break;
     case 'winery':if(e){o.food=-3*e;o.wine=2*e}break;
     case 'tavern':if(e){o.wine=-e;o.coins=4*e}break;
+    case 'kiln':if(e){o.stone=-2*e;o.wood=-e;o.porcelain=e}break;
     case 'workshop':if(e){const k=isUp(b)?2:1;o.wood=-e*k;o.stone=-e*k;o.coins=6*e*k}break;
     case 'hall':o.coins=2;break;
   }
@@ -73,6 +74,12 @@ function houseReq(b){
 }
 function houseKeep(b){const c=b.cov||{},m=hasMarket();if(b.lv===2)return b.conn&&c.water&&m&&S.happy>=40;if(b.lv===3)return b.conn&&c.water&&m&&c.school&&(c.park||c.temple)&&S.happy>=55;if(b.lv===4)return b.conn&&c.water&&m&&c.school&&(c.park||c.temple)&&!S.short.cloth&&S.happy>=65;return true}
 
+// a 商行 ships out up to EXPORT_PER_DAY goods (fewer when short of workers), keeping what the town needs
+function sellGoods(b){
+  let n=Math.floor(EXPORT_PER_DAY*(b.eff||0)),got=0;const sold={};
+  for(const [k,price,keep] of EXPORTS){const q=Math.max(0,Math.min(n,Math.floor(S.res[k]-keep)));if(q>0){S.res[k]-=q;got+=q*price;sold[k]=q;n-=q}}
+  S.res.coins+=got;S.exported=(S.exported||0)+got;b.sold=sold;b.soldFor=got;
+}
 function dayTick(){
   recompute();
   const s=season(),before={...S.res},pop=popTotal();
@@ -82,6 +89,8 @@ function dayTick(){
     if(b.type==='weave'&&S.res.silk<2)continue;
     if(b.type==='winery'&&S.res.food<3)continue;
     if(b.type==='tavern'){b.dry=S.res.wine<1;if(b.dry)continue}
+    if(b.type==='kiln'&&(S.res.stone<2||S.res.wood<1))continue;
+    if(b.type==='firm'){sellGoods(b);continue}
     const o=prodOf(b,i);for(const k in o)S.res[k]+=o[k];
   }
   S.res.coins+=taxIncome();

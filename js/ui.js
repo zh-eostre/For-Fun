@@ -45,6 +45,7 @@ function renderTop(){
    ${chip('food',S.res.food,`<small>/${c}</small>`,S.short.food)}
    ${S.rank>=LV4_RANK||S.res.silk||S.res.cloth?chip('silk',S.res.silk,`<small>/${c}</small>`)+chip('cloth',S.res.cloth,`<small>/${c}</small>`,S.short.cloth):''}
    ${S.rank>=WINE_RANK||S.res.wine?chip('wine',S.res.wine,`<small>/${c}</small>`):''}
+   ${S.rank>=KILN_RANK||S.res.porcelain?chip('porcelain',S.res.porcelain,`<small>/${c}</small>`):''}
    <div class="rc" title="人口 / 住房上限（空闲劳动力）"><span class="ic">👥</span><b>${pop}</b><small>/${cp}</small><small>　闲 ${S.idle||0}</small></div>
    <div class="rc ${S.happy<35?'warn':''}" title="幸福度"><span class="ic">${S.happy>=70?'😄':S.happy>=45?'🙂':S.happy>=30?'😐':'😠'}</span><b>${Math.round(S.happy)}</b></div>
   </div>`;
@@ -151,6 +152,7 @@ function vInfo(){
     if(d.workers)h+=`<dt>工人</dt><dd>${b.workers||0}/${workersOf(b)}${b.paused?'（已停工）':''}</dd>`;
     if(out)h+=`<dt>每天</dt><dd>${out}</dd>`;
     if(d.svc){let n=0;for(const [j,hb] of ent()){if(hb.type==='house'&&hb.cov&&hb.cov[d.svc])n++}h+=`<dt>覆盖</dt><dd>${n} 栋民居</dd>`}
+    if(b.type==='firm')h+=`<dt>昨天卖出</dt><dd>${b.sold&&b.soldFor?`${rTxt(b.sold)} → 💰${b.soldFor}`:'没有可卖的货'}</dd>`;
     if(b.type==='farm')h+=`<dt>灌溉</dt><dd>${adj4(x,y,'w')?'挨着水':nearWell(x,y)?'水井':'无'}</dd>`;
     if(b.type==='farm'&&season()===3)h+='<dt>状态</dt><dd>冬天停产</dd>';
     if(b.type==='fish'){const n=countR(x,y,2,'w'),[f,sh]=fishWater(x,y,!(b.conn&&b.eff>0));h+=`<dt>水面</dt><dd>${n} 格${sh?`，${sh} 格和别的渔屋共用（折合 ${fmt(f)} 格）`:''}</dd>`}
