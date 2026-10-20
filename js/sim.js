@@ -1,4 +1,5 @@
 /* ================= simulation ================= */
+const students=b=>Math.ceil(b.res*STUDENT_SHARE);
 function recompute(){
   connSet=new Set();
   const [hx,hy]=XY(S.hall),q=[];
@@ -21,10 +22,10 @@ function recompute(){
     for(const [j,s] of svcs){const [sx,sy]=XY(j),r=radiusOf(s);if((sx-x)**2+(sy-y)**2<=r*r)b.cov[B[s.type].svc]=1}
     [b.noise,b.noiseBy]=noiseAt(x,y);
   }
-  // school places: schools (and a finished university) offer seats town-wide; houses from 砖房 up take them, biggest level first
+  // school places: schools (and a finished university) offer seats town-wide; the students of houses from 砖房 up take them, biggest level first
   let seats=ent().reduce((t,[i,b])=>t+(B[b.type].seats&&b.conn&&b.eff>0&&(!isMega(b)||b.built)?B[b.type].seats*b.eff*(S.tech.edu?1.5:1):0),0);
   S.seats=Math.floor(seats);S.seatsUsed=0;S.seatsWanted=0;
-  for(const b of houses().filter(b=>b.lv>=2).sort((a,c)=>c.lv-a.lv||a.id-c.id)){S.seatsWanted+=b.res;if(seats>=b.res){b.cov.school=1;seats-=b.res;S.seatsUsed+=b.res}}
+  for(const b of houses().filter(b=>b.lv>=2).sort((a,c)=>c.lv-a.lv||a.id-c.id)){const k=students(b);S.seatsWanted+=k;if(seats>=k){b.cov.school=1;seats-=k;S.seatsUsed+=k}}
 }
 const RAW=['farm','fish','lumber','quarry','mulberry'];  // what 加班补贴 speeds up
 function prodOf(b,i){

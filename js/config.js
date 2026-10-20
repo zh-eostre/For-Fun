@@ -10,6 +10,7 @@ const RN={coins:'金币',wood:'木材',stone:'石头',food:'粮食',silk:'蚕丝
 const STORED=['wood','stone','food','silk','cloth','wine','porcelain'];  // goods limited by warehouse capacity
 const HN=['木屋','砖房','宅院','公寓'];
 const HCAP=[4,8,14,20],HTAX=[.2,.35,.55,.8],HHEAT=[.3,.45,.6,.75];
+const STUDENT_SHARE=.25;  // share of residents who go to school
 const CLOTH_PER=.04,LV4_RANK=5,WINE_RANK=6,KILN_RANK=7;
 // what a 外贸公司 ships out each day, in order: [good, coins each, amount the town keeps]
 const EXPORTS=[['porcelain',15,0],['cloth',7,30],['wine',6,30]],EXPORT_PER_DAY=3;  // cloth each 公寓 resident uses a day; town rank that allows 公寓
@@ -30,7 +31,7 @@ const B={
   bakery:{n:'面包房',cost:{wood:20,stone:10,coins:15},workers:3,rank:1,cat:3,desc:'每天用 2 粮食烤面包。每座供应 40 位居民，吃上面包的居民越多，全镇幸福度加得越多（最多 +5）。'},
   tea:{n:'茶馆',cost:{wood:25,stone:15,coins:30},workers:3,rank:2,cat:3,r:4,svc:'tea',desc:'4 格内的居民更开心。每天另赚 2 金币。被公园、茶馆、神庙、饭店中两种覆盖的民居进入幸福网，幸福度再 +5。'},
   park:{n:'公园',cost:{coins:25},rank:1,cat:3,r:3,svc:'park',upkeep:.5,up:{cost:{coins:38,stone:10},r:4,d:'覆盖半径 3 → 4'},desc:'3 格内的居民更开心。是宅院的升级条件之一。不用连路。被公园、茶馆、神庙、饭店中两种覆盖的民居进入幸福网，幸福度再 +5。'},
-  school:{n:'学校',cost:{wood:20,stone:30,coins:40},workers:4,rank:2,cat:3,seats:120,upkeep:1,desc:'提供 120 个学位（缺工人时按比例减少），不用管放在哪里。砖房要有学位才能升级成宅院，宅院和公寓也要有学位才能维持。'},
+  school:{n:'学校',cost:{wood:20,stone:30,coins:40},workers:4,rank:2,cat:3,seats:120,upkeep:1,desc:'提供 120 个学位（缺工人时按比例减少），不用管放在哪里。居民里大约四分之一是学生：砖房的学生都有学位才能升级成宅院，宅院和公寓也要有学位才能维持。'},
   workshop:{n:'工坊',cost:{wood:15,stone:20},workers:2,rank:2,cat:2,up:{cost:{wood:22,stone:30},workers:4,d:'每天加工 2 份：2 木材 + 2 石头 → 12 金币'},noise:6,desc:'每天把 1 木材和 1 石头加工成 6 金币。用来消化多余的材料。会吵到 2 格内的民居（幸福度 −6）。'},
   temple:{n:'神庙',cost:{stone:50,coins:60},workers:3,rank:3,cat:3,r:6,svc:'temple',upkeep:1,desc:'6 格内的居民幸福感大增，也能代替公园让砖房升级。被公园、茶馆、神庙、饭店中两种覆盖的民居进入幸福网，幸福度再 +5。'},
   tower:{n:'钟楼',cost:{stone:120,wood:80,coins:300},rank:4,cat:5,unique:1,desc:'小镇的地标，只能建一座。全镇幸福度 +10。不用连路。'},
