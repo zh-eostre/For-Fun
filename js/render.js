@@ -64,6 +64,7 @@ function draw(now){
   const t=UI.pending??UI.hover;
   if(UI.tool!=='select'&&UI.tool!=='demolish'&&t!=null){
     const [x,y]=XY(t),d=B[UI.tool],v=canPlace(UI.tool,x,y);
+    if(d.noise)tint(x,y,NOISE_R,'rgba(220,60,40,.18)');
     if(d.r){for(let yy=y-d.r;yy<=y+d.r;yy++)for(let xx=x-d.r;xx<=x+d.r;xx++)if(inb(xx,yy)&&(xx-x)**2+(yy-y)**2<=d.r*d.r)P(ctx,xx*T,yy*T,T,T,'rgba(255,226,120,.22)')}
     if(UI.tool==='lumber')hl(x,y,2,'t');if(UI.tool==='fish')hlFish(x,y,true);if(UI.tool==='quarry')hlr(x,y);
     ctx.globalAlpha=.75;if(UI.tool==='road')P(ctx,x*T+3,y*T+3,10,10,p.road);else drawBld(ctx,UI.tool,x*T,y*T,p,{lv:1,dir:faceDir(x,y,undefined,UI.tool)});ctx.globalAlpha=1;
@@ -72,11 +73,13 @@ function draw(now){
   else if(UI.tool==='select'){
     if(UI.hover!=null&&UI.hover!==UI.sel){const [x,y]=XY(UI.hover);outline(x,y,'rgba(255,255,255,.7)')}
     if(UI.sel!=null){const [x,y]=XY(UI.sel),b=S.b[UI.sel];
+      if(b&&B[b.type].noise)tint(x,y,NOISE_R,'rgba(220,60,40,.18)');
       if(b&&radiusOf(b)){const r=radiusOf(b);for(let yy=y-r;yy<=y+r;yy++)for(let xx=x-r;xx<=x+r;xx++)if(inb(xx,yy)&&(xx-x)**2+(yy-y)**2<=r*r)P(ctx,xx*T,yy*T,T,T,'rgba(255,226,120,.2)')}
       if(b&&b.type==='lumber')hl(x,y,2,'t');if(b&&b.type==='fish')hlFish(x,y,!(b.conn&&b.eff>0));if(b&&b.type==='quarry')hlr(x,y);
       outline(x,y,'#F2C14E')}
   }
 }
+function tint(x,y,r,c){for(let yy=y-r;yy<=y+r;yy++)for(let xx=x-r;xx<=x+r;xx++)if(inb(xx,yy)&&(xx-x)**2+(yy-y)**2<=r*r)P(ctx,xx*T,yy*T,T,T,c)}
 function outline(x,y,c){ctx.strokeStyle=c;ctx.lineWidth=1;ctx.strokeRect(x*T+.5,y*T+.5,T-1,T-1)}
 // a fishing hut's water: green when it has the tile to itself, orange when other huts share it
 function hlFish(x,y,adding){

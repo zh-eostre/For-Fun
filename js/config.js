@@ -15,24 +15,25 @@ const B={
   road:{n:'道路',cost:{coins:2},rank:0,cat:0,desc:'民居和需要工人的建筑要靠道路连到市政厅才能运作。电脑上可以按住鼠标拖动连续铺路。'},
   bridge:{n:'桥',cost:{wood:8,coins:4},rank:0,cat:0,desc:'只能建在水上，像道路一样把两岸连起来。'},
   house:{n:'民居',cost:{wood:10},rank:0,cat:1,desc:'居民住的地方。附近服务越齐全，居民会自己把房子升级成砖房、宅院，住更多人、交更多税。'},
-  farm:{n:'农场',cost:{wood:12,coins:8},workers:3,rank:0,cat:2,up:{cost:{wood:18,coins:12,stone:10},workers:4,d:'产量 ×1.5'},desc:'生产粮食。紧挨着水产量更高。秋天产量最高，冬天停产。'},
-  lumber:{n:'伐木场',cost:{coins:15,wood:5},workers:2,rank:0,cat:2,up:{cost:{coins:22,wood:8,stone:10},workers:3,d:'产量 ×1.5'},desc:'2 格内的树越多，木材产量越高（每棵树 0.5，最多 3.5）。'},
-  quarry:{n:'采石场',cost:{wood:15},workers:3,rank:0,cat:2,need:'rock',up:{cost:{wood:22,stone:10},workers:4,d:'产量 ×1.5'},desc:'必须紧挨着岩石。周围 8 格的岩石越多，产量越高（最多 3）。'},
-  well:{n:'水井',cost:{stone:6,coins:5},rank:0,cat:3,r:3,svc:'water',up:{cost:{stone:15,coins:8},r:4,d:'供水半径 3 → 4'},desc:'为 3 格内的民居供水。民居升级必备。不用连路。'},
+  farm:{n:'农场',cost:{wood:12,coins:8},workers:3,rank:0,cat:2,up:{cost:{wood:18,coins:12,stone:10},workers:4,d:'产量 ×1.5'},desc:'生产粮食。紧挨着水产量更高。秋天产量最高，冬天停产。2 格内有水井也算有灌溉。'},
+  lumber:{n:'伐木场',cost:{coins:15,wood:5},workers:2,rank:0,cat:2,up:{cost:{coins:22,wood:8,stone:10},workers:3,d:'产量 ×1.5'},noise:4,desc:'2 格内的树越多，木材产量越高（每棵树 0.5，最多 3.5）。会吵到 2 格内的民居（幸福度 −4）。'},
+  quarry:{n:'采石场',cost:{wood:15},workers:3,rank:0,cat:2,need:'rock',up:{cost:{wood:22,stone:10},workers:4,d:'产量 ×1.5'},noise:8,desc:'必须紧挨着岩石。周围 8 格的岩石越多，产量越高（最多 3）。会吵到 2 格内的民居（幸福度 −8）。'},
+  well:{n:'水井',cost:{stone:6,coins:5},rank:0,cat:3,r:3,svc:'water',up:{cost:{stone:15,coins:8},r:4,d:'供水半径 3 → 4'},desc:'为 3 格内的民居供水。民居升级必备。不用连路。2 格内的农场有灌溉，产量 +1。'},
   store:{n:'仓库',cost:{wood:20},rank:0,cat:0,up:{cost:{wood:30,stone:15},d:'储存上限 +150 → +300'},desc:'木材、石头、粮食的储存上限各 +150。冬天前很需要。不用连路。'},
   plant:{n:'种树',cost:{coins:3},rank:0,cat:4,desc:'在空地上种一棵树。伐木场旁边多种树可以提高产量。'},
   fish:{n:'渔屋',cost:{wood:15},workers:2,rank:1,cat:2,need:'water',up:{cost:{wood:22,stone:10},workers:3,d:'产量 ×1.5'},desc:'必须紧挨着水。2 格内的水面越多，产量越高（每格 0.5，最多 3）。和别的渔屋范围重叠的水面要平分。四季都能捕鱼，冬天结冰产量打 6 折。和农场同时运作，全镇幸福度 +5。'},
   market:{n:'市场',cost:{wood:20,stone:10},workers:4,rank:1,cat:3,desc:'镇上有一座运作中的市场，民居才能升级。每天另赚 3 金币，还能在侧栏买卖材料。'},
   bakery:{n:'面包房',cost:{wood:20,stone:10,coins:15},workers:3,rank:1,cat:3,desc:'每天用 2 粮食烤面包。每座供应 40 位居民，吃上面包的居民越多，全镇幸福度加得越多（最多 +5）。'},
-  tea:{n:'茶馆',cost:{wood:25,stone:15,coins:30},workers:3,rank:2,cat:3,r:4,svc:'tea',desc:'4 格内的居民更开心。每天另赚 2 金币。'},
-  park:{n:'公园',cost:{coins:25},rank:1,cat:3,r:3,svc:'park',upkeep:.5,up:{cost:{coins:38,stone:10},r:4,d:'覆盖半径 3 → 4'},desc:'3 格内的居民更开心。是宅院的升级条件之一。不用连路。'},
+  tea:{n:'茶馆',cost:{wood:25,stone:15,coins:30},workers:3,rank:2,cat:3,r:4,svc:'tea',desc:'4 格内的居民更开心。每天另赚 2 金币。被公园、茶馆、神庙中两种覆盖的民居进入幸福网，幸福度再 +5。'},
+  park:{n:'公园',cost:{coins:25},rank:1,cat:3,r:3,svc:'park',upkeep:.5,up:{cost:{coins:38,stone:10},r:4,d:'覆盖半径 3 → 4'},desc:'3 格内的居民更开心。是宅院的升级条件之一。不用连路。被公园、茶馆、神庙中两种覆盖的民居进入幸福网，幸福度再 +5。'},
   school:{n:'学校',cost:{wood:20,stone:30,coins:40},workers:4,rank:2,cat:3,r:5,svc:'school',upkeep:1,desc:'5 格内的砖房才能升级成宅院。'},
-  workshop:{n:'工坊',cost:{wood:15,stone:20},workers:2,rank:2,cat:2,up:{cost:{wood:22,stone:30},workers:4,d:'每天加工 2 份：2 木材 + 2 石头 → 12 金币'},desc:'每天把 1 木材和 1 石头加工成 6 金币。用来消化多余的材料。'},
-  temple:{n:'神庙',cost:{stone:50,coins:60},workers:3,rank:3,cat:3,r:6,svc:'temple',upkeep:1,desc:'6 格内的居民幸福感大增，也能代替公园让砖房升级。'},
+  workshop:{n:'工坊',cost:{wood:15,stone:20},workers:2,rank:2,cat:2,up:{cost:{wood:22,stone:30},workers:4,d:'每天加工 2 份：2 木材 + 2 石头 → 12 金币'},noise:6,desc:'每天把 1 木材和 1 石头加工成 6 金币。用来消化多余的材料。会吵到 2 格内的民居（幸福度 −6）。'},
+  temple:{n:'神庙',cost:{stone:50,coins:60},workers:3,rank:3,cat:3,r:6,svc:'temple',upkeep:1,desc:'6 格内的居民幸福感大增，也能代替公园让砖房升级。被公园、茶馆、神庙中两种覆盖的民居进入幸福网，幸福度再 +5。'},
   tower:{n:'钟楼',cost:{stone:120,wood:80,coins:300},rank:4,cat:5,unique:1,desc:'小镇的地标，只能建一座。全镇幸福度 +10。不用连路。'},
   hall:{n:'市政厅',desc:'小镇的中心，每天收入 2 金币。所有道路都要从这里连出去。'}
 };
 const ORDER=['road','bridge','house','store','farm','fish','lumber','quarry','workshop','well','market','bakery','tea','park','school','temple','plant','tower'];
+const NOISE_R=2;  // how far industry noise reaches
 const UP_RANK=2;  // town rank that unlocks building upgrades (houses upgrade on their own)
 const RANKS=[
   {n:'拓荒地',pop:0},

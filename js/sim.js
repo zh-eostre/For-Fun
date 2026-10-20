@@ -19,12 +19,13 @@ function recompute(){
     if(b.type!=='house')continue;
     const [x,y]=XY(i);b.cov={};
     for(const [j,s] of svcs){const [sx,sy]=XY(j),r=radiusOf(s);if((sx-x)**2+(sy-y)**2<=r*r)b.cov[B[s.type].svc]=1}
+    [b.noise,b.noiseBy]=noiseAt(x,y);
   }
 }
 function prodOf(b,i){
   const o={},[x,y]=XY(i),s=season(),e=b.eff||0,m=isUp(b)?1.5:1;
   switch(b.type){
-    case 'farm':if(e){let f=(3+(adj4(x,y,'w')?1:0))*[1,1.2,1.5,0][s]*e;if(S.ev.harvest)f*=2;o.food=f*m}break;
+    case 'farm':if(e){let f=(3+(adj4(x,y,'w')||nearWell(x,y)?1:0))*[1,1.2,1.5,0][s]*e;if(S.ev.harvest)f*=2;o.food=f*m}break;
     case 'fish':if(e)o.food=Math.min(3,.5*fishWater(x,y)[0])*(s===3?.6:1)*e*m;break;
     case 'lumber':if(e)o.wood=Math.min(3.5,.5*countR(x,y,2,'t'))*e*m;break;
     case 'quarry':if(e)o.stone=Math.min(3,count8(x,y,'r'))*e*m;break;
@@ -50,8 +51,10 @@ function happyParts(foodShort,heatShort){
   if(bread)parts.push(['面包',bread]);
   if(heatShort)parts.push(['冬天缺柴',-20]);
   parts.push(['税率'+['低','中','高'][S.tax],[8,0,-12][S.tax]]);
-  let sv=0,n=0;const m=hasMarket();houses().forEach(b=>{if(!b.res)return;const c=b.cov||{};sv+=b.res*((c.water?4:0)+(m?4:0)+(c.park?8:0)+(c.tea?6:0)+(c.temple?12:0));n+=b.res});
+  let sv=0,nt=0,nz=0,n=0;const m=hasMarket();houses().forEach(b=>{if(!b.res)return;const c=b.cov||{};sv+=b.res*((c.water?4:0)+(m?4:0)+(c.park?8:0)+(c.tea?6:0)+(c.temple?12:0));if(inNet(c))nt+=b.res*5;nz+=b.res*(b.noise||0);n+=b.res});
   if(n)parts.push(['公共服务',Math.round(sv/n)]);
+  if(n&&Math.round(nt/n))parts.push(['幸福网',Math.round(nt/n)]);
+  if(n&&Math.round(nz/n))parts.push(['工业噪音',-Math.round(nz/n)]);
   if(cnt('tower')&&ent().some(([i,b])=>b.type==='tower'&&b.conn))parts.push(['钟楼',10]);
   if(S.ev.fest)parts.push(['庙会',15]);
   return {parts,t:clamp(parts.reduce((s,p)=>s+p[1],0),0,100)};

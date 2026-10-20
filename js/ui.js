@@ -101,11 +101,13 @@ function renderSide(){
   <div style="text-align:right"><button class="btn sm danger" data-act="newgame">${UI.confirmNew?'确定？会清掉现在的小镇':'重新开始'}</button></div>`;
 }
 function renderInfo(){const el=document.getElementById('info');if(el)el.innerHTML=vInfo()}
+const lumberTxt=(x,y)=>{const n=countR(x,y,2,'t');return `，附近 ${n} 棵树，满员每天 ${fmt(Math.min(3.5,.5*n))} 木材`};
+const quarryTxt=(x,y)=>{const n=count8(x,y,'r');return `，周围 ${n} 块岩石，满员每天 ${fmt(Math.min(3,n))} 石头`};
 function preview(type,x,y){
-  if(type==='lumber'){const n=countR(x,y,2,'t');return `，附近 ${n} 棵树，满员每天 ${fmt(Math.min(3.5,.5*n))} 木材`}
   if(type==='fish'){const n=countR(x,y,2,'w'),[f,sh]=fishWater(x,y,true);return `，附近 ${n} 格水面${sh?`（${sh} 格和别的渔屋共用，折合 ${fmt(f)} 格）`:''}，满员每天 ${fmt(Math.min(3,.5*f))} 粮食`}
-  if(type==='quarry'){const n=count8(x,y,'r');return `，周围 ${n} 块岩石，满员每天 ${fmt(Math.min(3,n))} 石头`}
-  if(type==='farm')return adj4(x,y,'w')?'，紧挨着水，产量 +1':'，没挨着水（挨着水产量 +1）';
+  if(type==='farm')return adj4(x,y,'w')?'，紧挨着水，产量 +1':nearWell(x,y)?'，有水井灌溉，产量 +1':'，没有灌溉（挨着水或 2 格内有水井，产量 +1）';
+  if(B[type].noise){let n=0;for(const [i,b] of ent()){if(b.type!=='house')continue;const [hx,hy]=XY(i);if((hx-x)**2+(hy-y)**2<=NOISE_R**2)n++}return (type==='lumber'?lumberTxt(x,y):type==='quarry'?quarryTxt(x,y):'')+(n?`，会吵到 ${n} 栋民居`:'')}
+  if(type==='house'){const [nz,by]=noiseAt(x,y);return nz?`，但这里很吵（${B[by].n}，幸福度 −${nz}）`:''}
   if(B[type].r){let n=0;for(const [i,b] of ent()){if(b.type!=='house')continue;const [hx,hy]=XY(i);if((hx-x)**2+(hy-y)**2<=B[type].r**2)n++}return `，能覆盖 ${n} 栋民居`}
   return '';
 }
@@ -136,7 +138,7 @@ function vInfo(){
     const req=houseReq(b),c=b.cov||{};
     h=`<h3 class="hd"><img src="${b.lv===1?ICON.house:ICON['house'+b.lv]}" alt="" style="width:24px;height:24px;image-rendering:pixelated;vertical-align:-5px"> ${HN[b.lv-1]}（${b.lv} 级）</h3>
     <dl class="kv"><dt>居民</dt><dd>${b.res}/${HCAP[b.lv-1]}</dd><dt>每人交税</dt><dd>💰${HTAX[b.lv-1]}/天</dd>
-    <dt>覆盖服务</dt><dd>${['water','park','tea','school','temple'].filter(k=>c[k]).map(k=>({water:'水井',park:'公园',tea:'茶馆',school:'学校',temple:'神庙'})[k]).join('、')||'无'}</dd></dl>`;
+    <dt>覆盖服务</dt><dd>${['water','park','tea','school','temple'].filter(k=>c[k]).map(k=>({water:'水井',park:'公园',tea:'茶馆',school:'学校',temple:'神庙'})[k]).join('、')||'无'}</dd>${inNet(c)?'<dt>幸福网</dt><dd class="ok">+5</dd>':''}${b.noise?`<dt>噪音</dt><dd class="bad">${B[b.noiseBy].n} −${b.noise}</dd>`:''}</dl>`;
     if(!b.conn)h+='<p class="bad">没有连到道路，居民不会搬进来，住着的也会离开。</p>';
     if(req)h+=`<p><b>升级成${HN[b.lv]}还需要：</b></p><ul class="reqs">${req.map(([l,ok])=>`<li class="${ok?'y':''}">${l}</li>`).join('')}</ul>${req.every(r=>r[1])?'<p class="ok">条件都满足了，很快就会升级。</p>':''}`;
     if(req){const c=HUP[b.lv-1],ok=req.slice(0,-1).every(r=>r[1]);h+=`<p class="muted">也可以花钱立刻升级，不用等住满，但其他条件要先满足。</p><button class="btn sm" data-act="upgrade" ${ok&&canPay(c)?'':'disabled'}>花 ${rTxt(c)} 升级成${HN[b.lv]}</button> `}
@@ -147,6 +149,7 @@ function vInfo(){
     if(d.workers)h+=`<dt>工人</dt><dd>${b.workers||0}/${workersOf(b)}${b.paused?'（已停工）':''}</dd>`;
     if(out)h+=`<dt>每天</dt><dd>${out}</dd>`;
     if(d.svc){let n=0;for(const [j,hb] of ent()){if(hb.type==='house'&&hb.cov&&hb.cov[d.svc])n++}h+=`<dt>覆盖</dt><dd>${n} 栋民居</dd>`}
+    if(b.type==='farm')h+=`<dt>灌溉</dt><dd>${adj4(x,y,'w')?'挨着水':nearWell(x,y)?'水井':'无'}</dd>`;
     if(b.type==='farm'&&season()===3)h+='<dt>状态</dt><dd>冬天停产</dd>';
     if(b.type==='fish'){const n=countR(x,y,2,'w'),[f,sh]=fishWater(x,y,!(b.conn&&b.eff>0));h+=`<dt>水面</dt><dd>${n} 格${sh?`，${sh} 格和别的渔屋共用（折合 ${fmt(f)} 格）`:''}</dd>`}
     h+='</dl>';
