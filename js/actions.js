@@ -20,7 +20,7 @@ function place(type,x,y,quiet){
   if(!v.ok){if(!quiet)toast(v.msg);return false}
   pay(B[type].cost);
   if(type==='plant')S.t[I(x,y)]='t';
-  else S.b[I(x,y)]={type,id:S.nid++,lv:1,res:0};
+  else S.b[I(x,y)]={type,id:S.nid++,lv:1,res:0,...(B[type].stages?{stage:0,prog:0,paid:false,built:false}:{})};
   UI.pending=null;recompute();checkQuests();dirty=true;save();renderUI();
   return true;
 }
@@ -70,5 +70,12 @@ function upgradeBld(i){
   if(!canPay(u.cost)){toast('材料不够：需要 '+rTxt(u.cost));return}
   pay(u.cost);b.lv=2;log(`${B[b.type].n}升级了：${u.d}。`,'good');
   recompute();dirty=true;save();renderUI();
+}
+function fundStage(i){
+  const b=S.b[i];if(!b||!isMega(b)||b.built||b.paid)return;
+  const st=B[b.type].stages[b.stage];
+  if(!canPay(st.cost)){toast('材料不够：需要 '+rTxt(st.cost));return}
+  pay(st.cost);b.paid=true;log(`${B[b.type].n}第 ${b.stage+1} 期开工。`);
+  recompute();save();renderUI();
 }
 function setTool(t){UI.tool=t;UI.pending=null;UI.confirmDel=null;if(t!=='select')UI.sel=null;renderUI()}

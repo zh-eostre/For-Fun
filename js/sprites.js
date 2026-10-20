@@ -76,16 +76,14 @@ const SPR={
       else{P(g,ox+4,oy+10,2,2,WIN);P(g,ox+7,oy+10,2,2,WIN);P(g,ox+10,oy+10,2,2,WIN);P(g,ox+0,oy+11,2,4,p.t)}
       P(g,ox+14,oy+11,2,4,p.t);
     }else{
-      // 府邸: white walls, red pillars, grey tiled roof with upturned eaves
-      P(g,ox+0,oy+15,16,1,SH);P(g,ox+1,oy+7,14,8,'#F2EEE6');P(g,ox+1,oy+14,14,1,'#8F877C');
-      P(g,ox+2,oy+7,1,7,'#B5463A');P(g,ox+13,oy+7,1,7,'#B5463A');
-      rows(g,ox,oy,[[3,10,3],[2,12,4],[0,16,5],[0,16,6]],'#5E636A');P(g,ox+0,oy+4,1,1,'#5E636A');P(g,ox+15,oy+4,1,1,'#5E636A');P(g,ox+0,oy+6,16,1,'#3A3D42');
-      P(g,ox+4,oy+2,8,1,'#3A3D42');P(g,ox+3,oy+1,1,2,'#3A3D42');P(g,ox+12,oy+1,1,2,'#3A3D42');P(g,ox+13,oy+0,2,3,'#8C5A3C');
-      if(p.ice){P(g,ox+3,oy+3,10,1,'#fff');P(g,ox+1,oy+5,14,1,'#fff')}
-      P(g,ox+5,oy+7,1,2,'#E04A3A');P(g,ox+10,oy+7,1,2,'#E04A3A');
-      if(f==='front'){P(g,ox+3,oy+9,2,3,WIN);P(g,ox+11,oy+9,2,3,WIN);P(g,ox+3,oy+10,2,1,TIM);P(g,ox+11,oy+10,2,1,TIM);
-        P(g,ox+6,oy+9,4,5,'#A8382E');P(g,ox+6,oy+9,4,1,'#7A2A22');P(g,ox+7,oy+11,1,1,'#E2B93B');P(g,ox+8,oy+11,1,1,'#E2B93B')}
-      else{P(g,ox+3,oy+9,2,3,WIN);P(g,ox+7,oy+9,2,3,WIN);P(g,ox+11,oy+9,2,3,WIN);P(g,ox+3,oy+10,2,1,TIM);P(g,ox+7,oy+10,2,1,TIM);P(g,ox+11,oy+10,2,1,TIM)}
+      // 公寓: a flat-roofed block with a water tank and three floors of windows
+      P(g,ox+0,oy+15,16,1,SH);P(g,ox+2,oy+3,12,12,'#D9C9B4');P(g,ox+2,oy+14,12,1,'#8F877C');P(g,ox+13,oy+3,1,12,'#BFAE98');
+      P(g,ox+1,oy+2,14,1,'#6F737A');P(g,ox+11,oy+0,3,2,'#8C9198');P(g,ox+12,oy+0,1,1,'#B9BEC4');
+      if(p.ice){P(g,ox+1,oy+2,14,1,'#fff');P(g,ox+11,oy+0,3,1,'#fff')}
+      for(const y of [6,9])P(g,ox+3,oy+y,10,1,'#A89A88');
+      for(const y of [4,7])for(const x of [4,7,10])P(g,ox+x,oy+y,2,2,WIN);
+      if(f==='front'){P(g,ox+4,oy+10,2,2,WIN);P(g,ox+10,oy+10,2,2,WIN);P(g,ox+7,oy+11,2,3,'#3F6FA8');P(g,ox+6,oy+10,4,1,'#6F737A')}
+      else for(const x of [4,7,10])P(g,ox+x,oy+10,2,2,WIN);
     }
   },
   mulberry(g,ox,oy,p){
@@ -132,6 +130,19 @@ const SPR={
     P(g,ox+4,oy+7,8,2,'#2E2219');P(g,ox+5,oy+7,1,1,'#E2B93B');P(g,ox+7,oy+8,2,1,'#E2B93B');P(g,ox+10,oy+7,1,1,'#E2B93B');
     P(g,ox+2,oy+10,5,4,'#5B3A1E');P(g,ox+9,oy+10,5,4,'#5B3A1E');
     P(g,ox+3,oy+12,1,2,'#E8F0F5');P(g,ox+5,oy+11,1,3,'#D24B3C');P(g,ox+10,oy+12,2,2,'#E2B93B');P(g,ox+12,oy+11,1,3,'#3F6FA8');
+  },
+  uni(g,ox,oy,p){
+    P(g,ox+0,oy+15,16,1,SH);P(g,ox+1,oy+6,14,9,'#E8DCC4');P(g,ox+1,oy+14,14,1,'#B9BEC4');P(g,ox+2,oy+7,12,6,'#C9B8A6');
+    rows(g,ox,oy,[[7,2,2],[5,6,3],[3,10,4],[1,14,5]],'#D9CDB5');P(g,ox+1,oy+6,14,1,'#A89A88');
+    if(p.ice){P(g,ox+5,oy+3,6,1,'#fff');P(g,ox+3,oy+4,10,1,'#fff')}
+    for(const x of [3,6,9,12])P(g,ox+x,oy+7,1,6,'#F7F2E8');P(g,ox+7,oy+10,2,3,'#5B3A1E');
+    P(g,ox+8,oy+0,1,3,'#5B3A1E');P(g,ox+9,oy+0,3,2,'#D24B3C');
+  },
+  spire(g,ox,oy,p){
+    P(g,ox+2,oy+15,12,1,SH);P(g,ox+3,oy+12,10,3,'#D9C9B4');P(g,ox+7,oy+13,2,2,'#3F6FA8');
+    P(g,ox+5,oy+9,1,3,'#8C9198');P(g,ox+10,oy+9,1,3,'#8C9198');P(g,ox+7,oy+4,2,8,'#B9BEC4');P(g,ox+8,oy+4,1,8,'#8C9198');
+    P(g,ox+5,oy+2,6,3,'#3F6FA8');P(g,ox+6,oy+3,4,1,'#9FD3F0');P(g,ox+7,oy+0,1,2,'#6F737A');P(g,ox+7,oy+0,1,1,'#E04A3A');
+    if(p.ice)P(g,ox+5,oy+2,6,1,'#fff');
   },
   farm(g,ox,oy,p){
     P(g,ox+1,oy+3,14,12,p.ice?'#CFC3B8':'#8A5A33');
@@ -273,7 +284,15 @@ const UPA={
     P(g,ox+2,oy+14,4,1,'#8A5A33');P(g,ox+10,oy+14,4,1,'#8A5A33');
   }
 };
-function drawBld(g,type,ox,oy,p,b){if(SPR[type])SPR[type](g,ox,oy,p,b);if(b&&b.lv>1&&B[type].up&&UPA[type])UPA[type](g,ox,oy,p)}
+// an unfinished big project: scaffolding that rises with each finished stage
+function sScaffold(g,ox,oy,p,stage){
+  const top=10-stage*3;
+  P(g,ox+1,oy+12,14,3,p.ice?'#D2DCE4':'#A07A4A');P(g,ox+3,oy+top+1,10,13-top,'#B9BEC4');
+  for(const x of [2,7,13])P(g,ox+x,oy+top,1,15-top,TIM);
+  for(let y=top;y<14;y+=3)P(g,ox+2,oy+y,12,1,TIM);
+  P(g,ox+12,oy+13,3,2,'#8C9198');P(g,ox+0,oy+13,2,2,'#C99A62');
+}
+function drawBld(g,type,ox,oy,p,b){if(b&&B[type].stages&&b.built===false){sScaffold(g,ox,oy,p,b.stage);return}if(SPR[type])SPR[type](g,ox,oy,p,b);if(b&&b.lv>1&&B[type].up&&UPA[type])UPA[type](g,ox,oy,p)}
 
 const ICON={};
 function makeIcons(){

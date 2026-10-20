@@ -44,7 +44,9 @@ function countR(x,y,r,v){let n=0;for(let yy=y-r;yy<=y+r;yy++)for(let xx=x-r;xx<=
 function count8(x,y,v){let n=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if((dx||dy)&&terr(x+dx,y+dy)===v)n++}return n}
 // upgraded buildings (not houses, which have their own levels) use the numbers in B[type].up
 const isUp=b=>b.lv>1&&!!B[b.type].up;
-const workersOf=b=>isUp(b)&&B[b.type].up.workers||B[b.type].workers;
+// big projects (B[type].stages) are built in stages; while unfinished they need builders, and only once a stage is paid for
+const isMega=b=>!!B[b.type].stages;
+const workersOf=b=>isMega(b)&&!b.built?(b.paid?B[b.type].builders:0):isUp(b)&&B[b.type].up.workers||B[b.type].workers;
 const radiusOf=b=>isUp(b)&&B[b.type].up.r||B[b.type].r;
 const needRoad=t=>t==='house'||!!B[t].workers;
 const isRoad=b=>!!b&&(b.type==='road'||b.type==='bridge');

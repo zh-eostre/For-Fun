@@ -140,18 +140,19 @@ function vInfo(){
   if(b.type==='house'){
     const req=houseReq(b),c=b.cov||{};
     h=`<h3 class="hd"><img src="${b.lv===1?ICON.house:ICON['house'+b.lv]}" alt="" style="width:24px;height:24px;image-rendering:pixelated;vertical-align:-5px"> ${HN[b.lv-1]}（${b.lv} 级）</h3>
-    <dl class="kv"><dt>居民</dt><dd>${b.res}/${HCAP[b.lv-1]}</dd><dt>每人交税</dt><dd>💰${fmt(taxRate(b))}/天${taxRate(b)>HTAX[b.lv-1]?'（酒楼 +25%）':''}</dd>
-    <dt>覆盖服务</dt><dd>${['water','park','tea','tavern','school','temple'].filter(k=>c[k]).map(k=>({water:'水井',park:'公园',tea:'茶馆',tavern:'酒楼',school:'学校',temple:'神庙'})[k]).join('、')||'无'}</dd>${inNet(c)?'<dt>幸福网</dt><dd class="ok">+5</dd>':''}${b.noise?`<dt>噪音</dt><dd class="bad">${B[b.noiseBy].n} −${b.noise}</dd>`:''}</dl>`;
+    <dl class="kv"><dt>居民</dt><dd>${b.res}/${HCAP[b.lv-1]}</dd><dt>每人交税</dt><dd>💰${fmt(taxRate(b))}/天${taxRate(b)>HTAX[b.lv-1]?'（饭店 +25%）':''}</dd>
+    <dt>覆盖服务</dt><dd>${['water','park','tea','tavern','school','temple'].filter(k=>c[k]).map(k=>({water:'水井',park:'公园',tea:'茶馆',tavern:'饭店',school:'学校',temple:'神庙'})[k]).join('、')||'无'}</dd>${inNet(c)?'<dt>幸福网</dt><dd class="ok">+5</dd>':''}${b.noise?`<dt>噪音</dt><dd class="bad">${B[b.noiseBy].n} −${b.noise}</dd>`:''}</dl>`;
     if(!b.conn)h+='<p class="bad">没有连到道路，居民不会搬进来，住着的也会离开。</p>';
     if(req)h+=`<p><b>升级成${HN[b.lv]}还需要：</b></p><ul class="reqs">${req.map(([l,ok])=>`<li class="${ok?'y':''}">${l}</li>`).join('')}</ul>${req.every(r=>r[1])?'<p class="ok">条件都满足了，很快就会升级。</p>':''}`;
     if(req){const c=HUP[b.lv-1],ok=req.slice(0,-1).every(r=>r[1]);h+=`<p class="muted">也可以花钱立刻升级，不用等住满，但其他条件要先满足。</p><button class="btn sm" data-act="upgrade" ${ok&&canPay(c)?'':'disabled'}>花 ${rTxt(c)} 升级成${HN[b.lv]}</button> `}
     else h+=`<p class="ok">已经是最高级的${HN[b.lv-1]}了。</p>`;
     if(b.lv>1&&!houseKeep(b))h+=`<p class="bad">现在缺少维持${HN[b.lv-1]}的服务，再这样几天会退化。</p>`;
   }else{
-    h=`<h3 class="hd"><img src="${ICON[b.type]}" alt="" style="width:24px;height:24px;image-rendering:pixelated;vertical-align:-5px"> ${d.n}${isUp(b)?'（已升级）':''}</h3><p class="muted">${d.desc}</p><dl class="kv">`;
+    h=`<h3 class="hd"><img src="${ICON[b.type]}" alt="" style="width:24px;height:24px;image-rendering:pixelated;vertical-align:-5px"> ${d.n}${isUp(b)?'（已升级）':''}${isMega(b)&&!b.built?'（施工中）':''}</h3><p class="muted">${d.desc}</p><dl class="kv">`;
     if(d.workers)h+=`<dt>工人</dt><dd>${b.workers||0}/${workersOf(b)}${b.paused?'（已停工）':''}</dd>`;
     if(out)h+=`<dt>每天</dt><dd>${out}</dd>`;
     if(d.svc){let n=0;for(const [j,hb] of ent()){if(hb.type==='house'&&hb.cov&&hb.cov[d.svc])n++}h+=`<dt>覆盖</dt><dd>${n} 栋民居</dd>`}
+    if(isMega(b)&&!b.built){const st=d.stages[b.stage];h+=`<dt>进度</dt><dd>第 ${b.stage+1}/${d.stages.length} 期，${b.paid?`已干 ${fmt(b.prog)}/${st.days} 天`:'等材料'}</dd>`}
     if(b.type==='firm')h+=`<dt>昨天卖出</dt><dd>${b.sold&&b.soldFor?`${rTxt(b.sold)} → 💰${b.soldFor}`:'没有可卖的货'}</dd>`;
     if(b.type==='farm')h+=`<dt>灌溉</dt><dd>${adj4(x,y,'w')?'挨着水':nearWell(x,y)?'水井':'无'}</dd>`;
     if(b.type==='farm'&&season()===3)h+='<dt>状态</dt><dd>冬天停产</dd>';
@@ -159,7 +160,8 @@ function vInfo(){
     h+='</dl>';
     if(b.dry)h+='<p class="bad">没有酒了，暂停营业。</p>';
     if(!b.conn&&b.type!=='hall')h+='<p class="bad">没有连到道路，无法运作。</p>';
-    else if(d.workers&&!b.paused&&b.eff<1)h+=`<p class="bad">缺工人。多建民居增加人口，或者让别的建筑停工把人让出来。</p>`;
+    else if(workersOf(b)&&!b.paused&&b.eff<1)h+=`<p class="bad">缺工人。多建民居增加人口，或者让别的建筑停工把人让出来。</p>`;
+    if(isMega(b)&&!b.built&&!b.paid){const st=d.stages[b.stage];h+=`<button class="btn sm primary" data-act="fund" ${canPay(st.cost)?'':'disabled'}>投入第 ${b.stage+1} 期材料：${rTxt(st.cost)}</button> `}
     if(d.up&&!isUp(b)){const lock=S.rank<UP_RANK;h+=`<p class="muted">升级：${d.up.d}${d.up.workers?`，工人 ${d.workers} → ${d.up.workers}`:''}${lock?`（小镇升级为「${RANKS[UP_RANK].n}」后解锁）`:''}</p><button class="btn sm" data-act="upgrade" ${!lock&&canPay(d.up.cost)?'':'disabled'}>花 ${rTxt(d.up.cost)} 升级</button> `}
     if(d.workers)h+=`<button class="btn sm" data-act="pause">${b.paused?'恢复生产':'停工（让出工人）'}</button> `;
   }
