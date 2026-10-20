@@ -44,6 +44,7 @@ function renderTop(){
    ${chip('stone',S.res.stone,`<small>/${c}</small>`)}
    ${chip('food',S.res.food,`<small>/${c}</small>`,S.short.food)}
    ${S.rank>=LV4_RANK||S.res.silk||S.res.cloth?chip('silk',S.res.silk,`<small>/${c}</small>`)+chip('cloth',S.res.cloth,`<small>/${c}</small>`,S.short.cloth):''}
+   ${S.rank>=WINE_RANK||S.res.wine?chip('wine',S.res.wine,`<small>/${c}</small>`):''}
    <div class="rc" title="人口 / 住房上限（空闲劳动力）"><span class="ic">👥</span><b>${pop}</b><small>/${cp}</small><small>　闲 ${S.idle||0}</small></div>
    <div class="rc ${S.happy<35?'warn':''}" title="幸福度"><span class="ic">${S.happy>=70?'😄':S.happy>=45?'🙂':S.happy>=30?'😐':'😠'}</span><b>${Math.round(S.happy)}</b></div>
   </div>`;
@@ -138,8 +139,8 @@ function vInfo(){
   if(b.type==='house'){
     const req=houseReq(b),c=b.cov||{};
     h=`<h3 class="hd"><img src="${b.lv===1?ICON.house:ICON['house'+b.lv]}" alt="" style="width:24px;height:24px;image-rendering:pixelated;vertical-align:-5px"> ${HN[b.lv-1]}（${b.lv} 级）</h3>
-    <dl class="kv"><dt>居民</dt><dd>${b.res}/${HCAP[b.lv-1]}</dd><dt>每人交税</dt><dd>💰${HTAX[b.lv-1]}/天</dd>
-    <dt>覆盖服务</dt><dd>${['water','park','tea','school','temple'].filter(k=>c[k]).map(k=>({water:'水井',park:'公园',tea:'茶馆',school:'学校',temple:'神庙'})[k]).join('、')||'无'}</dd>${inNet(c)?'<dt>幸福网</dt><dd class="ok">+5</dd>':''}${b.noise?`<dt>噪音</dt><dd class="bad">${B[b.noiseBy].n} −${b.noise}</dd>`:''}</dl>`;
+    <dl class="kv"><dt>居民</dt><dd>${b.res}/${HCAP[b.lv-1]}</dd><dt>每人交税</dt><dd>💰${fmt(taxRate(b))}/天${taxRate(b)>HTAX[b.lv-1]?'（酒楼 +25%）':''}</dd>
+    <dt>覆盖服务</dt><dd>${['water','park','tea','tavern','school','temple'].filter(k=>c[k]).map(k=>({water:'水井',park:'公园',tea:'茶馆',tavern:'酒楼',school:'学校',temple:'神庙'})[k]).join('、')||'无'}</dd>${inNet(c)?'<dt>幸福网</dt><dd class="ok">+5</dd>':''}${b.noise?`<dt>噪音</dt><dd class="bad">${B[b.noiseBy].n} −${b.noise}</dd>`:''}</dl>`;
     if(!b.conn)h+='<p class="bad">没有连到道路，居民不会搬进来，住着的也会离开。</p>';
     if(req)h+=`<p><b>升级成${HN[b.lv]}还需要：</b></p><ul class="reqs">${req.map(([l,ok])=>`<li class="${ok?'y':''}">${l}</li>`).join('')}</ul>${req.every(r=>r[1])?'<p class="ok">条件都满足了，很快就会升级。</p>':''}`;
     if(req){const c=HUP[b.lv-1],ok=req.slice(0,-1).every(r=>r[1]);h+=`<p class="muted">也可以花钱立刻升级，不用等住满，但其他条件要先满足。</p><button class="btn sm" data-act="upgrade" ${ok&&canPay(c)?'':'disabled'}>花 ${rTxt(c)} 升级成${HN[b.lv]}</button> `}
@@ -154,6 +155,7 @@ function vInfo(){
     if(b.type==='farm'&&season()===3)h+='<dt>状态</dt><dd>冬天停产</dd>';
     if(b.type==='fish'){const n=countR(x,y,2,'w'),[f,sh]=fishWater(x,y,!(b.conn&&b.eff>0));h+=`<dt>水面</dt><dd>${n} 格${sh?`，${sh} 格和别的渔屋共用（折合 ${fmt(f)} 格）`:''}</dd>`}
     h+='</dl>';
+    if(b.dry)h+='<p class="bad">没有酒了，暂停营业。</p>';
     if(!b.conn&&b.type!=='hall')h+='<p class="bad">没有连到道路，无法运作。</p>';
     else if(d.workers&&!b.paused&&b.eff<1)h+=`<p class="bad">缺工人。多建民居增加人口，或者让别的建筑停工把人让出来。</p>`;
     if(d.up&&!isUp(b)){const lock=S.rank<UP_RANK;h+=`<p class="muted">升级：${d.up.d}${d.up.workers?`，工人 ${d.workers} → ${d.up.workers}`:''}${lock?`（小镇升级为「${RANKS[UP_RANK].n}」后解锁）`:''}</p><button class="btn sm" data-act="upgrade" ${!lock&&canPay(d.up.cost)?'':'disabled'}>花 ${rTxt(d.up.cost)} 升级</button> `}

@@ -58,7 +58,7 @@ function draw(now){
     if(isRoad(b)||b.type==='hall')continue;
     const [x,y]=XY(i),ox=x*T,oy=y*T;
     if(!b.conn){if(Math.floor(now/450)%2)bubble(ox,oy,'#D24B3C','!')}
-    else if(b.paused)bubble(ox,oy,'#7A7F86','=');
+    else if(b.paused||b.dry)bubble(ox,oy,'#7A7F86','=');
     else if(B[b.type].workers&&b.eff<1)bubble(ox,oy,'#E2A21B','!');
   }
   const t=UI.pending??UI.hover;

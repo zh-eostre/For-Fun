@@ -10,11 +10,11 @@ function recompute(){
     if(!isRoad(b)&&b.type!=='hall'){const d=faceDir(x,y,b.dir,b.type);if(d!==b.dir){b.dir=d;dirty=true}}
   }
   let free=popTotal();
-  const order=['farm','fish','lumber','quarry','market','school','temple','bakery','tea','mulberry','weave','workshop'];
+  const order=['farm','fish','lumber','quarry','market','school','temple','bakery','tea','mulberry','weave','winery','tavern','workshop'];
   const wp=ent().filter(([i,b])=>B[b.type].workers).sort((a,c)=>order.indexOf(a[1].type)-order.indexOf(c[1].type)||a[1].id-c[1].id);
   for(const [i,b] of wp){const need=workersOf(b);b.workers=(b.conn&&!b.paused)?Math.min(need,free):0;free-=b.workers;b.eff=b.workers/need}
   S.idle=free;
-  const svcs=ent().filter(([i,b])=>B[b.type].svc&&b.conn&&(!B[b.type].workers||b.eff>0));
+  const svcs=ent().filter(([i,b])=>B[b.type].svc&&b.conn&&(!B[b.type].workers||b.eff>0)&&!b.dry);
   for(const [i,b] of ent()){
     if(b.type!=='house')continue;
     const [x,y]=XY(i);b.cov={};
@@ -34,6 +34,8 @@ function prodOf(b,i){
     case 'tea':if(e)o.coins=2*e;break;
     case 'mulberry':if(e)o.silk=2*[1,1.25,1,0][s]*e;break;
     case 'weave':if(e){o.silk=-2*e;o.cloth=2*e}break;
+    case 'winery':if(e){o.food=-3*e;o.wine=2*e}break;
+    case 'tavern':if(e){o.wine=-e;o.coins=4*e}break;
     case 'workshop':if(e){const k=isUp(b)?2:1;o.wood=-e*k;o.stone=-e*k;o.coins=6*e*k}break;
     case 'hall':o.coins=2;break;
   }
@@ -42,7 +44,8 @@ function prodOf(b,i){
 }
 const working=t=>ent().some(([i,b])=>b.type===t&&b.conn&&b.eff>0);
 const hasMarket=()=>working('market');
-function taxIncome(){return houses().reduce((s,b)=>s+b.res*HTAX[b.lv-1],0)*[.6,1,1.5][S.tax]}
+const taxRate=b=>HTAX[b.lv-1]*(b.lv===4&&b.cov&&b.cov.tavern?1.25:1);  // 府邸 near a tavern pay more
+function taxIncome(){return houses().reduce((s,b)=>s+b.res*taxRate(b),0)*[.6,1,1.5][S.tax]}
 function heatNeed(){let h=houses().reduce((s,b)=>s+(b.res?HHEAT[b.lv-1]:0),0);if(S.ev.blizzard)h*=2;return h}
 function happyParts(foodShort,heatShort){
   const parts=[['基础',50]],pop=popTotal();
@@ -53,7 +56,7 @@ function happyParts(foodShort,heatShort){
   if(bread)parts.push(['面包',bread]);
   if(heatShort)parts.push(['冬天缺柴',-20]);
   parts.push(['税率'+['低','中','高'][S.tax],[8,0,-12][S.tax]]);
-  let sv=0,nt=0,nz=0,n=0;const m=hasMarket();houses().forEach(b=>{if(!b.res)return;const c=b.cov||{};sv+=b.res*((c.water?4:0)+(m?4:0)+(c.park?8:0)+(c.tea?6:0)+(c.temple?12:0));if(inNet(c))nt+=b.res*5;nz+=b.res*(b.noise||0);n+=b.res});
+  let sv=0,nt=0,nz=0,n=0;const m=hasMarket();houses().forEach(b=>{if(!b.res)return;const c=b.cov||{};sv+=b.res*((c.water?4:0)+(m?4:0)+(c.park?8:0)+(c.tea?6:0)+(c.temple?12:0)+(c.tavern?14:0));if(inNet(c))nt+=b.res*5;nz+=b.res*(b.noise||0);n+=b.res});
   if(n)parts.push(['公共服务',Math.round(sv/n)]);
   if(n&&Math.round(nt/n))parts.push(['幸福网',Math.round(nt/n)]);
   if(n&&Math.round(nz/n))parts.push(['工业噪音',-Math.round(nz/n)]);
@@ -77,6 +80,8 @@ function dayTick(){
     if(b.type==='workshop'&&(S.res.wood<(isUp(b)?2:1)||S.res.stone<(isUp(b)?2:1)))continue;
     if(b.type==='bakery'&&S.res.food<2)continue;
     if(b.type==='weave'&&S.res.silk<2)continue;
+    if(b.type==='winery'&&S.res.food<3)continue;
+    if(b.type==='tavern'){b.dry=S.res.wine<1;if(b.dry)continue}
     const o=prodOf(b,i);for(const k in o)S.res[k]+=o[k];
   }
   S.res.coins+=taxIncome();

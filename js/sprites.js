@@ -102,6 +102,22 @@ const SPR={
     P(g,ox+10,oy+5,1,9,TIM);P(g,ox+15,oy+5,1,9,TIM);P(g,ox+10,oy+5,6,1,TIM);
     P(g,ox+11,oy+6,1,6,'#D24B3C');P(g,ox+12,oy+6,1,5,'#3F6FA8');P(g,ox+13,oy+6,1,6,'#E2B93B');P(g,ox+14,oy+6,1,4,'#2F8A86');
   },
+  winery(g,ox,oy,p){
+    P(g,ox+1,oy+14,14,1,SH);P(g,ox+1,oy+7,9,7,'#C9A06A');rows(g,ox,oy,[[2,7,4],[1,9,5],[0,11,6]],'#6E4528');
+    if(p.ice)P(g,ox+2,oy+4,7,1,'#fff');
+    P(g,ox+4,oy+10,2,4,DOOR);P(g,ox+7,oy+9,2,2,WIN);
+    P(g,ox+10,oy+10,3,4,'#5B3A1E');P(g,ox+11,oy+9,1,1,'#5B3A1E');P(g,ox+10,oy+11,3,1,'#B5463A');
+    P(g,ox+13,oy+11,3,3,'#6B4423');P(g,ox+14,oy+10,1,1,'#6B4423');P(g,ox+13,oy+12,3,1,'#B5463A');
+    if(p.ice){P(g,ox+11,oy+9,1,1,'#fff');P(g,ox+14,oy+10,1,1,'#fff')}
+  },
+  tavern(g,ox,oy,p){
+    P(g,ox+0,oy+15,16,1,SH);P(g,ox+1,oy+9,14,6,'#C9A06A');P(g,ox+1,oy+9,1,6,'#B5463A');P(g,ox+14,oy+9,1,6,'#B5463A');
+    P(g,ox+0,oy+8,16,1,'#4A4A55');P(g,ox+3,oy+4,10,4,'#E8D8B5');P(g,ox+4,oy+5,2,2,WIN);P(g,ox+7,oy+5,2,2,WIN);P(g,ox+10,oy+5,2,2,WIN);
+    rows(g,ox,oy,[[5,6,1],[4,8,2],[2,12,3]],'#4A4A55');P(g,ox+1,oy+2,1,1,'#4A4A55');P(g,ox+14,oy+2,1,1,'#4A4A55');
+    if(p.ice){P(g,ox+4,oy+2,8,1,'#fff');P(g,ox+1,oy+8,14,1,'#fff')}
+    P(g,ox+6,oy+11,4,4,'#5B3A1E');P(g,ox+6,oy+11,4,1,'#D24B3C');P(g,ox+3,oy+9,1,2,'#E04A3A');P(g,ox+12,oy+9,1,2,'#E04A3A');
+    P(g,ox+15,oy+0,1,8,'#5B3A1E');P(g,ox+13,oy+1,2,4,'#F2EEE6');P(g,ox+13,oy+2,2,1,'#2E2219');
+  },
   farm(g,ox,oy,p){
     P(g,ox+1,oy+3,14,12,p.ice?'#CFC3B8':'#8A5A33');
     for(const y of [4,7,10,13]){

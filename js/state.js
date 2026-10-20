@@ -38,8 +38,8 @@ function fishWater(x,y,adding){
 const nearWell=(x,y)=>ent().some(([i,b])=>{if(b.type!=='well')return false;const [wx,wy]=XY(i);return (wx-x)**2+(wy-y)**2<=4});
 // the loudest working industry within NOISE_R of (x,y): [penalty, type]
 function noiseAt(x,y){let n=0,by=null;for(const [i,b] of ent()){if(!B[b.type].noise||!b.conn||!(b.eff>0))continue;const [sx,sy]=XY(i);if((sx-x)**2+(sy-y)**2<=NOISE_R*NOISE_R&&B[b.type].noise>n){n=B[b.type].noise;by=b.type}}return [n,by]}
-// a house covered by two of park / teahouse / temple is in the 幸福网
-const inNet=c=>(c.park?1:0)+(c.tea?1:0)+(c.temple?1:0)>=2;
+// a house covered by two of park / teahouse / temple / tavern is in the 幸福网
+const inNet=c=>(c.park?1:0)+(c.tea?1:0)+(c.temple?1:0)+(c.tavern?1:0)>=2;
 function countR(x,y,r,v){let n=0;for(let yy=y-r;yy<=y+r;yy++)for(let xx=x-r;xx<=x+r;xx++){if(!inb(xx,yy)||(xx-x)**2+(yy-y)**2>r*r)continue;if(S.t[I(xx,yy)]===v&&!S.b[I(xx,yy)])n++}return n}
 function count8(x,y,v){let n=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if((dx||dy)&&terr(x+dx,y+dy)===v)n++}return n}
 // upgraded buildings (not houses, which have their own levels) use the numbers in B[type].up
