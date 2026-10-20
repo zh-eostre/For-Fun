@@ -21,7 +21,7 @@ const B={
   well:{n:'水井',cost:{stone:6,coins:5},rank:0,cat:3,r:3,svc:'water',up:{cost:{stone:15,coins:8},r:4,d:'供水半径 3 → 4'},desc:'为 3 格内的民居供水。民居升级必备。不用连路。'},
   store:{n:'仓库',cost:{wood:20},rank:0,cat:0,up:{cost:{wood:30,stone:15},d:'储存上限 +150 → +300'},desc:'木材、石头、粮食的储存上限各 +150。冬天前很需要。不用连路。'},
   plant:{n:'种树',cost:{coins:3},rank:0,cat:4,desc:'在空地上种一棵树。伐木场旁边多种树可以提高产量。'},
-  fish:{n:'渔屋',cost:{wood:15},workers:2,rank:1,cat:2,need:'water',up:{cost:{wood:22,stone:10},workers:3,d:'产量 ×1.5'},desc:'必须紧挨着水。2 格内的水面越多，产量越高（每格 0.5，最多 3）。四季都能捕鱼，冬天结冰产量打 6 折。和农场同时运作，全镇幸福度 +5。'},
+  fish:{n:'渔屋',cost:{wood:15},workers:2,rank:1,cat:2,need:'water',up:{cost:{wood:22,stone:10},workers:3,d:'产量 ×1.5'},desc:'必须紧挨着水。2 格内的水面越多，产量越高（每格 0.5，最多 3）。和别的渔屋范围重叠的水面要平分。四季都能捕鱼，冬天结冰产量打 6 折。和农场同时运作，全镇幸福度 +5。'},
   market:{n:'市场',cost:{wood:20,stone:10},workers:4,rank:1,cat:3,desc:'镇上有一座运作中的市场，民居才能升级。每天另赚 3 金币，还能在侧栏买卖材料。'},
   bakery:{n:'面包房',cost:{wood:20,stone:10,coins:15},workers:3,rank:1,cat:3,desc:'每天用 2 粮食烤面包。每座供应 40 位居民，吃上面包的居民越多，全镇幸福度加得越多（最多 +5）。'},
   tea:{n:'茶馆',cost:{wood:25,stone:15,coins:30},workers:3,rank:2,cat:3,r:4,svc:'tea',desc:'4 格内的居民更开心。每天另赚 2 金币。'},

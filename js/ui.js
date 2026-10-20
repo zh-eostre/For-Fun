@@ -103,7 +103,7 @@ function renderSide(){
 function renderInfo(){const el=document.getElementById('info');if(el)el.innerHTML=vInfo()}
 function preview(type,x,y){
   if(type==='lumber'){const n=countR(x,y,2,'t');return `，附近 ${n} 棵树，满员每天 ${fmt(Math.min(3.5,.5*n))} 木材`}
-  if(type==='fish'){const n=countR(x,y,2,'w');return `，附近 ${n} 格水面，满员每天 ${fmt(Math.min(3,.5*n))} 粮食`}
+  if(type==='fish'){const n=countR(x,y,2,'w'),[f,sh]=fishWater(x,y,true);return `，附近 ${n} 格水面${sh?`（${sh} 格和别的渔屋共用，折合 ${fmt(f)} 格）`:''}，满员每天 ${fmt(Math.min(3,.5*f))} 粮食`}
   if(type==='quarry'){const n=count8(x,y,'r');return `，周围 ${n} 块岩石，满员每天 ${fmt(Math.min(3,n))} 石头`}
   if(type==='farm')return adj4(x,y,'w')?'，紧挨着水，产量 +1':'，没挨着水（挨着水产量 +1）';
   if(B[type].r){let n=0;for(const [i,b] of ent()){if(b.type!=='house')continue;const [hx,hy]=XY(i);if((hx-x)**2+(hy-y)**2<=B[type].r**2)n++}return `，能覆盖 ${n} 栋民居`}
@@ -148,6 +148,7 @@ function vInfo(){
     if(out)h+=`<dt>每天</dt><dd>${out}</dd>`;
     if(d.svc){let n=0;for(const [j,hb] of ent()){if(hb.type==='house'&&hb.cov&&hb.cov[d.svc])n++}h+=`<dt>覆盖</dt><dd>${n} 栋民居</dd>`}
     if(b.type==='farm'&&season()===3)h+='<dt>状态</dt><dd>冬天停产</dd>';
+    if(b.type==='fish'){const n=countR(x,y,2,'w'),[f,sh]=fishWater(x,y,!(b.conn&&b.eff>0));h+=`<dt>水面</dt><dd>${n} 格${sh?`，${sh} 格和别的渔屋共用（折合 ${fmt(f)} 格）`:''}</dd>`}
     h+='</dl>';
     if(!b.conn&&b.type!=='hall')h+='<p class="bad">没有连到道路，无法运作。</p>';
     else if(d.workers&&!b.paused&&b.eff<1)h+=`<p class="bad">缺工人。多建民居增加人口，或者让别的建筑停工把人让出来。</p>`;

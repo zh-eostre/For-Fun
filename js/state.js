@@ -23,6 +23,18 @@ const popCap=()=>houses().filter(b=>b.conn).reduce((s,b)=>s+HCAP[b.lv-1],0);
 const storeCap=()=>150+Object.values(S.b).reduce((s,b)=>s+(b.type==='store'?(isUp(b)?300:150):0),0);
 const terr=(x,y)=>inb(x,y)?S.t[I(x,y)]:null;
 const bAt=(x,y)=>inb(x,y)?S.b[I(x,y)]:null;
+// water a fishing hut at (x,y) can fish: each water tile within 2 tiles is shared evenly by the working huts that reach it;
+// adding counts one more hut there (for previewing a hut that isn't built yet). Returns [tiles, shared tiles]
+function fishWater(x,y,adding){
+  const huts=ent().filter(([i,b])=>b.type==='fish'&&b.conn&&b.eff>0).map(([i])=>XY(i));
+  let n=0,sh=0;
+  for(let yy=y-2;yy<=y+2;yy++)for(let xx=x-2;xx<=x+2;xx++){
+    if(!inb(xx,yy)||(xx-x)**2+(yy-y)**2>4||S.t[I(xx,yy)]!=='w'||S.b[I(xx,yy)])continue;
+    const k=Math.max(1,huts.filter(([hx,hy])=>(hx-xx)**2+(hy-yy)**2<=4).length+(adding?1:0));
+    n+=1/k;if(k>1)sh++;
+  }
+  return [n,sh];
+}
 function countR(x,y,r,v){let n=0;for(let yy=y-r;yy<=y+r;yy++)for(let xx=x-r;xx<=x+r;xx++){if(!inb(xx,yy)||(xx-x)**2+(yy-y)**2>r*r)continue;if(S.t[I(xx,yy)]===v&&!S.b[I(xx,yy)])n++}return n}
 function count8(x,y,v){let n=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if((dx||dy)&&terr(x+dx,y+dy)===v)n++}return n}
 // upgraded buildings (not houses, which have their own levels) use the numbers in B[type].up

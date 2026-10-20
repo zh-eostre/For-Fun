@@ -65,7 +65,7 @@ function draw(now){
   if(UI.tool!=='select'&&UI.tool!=='demolish'&&t!=null){
     const [x,y]=XY(t),d=B[UI.tool],v=canPlace(UI.tool,x,y);
     if(d.r){for(let yy=y-d.r;yy<=y+d.r;yy++)for(let xx=x-d.r;xx<=x+d.r;xx++)if(inb(xx,yy)&&(xx-x)**2+(yy-y)**2<=d.r*d.r)P(ctx,xx*T,yy*T,T,T,'rgba(255,226,120,.22)')}
-    if(UI.tool==='lumber')hl(x,y,2,'t');if(UI.tool==='fish')hl(x,y,2,'w');if(UI.tool==='quarry')hlr(x,y);
+    if(UI.tool==='lumber')hl(x,y,2,'t');if(UI.tool==='fish')hlFish(x,y,true);if(UI.tool==='quarry')hlr(x,y);
     ctx.globalAlpha=.75;if(UI.tool==='road')P(ctx,x*T+3,y*T+3,10,10,p.road);else drawBld(ctx,UI.tool,x*T,y*T,p,{lv:1,dir:faceDir(x,y,undefined,UI.tool)});ctx.globalAlpha=1;
     P(ctx,x*T,y*T,T,T,v.ok?'rgba(80,200,120,.28)':'rgba(220,60,40,.35)');outline(x,y,v.ok?'#7CFF9E':'#FF6B57');
   }else if(UI.tool==='demolish'&&t!=null){const [x,y]=XY(t);P(ctx,x*T,y*T,T,T,UI.confirmDel===t?'rgba(220,60,40,.55)':'rgba(220,60,40,.28)');outline(x,y,'#FF6B57')}
@@ -73,10 +73,19 @@ function draw(now){
     if(UI.hover!=null&&UI.hover!==UI.sel){const [x,y]=XY(UI.hover);outline(x,y,'rgba(255,255,255,.7)')}
     if(UI.sel!=null){const [x,y]=XY(UI.sel),b=S.b[UI.sel];
       if(b&&radiusOf(b)){const r=radiusOf(b);for(let yy=y-r;yy<=y+r;yy++)for(let xx=x-r;xx<=x+r;xx++)if(inb(xx,yy)&&(xx-x)**2+(yy-y)**2<=r*r)P(ctx,xx*T,yy*T,T,T,'rgba(255,226,120,.2)')}
-      if(b&&b.type==='lumber')hl(x,y,2,'t');if(b&&b.type==='fish')hl(x,y,2,'w');if(b&&b.type==='quarry')hlr(x,y);
+      if(b&&b.type==='lumber')hl(x,y,2,'t');if(b&&b.type==='fish')hlFish(x,y,!(b.conn&&b.eff>0));if(b&&b.type==='quarry')hlr(x,y);
       outline(x,y,'#F2C14E')}
   }
 }
 function outline(x,y,c){ctx.strokeStyle=c;ctx.lineWidth=1;ctx.strokeRect(x*T+.5,y*T+.5,T-1,T-1)}
+// a fishing hut's water: green when it has the tile to itself, orange when other huts share it
+function hlFish(x,y,adding){
+  const huts=ent().filter(([i,b])=>b.type==='fish'&&b.conn&&b.eff>0).map(([i])=>XY(i));
+  for(let yy=y-2;yy<=y+2;yy++)for(let xx=x-2;xx<=x+2;xx++){
+    if(!inb(xx,yy)||(xx-x)**2+(yy-y)**2>4||S.t[I(xx,yy)]!=='w'||S.b[I(xx,yy)])continue;
+    const k=huts.filter(([hx,hy])=>(hx-xx)**2+(hy-yy)**2<=4).length+(adding?1:0);
+    outline(xx,yy,k>1?'#FFB347':'#9BFF7A');
+  }
+}
 function hl(x,y,r,v){for(let yy=y-r;yy<=y+r;yy++)for(let xx=x-r;xx<=x+r;xx++)if(inb(xx,yy)&&(xx-x)**2+(yy-y)**2<=r*r&&S.t[I(xx,yy)]===v&&!S.b[I(xx,yy)])outline(xx,yy,'#9BFF7A')}
 function hlr(x,y){for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)if((dx||dy)&&terr(x+dx,y+dy)==='r')outline(x+dx,y+dy,'#9BFF7A')}

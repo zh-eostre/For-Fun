@@ -25,7 +25,7 @@ function prodOf(b,i){
   const o={},[x,y]=XY(i),s=season(),e=b.eff||0,m=isUp(b)?1.5:1;
   switch(b.type){
     case 'farm':if(e){let f=(3+(adj4(x,y,'w')?1:0))*[1,1.2,1.5,0][s]*e;if(S.ev.harvest)f*=2;o.food=f*m}break;
-    case 'fish':if(e)o.food=Math.min(3,.5*countR(x,y,2,'w'))*(s===3?.6:1)*e*m;break;
+    case 'fish':if(e)o.food=Math.min(3,.5*fishWater(x,y)[0])*(s===3?.6:1)*e*m;break;
     case 'lumber':if(e)o.wood=Math.min(3.5,.5*countR(x,y,2,'t'))*e*m;break;
     case 'quarry':if(e)o.stone=Math.min(3,count8(x,y,'r'))*e*m;break;
     case 'market':if(e)o.coins=3*e;break;
