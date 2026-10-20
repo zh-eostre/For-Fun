@@ -33,8 +33,8 @@ function prodOf(b,i){
     case 'market':if(e)o.coins=3*e;break;
     case 'bakery':if(e)o.food=-2*e;break;
     case 'tea':if(e)o.coins=2*e;break;
-    case 'mulberry':if(e)o.silk=2*[1,1.25,1,0][s]*e;break;
-    case 'weave':if(e){o.silk=-2*e;o.cloth=2*e}break;
+    case 'mulberry':if(e)o.silk=3*[1,1.25,1,0][s]*e*m;break;
+    case 'weave':if(e){const k=isUp(b)?2:1;o.silk=-2*e*k;o.cloth=3*e*k}break;
     case 'winery':if(e){o.food=-3*e;o.wine=2*e}break;
     case 'tavern':if(e){o.wine=-e;o.coins=4*e}break;
     case 'spire':if(b.built&&e)o.coins=20*e;break;
@@ -98,7 +98,7 @@ function dayTick(){
   for(const [i,b] of ent()){
     if(b.type==='workshop'&&(S.res.wood<(isUp(b)?2:1)||S.res.stone<(isUp(b)?2:1)))continue;
     if(b.type==='bakery'&&S.res.food<2)continue;
-    if(b.type==='weave'&&S.res.silk<2)continue;
+    if(b.type==='weave'&&S.res.silk<(isUp(b)?4:2))continue;
     if(b.type==='winery'&&S.res.food<3)continue;
     if(b.type==='tavern'){b.dry=S.res.wine<1;if(b.dry)continue}
     if(b.type==='kiln'&&(S.res.stone<2||S.res.wood<1))continue;

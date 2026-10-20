@@ -279,6 +279,14 @@ const UPA={
     P(g,ox+5,oy+2,6,1,'#3F6FA8');P(g,ox+3,oy+3,10,2,'#3F6FA8');P(g,ox+3,oy+4,10,1,'#2E5384');if(p.ice)P(g,ox+3,oy+3,10,1,'#fff');
     P(g,ox+13,oy+11,3,3,'#8A5A33');P(g,ox+13,oy+11,3,1,p.ice?'#E8F5FD':'#6FB0E8');
   },
+  mulberry(g,ox,oy,p){
+    P(g,ox+15,oy+9,1,5,'#E8D8B5');P(g,ox+10,oy+14,5,1,'#F2EEE6');P(g,ox+11,oy+13,1,1,'#F2EEE6');P(g,ox+13,oy+13,1,1,'#F2EEE6');
+    P(g,ox+6,oy+13,3,2,p.t);P(g,ox+6,oy+13,1,1,p.th);
+  },
+  weave(g,ox,oy,p){
+    P(g,ox+10,oy+11,6,1,TIM);P(g,ox+11,oy+12,1,2,'#8E5AB5');P(g,ox+13,oy+12,1,2,'#7CC24E');P(g,ox+14,oy+12,1,1,'#D9506E');
+    P(g,ox+3,oy+1,1,4,'#6F737A');P(g,ox+3,oy+1,1,1,'#5E636A');
+  },
   park(g,ox,oy,p){
     for(const x of [3,12]){P(g,ox+x,oy+3,1,3,'#3A3D42');P(g,ox+x-1,oy+2,3,1,'#F5DE8C')}
     P(g,ox+2,oy+14,4,1,'#8A5A33');P(g,ox+10,oy+14,4,1,'#8A5A33');
