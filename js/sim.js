@@ -10,7 +10,7 @@ function recompute(){
     if(!isRoad(b)&&b.type!=='hall'){const d=faceDir(x,y,b.dir,b.type);if(d!==b.dir){b.dir=d;dirty=true}}
   }
   let free=popTotal();
-  const order=['farm','fish','lumber','quarry','market','school','temple','bakery','tea','workshop'];
+  const order=['farm','fish','lumber','quarry','market','school','temple','bakery','tea','mulberry','weave','workshop'];
   const wp=ent().filter(([i,b])=>B[b.type].workers).sort((a,c)=>order.indexOf(a[1].type)-order.indexOf(c[1].type)||a[1].id-c[1].id);
   for(const [i,b] of wp){const need=workersOf(b);b.workers=(b.conn&&!b.paused)?Math.min(need,free):0;free-=b.workers;b.eff=b.workers/need}
   S.idle=free;
@@ -32,6 +32,8 @@ function prodOf(b,i){
     case 'market':if(e)o.coins=3*e;break;
     case 'bakery':if(e)o.food=-2*e;break;
     case 'tea':if(e)o.coins=2*e;break;
+    case 'mulberry':if(e)o.silk=2*[1,1.25,1,0][s]*e;break;
+    case 'weave':if(e){o.silk=-2*e;o.cloth=2*e}break;
     case 'workshop':if(e){const k=isUp(b)?2:1;o.wood=-e*k;o.stone=-e*k;o.coins=6*e*k}break;
     case 'hall':o.coins=2;break;
   }
@@ -63,9 +65,10 @@ function houseReq(b){
   const c=b.cov||{},m=hasMarket(),cap=HCAP[b.lv-1],need=Math.ceil(cap*.75);
   if(b.lv===1)return [['连上道路',b.conn],['水井覆盖',!!c.water],['镇上有市场',m],['幸福度 50 以上',S.happy>=50],[`住满 ${need} 人`,b.res>=need]];
   if(b.lv===2)return [['连上道路',b.conn],['水井覆盖',!!c.water],['镇上有市场',m],['学校覆盖',!!c.school],['公园或神庙覆盖',!!(c.park||c.temple)],['幸福度 65 以上',S.happy>=65],[`住满 ${need} 人`,b.res>=need]];
+  if(b.lv===3)return [[`小镇达到「${RANKS[LV4_RANK].n}」`,S.rank>=LV4_RANK],['连上道路',b.conn],['水井覆盖',!!c.water],['镇上有市场',m],['学校覆盖',!!c.school],['公园或神庙覆盖',!!(c.park||c.temple)],['镇上有布',S.res.cloth>=1&&!S.short.cloth],['幸福度 75 以上',S.happy>=75],[`住满 ${need} 人`,b.res>=need]];
   return null;
 }
-function houseKeep(b){const c=b.cov||{},m=hasMarket();if(b.lv===2)return b.conn&&c.water&&m&&S.happy>=40;if(b.lv===3)return b.conn&&c.water&&m&&c.school&&(c.park||c.temple)&&S.happy>=55;return true}
+function houseKeep(b){const c=b.cov||{},m=hasMarket();if(b.lv===2)return b.conn&&c.water&&m&&S.happy>=40;if(b.lv===3)return b.conn&&c.water&&m&&c.school&&(c.park||c.temple)&&S.happy>=55;if(b.lv===4)return b.conn&&c.water&&m&&c.school&&(c.park||c.temple)&&!S.short.cloth&&S.happy>=65;return true}
 
 function dayTick(){
   recompute();
@@ -73,17 +76,21 @@ function dayTick(){
   for(const [i,b] of ent()){
     if(b.type==='workshop'&&(S.res.wood<(isUp(b)?2:1)||S.res.stone<(isUp(b)?2:1)))continue;
     if(b.type==='bakery'&&S.res.food<2)continue;
+    if(b.type==='weave'&&S.res.silk<2)continue;
     const o=prodOf(b,i);for(const k in o)S.res[k]+=o[k];
   }
   S.res.coins+=taxIncome();
   S.res.food-=pop*.25;
   if(s===3)S.res.wood-=heatNeed();
+  const clothNeed=houses().reduce((t,b)=>t+(b.lv===4?b.res*CLOTH_PER:0),0);S.res.cloth-=clothNeed;
+  S.short.cloth=clothNeed>0&&S.res.cloth<0?S.short.cloth+1:0;
   const foodShort=pop>0&&S.res.food<0,heatShort=s===3&&S.res.wood<0;
   S.short.food=foodShort?S.short.food+1:0;S.short.heat=heatShort?S.short.heat+1:0;
-  const cap=storeCap();for(const k of ['wood','stone','food'])S.res[k]=clamp(S.res[k],0,cap);S.res.coins=Math.max(0,S.res.coins);
+  const cap=storeCap();for(const k of STORED)S.res[k]=clamp(S.res[k],0,cap);S.res.coins=Math.max(0,S.res.coins);
   for(const k in S.res)S.delta[k]=S.res[k]-before[k];
   if(S.short.food===1)log('粮食吃完了！居民在挨饿，幸福度会快速下降。多建农场或渔屋。','bad');
   if(S.short.heat===1)log('木材烧完了，民居没法取暖。','bad');
+  if(S.short.cloth===1)log('布用完了，府邸的居民不满意。再缺几天，府邸会退化成宅院。','bad');
   const hp=happyParts(foodShort,heatShort);S.happy+=(hp.t-S.happy)*.3;
 
   for(const b of houses()){
@@ -120,7 +127,7 @@ function checkRank(){
     log(`小镇升级为「${r.n}」！奖励 ${rTxt(r.reward)}`,'good');
     openModal({icon:'🎉',title:`升级为「${r.n}」`,text:`人口达到 ${r.pop}，奖励 ${rTxt(r.reward)}。${S.rank===UP_RANK?'现在可以升级农场、仓库等建筑了。':''}${un.length?'解锁了新建筑：':''}`,icons:un,
       choices:[{label:S.rank===RANKS.length-1?'太好了，继续经营':'继续',primary:1,fn:()=>{}}]});
-    if(S.rank===RANKS.length-1&&!S.won){S.won=true;log('晴川小镇成为了繁华之城！你可以继续经营下去。','good')}
+    if(S.rank===RANKS.length-1&&!S.won){S.won=true;log(`晴川小镇成为了${r.n}！你可以继续经营下去。`,'good')}
   }
 }
 // bg quests run alongside the chain and finish whenever their condition holds; the chain skips over them

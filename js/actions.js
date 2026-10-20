@@ -55,7 +55,7 @@ function applyTool(t,dragging,touch){
 }
 // buying skips the "住满" condition, the others still have to hold or the house would just slide back
 function upgradeHouse(i){
-  const b=S.b[i];if(!b||b.type!=='house'||b.lv>=3)return;
+  const b=S.b[i];if(!b||b.type!=='house'||b.lv>=4)return;
   const c=HUP[b.lv-1];
   if(!houseReq(b).slice(0,-1).every(r=>r[1])){toast('还有升级条件没满足');return}
   if(!canPay(c)){toast('材料不够：需要 '+rTxt(c));return}

@@ -43,6 +43,7 @@ function renderTop(){
    ${chip('wood',S.res.wood,`<small>/${c}</small>`,s===3&&S.short.heat)}
    ${chip('stone',S.res.stone,`<small>/${c}</small>`)}
    ${chip('food',S.res.food,`<small>/${c}</small>`,S.short.food)}
+   ${S.rank>=LV4_RANK||S.res.silk||S.res.cloth?chip('silk',S.res.silk,`<small>/${c}</small>`)+chip('cloth',S.res.cloth,`<small>/${c}</small>`,S.short.cloth):''}
    <div class="rc" title="人口 / 住房上限（空闲劳动力）"><span class="ic">👥</span><b>${pop}</b><small>/${cp}</small><small>　闲 ${S.idle||0}</small></div>
    <div class="rc ${S.happy<35?'warn':''}" title="幸福度"><span class="ic">${S.happy>=70?'😄':S.happy>=45?'🙂':S.happy>=30?'😐':'😠'}</span><b>${Math.round(S.happy)}</b></div>
   </div>`;
@@ -80,7 +81,7 @@ function renderSide(){
   }
   const mk=hasMarket();
   const trade=mk?`<section class="box"><h3 class="hd">⚖️ 市集交易</h3><p class="muted">有市场在运作，就能在这里买卖材料。</p>
-   <div class="trade">${TRADE.map((t,i)=>`<button class="btn sm" data-act="trade" data-arg="${i}" ${canPay(t.g)?'':'disabled'}>${rTxt(t.g)} → ${rTxt(t.r)}</button>`).join('')}</div></section>`:'';
+   <div class="trade">${TRADE.map((t,i)=>(t.rank||0)>S.rank?'':`<button class="btn sm" data-act="trade" data-arg="${i}" ${canPay(t.g)?'':'disabled'}>${rTxt(t.g)} → ${rTxt(t.r)}</button>`).join('')}</div></section>`:'';
   const lg=S.log.slice(0,8).map(l=>`<li class="${l.c}"><span class="d">${l.d}</span>${l.t}</li>`).join('');
   document.getElementById('side').innerHTML=`
   <section class="box" id="info">${vInfo()}</section>
@@ -142,7 +143,7 @@ function vInfo(){
     if(!b.conn)h+='<p class="bad">没有连到道路，居民不会搬进来，住着的也会离开。</p>';
     if(req)h+=`<p><b>升级成${HN[b.lv]}还需要：</b></p><ul class="reqs">${req.map(([l,ok])=>`<li class="${ok?'y':''}">${l}</li>`).join('')}</ul>${req.every(r=>r[1])?'<p class="ok">条件都满足了，很快就会升级。</p>':''}`;
     if(req){const c=HUP[b.lv-1],ok=req.slice(0,-1).every(r=>r[1]);h+=`<p class="muted">也可以花钱立刻升级，不用等住满，但其他条件要先满足。</p><button class="btn sm" data-act="upgrade" ${ok&&canPay(c)?'':'disabled'}>花 ${rTxt(c)} 升级成${HN[b.lv]}</button> `}
-    else h+='<p class="ok">已经是最高级的宅院了。</p>';
+    else h+=`<p class="ok">已经是最高级的${HN[b.lv-1]}了。</p>`;
     if(b.lv>1&&!houseKeep(b))h+=`<p class="bad">现在缺少维持${HN[b.lv-1]}的服务，再这样几天会退化。</p>`;
   }else{
     h=`<h3 class="hd"><img src="${ICON[b.type]}" alt="" style="width:24px;height:24px;image-rendering:pixelated;vertical-align:-5px"> ${d.n}${isUp(b)?'（已升级）':''}</h3><p class="muted">${d.desc}</p><dl class="kv">`;

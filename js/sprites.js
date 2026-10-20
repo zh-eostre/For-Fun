@@ -65,7 +65,7 @@ const SPR={
       P(g,ox+4,oy+8,2,2,WIN);P(g,ox+10,oy+8,2,2,WIN);
       if(f==='front'){P(g,ox+10,oy+11,2,2,WIN);P(g,ox+9,oy+13,4,1,'#D9506E');P(g,ox+6,oy+11,2,3,DOOR);P(g,ox+3,oy+11,2,2,WIN)}
       else{P(g,ox+4,oy+11,2,2,WIN);P(g,ox+10,oy+11,2,2,WIN)}
-    }else{
+    }else if(lv===3){
       P(g,ox+0,oy+15,16,1,SH);P(g,ox+2,oy+5,12,10,'#F0E4C9');P(g,ox+2,oy+14,12,1,'#8F877C');
       P(g,ox+2,oy+9,12,1,TIM);P(g,ox+2,oy+5,1,10,TIM);P(g,ox+13,oy+5,1,10,TIM);
       rows(g,ox,oy,[[7,2,0],[5,6,1],[3,10,2],[2,12,3],[1,14,4]],'#2F8A86');P(g,ox+1,oy+4,14,1,'#1F625F');
@@ -75,7 +75,32 @@ const SPR={
       if(f==='front'){P(g,ox+4,oy+10,2,2,WIN);P(g,ox+10,oy+10,2,2,WIN);P(g,ox+7,oy+10,2,4,DOOR);P(g,ox+3,oy+12,3,1,'#D9506E');P(g,ox+10,oy+12,3,1,'#E2B93B');P(g,ox+0,oy+11,2,4,p.t)}
       else{P(g,ox+4,oy+10,2,2,WIN);P(g,ox+7,oy+10,2,2,WIN);P(g,ox+10,oy+10,2,2,WIN);P(g,ox+0,oy+11,2,4,p.t)}
       P(g,ox+14,oy+11,2,4,p.t);
+    }else{
+      // 府邸: white walls, red pillars, grey tiled roof with upturned eaves
+      P(g,ox+0,oy+15,16,1,SH);P(g,ox+1,oy+7,14,8,'#F2EEE6');P(g,ox+1,oy+14,14,1,'#8F877C');
+      P(g,ox+2,oy+7,1,7,'#B5463A');P(g,ox+13,oy+7,1,7,'#B5463A');
+      rows(g,ox,oy,[[3,10,3],[2,12,4],[0,16,5],[0,16,6]],'#5E636A');P(g,ox+0,oy+4,1,1,'#5E636A');P(g,ox+15,oy+4,1,1,'#5E636A');P(g,ox+0,oy+6,16,1,'#3A3D42');
+      P(g,ox+4,oy+2,8,1,'#3A3D42');P(g,ox+3,oy+1,1,2,'#3A3D42');P(g,ox+12,oy+1,1,2,'#3A3D42');P(g,ox+13,oy+0,2,3,'#8C5A3C');
+      if(p.ice){P(g,ox+3,oy+3,10,1,'#fff');P(g,ox+1,oy+5,14,1,'#fff')}
+      P(g,ox+5,oy+7,1,2,'#E04A3A');P(g,ox+10,oy+7,1,2,'#E04A3A');
+      if(f==='front'){P(g,ox+3,oy+9,2,3,WIN);P(g,ox+11,oy+9,2,3,WIN);P(g,ox+3,oy+10,2,1,TIM);P(g,ox+11,oy+10,2,1,TIM);
+        P(g,ox+6,oy+9,4,5,'#A8382E');P(g,ox+6,oy+9,4,1,'#7A2A22');P(g,ox+7,oy+11,1,1,'#E2B93B');P(g,ox+8,oy+11,1,1,'#E2B93B')}
+      else{P(g,ox+3,oy+9,2,3,WIN);P(g,ox+7,oy+9,2,3,WIN);P(g,ox+11,oy+9,2,3,WIN);P(g,ox+3,oy+10,2,1,TIM);P(g,ox+7,oy+10,2,1,TIM);P(g,ox+11,oy+10,2,1,TIM)}
     }
+  },
+  mulberry(g,ox,oy,p){
+    P(g,ox+1,oy+3,14,12,p.ice?'#CFC3B8':'#7A5A3A');P(g,ox+0,oy+3,16,1,'#A07A4A');for(const x of [0,5,15])P(g,ox+x,oy+2,1,2,'#A07A4A');
+    for(const [x,y] of [[2,4],[6,4],[2,9],[6,9]]){P(g,ox+x,oy+y,3,3,p.t);P(g,ox+x,oy+y,1,1,p.th);P(g,ox+x+2,oy+y+2,1,1,p.td);P(g,ox+x+1,oy+y+3,1,1,'#6B4423')}
+    P(g,ox+10,oy+9,5,5,'#E8D8B5');P(g,ox+9,oy+8,7,1,'#8C5A3C');P(g,ox+10,oy+7,5,1,'#8C5A3C');if(p.ice)P(g,ox+10,oy+7,5,1,'#fff');
+    P(g,ox+12,oy+11,1,3,DOOR);P(g,ox+10,oy+10,1,1,'#F2EEE6');P(g,ox+14,oy+10,1,1,'#F2EEE6');
+    P(g,ox+11,oy+4,3,3,p.t);P(g,ox+11,oy+4,1,1,p.th);P(g,ox+12,oy+7,1,1,'#6B4423');
+  },
+  weave(g,ox,oy,p){
+    P(g,ox+1,oy+14,14,1,SH);P(g,ox+1,oy+6,9,8,'#D9C6A5');rows(g,ox,oy,[[3,5,3],[2,7,4],[1,9,5]],'#7A5233');P(g,ox+1,oy+6,9,1,'#5B3A1E');
+    if(p.ice)P(g,ox+2,oy+4,7,1,'#fff');
+    P(g,ox+2,oy+8,2,2,WIN);P(g,ox+6,oy+10,2,4,DOOR);
+    P(g,ox+10,oy+5,1,9,TIM);P(g,ox+15,oy+5,1,9,TIM);P(g,ox+10,oy+5,6,1,TIM);
+    P(g,ox+11,oy+6,1,6,'#D24B3C');P(g,ox+12,oy+6,1,5,'#3F6FA8');P(g,ox+13,oy+6,1,6,'#E2B93B');P(g,ox+14,oy+6,1,4,'#2F8A86');
   },
   farm(g,ox,oy,p){
     P(g,ox+1,oy+3,14,12,p.ice?'#CFC3B8':'#8A5A33');
@@ -230,5 +255,5 @@ function makeIcons(){
     ICON[k]=c.toDataURL();
   }
   const c=document.createElement('canvas');c.width=16;c.height=16;const g=c.getContext('2d');
-  SPR.house(g,0,0,p,{lv:2});ICON.house2=c.toDataURL();g.clearRect(0,0,16,16);SPR.house(g,0,0,p,{lv:3});ICON.house3=c.toDataURL();
+  SPR.house(g,0,0,p,{lv:2});ICON.house2=c.toDataURL();g.clearRect(0,0,16,16);SPR.house(g,0,0,p,{lv:3});ICON.house3=c.toDataURL();g.clearRect(0,0,16,16);SPR.house(g,0,0,p,{lv:4});ICON.house4=c.toDataURL();
 }
