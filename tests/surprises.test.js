@@ -12,6 +12,10 @@ fp()[4].inj=12;t=SURPRISES[3].run();ok(fp()[4].inj===0,'old healer: '+t);
 b=S.budget;t=SURPRISES[4].run();ok(S.budget>b,'fans: '+t);
 S.boost=0;t=SURPRISES[5].run();ok(S.boost===1,'legend visit: '+t);
 t=SURPRISES[6].run();ok(S.market.some(p=>p.pot>=88&&p.scout.conf==='low'),'scout letter: '+t);
+// the scout letter only comes while a window is open, so the gem can be signed before the summer clears the market
+{const d=S.day;S.day=S.pre;ok(!windowOpen()&&!SURPRISES[6].ok(),'no scout letter once the summer window has shut');
+  S.day=winterStart();ok(SURPRISES[6].ok(),'the letter can come in the winter window');
+  S.day=winterStart()+WINTER;ok(!SURPRISES[6].ok(),'and not after it');S.day=d}
 const n=S.academy.intake.length;t=SURPRISES[7].run();ok(S.academy.intake.length===n+1&&S.academy.intake[n].pot>=85,'gifted kid: '+t);
 // how often over a full season of calendar days
 newGame(2,teamNames());let count=0,days=0;

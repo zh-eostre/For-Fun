@@ -644,7 +644,9 @@ const SURPRISES=[
     return `一位神秘的老中医为 ${p.name} 推拿了一整晚……伤势痊愈了！`}},
   {w:2,run:()=>{const m=ri(20,50);S.budget+=m;return `球迷自发众筹，为球队送来 ${money(m)}！`}},
   {w:2,run:()=>{raiseMorale();return '一位退役的传奇前辈回到训练场为全队打气，下一场士气高涨！'}},
-  {w:1,ok:()=>S.market.length>0,run:()=>{
+  // only while a window is open, so the gem can be signed (the market is cleared each summer). the window is about
+  // a ninth of the season, so the weight is raised to keep the same number of letters a season as weight 1 all year
+  {w:20,ok:()=>windowOpen()&&S.market.length>0,run:()=>{
     const g=makeGem();S.market.push(g);  // added to the list (it used to replace someone already on it)
     return `一位老球探寄来密信：转会市场上有一颗被埋没的明珠，${g.name}（${POS[g.pos]}，${g.age} 岁）……`}},
   {w:1,ok:()=>!!S.academy,run:()=>{
