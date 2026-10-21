@@ -590,6 +590,8 @@ dialog.modal.wide{max-width:860px}
 .rules-btn{margin-left:auto;align-self:center;border-color:currentColor;color:inherit;white-space:nowrap;flex:none}
 .rules-btn+.cash{margin-left:4px}
 .rules-btn+.rules-btn{margin-left:6px}
+/* on a phone the top bar has no room for the theme switch; it's on the rules page there */
+@media (max-width:560px){.rules-btn.theme-btn{display:none}}
 
 /* players who have left the pitch */
 .gone-row{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;padding-top:4px;border-top:1px dashed var(--line);margin-top:2px}

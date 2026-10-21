@@ -136,6 +136,15 @@ function canStart(p){
   if(p.away){toast(`${p.name} 回家探亲了`);return false}
   return true;
 }
+// colour theme: follow the system, or always light / dark. kept per device, like the sound; the page's <head>
+// applies it before the first paint so a dark choice doesn't flash light
+const THEME_KEY='lvyin-theme';
+const THEMES={auto:['跟随系统','🌓'],light:['浅色','☀️'],dark:['深色','🌙']};
+const themeNow=()=>{try{const t=localStorage.getItem(THEME_KEY);return THEMES[t]&&t!=='auto'?t:'auto'}catch(e){return 'auto'}};
+function applyTheme(){
+  const r=typeof document!=='undefined'&&document.documentElement;if(!r)return;
+  const t=themeNow();if(t==='auto')r.removeAttribute('data-theme');else r.setAttribute('data-theme',t);
+}
 const ACT={
   cheat:(a,b)=>useCheat(a,b),
   start:a=>{if(TEAMS[+a]&&TEAMS[+a].div===DIVS.length-1)newGame(+a,UI.draft,UI.diff)},
@@ -200,6 +209,9 @@ const ACT={
     render();window.scrollTo(0,0);
   },
   sound:()=>{setSound(!soundOn());if(soundOn())sfx('card');render()},
+  theme:()=>{const k=Object.keys(THEMES),t=k[(k.indexOf(themeNow())+1)%k.length];
+    try{if(t==='auto')localStorage.removeItem(THEME_KEY);else localStorage.setItem(THEME_KEY,t)}catch(e){}
+    applyTheme();render();toast(`主题：${THEMES[t][0]}`)},
   list:a=>{const p=findP(+a);if(!p)return;p.listed=!p.listed;
     toast(p.listed?`${p.name} 已挂牌出售${windowOpen()?'，接下来几天留意报价':'，转会窗口开放后会有球队报价'}`:`${p.name} 已撤下挂牌`);save();render()},
   rotate:()=>{S.rotate=S.rotate===false;if(S.autoXI!==false)fixLineup();save();render()},
@@ -324,7 +336,7 @@ document.addEventListener('click',e=>{if(e.target.matches&&e.target.matches('dia
 if(window.matchMedia){const mq=window.matchMedia(WIDE);(mq.addEventListener?mq.addEventListener('change',()=>render()):mq.addListener(()=>render()))}
 
 // always open on the start screen, so the player can continue or restart
-render();
+applyTheme();render();
 
 // chart tooltips: any mark with data-tip shows it on hover or keyboard focus, just above the mark
 (()=>{
