@@ -9,7 +9,19 @@ const I=S.intl,away=S.teams.filter(t=>t.foreign);
 ok(I&&I.groups.length===8&&I.groups.every(g=>g.length===4)&&new Set(I.groups.flat()).size===32,'32 clubs in eight groups of four');
 ok(I.home.length===4&&I.home.includes(S.my)&&I.home.every(id=>S.teams[id].div===0),'four 甲级 clubs enter, us among them');
 ok(I.home.every(id=>I.groups.filter(g=>g.includes(id)).length===1)&&I.groups.every(g=>g.filter(id=>I.home.includes(id)).length<=1),'our clubs are drawn into different groups');
-ok(I.home.map(id=>I.groups.findIndex(g=>g.includes(id))).join()==='0,2,4,6','in groups A, C, E and G, so they can\u2019t meet in the last 16');
+ok(I.home.map(id=>I.groups.findIndex(g=>g.includes(id))).sort().join()==='0,2,4,6','one in each of groups A, C, E and G, so they can\u2019t meet in the last 16');
+// the draw by pots: the 32 by 底蕴 into four pots of eight, each group one club from each pot
+{const D=I.draw,rk=[...I.groups.flat()].sort((a,b)=>S.teams[b].rep-S.teams[a].rep||a-b);
+ ok(D.pots.length===4&&D.pots.every((p,k)=>p.join()===rk.slice(8*k,8*k+8).join()),'four pots of eight by 底蕴');
+ ok(I.groups.every(g=>g.every((id,k)=>D.pots[k].includes(id))),'each group has one club from each pot');
+ ok(D.picks.length===32&&D.picks.every(p=>I.groups[p.g].includes(p.id))&&D.picks.map(p=>p.id).join()===D.pots.flatMap(p=>D.picks.filter(x=>p.includes(x.id)).map(x=>x.id)).join(),'the balls are drawn pot by pot, each into its group')}
+// any mix of our clubs over the pots: the draw always finds room, and ours stay apart in A, C, E and G
+{let fine=0,bGroup=new Set();for(let n=0;n<400;n++){const pool=shuffle(S.teams.filter(t=>t.foreign).map(t=>t.id)).slice(0,28),home=shuffle(domestic().map(t=>t.id)).slice(0,4);
+  const r=potDraw(home,pool),gs=home.map(id=>r.groups.findIndex(g=>g.includes(id)));
+  if(r.groups.every(g=>g.length===4)&&gs.sort().join()==='0,2,4,6')fine++;
+  bGroup.add(r.groups.findIndex(g=>g.includes(r.draw.pots[0].find(id=>!home.includes(id)))))}
+ ok(fine===400,'400 random draws: '+fine+' complete with ours in A, C, E and G');
+ ok(bGroup.size>=4,'the strongest club from abroad turns up in '+bGroup.size+' different groups (it used to be B every year)')}
 ok(away.length===FOREIGN.length&&away.every(t=>t.div===-1&&t.players.length>=16),'the clubs from abroad have squads and no division');
 ok(away.every(t=>t.players.every(p=>!!p.sig===(p.ovr>=SIG_OVR&&p.age<SIG_FADE))),'their stars learn signature moves like everyone else');
 ok(!S.fixtures.flat(3).filter(x=>typeof x==='number').some(id=>S.teams[id].foreign),'no club from abroad in the league');

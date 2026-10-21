@@ -925,6 +925,8 @@ tr.intl-maybe td:first-child{box-shadow:inset 4px 0 color-mix(in srgb,var(--ambe
 .bpair{flex:1;display:flex;flex-direction:column;justify-content:space-around;position:relative}
 .bpair::after{content:"";position:absolute;right:-12px;top:25%;bottom:25%;width:10px;border:1.5px solid var(--line);border-left:0;border-radius:0 6px 6px 0}
 .bpair::before{content:"";position:absolute;right:-22px;top:50%;width:10px;border-top:1.5px solid var(--line)}
+/* a round whose next round isn't drawn yet: its pairs aren't joined to anything */
+.bcol.loose .bpair::after,.bcol.loose .bpair::before{display:none}
 .btie{border:1px solid var(--line);border-radius:8px;background:var(--card);font-size:13px;overflow:hidden;margin:4px 0}
 .btie.mine{border-color:var(--pitch);box-shadow:0 0 0 1px var(--pitch)}
 .bt{display:flex;justify-content:space-between;gap:6px;padding:3px 8px;line-height:1.35}
@@ -990,3 +992,67 @@ tr.intl-maybe td:first-child{box-shadow:inset 4px 0 color-mix(in srgb,var(--ambe
 .bs-cap{grid-column:1/-1;text-align:center;font-size:11px;color:var(--muted);margin-top:-2px}
 @media (prefers-reduced-motion:no-preference){.bs-ball{animation:bsmove .45s ease-out both}@keyframes bsmove{from{left:var(--from)}to{left:var(--to)}}
   .bstrip.goal .bs-field{animation:bsgoal .8s ease-out}@keyframes bsgoal{30%{box-shadow:inset 0 0 0 2px var(--amber),0 0 18px var(--amber)}}}
+
+/* the draw ceremony: the balls come out on the stage one by one and drop into their tie or group, the pot emptying.
+   every timed part has --at (when its ball comes out) and the panel has --t (how far in we are), so a re-render
+   carries on where it was; .done is the outcome with nothing moving */
+.dceremony{background:linear-gradient(160deg,color-mix(in srgb,var(--pitch) 14%,var(--card)),var(--card) 60%)}
+.dhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.dhead h2{margin:0}
+.dbtns{margin-left:auto;display:grid}
+.dbtns>*{grid-area:1/1}
+.dnote{font-size:13px;margin:4px 0 10px}
+.dball{display:inline-flex;align-items:center;justify-content:center;flex:none;width:36px;height:36px;border-radius:50%;
+  background:radial-gradient(circle at 34% 28%,#fff 0 16%,color-mix(in srgb,var(--tc) 22%,#fff) 58%,color-mix(in srgb,var(--tc) 48%,#d8d8d8));
+  border:2px solid var(--tc);color:#16201A;font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;box-shadow:0 2px 4px rgba(0,0,0,.25)}
+.dball.me{border-color:var(--amber);box-shadow:0 0 0 3px color-mix(in srgb,var(--amber) 55%,transparent)}
+.dball.big{width:68px;height:68px;font-size:19px;border-width:3px}
+.dstage{position:relative;height:132px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:var(--board);color:#fff;margin-bottom:12px;overflow:hidden}
+.dwait{color:rgba(255,255,255,.6);font-size:14px}
+.dnow{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;opacity:0}
+.dnow b{font-size:16px;line-height:1.2}.dnow small{font-size:12px;color:var(--amber)}
+.dnow.me b{color:var(--amber)}
+.dpots{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.dpot-h{font-size:12px;color:var(--muted);margin-bottom:4px}
+.dballs{display:flex;flex-wrap:wrap;gap:6px}
+.dout{display:inline-flex;opacity:.22;transform:scale(.85)}
+.din{display:inline-flex;align-items:center;gap:6px;min-width:0}
+.din em{font-style:normal;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.din b{color:var(--pitch)}
+.dties{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px}
+.dtie{display:flex;align-items:center;gap:6px;min-height:50px;border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--card)}
+.dtie i{font-style:normal;font-size:12px;color:var(--muted);flex:none}
+.dside{flex:1;min-width:0;display:flex}
+.dside:last-child{justify-content:flex-end}
+.dside:last-child .din{flex-direction:row-reverse}
+.dgroups{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:560px){.dgroups{grid-template-columns:repeat(2,minmax(0,1fr))}.dties{grid-template-columns:1fr}
+  .dballs{gap:4px}.dout .dball{width:32px;height:32px;font-size:10px}.dsum{font-size:14px}}
+.dgroup{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--card);min-width:0}
+.dgroup h4{margin:0 0 2px;font-size:13px}
+.dslot{display:flex;align-items:center;min-height:36px;border-bottom:1px dashed var(--line)}
+.dslot:last-child{border-bottom:0}
+.dslot .dball{width:28px;height:28px;font-size:10px}
+.dsum{position:absolute;inset:0;margin:0;padding:0 18px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:16px;line-height:1.6}
+.dsum b{color:var(--amber)}
+.dceremony .mine{border-color:var(--pitch);box-shadow:0 0 0 1px var(--pitch)}
+.dceremony .ddone{visibility:hidden}
+.dceremony.done .dpots,.dceremony.done .dskip,.dceremony.done .dwait,.dceremony.done .dnow{display:none}
+.dceremony.done .ddone{visibility:visible}
+@media (prefers-reduced-motion:no-preference){
+  .dceremony:not(.done) .dnow{animation:dnow var(--step) ease-out both;animation-delay:calc(var(--at) - var(--t))}
+  .dceremony:not(.done) .din{animation:din .35s ease-out both;animation-delay:calc(var(--at) + var(--step) / 2 - var(--t))}
+  .dceremony:not(.done) .dout{animation:dout .25s ease-in both;animation-delay:calc(var(--at) - var(--t))}
+  .dceremony:not(.done) .dwait{animation:dfade .2s both;animation-delay:calc(var(--lead) - var(--t))}
+  .dceremony:not(.done) .dsum{animation:din .4s ease-out both;animation-delay:calc(var(--at) - var(--t))}
+  .dceremony:not(.done) .mine{animation:dmine .3s both;animation-delay:calc(var(--mt) - var(--t))}
+  .dceremony:not(.done) .dskip{animation:dgone 0s forwards;animation-delay:calc(var(--at) - var(--t))}
+  .dceremony:not(.done) .ddone{animation:dcome 0s forwards;animation-delay:calc(var(--at) - var(--t))}
+  @keyframes dnow{0%{opacity:0;transform:translateY(-34px) scale(.5)}18%{opacity:1;transform:none}80%{opacity:1;transform:none}100%{opacity:0;transform:translateY(26px) scale(.6)}}
+  @keyframes din{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:none}}
+  @keyframes dout{from{opacity:1;transform:none}to{opacity:.22;transform:scale(.85)}}
+  @keyframes dfade{to{opacity:0}}
+  @keyframes dmine{from{border-color:var(--line);box-shadow:none}to{border-color:var(--pitch);box-shadow:0 0 0 1px var(--pitch)}}
+  @keyframes dgone{to{visibility:hidden}}
+  @keyframes dcome{to{visibility:visible}}
+}

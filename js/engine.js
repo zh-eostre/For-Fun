@@ -838,6 +838,7 @@ function newSeason(moveTo){
   S.pre=PRESEASON;S.day=0;aiPoach();refreshMarket();planFriendlies();
   if(left)releaseSurplus(left);
   S.intl=newIntl(intlHome);planWarmups();
+  S.drawQ=[];queueDraw('cup');queueDraw('intl');  // this summer's draws we're in, for the ceremony
   S.lineup=autoPick(my(),S.formation);S.autoXI=true;
   news(`升级：${names('up')}。降级：${names('down')}。`);
   prestigeNotes.forEach(t=>news(t+'。'));

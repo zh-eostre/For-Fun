@@ -209,6 +209,8 @@ const ACT={
     render();window.scrollTo(0,0);
   },
   sound:()=>{setSound(!soundOn());if(soundOn())sfx('card');render()},
+  drawSkip:()=>{if(UI.drawAt)UI.drawAt.t0=0;render()},
+  drawDone:()=>{const e=drawNow();if(e)S.drawQ.shift();UI.drawAt=null;save();render();window.scrollTo(0,0)},
   theme:()=>{const k=Object.keys(THEMES),t=k[(k.indexOf(themeNow())+1)%k.length];
     try{if(t==='auto')localStorage.removeItem(THEME_KEY);else localStorage.setItem(THEME_KEY,t)}catch(e){}
     applyTheme();render();toast(`主题：${THEMES[t][0]}`)},

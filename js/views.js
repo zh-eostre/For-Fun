@@ -208,7 +208,7 @@ function vHome(){
   const hs=f.home?rating(ms):rating(os),as=f.home?rating(os):rating(ms);
   // events and bids need an answer: first thing on a phone, top of the right column on a wide screen
   const ask=vEvent()+vOffer(),wide=isWide();
-  return `${vHeadline()}${ask&&!wide?ask:''}<div class="cols"><div class="col">${vCalendar()}<section class="panel ${f.cup?'cupmatch':f.intl?'cupmatch intlmatch':''}"><h2>下一场：${fixLabel(f)}，${f.home?'主场':'客场'}${f.derby?' <span class="tag2 derby">宿敌之战</span>':''}</h2>
+  return `${vHeadline()}${vDraw()}${ask&&!wide?ask:''}<div class="cols"><div class="col">${vCalendar()}<section class="panel ${f.cup?'cupmatch':f.intl?'cupmatch intlmatch':''}"><h2>下一场：${fixLabel(f)}，${f.home?'主场':'客场'}${f.derby?' <span class="tag2 derby">宿敌之战</span>':''}</h2>
   ${f.derby?`<p class="muted" style="margin:-6px 0 8px;font-size:13px">收入翻倍，赢了全队士气高涨 2 场。</p>`:''}${f.cup||f.intl&&S.intl.stage>=INTL_GROUP_ROUNDS?`<p class="muted" style="margin:-6px 0 8px;font-size:13px">一场定胜负，平局直接点球大战。</p>`:f.intl?`<p class="muted" style="margin:-6px 0 8px;font-size:13px">小组赛：胜 ${money(INTL_PRIZE.win)}，平 ${money(INTL_PRIZE.draw)}，小组前两名进八强。比赛收入 1.5 倍。</p>`:''}
   <div class="fixture"><div><div class="t disp" style="--tc:${H.color}">${H.name}</div><div class="str">综合实力 <span class="num">${hs}</span></div></div>
   <div class="vs num">VS</div>
@@ -290,8 +290,8 @@ function vRules(){
     `${CUP_NAME}决赛在联赛最后一轮的前一周，${INTL_NAME}决赛在联赛最后一轮的后一周（进了决赛，赛季就踢到决赛为止）。`,
     `哪一周你没有正式比赛（联赛轮空、杯赛已出局），那周六会自动安排一场热身赛，对手是海外球队，不计成绩、不吃牌；休赛周不安排。`,
     `季前一周：转会窗口开放，还有两场友谊赛（对手是本国其他级别的球队，不计成绩、不吃牌）。赛季过半后开 ${WINTER} 天冬窗，其余时间不能买卖球员。AI 球队大多在窗口最后几天才出手，所以想要的人最好早点下手；冬窗只是小修补，出手的球队不多。窗口结束前 3 天，会传出豪门盯上了哪位年轻天才，窗口最后一天他可能被签走（${diff().name}难度：${Math.round(diff().grab*100)}%）。`,
-    `${CUP_NAME}是单场淘汰，平局直接点球大战。杯赛在周中，3 天后就是下一轮联赛。两项杯赛的奖金都在决赛踢完后一次发放。`,
-    `${INTL_NAME}：${4*INTL_GROUPS} 队参加，本国派出甲级前 ${INTL_LEAGUE_PLACES} 名和${CUP_NAME}冠军（冠军已在前 ${INTL_LEAGUE_PLACES} 名时由甲级第 ${INTL_LEAGUE_PLACES+1} 名替补），其余 ${4*INTL_GROUPS-INTL_LEAGUE_PLACES-1} 队来自海外（每季从 ${FOREIGN.length} 支海外俱乐部里按实力抽签，强队更常出现；它们的底蕴会随冠军杯成绩升降）。${INTL_GROUPS} 个小组主客场双循环，前两名进十六强，之后单场淘汰。比赛在周三，收入 1.5 倍；小组赛胜 ${money(INTL_PRIZE.win)}、平 ${money(INTL_PRIZE.draw)}，进十六强 ${money(INTL_PRIZE.ko[0])}、八强 ${money(INTL_PRIZE.ko[1])}、四强 ${money(INTL_PRIZE.ko[2])}、决赛 ${money(INTL_PRIZE.ko[3])}，冠军 ${money(INTL_PRIZE.champion)}。海外球队不参加联赛和${CUP_NAME}，也不买卖球员。`])}
+    `${CUP_NAME}是单场淘汰，平局直接点球大战。每一轮都在上一轮踢完后重新抽签，先抽出的一方主场。杯赛在周中，3 天后就是下一轮联赛。两项杯赛的奖金都在决赛踢完后一次发放。`,
+    `${INTL_NAME}：${4*INTL_GROUPS} 队参加，本国派出甲级前 ${INTL_LEAGUE_PLACES} 名和${CUP_NAME}冠军（冠军已在前 ${INTL_LEAGUE_PLACES} 名时由甲级第 ${INTL_LEAGUE_PLACES+1} 名替补），其余 ${4*INTL_GROUPS-INTL_LEAGUE_PLACES-1} 队来自海外（每季从 ${FOREIGN.length} 支海外俱乐部里按实力抽签，强队更常出现；它们的底蕴会随冠军杯成绩升降）。小组抽签分 4 档：32 队按底蕴排序，每 8 队一档，逐档抽签，每组每档各一队；本国球队分别进入 A、C、E、G 组，八强前不会相遇。${INTL_GROUPS} 个小组主客场双循环，前两名进十六强，之后单场淘汰（十六强按小组排定：A 组第一对 B 组第二，以此类推）。有本队参加的抽签，会在「俱乐部」页现场直播。比赛在周三，收入 1.5 倍；小组赛胜 ${money(INTL_PRIZE.win)}、平 ${money(INTL_PRIZE.draw)}，进十六强 ${money(INTL_PRIZE.ko[0])}、八强 ${money(INTL_PRIZE.ko[1])}、四强 ${money(INTL_PRIZE.ko[2])}、决赛 ${money(INTL_PRIZE.ko[3])}，冠军 ${money(INTL_PRIZE.champion)}。海外球队不参加联赛和${CUP_NAME}，也不买卖球员。`])}
   ${sec('比赛怎么踢',['每分钟按双方「进攻对防守」的差距决定进球机会。实力强的一方机会更多，但强队也会输球，强队累了时弱队更有机会。',
     '进攻主要看前锋和中场，防守主要看后卫、门将和中场；主场略占优势。',
     `球员打非本职位置，能力打 ${Math.round(OOP*100)} 折；外场球员当门将（或门将踢外场）只剩一半。`,
@@ -860,6 +860,55 @@ function vCareer(){
   <div class="tw scrollbox"><table class="sticky-head"><thead><tr><th>季</th><th>球队</th><th>联赛</th><th>名次</th></tr></thead>
   <tbody>${H.slice().reverse().map(h=>`<tr><td>${h.season}</td><td>${h.club||'—'}</td><td>${DIVS[h.div||0]}</td><td>${h.rank===1?'🏆 ':''}第 ${h.rank}</td></tr>`).join('')}</tbody></table></div></section>`;
 }
+/* ---------- the draw ceremony ----------
+   a draw with us in it (S.drawQ) is shown at the top of the club page: the balls come out one by one, big on the
+   stage, then drop into their tie or group while the pot empties. it runs on the clock (UI.drawAt: when the shown
+   draw began) through CSS delays, so a re-render carries on where it was; 跳过动画 shows the outcome at once */
+const DRAW_STEP={cup:.6,intl:.5},DRAW_LEAD=.8,DRAW_POT_GAP=.8;
+const drawTimes=(kind,n)=>Array.from({length:n},(_,i)=>DRAW_LEAD+i*DRAW_STEP[kind]+(kind==='intl'?Math.floor(i/INTL_GROUPS)*DRAW_POT_GAP:0));
+// the first queued draw that is still to come (one whose round has been played, or from a past season, is dropped)
+function drawNow(){
+  const Q=S.drawQ||[];
+  while(Q.length){const e=Q[0],C=S.cup,I=S.intl;
+    if(e.season===S.season&&(e.kind==='cup'?C.draw&&C.draw.stage===e.stage&&C.stage===e.stage&&C.ties.length:I&&I.draw&&I.season===S.season&&I.stage===0))return e;
+    Q.shift()}
+  return null;
+}
+function vDraw(){
+  const e=drawNow();if(!e)return '';
+  const key=`${e.kind}${e.season}-${e.stage}`;if(!UI.drawAt||UI.drawAt.key!==key)UI.drawAt={key,t0:Date.now()};
+  const cup=e.kind==='cup',D=cup?S.cup.draw:S.intl.draw,ids=cup?D.picks:D.picks.map(p=>p.id),step=DRAW_STEP[e.kind];
+  const T=drawTimes(e.kind,ids.length),end=T[T.length-1]+step+.4,t=(Date.now()-UI.drawAt.t0)/1000,done=t>=end||reducedMotion();
+  const idx=new Map(ids.map((id,i)=>[id,i])),at=id=>`--at:${T[idx.get(id)].toFixed(2)}s`,land=id=>(T[idx.get(id)]+step/2).toFixed(2);
+  const ball=(id,cls='')=>`<span class="dball ${id===S.my?'me':''} ${cls}" style="--tc:${S.teams[id].color}">${S.teams[id].short}</span>`;
+  const slot=id=>`<span class="din" style="${at(id)}">${ball(id)}<em>${id===S.my?`<b>${S.teams[id].name}</b>`:S.teams[id].name}</em></span>`;
+  const G='ABCDEFGH';
+  // the stage: each ball as it comes out, with where it goes
+  const now=ids.map((id,i)=>`<div class="dnow ${id===S.my?'me':''}" style="${at(id)}">${ball(id,'big')}<b>${S.teams[id].name}</b><small>${cup?(i%2?'客队':'主队'):`${G[D.picks[i].g]} 组`}${id===S.my?' · 就是我们！':''}</small></div>`).join('');
+  const pot=(list,label)=>`<div class="dpot"><div class="dpot-h">${label}</div><div class="dballs">${list.map(id=>`<span class="dout" style="${at(id)}">${ball(id)}</span>`).join('')}</div></div>`;
+  let pots,board,sum,note;
+  if(cup){
+    const pool=[...ids].sort((a,b)=>S.teams[a].div-S.teams[b].div||S.teams[b].rep-S.teams[a].rep);
+    pots=pot(pool,`签池 · ${ids.length} 队`);
+    board=`<div class="dboard dties">${pairUp(ids).map(([h,a])=>{const m=h===S.my||a===S.my;
+      return `<div class="dtie ${m?'mine':''}" ${m?`style="--mt:${land(S.my)}s"`:''}><span class="dside">${slot(h)}</span><i>VS</i><span class="dside">${slot(a)}</span></div>`}).join('')}</div>`;
+    const tie=S.cup.ties.find(x=>x.includes(S.my)),o=S.teams[tie[0]===S.my?tie[1]:tie[0]];
+    sum=`命运的签球已经落定——${tie[0]===S.my?'坐镇主场，迎战':'远征客场，挑战'} <b>${o.name}</b>（${o.foreign?'海外':DIVS[o.div]}）！${dayLabel(cupDay(e.stage))}，一决生死。`;
+    note=`每轮赛后重新抽签，先抽出的一方主场。`;
+  }else{
+    const I=S.intl,gi=I.groups.findIndex(g=>g.includes(S.my));
+    pots=D.pots.map((p,k)=>pot(p,`第 ${k+1} 档`)).join('');
+    board=`<div class="dboard dgroups">${I.groups.map((g,i)=>`<div class="dgroup ${i===gi?'mine':''}" ${i===gi?`style="--mt:${land(S.my)}s"`:''}><h4>${G[i]} 组</h4>${g.map(id=>`<div class="dslot">${slot(id)}</div>`).join('')}</div>`).join('')}</div>`;
+    sum=`${G[gi]} 组，就是我们的战场！同组对手：${I.groups[gi].filter(id=>id!==S.my).map(id=>`<b>${S.teams[id].name}</b>`).join('、')}。`;
+    note=`32 队按底蕴分成 4 档，逐档抽签，每组每档各一队；本国球队分别进入 A、C、E、G 组，八强前不会相遇。`;
+  }
+  return `<section class="panel dceremony ${done?'done':''}" style="--t:${t.toFixed(2)}s;--step:${step}s;--lead:${DRAW_LEAD}s">
+  <div class="dhead"><h2>🎱 ${cup?`${CUP_NAME} · ${stageName(e.stage)}抽签`:`${INTL_NAME} · 小组赛抽签`}</h2>
+  <div class="dbtns"><button class="btn small dskip" data-act="drawSkip" style="--at:${end.toFixed(2)}s">跳过动画</button><button class="btn primary small ddone" data-act="drawDone" style="--at:${end.toFixed(2)}s">完成</button></div></div>
+  <p class="muted dnote">${note}</p>
+  <div class="dstage"><div class="dwait" aria-hidden="true">主持人缓缓将手伸进签池……</div><div aria-hidden="true">${now}</div><p class="dsum" style="--at:${end.toFixed(2)}s"><span>${sum}</span></p></div>
+  <div class="dpots" aria-hidden="true">${pots}</div>${board}</section>`;
+}
 // the national awards ceremony: each award's three nominees, its winner revealed with a click (UI.cer: how many are)
 function vCeremony(){
   const A=nationalAwards(),n=Math.min(UI.cer||0,A.length);if(!A.length)return '';
@@ -989,22 +1038,24 @@ function vCup(){
 }
 // a knockout bracket, from a round of at most 8 ties to the champion. rounds: [{name, res (played), ties (drawn,
 // not yet played), when}]; feed: how a round's ties meet in the next ('pairs': ties 2j and 2j+1, 'halves': ties j
-// and j + half). each column lists its ties in an order that keeps the two feeding one tie of the next round together
-function vBracket(rounds,feed,winner){
+// and j + half). each column lists its ties in an order that keeps the two feeding one tie of the next round together.
+// open: the first round not drawn yet, when each round is drawn after the one before (its ties are all 待定, and the
+// round before it isn't joined to it)
+function vBracket(rounds,feed,winner,open=rounds.length){
   const R=rounds.length,n=r=>rounds[0].ties?rounds[0].ties.length>>r:(rounds[0].res||[]).length>>r;
   const kids=(r,j)=>feed==='pairs'?[2*j,2*j+1]:[j,j+n(r-1)/2];
   const order=[[0]];for(let r=R-1;r>0;r--)order.unshift(order[0].flatMap(j=>kids(r,j)));
   const won=(r,j)=>{const x=rounds[r].res&&rounds[r].res[j];return x?x.w:null};
   // who is in tie j of round r: its result, its draw, or the winners (or "待定") of the ties that feed it
   const sides=(r,j)=>{const x=rounds[r].res&&rounds[r].res[j];if(x)return [x.h,x.a];const t=rounds[r].ties&&rounds[r].ties[j];if(t)return t;
-    return r?kids(r,j).map(c=>won(r-1,c)):[null,null]};
+    return r&&r<open?kids(r,j).map(c=>won(r-1,c)):[null,null]};
   const team=(id,x,side)=>{if(id==null)return `<div class="bt tbd"><span>待定</span></div>`;
     const sc=x?(side==='h'?x.hg:x.ag):'',pk=x&&x.hp!=null?(side==='h'?x.hp:x.ap):null,cls=[id===S.my?'me':'',x?(x.w===id?'w':'l'):''].join(' ');
     return `<div class="bt ${cls}"><span>${S.teams[id].short}</span><b class="num">${sc}${pk!=null?`<small>(${pk})</small>`:''}</b></div>`};
   const tie=(r,j)=>{const x=rounds[r].res&&rounds[r].res[j],[h,a]=sides(r,j),mine=h===S.my||a===S.my;
     return `<div class="btie ${mine?'mine':''} ${x?'done':''}">${team(h,x,'h')}${team(a,x,'a')}</div>`};
   const cols=rounds.map((rd,r)=>{const ids=order[r],body=r<R-1?Array.from({length:ids.length/2},(_,i)=>`<div class="bpair">${tie(r,ids[2*i])}${tie(r,ids[2*i+1])}</div>`).join(''):tie(r,0);
-    return `<div class="bcol ${rd.ties?'now':''}"><div class="bh"><b>${rd.name}</b>${rd.when?`<small>${rd.when}</small>`:''}</div><div class="bbody">${body}</div></div>`}).join('');
+    return `<div class="${['bcol',rd.ties?'now':'',r+1>=open&&r<R-1?'loose':''].filter(Boolean).join(' ')}"><div class="bh"><b>${rd.name}</b>${rd.when?`<small>${rd.when}${r>=open?' · 待抽签':''}</small>`:''}</div><div class="bbody">${body}</div></div>`}).join('');
   const champ=`<div class="bcol bchamp"><div class="bh"><b>冠军</b></div><div class="bbody"><div class="bcup ${winner===S.my?'me':''}">🏆<span>${winner!=null?S.teams[winner].short:'？'}</span></div></div></div>`;
   return `<section class="panel"><h2>淘汰赛对阵</h2><div class="bracket-wrap"><div class="bracket" style="--cols:${R};--ties:${n(0)}">${cols}${champ}</div></div></section>`;
 }
@@ -1043,7 +1094,8 @@ function vDomCup(){
   ${C.winner!=null?`<p class="cup-champ disp">🏆 ${cupNm(C.winner)}</p>`:''}</section>`;
   const byes=(C.byes||[]).length?`<details class="fold byes"><summary><span class="muted">${C.byes.length} 队轮空，直接进入${stageName(C.stage+1)}${C.byes.includes(S.my)?'（包括本队）':''}</span></summary><p style="margin:6px 0 0;font-size:13px">${C.byes.map(id=>id===S.my?`<b>${cupNm(id)}</b>`:cupNm(id)).join('、')}</p></details>`:'';
   const pending=C.ties.length&&!inBracket?`<section class="panel"><h2>${stageName(C.stage)} <span class="muted" style="font-weight:400;font-size:14px">${dayLabel(cupDay(C.stage))}</span></h2>${C.ties.map(cupTie).join('')}${byes}</section>`:'';
-  const bracket=inBracket?vBracket(F.names.slice(start).map((_,i)=>{const k=start+i;return {name:stageName(k),res:C.rounds[k],ties:k===C.stage?C.ties:null,when:k>=C.stage&&C.winner==null?dayLabel(cupDay(k)).replace(/^第 (\d+) 周/,'第$1周'):''}}),'pairs',C.winner):'';
+  // each round is drawn once the one before is played, so the bracket is joined up only as far as the latest draw
+  const bracket=inBracket?vBracket(F.names.slice(start).map((_,i)=>{const k=start+i;return {name:stageName(k),res:C.rounds[k],ties:k===C.stage?C.ties:null,when:k>=C.stage&&C.winner==null?dayLabel(cupDay(k)).replace(/^第 (\d+) 周/,'第$1周'):''}}),'pairs',C.winner,C.stage-start+(C.ties.length?1:0)):'';
   const early=C.rounds.slice(0,start);
   const rounds=early.length?`<section class="panel"><h2>${inBracket?'早期轮次':'已赛轮次'}</h2>${early.map((rd,k)=>cupRound(stageName(k),rd,!inBracket&&k===early.length-1,'cupr'+k)).reverse().join('')}</section>`:'';
   const P=F.prize,prize=`<section class="panel"><h2>奖金</h2><div class="prize-list">${F.names.map((name,k)=>P[k]?`<div><span>止步${stageName(k)}</span><b>${money(P[k])}</b></div>`:'').join('')}<div><span>夺冠</span><b>${money(P[F.names.length])}</b></div></div></section>`;

@@ -70,16 +70,28 @@ function intlEntrants(top,cupWinner){
   ids.push(cupWinner!=null&&!ids.includes(cupWinner)&&!S.teams[cupWinner].foreign?cupWinner:top[INTL_LEAGUE_PLACES]);
   return ids;
 }
-// the draw: our clubs go to groups that can't meet before the quarter-finals (A, C, E, G); the rest from abroad fill
-// the smallest group first, strongest first
+// the draw, by pots: the 32 clubs by 底蕴 into four pots of eight, drawn pot by pot, each ball into a group with no
+// club from its pot yet. our clubs only go to A, C, E and G, one in each, so they can't meet before the
+// quarter-finals; a club from abroad never takes the last of those groups that one of ours still to come out of its
+// pot would need. returns the groups and the draw (the pots, and each ball in order with its group) for the ceremony
+function potDraw(home,away){
+  const all=[...home,...away].sort((a,b)=>S.teams[b].rep-S.teams[a].rep||a-b),G=INTL_GROUPS;
+  const pots=Array.from({length:all.length/G},(_,k)=>all.slice(k*G,(k+1)*G));
+  const groups=Array.from({length:G},()=>[]),picks=[],ours=id=>home.includes(id);
+  pots.forEach((pot,k)=>{const balls=shuffle(pot);balls.forEach((id,i)=>{
+    const open=groups.map((_,g)=>g).filter(g=>groups[g].length===k);  // no club from this pot yet
+    const free=g=>g%2===0&&!groups[g].some(ours),left=balls.slice(i+1).filter(ours).length,nFree=open.filter(free).length;
+    const g=pick(ours(id)?open.filter(free):open.filter(g=>!free(g)||nFree>left));
+    groups[g].push(id);picks.push({id,g});
+  })});
+  return {groups,draw:{pots,picks}};
+}
 function newIntl(home){
   if(S.intl)foreignForm(S.intl);  // last season's cup moves the clubs abroad up or down
   ensureForeign();freshenForeign();
-  const away=drawAbroad(4*INTL_GROUPS-home.length).sort((a,b)=>b.rep-a.rep).map(t=>t.id);
-  const groups=Array.from({length:INTL_GROUPS},()=>[]);home.forEach((id,i)=>groups[i*INTL_GROUPS/4].push(id));
-  away.forEach(id=>{const g=groups.map((x,i)=>[x.length,i]).sort((a,b)=>a[0]-b[0]||a[1]-b[1])[0][1];groups[g].push(id)});
+  const {groups,draw}=potDraw(home,drawAbroad(4*INTL_GROUPS-home.length).map(t=>t.id));
   news(`${INTL_NAME}抽签：${home.map(id=>S.teams[id].name).join('、')}代表本国出战。`);
-  return {season:S.season,weeks:INTL_WEEKS,home,groups,fix:groups.map(g=>genFixtures(g)),res:groups.map(()=>[]),stage:0,ties:[],ko:[],winner:null};
+  return {season:S.season,weeks:INTL_WEEKS,home,groups,draw,fix:groups.map(g=>genFixtures(g)),res:groups.map(()=>[]),stage:0,ties:[],ko:[],winner:null};
 }
 // the cup's stages: six group rounds, then the knockout rounds (four after eight groups, three after four)
 const intlKO=(I=S.intl)=>I&&I.groups.length>=8?4:3;

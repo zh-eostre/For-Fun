@@ -5,12 +5,35 @@ const cupFmt=(C=S.cup)=>C.fmt||CUP_LEGACY;
 const stageName=(k,C=S.cup)=>cupFmt(C).names[k];
 const cupDay=k=>(S.pre||0)+7*cupFmt().at[k]+2;
 const pairUp=ids=>{const t=[];for(let i=0;i+1<ids.length;i+=2)t.push([ids[i],ids[i+1]]);return t};
+// every round is drawn afresh: the balls come out one by one and are paired in that order, the first of a pair at
+// home. the draw is kept on the cup (C.draw: the stage and the balls in order) for the ceremony on the club page
+function cupDraw(C,stage,pool){const picks=shuffle(pool);C.draw={stage,picks};return pairUp(picks)}
 function newCup(){
   // the main draw is the biggest power of two that fits (16 or 32); the clubs over it play a qualifying round
   const home=S.teams.filter(t=>!t.foreign),n=home.length,base=n>=32?32:16,extra=Math.max(0,n-base);
-  if(!extra)return {fmt:CUP_LEGACY,stage:0,ties:pairUp(shuffle(home.map(t=>t.id))),byes:[],rounds:[],winner:null};
+  if(!extra){const C={fmt:CUP_LEGACY,stage:0,byes:[],rounds:[],winner:null};C.ties=cupDraw(C,0,home.map(t=>t.id));return C}
   const order=[...home].sort((a,b)=>(a.rep||0)-(b.rep||0)).map(t=>t.id);
-  return {fmt:base===32?(S.cal>=4?CUP_FORMAT32_C4:CUP_FORMAT32):CUP_FORMAT,stage:0,ties:pairUp(shuffle(order.slice(0,extra*2))),byes:order.slice(extra*2),rounds:[],winner:null};
+  const C={fmt:base===32?(S.cal>=4?CUP_FORMAT32_C4:CUP_FORMAT32):CUP_FORMAT,stage:0,byes:order.slice(extra*2),rounds:[],winner:null};
+  C.ties=cupDraw(C,0,order.slice(0,extra*2));return C;
+}
+// with every round drawn afresh, the bracket on the cup page is put together afterwards: from the newest draw back to
+// the last 16, each round's results are reordered so the two ties whose winners were drawn together sit side by side
+function alignBracket(C){
+  const start=Math.max(0,cupFmt(C).names.indexOf('十六强'));
+  for(let k=C.stage-1;k>=start;k--){
+    const next=k+1===C.stage?C.ties:C.rounds[k+1].map(r=>[r.h,r.a]),byW=new Map(C.rounds[k].map(r=>[r.w,r]));
+    if(next.flat().every(id=>byW.has(id)))C.rounds[k]=next.flat().map(id=>byW.get(id));
+  }
+}
+// a draw with us in it gets a ceremony on the club page (S.drawQ: the draws still to be shown), and a line in the news
+function queueDraw(kind){
+  const D=kind==='cup'?S.cup.draw:S.intl&&S.intl.draw;if(!D)return;
+  const ids=kind==='cup'?D.picks:D.picks.map(p=>p.id);if(!ids.includes(S.my))return;
+  (S.drawQ=S.drawQ||[]).push({kind,stage:kind==='cup'?D.stage:0,season:S.season});
+  if(kind==='cup'){const t=S.cup.ties.find(x=>x.includes(S.my)),o=S.teams[t[0]===S.my?t[1]:t[0]];
+    news(`🎱 ${CUP_NAME}${stageName(D.stage)}抽签！命运的签球落定——${t[0]===S.my?`我们将坐镇主场，迎战 ${o.name}`:`我们将远征 ${o.name} 的主场`}。`)}
+  else{const I=S.intl,g=I.groups.findIndex(x=>x.includes(S.my));
+    news(`🎱 ${INTL_NAME}抽签！我们落入 ${'ABCDEFGH'[g]} 组，同组的是 ${I.groups[g].filter(id=>id!==S.my).map(id=>S.teams[id].name).join('、')}。大陆的舞台，等待我们登场！`)}
 }
 // the next cup stage comes before our next league match (by date: lower divisions also play midweek rounds)
 const cupDue=()=>S.cup.stage<cupFmt().names.length&&cupDay(S.cup.stage)<leagueDay(S.round);
@@ -59,9 +82,9 @@ function playCupStage(myRes){
   const win=res.map(r=>r.w);
   C.stage++;C.ties=[];
   if(C.stage<cupFmt(C).names.length){
-    // qualifiers join the clubs that had a bye, and the last 16 is drawn afresh
-    const pool=C.byes&&C.byes.length?shuffle(C.byes.concat(win)):win;C.byes=[];
-    C.ties=pairUp(pool);
+    // the next round is drawn afresh (qualifiers join the clubs that had a bye)
+    const pool=(C.byes||[]).concat(win);C.byes=[];
+    C.ties=cupDraw(C,C.stage,pool);alignBracket(C);queueDraw('cup');
   }else{C.winner=win[0];cupHeadline(CUP_NAME,res[0])}
   const mine=res.find(r=>r.h===S.my||r.a===S.my);
   if(mine){
